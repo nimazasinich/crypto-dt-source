@@ -1,5 +1,15 @@
+# Gradio Application Dependencies
+gradio==4.14.0
+pandas==2.1.4
+plotly==5.18.0
+APScheduler==3.10.4
+
+# API & HTTP
+aiohttp==3.9.1
+requests==2.31.0
+
+# FastAPI (for alternative API mode)
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-aiohttp==3.9.1
 pydantic==2.5.0
 python-multipart==0.0.6
