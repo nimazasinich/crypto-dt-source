@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto API Resource Monitor - Live Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-card .subvalue {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .stat-card.online .value {
+            color: #10b981;
+        }
+
+        .stat-card.degraded .value {
+            color: #f59e0b;
+        }
+
+        .stat-card.offline .value {
+            color: #ef4444;
+        }
+
+        .category-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .category-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-section h2 .icon {
+            font-size: 1.2em;
+        }
+
+        .resource-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .resource-item {
+            display: grid;
+            grid-template-columns: 40px 1fr auto auto auto;
+            align-items: center;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 10px;
+            border-left: 4px solid #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .resource-item:hover {
+            background: #f3f4f6;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .resource-item.online {
+            border-left-color: #10b981;
+        }
+
+        .resource-item.degraded {
+            border-left-color: #f59e0b;
+        }
+
+        .resource-item.offline {
+            border-left-color: #ef4444;
+        }
+
+        .status-icon {
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .status-icon.online {
+            color: #10b981;
+        }
+
+        .status-icon.degraded {
+            color: #f59e0b;
+        }
+
+        .status-icon.offline {
+            color: #ef4444;
+        }
+
+        .resource-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .resource-url {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.online {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.degraded {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .response-time {
+            font-family: 'Courier New', monospace;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .tier-badge {
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .tier-1 {
+            background: #dc2626;
+            color: white;
+        }
+
+        .tier-2 {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .tier-3 {
+            background: #6b7280;
+            color: white;
+        }
+
+        .alerts-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .alert-item {
+            padding: 15px;
+            border-left: 4px solid;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background: #f9fafb;
+        }
+
+        .alert-item.critical {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .alert-item.warning {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        .alert-severity {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .alert-time {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        .last-updated {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .loading:after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 30px;
+            background: #e5e7eb;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .health-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .resource-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Crypto API Resource Monitor</h1>
+            <p class="subtitle">Real-time monitoring of cryptocurrency data sources and blockchain infrastructure</p>
+            <div class="health-bar">
+                <div class="health-bar-fill" id="healthBar" style="width: 0%">
+                    <span id="healthPercent">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Total Resources</div>
+                <div class="value" id="totalResources">--</div>
+                <div class="subvalue">Monitored APIs</div>
+            </div>
+            <div class="stat-card online">
+                <div class="label">Online</div>
+                <div class="value" id="onlineResources">--</div>
+                <div class="subvalue">Fully Operational</div>
+            </div>
+            <div class="stat-card degraded">
+                <div class="label">Degraded</div>
+                <div class="value" id="degradedResources">--</div>
+                <div class="subvalue">Slow Performance</div>
+            </div>
+            <div class="stat-card offline">
+                <div class="label">Offline</div>
+                <div class="value" id="offlineResources">--</div>
+                <div class="subvalue">Unavailable</div>
+            </div>
+        </div>
+
+        <div class="alerts-section" id="alertsSection" style="display: none;">
+            <h2>⚠️ Active Alerts</h2>
+            <div id="alertsContainer"></div>
+        </div>
+
+        <div id="categoriesContainer">
+            <div class="loading">Loading API resources</div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="refresh-btn" onclick="loadDashboard()">
+                🔄 Refresh Status
+            </button>
+        </div>
+
+        <div class="last-updated" id="lastUpdated"></div>
+    </div>
+
+    <script>
+        let reportData = null;
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch('api-monitor-report.json');
+                reportData = await response.json();
+                renderDashboard();
+            } catch (error) {
+                console.error('Error loading report:', error);
+                document.getElementById('categoriesContainer').innerHTML = `
+                    <div class="category-section">
+                        <h2>❌ Error Loading Data</h2>
+                        <p>Could not load api-monitor-report.json. Please run the monitor first:</p>
+                        <pre>node api-monitor.js</pre>
+                    </div>
+                `;
+            }
+        }
+
+        function renderDashboard() {
+            if (!reportData) return;
+
+            // Update summary stats
+            document.getElementById('totalResources').textContent = reportData.summary.totalResources;
+            document.getElementById('onlineResources').textContent = reportData.summary.onlineResources;
+            document.getElementById('degradedResources').textContent = reportData.summary.degradedResources;
+            document.getElementById('offlineResources').textContent = reportData.summary.offlineResources;
+
+            // Update health bar
+            const healthPercent = reportData.summary.totalResources > 0 ?
+                Math.round((reportData.summary.onlineResources / reportData.summary.totalResources) * 100) : 0;
+            document.getElementById('healthBar').style.width = healthPercent + '%';
+            document.getElementById('healthPercent').textContent = healthPercent + '%';
+
+            // Render alerts
+            if (reportData.alerts && reportData.alerts.length > 0) {
+                document.getElementById('alertsSection').style.display = 'block';
+                const alertsHtml = reportData.alerts.slice(-10).reverse().map(alert => `
+                    <div class="alert-item ${alert.severity.toLowerCase()}">
+                        <div class="alert-severity">[${alert.severity}]</div>
+                        <div>${alert.message}</div>
+                        <div class="alert-time">${new Date(alert.timestamp).toLocaleString()}</div>
+                    </div>
+                `).join('');
+                document.getElementById('alertsContainer').innerHTML = alertsHtml;
+            }
+
+            // Render categories
+            const categoriesHtml = Object.entries(reportData.categories).map(([category, resources]) => {
+                const categoryTitle = formatCategoryName(category);
+                const categoryIcon = getCategoryIcon(category);
+
+                const resourcesHtml = resources.map(resource => {
+                    const statusClass = resource.status.toLowerCase();
+                    const statusIcon = getStatusIcon(resource.status);
+                    const responseTime = resource.lastCheck ?
+                        `${resource.lastCheck.responseTime}ms` : 'N/A';
+                    const tierBadge = resource.tier ?
+                        `<span class="tier-badge tier-${resource.tier}">TIER-${resource.tier}</span>` : '';
+
+                    return `
+                        <div class="resource-item ${statusClass}">
+                            <div class="status-icon ${statusClass}">${statusIcon}</div>
+                            <div>
+                                <div class="resource-name">
+                                    ${resource.name} ${tierBadge}
+                                </div>
+                                <div class="resource-url">${resource.url}</div>
+                            </div>
+                            <div class="status-badge ${statusClass}">${resource.status}</div>
+                            <div class="response-time">${responseTime}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="category-section">
+                        <h2>
+                            <span class="icon">${categoryIcon}</span>
+                            ${categoryTitle}
+                        </h2>
+                        <div class="resource-grid">
+                            ${resourcesHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('categoriesContainer').innerHTML = categoriesHtml;
+
+            // Update timestamp
+            document.getElementById('lastUpdated').textContent =
+                `Last updated: ${new Date(reportData.timestamp).toLocaleString()}`;
+        }
+
+        function formatCategoryName(name) {
+            return name
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .trim();
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                blockchainExplorers: '🔍',
+                marketData: '💰',
+                newsAndSentiment: '📰',
+                rpcNodes: '🔗',
+                onChainAnalytics: '📊',
+                whaleTracking: '🐋',
+                corsProxies: '🌐'
+            };
+            return icons[category] || '📁';
+        }
+
+        function getStatusIcon(status) {
+            const icons = {
+                ONLINE: '✓',
+                DEGRADED: '◐',
+                SLOW: '◑',
+                UNSTABLE: '◒',
+                OFFLINE: '✗',
+                UNKNOWN: '?'
+            };
+            return icons[status] || '●';
+        }
+
+        // Auto-refresh every 5 minutes
+        setInterval(loadDashboard, 5 * 60 * 1000);
+
+        // Initial load
+        loadDashboard();
+    </script>
+</body>
+</html>
