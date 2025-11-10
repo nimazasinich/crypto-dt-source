@@ -1,33 +1,47 @@
-# Node modules
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Generated monitoring reports
-api-monitor-report.json
-failover-config.json
-
-# Logs
-*.log
-logs/
-
-# OS files
-.DS_Store
-Thumbs.db
+# Virtual environments
+venv/
+ENV/
+env/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
-# Environment variables (if used in future)
+# Data
+data/*.db
+data/*.db-journal
+data/exports/
+
+# Environment
 .env
-.env.local
-.env.*.local
 
-# Temporary files
-*.tmp
-*.temp
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
