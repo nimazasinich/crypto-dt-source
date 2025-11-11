@@ -1,0 +1,237 @@
+version: '3.8'
+
+# ============================================================================
+# Docker Compose for Crypto API Monitoring System
+# Production-ready configuration with multiple services
+# ============================================================================
+
+services:
+  # Main application service
+  crypto-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DEBIAN_FRONTEND=noninteractive
+    image: crypto-api-monitor:latest
+    container_name: crypto-monitor-app
+    restart: unless-stopped
+
+    ports:
+      - "7860:7860"    # Main API port
+      - "8000:8000"    # Alternative port
+
+    environment:
+      # Application settings
+      - APP_ENV=production
+      - LOG_LEVEL=info
+      - TZ=UTC
+
+      # API Keys (loaded from .env file)
+      - ETHERSCAN_KEY_1=${ETHERSCAN_KEY_1:-}
+      - ETHERSCAN_KEY_2=${ETHERSCAN_KEY_2:-}
+      - BSCSCAN_KEY=${BSCSCAN_KEY:-}
+      - TRONSCAN_KEY=${TRONSCAN_KEY:-}
+      - COINMARKETCAP_KEY_1=${COINMARKETCAP_KEY_1:-}
+      - COINMARKETCAP_KEY_2=${COINMARKETCAP_KEY_2:-}
+      - NEWSAPI_KEY=${NEWSAPI_KEY:-}
+      - CRYPTOCOMPARE_KEY=${CRYPTOCOMPARE_KEY:-}
+      - HUGGINGFACE_KEY=${HUGGINGFACE_KEY:-}
+
+      # Database settings
+      - DATABASE_PATH=/app/data/api_monitor.db
+
+      # Performance settings
+      - WORKERS=1
+      - MAX_CONNECTIONS=100
+      - POOL_SIZE=10
+
+    volumes:
+      # Persistent data storage
+      - crypto-data:/app/data
+      - crypto-logs:/app/logs
+      # Mount config file (optional)
+      - ./all_apis_merged_2025.json:/app/all_apis_merged_2025.json:ro
+
+    networks:
+      - crypto-network
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    labels:
+      - "com.crypto-monitor.service=main"
+      - "com.crypto-monitor.version=2.0.0"
+
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Nginx reverse proxy (optional, for production)
+  nginx:
+    image: nginx:alpine
+    container_name: crypto-monitor-nginx
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-cache:/var/cache/nginx
+
+    networks:
+      - crypto-network
+
+    depends_on:
+      - crypto-monitor
+
+    profiles:
+      - production
+
+    labels:
+      - "com.crypto-monitor.service=proxy"
+
+  # Redis cache (optional, for caching API responses)
+  redis:
+    image: redis:7-alpine
+    container_name: crypto-monitor-redis
+    restart: unless-stopped
+
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+    volumes:
+      - redis-data:/data
+
+    networks:
+      - crypto-network
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+    profiles:
+      - with-cache
+
+    labels:
+      - "com.crypto-monitor.service=cache"
+
+  # Prometheus monitoring (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: crypto-monitor-prometheus
+    restart: unless-stopped
+
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+    ports:
+      - "9090:9090"
+
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+    networks:
+      - crypto-network
+
+    depends_on:
+      - crypto-monitor
+
+    profiles:
+      - monitoring
+
+    labels:
+      - "com.crypto-monitor.service=monitoring"
+
+  # Grafana dashboards (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: crypto-monitor-grafana
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+
+    networks:
+      - crypto-network
+
+    depends_on:
+      - prometheus
+
+    profiles:
+      - monitoring
+
+    labels:
+      - "com.crypto-monitor.service=dashboard"
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  crypto-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  crypto-data:
+    driver: local
+    labels:
+      - "com.crypto-monitor.volume=data"
+
+  crypto-logs:
+    driver: local
+    labels:
+      - "com.crypto-monitor.volume=logs"
+
+  nginx-cache:
+    driver: local
+    labels:
+      - "com.crypto-monitor.volume=nginx-cache"
+
+  redis-data:
+    driver: local
+    labels:
+      - "com.crypto-monitor.volume=redis"
+
+  prometheus-data:
+    driver: local
+    labels:
+      - "com.crypto-monitor.volume=prometheus"
+
+  grafana-data:
+    driver: local
+    labels:
+      - "com.crypto-monitor.volume=grafana"

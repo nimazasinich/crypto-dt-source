@@ -1,0 +1,166 @@
+# ============================================================================
+# .dockerignore for Crypto API Monitoring System
+# Exclude unnecessary files from Docker build context
+# ============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+*.cover
+.cache
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Documentation
+docs/
+*.md
+!README.md
+LICENSE
+
+# Tests
+tests/
+test_*.py
+*_test.py
+pytest.ini
+tox.ini
+
+# Database (development)
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (if any)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Backup files
+*.backup
+*.old
+*~
+
+# Large files
+*.tar
+*.tar.gz
+*.zip
+*.rar
+
+# Media files (if not needed)
+*.mp4
+*.avi
+*.mov
+*.mp3
+*.wav
+
+# Sensitive data
+secrets/
+credentials/
+*.pem
+*.key
+*.crt
+
+# Build artifacts
+*.o
+*.a
+*.exe
+*.dll
+*.dylib
+
+# Editor directories
+.vscode/
+.idea/
+*.sublime-*
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
+.npm
+.eslintcache
+.stylelintcache
