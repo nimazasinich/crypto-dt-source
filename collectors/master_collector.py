@@ -21,6 +21,9 @@ from collectors.onchain import collect_onchain_data
 from collectors.rpc_nodes import collect_rpc_data
 from collectors.whale_tracking import collect_whale_tracking_data
 
+# Import data persistence
+from collectors.data_persistence import data_persistence
+
 logger = setup_logger("master_collector")
 
 
@@ -306,6 +309,14 @@ class DataSourceCollector:
         for category, stats in results['statistics']['categories'].items():
             logger.info(f"  {category}: {stats['successful']}/{stats['total']}")
         logger.info("=" * 60)
+
+        # Save all collected data to database
+        try:
+            persistence_stats = data_persistence.save_all_data(results)
+            results['persistence_stats'] = persistence_stats
+        except Exception as e:
+            logger.error(f"Error persisting data to database: {e}", exc_info=True)
+            results['persistence_stats'] = {'error': str(e)}
 
         return results
 

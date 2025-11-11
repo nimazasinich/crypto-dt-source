@@ -25,15 +25,23 @@ from database.models import (
     Alert,
     SystemMetrics,
     ConnectionStatus,
-    ProviderCategory
+    ProviderCategory,
+    # Crypto data models
+    MarketPrice,
+    NewsArticle,
+    WhaleTransaction,
+    SentimentMetric,
+    GasPrice,
+    BlockchainStat
 )
+from database.data_access import DataAccessMixin
 from utils.logger import setup_logger
 
 # Initialize logger
 logger = setup_logger("db_manager", level="INFO")
 
 
-class DatabaseManager:
+class DatabaseManager(DataAccessMixin):
     """
     Comprehensive database manager for API monitoring system
     Handles all database operations with proper error handling and logging

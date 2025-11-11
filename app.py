@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from api.endpoints import router as api_router
 from api.websocket import router as websocket_router, manager as ws_manager
 from api.pool_endpoints import router as pool_router
+from api.data_endpoints import router as data_router
 
 # Import new WebSocket service routers
 from api.ws_unified_router import router as ws_unified_router, start_all_websocket_streams
@@ -168,6 +169,15 @@ async def lifespan(app: FastAPI):
         task_scheduler.start()
         logger.info("Task scheduler started successfully")
 
+        # 7. Start WebSocket data broadcaster
+        logger.info("Starting WebSocket data broadcaster...")
+        try:
+            from api.ws_data_broadcaster import broadcaster
+            asyncio.create_task(broadcaster.start_broadcasting())
+            logger.info("WebSocket data broadcaster started")
+        except Exception as e:
+            logger.warning(f"Could not start WebSocket data broadcaster: {e}")
+
         # Log startup summary
         logger.info("=" * 80)
         logger.info("Crypto API Monitoring System started successfully")
@@ -185,17 +195,26 @@ async def lifespan(app: FastAPI):
         logger.info("Shutting down Crypto API Monitoring System...")
         logger.info("=" * 80)
 
-        # 1. Stop task scheduler
+        # 1. Stop WebSocket data broadcaster
+        logger.info("Stopping WebSocket data broadcaster...")
+        try:
+            from api.ws_data_broadcaster import broadcaster
+            await broadcaster.stop_broadcasting()
+            logger.info("WebSocket data broadcaster stopped")
+        except Exception as e:
+            logger.warning(f"Error stopping WebSocket data broadcaster: {e}")
+
+        # 2. Stop task scheduler
         logger.info("Stopping task scheduler...")
         task_scheduler.stop()
         logger.info("Task scheduler stopped")
 
-        # 2. Stop WebSocket background tasks
+        # 3. Stop WebSocket background tasks
         logger.info("Stopping WebSocket background tasks...")
         await ws_manager.stop_background_tasks()
         logger.info("WebSocket background tasks stopped")
 
-        # 3. Close all WebSocket connections
+        # 4. Close all WebSocket connections
         logger.info("Closing WebSocket connections...")
         await ws_manager.close_all_connections()
         logger.info("WebSocket connections closed")
@@ -307,6 +326,12 @@ app.include_router(
 app.include_router(
     pool_router,
     tags=["Pool Management"]
+)
+
+# Include Data endpoints router (cryptocurrency data)
+app.include_router(
+    data_router,
+    tags=["Crypto Data"]
 )
 
 # Include HF router (if available)
