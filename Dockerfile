@@ -1,71 +1,80 @@
-# Dockerfile for Crypto API Monitoring System
-# Optimized for HuggingFace Spaces deployment
-FROM python:3.10-slim
+# Stage 1: Build Frontend
+FROM node:18-slim AS frontend-builder
 
-# Set working directory
 WORKDIR /app
 
-# Set environment variables for better Python behavior
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+# Copy frontend package files
+COPY package*.json ./
 
-# Install system dependencies required for building Python packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install dependencies
+RUN npm install
+
+# Copy frontend source files
+COPY *.html ./
+COPY *.js ./
+COPY config.js ./
+
+# Note: This project uses static HTML/JS files, no build step needed
+# If you add a build step later, uncomment the next line
+# RUN npm run build
+
+# Stage 2: Setup Backend and Serve
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
-    git \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better layer caching
-COPY requirements.txt .
+# Copy backend requirements
+COPY requirements.txt ./
 
-# Install Python dependencies with optimizations
-# Split into two steps: core dependencies first, then ML libraries
-RUN pip install --no-cache-dir \
-    fastapi==0.104.1 \
-    uvicorn[standard]==0.24.0 \
-    pydantic==2.5.0 \
-    python-multipart==0.0.6 \
-    websockets==12.0 \
-    SQLAlchemy==2.0.23 \
-    APScheduler==3.10.4 \
-    aiohttp==3.9.1 \
-    requests==2.31.0 \
-    httpx \
-    python-dotenv==1.0.0 \
-    feedparser==6.0.11 \
-    gradio==4.14.0 \
-    pandas==2.1.4 \
-    plotly==5.18.0
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install HuggingFace ML dependencies separately
-RUN pip install --no-cache-dir \
-    transformers>=4.44.0 \
-    datasets>=3.0.0 \
-    huggingface_hub>=0.24.0 \
-    torch>=2.0.0 --index-url https://download.pytorch.org/whl/cpu \
-    sentencepiece>=0.1.99 \
-    protobuf>=3.20.0
+# Copy backend code
+COPY backend/ ./backend/
 
-# Copy all application code
-COPY . .
+# Copy other Python files
+COPY *.py ./
+
+# Copy built frontend from previous stage
+COPY --from=frontend-builder /app/*.html ./
+COPY --from=frontend-builder /app/*.js ./
+COPY --from=frontend-builder /app/config.js ./
+
+# Copy additional directories
+COPY api/ ./api/
+COPY collectors/ ./collectors/
+COPY database/ ./database/
+COPY monitoring/ ./monitoring/
+COPY scripts/ ./scripts/
+COPY tests/ ./tests/
+COPY utils/ ./utils/
+
+# Copy data files
+COPY *.json ./
 
 # Create necessary directories
 RUN mkdir -p data logs
 
-# Set proper permissions for data directories
+# Set proper permissions
 RUN chmod -R 755 data logs
 
-# Expose port 7860 (HuggingFace Spaces standard port)
+# Expose Hugging Face Space port
 EXPOSE 7860
 
-# Health check endpoint for HuggingFace Spaces
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:7860/health || exit 1
 
-# Run the FastAPI application with uvicorn
-# Using multiple workers for better performance (adjust based on available resources)
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860", "--log-level", "info", "--workers", "1"]
+# Run the application
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860", "--log-level", "info"]
