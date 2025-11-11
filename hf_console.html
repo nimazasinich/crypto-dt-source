@@ -139,11 +139,17 @@
             gap: 20px;
         }
     </style>
+    <!-- API Configuration -->
+    <script src="config.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>🤗 HuggingFace Console</h1>
         <p class="subtitle">Test HF connectivity, registry, search, and sentiment analysis</p>
+        <div style="background: #f0f9ff; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: #0369a1;">
+            <strong>🌐 Environment:</strong> <span id="envInfo">Loading...</span> |
+            <strong>📡 API:</strong> <span id="apiInfo">Loading...</span>
+        </div>
 
         <section>
             <h3>
@@ -208,27 +214,22 @@ Neutral market conditions</textarea>
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:7860';
+        // Use the CONFIG object from config.js
+        const API_BASE = CONFIG.API_BASE;
+        const fetchJSON = CONFIG.fetchJSON;
+        const postJSON = CONFIG.postJSON;
 
-        async function fetchJSON(url) {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json();
-        }
-
-        async function postJSON(url, body) {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json();
+        // Display environment info
+        function updateEnvironmentInfo() {
+            const envType = CONFIG.IS_HUGGINGFACE_SPACES ? '🤗 HuggingFace Spaces' :
+                           CONFIG.IS_LOCALHOST ? '💻 Localhost' : '🌐 Custom Deployment';
+            document.getElementById('envInfo').textContent = envType;
+            document.getElementById('apiInfo').textContent = CONFIG.API_BASE;
         }
 
         async function loadHealth() {
             try {
-                const data = await fetchJSON(`${API_BASE}/api/hf/health`);
+                const data = await fetchJSON(CONFIG.ENDPOINTS.HF_HEALTH);
                 document.getElementById('healthOutput').textContent = JSON.stringify(data, null, 2);
                 document.getElementById('healthBadge').textContent = data.ok ? '✓ Healthy' : '✗ Unhealthy';
                 document.getElementById('healthBadge').className = data.ok ? 'badge badge-success' : 'badge badge-warning';
@@ -242,7 +243,7 @@ Neutral market conditions</textarea>
         async function doRefresh() {
             try {
                 document.getElementById('healthOutput').textContent = 'Refreshing registry...';
-                const data = await postJSON(`${API_BASE}/api/hf/refresh`, {});
+                const data = await postJSON(CONFIG.ENDPOINTS.HF_REFRESH, {});
                 document.getElementById('healthOutput').textContent = JSON.stringify(data, null, 2);
                 await loadHealth();
             } catch (err) {
@@ -252,7 +253,7 @@ Neutral market conditions</textarea>
 
         async function loadModels() {
             try {
-                const data = await fetchJSON(`${API_BASE}/api/hf/registry?kind=models`);
+                const data = await fetchJSON(`${CONFIG.ENDPOINTS.HF_REGISTRY}?kind=models`);
                 const items = data.items || [];
                 document.getElementById('modelsCount').textContent = items.length;
                 const html = items.length > 0 
@@ -266,7 +267,7 @@ Neutral market conditions</textarea>
 
         async function loadDatasets() {
             try {
-                const data = await fetchJSON(`${API_BASE}/api/hf/registry?kind=datasets`);
+                const data = await fetchJSON(`${CONFIG.ENDPOINTS.HF_REGISTRY}?kind=datasets`);
                 const items = data.items || [];
                 document.getElementById('datasetsCount').textContent = items.length;
                 const html = items.length > 0
@@ -281,7 +282,7 @@ Neutral market conditions</textarea>
         async function doSearch() {
             const q = document.getElementById('searchQuery').value;
             try {
-                const data = await fetchJSON(`${API_BASE}/api/hf/search?q=${encodeURIComponent(q)}&kind=models`);
+                const data = await fetchJSON(`${CONFIG.ENDPOINTS.HF_SEARCH}?q=${encodeURIComponent(q)}&kind=models`);
                 const items = data.items || [];
                 const html = items.length > 0
                     ? `<p style="color: #10b981; font-weight: 600;">Found ${items.length} models</p><ul>` + items.map(i => `<li>🤖 ${i.id}</li>`).join('') + '</ul>'
@@ -295,7 +296,7 @@ Neutral market conditions</textarea>
         async function doSearchDatasets() {
             const q = document.getElementById('searchQuery').value;
             try {
-                const data = await fetchJSON(`${API_BASE}/api/hf/search?q=${encodeURIComponent(q)}&kind=datasets`);
+                const data = await fetchJSON(`${CONFIG.ENDPOINTS.HF_SEARCH}?q=${encodeURIComponent(q)}&kind=datasets`);
                 const items = data.items || [];
                 const html = items.length > 0
                     ? `<p style="color: #10b981; font-weight: 600;">Found ${items.length} datasets</p><ul>` + items.map(i => `<li>📚 ${i.id}</li>`).join('') + '</ul>'
@@ -316,7 +317,7 @@ Neutral market conditions</textarea>
                 document.getElementById('voteDisplay').innerHTML = '<span class="loading"></span>';
                 document.getElementById('sentimentOutput').textContent = 'Running sentiment analysis...';
                 
-                const data = await postJSON(`${API_BASE}/api/hf/run-sentiment`, { texts });
+                const data = await postJSON(CONFIG.ENDPOINTS.HF_RUN_SENTIMENT, { texts });
                 
                 const vote = data.vote || 0;
                 let voteClass = 'vote-neutral';
@@ -332,8 +333,9 @@ Neutral market conditions</textarea>
             }
         }
 
-        // Auto-load health on page load
+        // Auto-load health and environment info on page load
         window.addEventListener('load', () => {
+            updateEnvironmentInfo();
             loadHealth();
         });
     </script>
