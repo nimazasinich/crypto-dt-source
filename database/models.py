@@ -272,3 +272,92 @@ class RotationState(Base):
     # Relationships
     pool = relationship("SourcePool")
     current_provider = relationship("Provider")
+
+
+# ============================================================================
+# Data Storage Tables (Actual Crypto Data)
+# ============================================================================
+
+class MarketPrice(Base):
+    """Market price data table"""
+    __tablename__ = 'market_prices'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    symbol = Column(String(20), nullable=False, index=True)
+    price_usd = Column(Float, nullable=False)
+    market_cap = Column(Float, nullable=True)
+    volume_24h = Column(Float, nullable=True)
+    price_change_24h = Column(Float, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    source = Column(String(100), nullable=False)
+
+
+class NewsArticle(Base):
+    """News articles table"""
+    __tablename__ = 'news_articles'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(500), nullable=False)
+    content = Column(Text, nullable=True)
+    source = Column(String(100), nullable=False, index=True)
+    url = Column(String(1000), nullable=True)
+    published_at = Column(DateTime, nullable=False, index=True)
+    sentiment = Column(String(50), nullable=True)  # positive, negative, neutral
+    tags = Column(String(500), nullable=True)  # comma-separated tags
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class WhaleTransaction(Base):
+    """Whale transactions table"""
+    __tablename__ = 'whale_transactions'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    blockchain = Column(String(50), nullable=False, index=True)
+    transaction_hash = Column(String(200), nullable=False, unique=True)
+    from_address = Column(String(200), nullable=False)
+    to_address = Column(String(200), nullable=False)
+    amount = Column(Float, nullable=False)
+    amount_usd = Column(Float, nullable=False, index=True)
+    timestamp = Column(DateTime, nullable=False, index=True)
+    source = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SentimentMetric(Base):
+    """Sentiment metrics table"""
+    __tablename__ = 'sentiment_metrics'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    metric_name = Column(String(100), nullable=False, index=True)
+    value = Column(Float, nullable=False)
+    classification = Column(String(50), nullable=False)  # fear, greed, neutral, etc.
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    source = Column(String(100), nullable=False)
+
+
+class GasPrice(Base):
+    """Gas prices table"""
+    __tablename__ = 'gas_prices'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    blockchain = Column(String(50), nullable=False, index=True)
+    gas_price_gwei = Column(Float, nullable=False)
+    fast_gas_price = Column(Float, nullable=True)
+    standard_gas_price = Column(Float, nullable=True)
+    slow_gas_price = Column(Float, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    source = Column(String(100), nullable=False)
+
+
+class BlockchainStat(Base):
+    """Blockchain statistics table"""
+    __tablename__ = 'blockchain_stats'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    blockchain = Column(String(50), nullable=False, index=True)
+    latest_block = Column(Integer, nullable=True)
+    total_transactions = Column(Integer, nullable=True)
+    network_hashrate = Column(Float, nullable=True)
+    difficulty = Column(Float, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    source = Column(String(100), nullable=False)
