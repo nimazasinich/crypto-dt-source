@@ -1156,6 +1156,13 @@
                 </svg>
                 Configuration
             </div>
+            <div class="tab" onclick="switchTab(event, 'huggingface')">
+                <svg class="icon">
+                    <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                🤗 HuggingFace
+            </div>
         </div>
 
         <!-- Tab 1: Dashboard -->
@@ -1722,6 +1729,162 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tab 9: HuggingFace -->
+        <div class="tab-content" id="tab-huggingface">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg class="icon icon-lg">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 6v6l4 2"></path>
+                        </svg>
+                        🤗 HuggingFace Health Status
+                    </h2>
+                    <div class="card-actions">
+                        <button class="btn" onclick="refreshHFRegistry()">
+                            <svg class="icon">
+                                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+                            </svg>
+                            Force Refresh Registry
+                        </button>
+                        <button class="btn btn-secondary btn-icon" onclick="loadHFHealth()">
+                            <svg class="icon">
+                                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="hfHealthDisplay" style="padding: 20px; background: var(--bg-hover); border-radius: var(--radius); font-family: monospace; font-size: 13px; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                    Loading HF health status...
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <svg class="icon icon-lg">
+                                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            Models Registry
+                            <span class="badge badge-success" id="hfModelsCount" style="margin-left: 10px;">0</span>
+                        </h2>
+                        <div class="card-actions">
+                            <button class="btn btn-secondary btn-icon" onclick="loadHFModels()">
+                                <svg class="icon">
+                                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="hfModelsList" style="max-height: 400px; overflow-y: auto;">
+                        <div class="loading-inline">
+                            <div class="spinner-inline"></div>
+                            Loading models...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <svg class="icon icon-lg">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            Datasets Registry
+                            <span class="badge badge-success" id="hfDatasetsCount" style="margin-left: 10px;">0</span>
+                        </h2>
+                        <div class="card-actions">
+                            <button class="btn btn-secondary btn-icon" onclick="loadHFDatasets()">
+                                <svg class="icon">
+                                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="hfDatasetsList" style="max-height: 400px; overflow-y: auto;">
+                        <div class="loading-inline">
+                            <div class="spinner-inline"></div>
+                            Loading datasets...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg class="icon icon-lg">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        Search Registry (Local Snapshot)
+                    </h2>
+                </div>
+                <div class="filter-bar">
+                    <div class="filter-item" style="flex: 2;">
+                        <label class="input-label">Search Query</label>
+                        <input type="text" class="input" id="hfSearchQuery" placeholder="e.g., crypto, bitcoin, sentiment" value="crypto">
+                    </div>
+                    <div class="filter-item">
+                        <label class="input-label">Type</label>
+                        <select class="select" id="hfSearchKind">
+                            <option value="models">Models</option>
+                            <option value="datasets">Datasets</option>
+                        </select>
+                    </div>
+                    <div class="filter-item" style="display: flex; align-items: flex-end;">
+                        <button class="btn" onclick="searchHF()" style="width: 100%;">
+                            <svg class="icon">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            Search
+                        </button>
+                    </div>
+                </div>
+                <div id="hfSearchResults" style="max-height: 400px; overflow-y: auto; padding: 20px; background: var(--bg-hover); border-radius: var(--radius);">
+                    <div class="empty-state">
+                        <div class="empty-state-title">Enter a query and click search</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg class="icon icon-lg">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        💭 Sentiment Analysis (Local Pipeline)
+                    </h2>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Text Samples (one per line)</label>
+                    <textarea class="input" id="hfSentimentTexts" rows="6" placeholder="BTC strong breakout&#10;ETH looks weak&#10;Crypto market is bullish today">BTC strong breakout
+ETH looks weak
+Crypto market is bullish today
+Bears are taking control
+Neutral market conditions</textarea>
+                </div>
+                <button class="btn" onclick="runHFSentiment()">
+                    <svg class="icon">
+                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    Run Sentiment Analysis
+                </button>
+                <div id="hfSentimentVote" style="margin: 20px 0; padding: 20px; background: var(--bg-hover); border-radius: var(--radius); text-align: center; font-size: 32px; font-weight: 700;">
+                    <span style="color: var(--text-muted);">—</span>
+                </div>
+                <div id="hfSentimentResults" style="padding: 20px; background: var(--bg-hover); border-radius: var(--radius); font-family: monospace; font-size: 13px; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
+                    Results will appear here...
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1783,16 +1946,15 @@
                 };
                 
                 state.ws.onclose = () => {
-                    console.log('WebSocket disconnected');
+                    console.log('WebSocket disconnected - not reconnecting (WebSocket not available)');
                     state.wsConnected = false;
                     updateWSStatus('disconnected');
-                    // Attempt to reconnect after 5 seconds
-                    setTimeout(initializeWebSocket, 5000);
+                    // Don't reconnect - WebSocket not implemented in simple server
                 };
             } catch (error) {
-                console.error('Failed to initialize WebSocket:', error);
+                console.log('WebSocket not available - using polling mode');
                 updateWSStatus('disconnected');
-                showToast('Connection Error', 'Failed to connect to WebSocket server', 'error');
+                // Don't show error toast - WebSocket is optional
             }
         }
 
@@ -2675,7 +2837,7 @@
                 switch(chartName) {
                     case 'health':
                         const healthData = await apiCall('/api/charts/health-history?hours=24');
-                        if (state.charts.health && healthData) {
+                        if (state.charts.health && healthData && healthData.timestamps && healthData.success_rate) {
                             state.charts.health.data.labels = healthData.timestamps.map(t => new Date(t).getHours() + ':00');
                             state.charts.health.data.datasets[0].data = healthData.success_rate;
                             state.charts.health.update();
@@ -2693,7 +2855,7 @@
 
                     case 'rateLimit':
                         const rateLimitData = await apiCall('/api/charts/rate-limit-history?hours=24');
-                        if (state.charts.rateLimit && rateLimitData) {
+                        if (state.charts.rateLimit && rateLimitData && rateLimitData.timestamps) {
                             state.charts.rateLimit.data.labels = rateLimitData.timestamps;
 
                             // Clear existing datasets
@@ -2708,17 +2870,21 @@
                                 'rgba(239, 68, 68, 0.8)'     // Red
                             ];
 
-                            rateLimitData.providers.forEach((provider, index) => {
-                                state.charts.rateLimit.data.datasets.push({
-                                    label: provider.name,
-                                    data: provider.usage_percentage,
-                                    borderColor: colors[index % colors.length],
-                                    backgroundColor: colors[index % colors.length].replace('0.8', '0.1'),
-                                    borderWidth: 2,
-                                    tension: 0.4,
-                                    fill: false
-                                });
-                            });
+                            if (rateLimitData.providers && typeof rateLimitData.providers === 'object') {
+                                let index = 0;
+                                for (const [providerName, usageData] of Object.entries(rateLimitData.providers)) {
+                                    state.charts.rateLimit.data.datasets.push({
+                                        label: providerName,
+                                        data: usageData,
+                                        borderColor: colors[index % colors.length],
+                                        backgroundColor: colors[index % colors.length].replace('0.8', '0.1'),
+                                        borderWidth: 2,
+                                        tension: 0.4,
+                                        fill: false
+                                    });
+                                    index++;
+                                }
+                            }
 
                             state.charts.rateLimit.update();
                         }
@@ -2726,7 +2892,7 @@
 
                     case 'freshness':
                         const freshnessData = await apiCall('/api/charts/freshness-history?hours=24');
-                        if (state.charts.freshness && freshnessData) {
+                        if (state.charts.freshness && freshnessData && freshnessData.timestamps) {
                             state.charts.freshness.data.labels = freshnessData.timestamps;
 
                             // Clear existing datasets
@@ -2741,17 +2907,21 @@
                                 'rgba(239, 68, 68, 0.8)'     // Red
                             ];
 
-                            freshnessData.providers.forEach((provider, index) => {
-                                state.charts.freshness.data.datasets.push({
-                                    label: provider.name,
-                                    data: provider.staleness_minutes,
-                                    borderColor: colors[index % colors.length],
-                                    backgroundColor: colors[index % colors.length].replace('0.8', '0.1'),
-                                    borderWidth: 2,
-                                    tension: 0.4,
-                                    fill: false
-                                });
-                            });
+                            if (freshnessData.providers && typeof freshnessData.providers === 'object') {
+                                let index = 0;
+                                for (const [providerName, stalenessData] of Object.entries(freshnessData.providers)) {
+                                    state.charts.freshness.data.datasets.push({
+                                        label: providerName,
+                                        data: stalenessData,
+                                        borderColor: colors[index % colors.length],
+                                        backgroundColor: colors[index % colors.length].replace('0.8', '0.1'),
+                                        borderWidth: 2,
+                                        tension: 0.4,
+                                        fill: false
+                                    });
+                                    index++;
+                                }
+                            }
 
                             state.charts.freshness.update();
                         }
@@ -3009,6 +3179,237 @@
 
         function exportConfig() {
             showToast('Export', 'Configuration exported', 'success');
+        }
+
+        // HuggingFace Functions
+        async function loadHFHealth() {
+            try {
+                const data = await apiCall('/api/hf/health');
+                document.getElementById('hfHealthDisplay').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('hfHealthDisplay').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function refreshHFRegistry() {
+            try {
+                showToast('HF Registry', 'Refreshing registry...', 'info');
+                document.getElementById('hfHealthDisplay').textContent = 'Refreshing registry...';
+                const data = await apiCall('/api/hf/refresh', { method: 'POST' });
+                document.getElementById('hfHealthDisplay').textContent = JSON.stringify(data, null, 2);
+                showToast('Success', `Registry refreshed: ${data.models} models, ${data.datasets} datasets`, 'success');
+                await loadHFHealth();
+                await loadHFModels();
+                await loadHFDatasets();
+            } catch (error) {
+                document.getElementById('hfHealthDisplay').textContent = `Error: ${error.message}`;
+                showToast('Error', 'Failed to refresh registry', 'error');
+            }
+        }
+
+        async function loadHFModels() {
+            try {
+                const data = await apiCall('/api/hf/registry?kind=models');
+                const items = data.items || [];
+                document.getElementById('hfModelsCount').textContent = items.length;
+                
+                if (items.length === 0) {
+                    document.getElementById('hfModelsList').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-title">No models found</div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('hfModelsList').innerHTML = `
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Model ID</th>
+                                        <th>Pipeline</th>
+                                        <th>Source</th>
+                                        <th>Likes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.slice(0, 50).map(m => `
+                                        <tr>
+                                            <td style="font-family: monospace; font-size: 13px;">${m.id}</td>
+                                            <td><span class="badge badge-info">${m.pipeline_tag || 'N/A'}</span></td>
+                                            <td><span class="badge badge-${m.source === 'hub' ? 'success' : 'warning'}">${m.source}</span></td>
+                                            <td>${m.likes || 0}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('hfModelsList').innerHTML = `
+                    <div class="alert alert-danger">
+                        <div class="alert-content">
+                            <div class="alert-title">Error</div>
+                            <div class="alert-message">${error.message}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadHFDatasets() {
+            try {
+                const data = await apiCall('/api/hf/registry?kind=datasets');
+                const items = data.items || [];
+                document.getElementById('hfDatasetsCount').textContent = items.length;
+                
+                if (items.length === 0) {
+                    document.getElementById('hfDatasetsList').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-title">No datasets found</div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('hfDatasetsList').innerHTML = `
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Dataset ID</th>
+                                        <th>Source</th>
+                                        <th>Likes</th>
+                                        <th>Downloads</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.slice(0, 50).map(d => `
+                                        <tr>
+                                            <td style="font-family: monospace; font-size: 13px;">${d.id}</td>
+                                            <td><span class="badge badge-${d.source === 'hub' ? 'success' : 'warning'}">${d.source}</span></td>
+                                            <td>${d.likes || 0}</td>
+                                            <td>${d.downloads || 0}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('hfDatasetsList').innerHTML = `
+                    <div class="alert alert-danger">
+                        <div class="alert-content">
+                            <div class="alert-title">Error</div>
+                            <div class="alert-message">${error.message}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function searchHF() {
+            const query = document.getElementById('hfSearchQuery').value;
+            const kind = document.getElementById('hfSearchKind').value;
+            
+            try {
+                document.getElementById('hfSearchResults').innerHTML = `
+                    <div class="loading-inline">
+                        <div class="spinner-inline"></div>
+                        Searching...
+                    </div>
+                `;
+                
+                const data = await apiCall(`/api/hf/search?q=${encodeURIComponent(query)}&kind=${kind}`);
+                const items = data.items || [];
+                
+                if (items.length === 0) {
+                    document.getElementById('hfSearchResults').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-title">No results found</div>
+                            <div class="empty-state-message">Try a different search query</div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('hfSearchResults').innerHTML = `
+                        <div class="alert alert-success" style="margin-bottom: 16px;">
+                            <div class="alert-content">
+                                <div class="alert-title">Found ${items.length} ${kind}</div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tags</th>
+                                        <th>Source</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.map(item => `
+                                        <tr>
+                                            <td style="font-family: monospace; font-size: 13px;">${item.id}</td>
+                                            <td style="font-size: 12px; color: var(--text-muted);">${(item.tags || []).slice(0, 3).join(', ')}</td>
+                                            <td><span class="badge badge-${item.source === 'hub' ? 'success' : 'warning'}">${item.source}</span></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('hfSearchResults').innerHTML = `
+                    <div class="alert alert-danger">
+                        <div class="alert-content">
+                            <div class="alert-title">Error</div>
+                            <div class="alert-message">${error.message}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function runHFSentiment() {
+            const texts = document.getElementById('hfSentimentTexts').value.split('\n').filter(t => t.trim());
+            
+            if (texts.length === 0) {
+                showToast('Error', 'Please enter at least one text sample', 'error');
+                return;
+            }
+            
+            try {
+                document.getElementById('hfSentimentVote').innerHTML = '<div class="spinner-inline"></div>';
+                document.getElementById('hfSentimentResults').textContent = 'Running sentiment analysis...';
+                
+                const data = await apiCall('/api/hf/run-sentiment', {
+                    method: 'POST',
+                    body: JSON.stringify({ texts })
+                });
+                
+                const vote = data.vote || 0;
+                let voteClass = 'text-muted';
+                let voteEmoji = '😐';
+                
+                if (vote > 0.2) {
+                    voteClass = 'success';
+                    voteEmoji = '📈';
+                } else if (vote < -0.2) {
+                    voteClass = 'danger';
+                    voteEmoji = '📉';
+                }
+                
+                document.getElementById('hfSentimentVote').innerHTML = `
+                    <span style="color: var(--${voteClass});">${voteEmoji} ${vote.toFixed(3)}</span>
+                `;
+                document.getElementById('hfSentimentResults').textContent = JSON.stringify(data, null, 2);
+                
+                showToast('Success', `Sentiment analysis complete: ${vote.toFixed(3)}`, 'success');
+            } catch (error) {
+                document.getElementById('hfSentimentVote').innerHTML = '<span style="color: var(--danger);">Error</span>';
+                document.getElementById('hfSentimentResults').textContent = `Error: ${error.message}`;
+                showToast('Error', 'Sentiment analysis failed', 'error');
+            }
         }
 
         // Utility Functions

@@ -9,6 +9,7 @@ APScheduler==3.10.4
 # API & HTTP
 aiohttp==3.9.1
 requests==2.31.0
+httpx>=0.24
 
 # FastAPI (for API mode)
 fastapi==0.104.1
@@ -22,3 +23,9 @@ SQLAlchemy==2.0.23
 
 # Configuration
 python-dotenv==1.0.0
+
+# HuggingFace Integration (optional)
+transformers>=4.44.0
+datasets>=3.0.0
+huggingface_hub>=0.24.0
+torch>=2.0.0

@@ -26,6 +26,14 @@ from utils.logger import setup_logger
 # Setup logger
 logger = setup_logger("main", level="INFO")
 
+# Import HF router (optional, graceful fallback)
+try:
+    from backend.routers import hf_connect
+    HF_ROUTER_AVAILABLE = True
+except Exception as e:
+    logger.warning(f"HF router not available: {e}")
+    HF_ROUTER_AVAILABLE = False
+
 
 # ============================================================================
 # Lifespan Context Manager for Startup/Shutdown Events
@@ -128,12 +136,22 @@ async def lifespan(app: FastAPI):
                             f"Created schedule config for {provider.name}: {schedule_interval}"
                         )
 
-        # 4. Start WebSocket background tasks
+        # 4. Start HF registry background refresh (if available)
+        if HF_ROUTER_AVAILABLE:
+            try:
+                from backend.services.hf_registry import periodic_refresh
+                logger.info("Starting HF registry background refresh...")
+                asyncio.create_task(periodic_refresh())
+                logger.info("HF registry background refresh started")
+            except Exception as e:
+                logger.warning(f"Could not start HF background refresh: {e}")
+
+        # 5. Start WebSocket background tasks
         logger.info("Starting WebSocket background tasks...")
         await ws_manager.start_background_tasks()
         logger.info("WebSocket background tasks started")
 
-        # 5. Start task scheduler
+        # 6. Start task scheduler
         logger.info("Starting task scheduler...")
         task_scheduler.start()
         logger.info("Task scheduler started successfully")
@@ -263,6 +281,17 @@ app.include_router(
     websocket_router,
     tags=["WebSocket"]
 )
+
+# Include HF router (if available)
+if HF_ROUTER_AVAILABLE:
+    try:
+        app.include_router(
+            hf_connect.router,
+            tags=["HuggingFace"]
+        )
+        logger.info("HF router included successfully")
+    except Exception as e:
+        logger.warning(f"Could not include HF router: {e}")
 
 
 # ============================================================================

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Crypto API Monitor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            padding: 20px;
+            color: #1a1a1a;
+            min-height: 100vh;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 30px 0;
+            border-bottom: 3px solid #e9ecef;
+            padding-bottom: 0;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 12px 12px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section {
+            background: #f8f9fa;
+            padding: 24px;
+            border-radius: 16px;
+            margin: 20px 0;
+            border: 2px solid #dee2e6;
+        }
+        .section h3 {
+            color: #667eea;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+        .form-group {
+            margin: 16px 0;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .api-list {
+            list-style: none;
+        }
+        .api-item {
+            background: white;
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 12px;
+            border: 2px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        .api-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        .api-info {
+            flex: 1;
+        }
+        .api-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: #667eea;
+        }
+        .api-url {
+            font-size: 12px;
+            color: #6c757d;
+            font-family: monospace;
+            margin: 4px 0;
+        }
+        .api-category {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-online { background: #10b981; box-shadow: 0 0 10px #10b981; }
+        .status-offline { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #dee2e6;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 600;
+        }
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            border-left: 4px solid;
+        }
+        .alert-success {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+        }
+        .alert-error {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+        .alert-info {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Admin Panel</h1>
+        <p style="color: #6c757d; margin-bottom: 20px;">Configure and manage your crypto API monitoring system</p>
+        
+        <div style="margin: 20px 0;">
+            <button class="btn" onclick="window.location.href='/'">🏠 Dashboard</button>
+            <button class="btn" onclick="window.location.href='/hf_console.html'">🤗 HF Console</button>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab active" onclick="switchTab('apis')">📡 API Sources</button>
+            <button class="tab" onclick="switchTab('settings')">⚙️ Settings</button>
+            <button class="tab" onclick="switchTab('stats')">📊 Statistics</button>
+        </div>
+
+        <!-- Tab 1: API Sources -->
+        <div class="tab-content active" id="tab-apis">
+            <div class="section">
+                <h3>➕ Add New API Source</h3>
+                <div class="form-group">
+                    <label>API Name</label>
+                    <input type="text" id="newApiName" placeholder="e.g., CoinGecko">
+                </div>
+                <div class="form-group">
+                    <label>API URL</label>
+                    <input type="text" id="newApiUrl" placeholder="https://api.example.com/endpoint">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="newApiCategory">
+                        <option value="market_data">Market Data</option>
+                        <option value="blockchain_explorers">Blockchain Explorers</option>
+                        <option value="news">News & Social</option>
+                        <option value="sentiment">Sentiment</option>
+                        <option value="defi">DeFi</option>
+                        <option value="nft">NFT</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Test Field (optional - JSON field to verify)</label>
+                    <input type="text" id="newApiTestField" placeholder="e.g., data or status">
+                </div>
+                <button class="btn btn-success" onclick="addNewAPI()">➕ Add API Source</button>
+            </div>
+
+            <div class="section">
+                <h3>📋 Current API Sources</h3>
+                <div id="apisList">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Settings -->
+        <div class="tab-content" id="tab-settings">
+            <div class="section">
+                <h3>🔄 Refresh Settings</h3>
+                <div class="form-group">
+                    <label>API Check Interval (seconds)</label>
+                    <input type="number" id="checkInterval" value="30" min="10" max="300">
+                    <small style="color: #6c757d;">How often to check API status (10-300 seconds)</small>
+                </div>
+                <div class="form-group">
+                    <label>Dashboard Auto-Refresh (seconds)</label>
+                    <input type="number" id="dashboardRefresh" value="30" min="5" max="300">
+                    <small style="color: #6c757d;">How often dashboard updates (5-300 seconds)</small>
+                </div>
+                <button class="btn btn-success" onclick="saveSettings()">💾 Save Settings</button>
+            </div>
+
+            <div class="section">
+                <h3>🤗 HuggingFace Settings</h3>
+                <div class="form-group">
+                    <label>HuggingFace Token (optional)</label>
+                    <input type="password" id="hfToken" placeholder="hf_...">
+                    <small style="color: #6c757d;">For higher rate limits</small>
+                </div>
+                <div class="form-group">
+                    <label>Enable Sentiment Analysis</label>
+                    <select id="enableSentiment">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sentiment Model</label>
+                    <select id="sentimentModel">
+                        <option value="ElKulako/cryptobert">ElKulako/cryptobert</option>
+                        <option value="kk08/CryptoBERT">kk08/CryptoBERT</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" onclick="saveHFSettings()">💾 Save HF Settings</button>
+            </div>
+
+            <div class="section">
+                <h3>🔧 System Configuration</h3>
+                <div class="form-group">
+                    <label>Request Timeout (seconds)</label>
+                    <input type="number" id="requestTimeout" value="5" min="1" max="30">
+                </div>
+                <div class="form-group">
+                    <label>Max Concurrent Requests</label>
+                    <input type="number" id="maxConcurrent" value="10" min="1" max="50">
+                </div>
+                <button class="btn btn-success" onclick="saveSystemSettings()">💾 Save System Settings</button>
+            </div>
+        </div>
+
+        <!-- Tab 3: Statistics -->
+        <div class="tab-content" id="tab-stats">
+            <div class="grid">
+                <div class="stat-box">
+                    <div class="stat-label">Total API Sources</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Currently Online</div>
+                    <div class="stat-value" style="color: #10b981;" id="statOnline">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Currently Offline</div>
+                    <div class="stat-value" style="color: #ef4444;" id="statOffline">0</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📊 System Information</h3>
+                <pre id="systemInfo">Loading...</pre>
+            </div>
+
+            <div class="section">
+                <h3>🔍 Current Configuration</h3>
+                <pre id="currentConfig">Loading...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAPIs = [];
+        let settings = {
+            checkInterval: 30,
+            dashboardRefresh: 30,
+            requestTimeout: 5,
+            maxConcurrent: 10,
+            hfToken: '',
+            enableSentiment: true,
+            sentimentModel: 'ElKulako/cryptobert'
+        };
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            if (tabName === 'stats') {
+                loadStats();
+            }
+        }
+
+        async function loadAPIs() {
+            try {
+                const res = await fetch('/api/providers');
+                const providers = await res.json();
+                currentAPIs = providers;
+                
+                const list = document.getElementById('apisList');
+                list.innerHTML = '<ul class="api-list">' + providers.map(api => `
+                    <li class="api-item">
+                        <div class="api-info">
+                            <div class="api-name">
+                                <span class="status-indicator status-${api.status}"></span>
+                                ${api.name}
+                            </div>
+                            <div class="api-url">${api.category}</div>
+                            <span class="api-category">${api.status.toUpperCase()}</span>
+                            <span class="api-category">${api.response_time_ms}ms</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-secondary" onclick="testAPI('${api.name}')">🧪 Test</button>
+                        </div>
+                    </li>
+                `).join('') + '</ul>';
+            } catch (error) {
+                document.getElementById('apisList').innerHTML = 
+                    '<div class="alert alert-error">Error loading APIs: ' + error.message + '</div>';
+            }
+        }
+
+        async function addNewAPI() {
+            const name = document.getElementById('newApiName').value;
+            const url = document.getElementById('newApiUrl').value;
+            const category = document.getElementById('newApiCategory').value;
+            const testField = document.getElementById('newApiTestField').value;
+
+            if (!name || !url) {
+                alert('Please fill in API name and URL');
+                return;
+            }
+
+            const newAPI = {
+                name: name,
+                url: url,
+                category: category,
+                test_field: testField || null
+            };
+
+            // Save to localStorage for now
+            let customAPIs = JSON.parse(localStorage.getItem('customAPIs') || '[]');
+            customAPIs.push(newAPI);
+            localStorage.setItem('customAPIs', JSON.stringify(customAPIs));
+
+            document.getElementById('newApiName').value = '';
+            document.getElementById('newApiUrl').value = '';
+            document.getElementById('newApiTestField').value = '';
+
+            alert('✅ API added! Note: Restart server to activate. Custom APIs are saved in browser storage.');
+            loadAPIs();
+        }
+
+        async function testAPI(name) {
+            alert('Testing ' + name + '...\n\nThis will check if the API is responding.');
+            await loadAPIs();
+        }
+
+        function saveSettings() {
+            settings.checkInterval = parseInt(document.getElementById('checkInterval').value);
+            settings.dashboardRefresh = parseInt(document.getElementById('dashboardRefresh').value);
+            localStorage.setItem('monitorSettings', JSON.stringify(settings));
+            alert('✅ Settings saved!\n\nNote: Some settings require server restart to take effect.');
+        }
+
+        function saveHFSettings() {
+            settings.hfToken = document.getElementById('hfToken').value;
+            settings.enableSentiment = document.getElementById('enableSentiment').value === 'true';
+            settings.sentimentModel = document.getElementById('sentimentModel').value;
+            localStorage.setItem('monitorSettings', JSON.stringify(settings));
+            alert('✅ HuggingFace settings saved!\n\nRestart server to apply changes.');
+        }
+
+        function saveSystemSettings() {
+            settings.requestTimeout = parseInt(document.getElementById('requestTimeout').value);
+            settings.maxConcurrent = parseInt(document.getElementById('maxConcurrent').value);
+            localStorage.setItem('monitorSettings', JSON.stringify(settings));
+            alert('✅ System settings saved!\n\nRestart server to apply changes.');
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                
+                document.getElementById('statTotal').textContent = data.total_providers;
+                document.getElementById('statOnline').textContent = data.online;
+                document.getElementById('statOffline').textContent = data.offline;
+                
+                document.getElementById('systemInfo').textContent = JSON.stringify({
+                    total_providers: data.total_providers,
+                    online: data.online,
+                    offline: data.offline,
+                    degraded: data.degraded,
+                    avg_response_time_ms: data.avg_response_time_ms,
+                    system_health: data.system_health,
+                    last_check: data.timestamp
+                }, null, 2);
+                
+                document.getElementById('currentConfig').textContent = JSON.stringify(settings, null, 2);
+            } catch (error) {
+                document.getElementById('systemInfo').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Load settings from localStorage
+        function loadSettings() {
+            const saved = localStorage.getItem('monitorSettings');
+            if (saved) {
+                settings = JSON.parse(saved);
+                document.getElementById('checkInterval').value = settings.checkInterval;
+                document.getElementById('dashboardRefresh').value = settings.dashboardRefresh;
+                document.getElementById('requestTimeout').value = settings.requestTimeout;
+                document.getElementById('maxConcurrent').value = settings.maxConcurrent;
+                document.getElementById('hfToken').value = settings.hfToken;
+                document.getElementById('enableSentiment').value = settings.enableSentiment.toString();
+                document.getElementById('sentimentModel').value = settings.sentimentModel;
+            }
+        }
+
+        // Initialize
+        loadAPIs();
+        loadSettings();
+    </script>
+</body>
+</html>

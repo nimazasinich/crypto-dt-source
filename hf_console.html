@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HF Console - Crypto API Monitor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+        }
+        h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .badge-success { background: #d1fae5; color: #10b981; }
+        .badge-warning { background: #fef3c7; color: #f59e0b; }
+        .badge-info { background: #dbeafe; color: #3b82f6; }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        button:active { transform: translateY(0); }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: inherit;
+            margin: 10px 0;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .list-box {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .list-box ul { list-style: none; }
+        .list-box li {
+            padding: 8px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #475569;
+        }
+        .list-box li:last-child { border-bottom: none; }
+        .vote-display {
+            font-size: 24px;
+            font-weight: 700;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .vote-positive { color: #10b981; }
+        .vote-negative { color: #ef4444; }
+        .vote-neutral { color: #6b7280; }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #f3f4f6;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤗 HuggingFace Console</h1>
+        <p class="subtitle">Test HF connectivity, registry, search, and sentiment analysis</p>
+
+        <section>
+            <h3>
+                <span>📊 Health Status</span>
+                <span class="badge badge-info" id="healthBadge">Loading...</span>
+            </h3>
+            <button onclick="loadHealth()">🔄 Refresh Health</button>
+            <button onclick="doRefresh()">🔃 Force Registry Refresh</button>
+            <pre id="healthOutput">Loading...</pre>
+        </section>
+
+        <div class="grid">
+            <section>
+                <h3>
+                    <span>🤖 Models Registry</span>
+                    <span class="badge badge-success" id="modelsCount">0</span>
+                </h3>
+                <button onclick="loadModels()">Load Models</button>
+                <div class="list-box" id="modelsList">
+                    <p style="color: #94a3b8;">Click "Load Models" to fetch...</p>
+                </div>
+            </section>
+
+            <section>
+                <h3>
+                    <span>📚 Datasets Registry</span>
+                    <span class="badge badge-success" id="datasetsCount">0</span>
+                </h3>
+                <button onclick="loadDatasets()">Load Datasets</button>
+                <div class="list-box" id="datasetsList">
+                    <p style="color: #94a3b8;">Click "Load Datasets" to fetch...</p>
+                </div>
+            </section>
+        </div>
+
+        <section>
+            <h3>🔍 Search Registry (Local Snapshot)</h3>
+            <input type="text" id="searchQuery" placeholder="Search query (e.g., crypto, bitcoin, sentiment)" value="crypto">
+            <button onclick="doSearch()">Search Models</button>
+            <button onclick="doSearchDatasets()">Search Datasets</button>
+            <div class="list-box" id="searchResults">
+                <p style="color: #94a3b8;">Enter a query and click search...</p>
+            </div>
+        </section>
+
+        <section>
+            <h3>💭 Sentiment Analysis (Local Pipeline)</h3>
+            <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+                Enter text samples (one per line) to analyze crypto sentiment using local transformers
+            </p>
+            <textarea id="sentimentTexts" rows="5" placeholder="BTC looks strong&#10;ETH is weak today&#10;Market sentiment is bullish">BTC strong breakout
+ETH looks weak
+Crypto market is bullish today
+Bears are taking control
+Neutral market conditions</textarea>
+            <button onclick="doSentiment()">🧠 Run Sentiment Analysis</button>
+            <div class="vote-display" id="voteDisplay">
+                <span style="color: #94a3b8;">—</span>
+            </div>
+            <pre id="sentimentOutput">Results will appear here...</pre>
+        </section>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:7860';
+
+        async function fetchJSON(url) {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        }
+
+        async function postJSON(url, body) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        }
+
+        async function loadHealth() {
+            try {
+                const data = await fetchJSON(`${API_BASE}/api/hf/health`);
+                document.getElementById('healthOutput').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('healthBadge').textContent = data.ok ? '✓ Healthy' : '✗ Unhealthy';
+                document.getElementById('healthBadge').className = data.ok ? 'badge badge-success' : 'badge badge-warning';
+            } catch (err) {
+                document.getElementById('healthOutput').textContent = `Error: ${err.message}`;
+                document.getElementById('healthBadge').textContent = '✗ Error';
+                document.getElementById('healthBadge').className = 'badge badge-warning';
+            }
+        }
+
+        async function doRefresh() {
+            try {
+                document.getElementById('healthOutput').textContent = 'Refreshing registry...';
+                const data = await postJSON(`${API_BASE}/api/hf/refresh`, {});
+                document.getElementById('healthOutput').textContent = JSON.stringify(data, null, 2);
+                await loadHealth();
+            } catch (err) {
+                document.getElementById('healthOutput').textContent = `Error: ${err.message}`;
+            }
+        }
+
+        async function loadModels() {
+            try {
+                const data = await fetchJSON(`${API_BASE}/api/hf/registry?kind=models`);
+                const items = data.items || [];
+                document.getElementById('modelsCount').textContent = items.length;
+                const html = items.length > 0 
+                    ? '<ul>' + items.slice(0, 50).map(i => `<li>🤖 ${i.id} • ${i.pipeline_tag || 'N/A'} • <small>${i.source}</small></li>`).join('') + '</ul>'
+                    : '<p style="color: #94a3b8;">No models found</p>';
+                document.getElementById('modelsList').innerHTML = html;
+            } catch (err) {
+                document.getElementById('modelsList').innerHTML = `<p style="color: #ef4444;">Error: ${err.message}</p>`;
+            }
+        }
+
+        async function loadDatasets() {
+            try {
+                const data = await fetchJSON(`${API_BASE}/api/hf/registry?kind=datasets`);
+                const items = data.items || [];
+                document.getElementById('datasetsCount').textContent = items.length;
+                const html = items.length > 0
+                    ? '<ul>' + items.slice(0, 50).map(i => `<li>📚 ${i.id} • <small>${i.source}</small></li>`).join('') + '</ul>'
+                    : '<p style="color: #94a3b8;">No datasets found</p>';
+                document.getElementById('datasetsList').innerHTML = html;
+            } catch (err) {
+                document.getElementById('datasetsList').innerHTML = `<p style="color: #ef4444;">Error: ${err.message}</p>`;
+            }
+        }
+
+        async function doSearch() {
+            const q = document.getElementById('searchQuery').value;
+            try {
+                const data = await fetchJSON(`${API_BASE}/api/hf/search?q=${encodeURIComponent(q)}&kind=models`);
+                const items = data.items || [];
+                const html = items.length > 0
+                    ? `<p style="color: #10b981; font-weight: 600;">Found ${items.length} models</p><ul>` + items.map(i => `<li>🤖 ${i.id}</li>`).join('') + '</ul>'
+                    : '<p style="color: #94a3b8;">No results found</p>';
+                document.getElementById('searchResults').innerHTML = html;
+            } catch (err) {
+                document.getElementById('searchResults').innerHTML = `<p style="color: #ef4444;">Error: ${err.message}</p>`;
+            }
+        }
+
+        async function doSearchDatasets() {
+            const q = document.getElementById('searchQuery').value;
+            try {
+                const data = await fetchJSON(`${API_BASE}/api/hf/search?q=${encodeURIComponent(q)}&kind=datasets`);
+                const items = data.items || [];
+                const html = items.length > 0
+                    ? `<p style="color: #10b981; font-weight: 600;">Found ${items.length} datasets</p><ul>` + items.map(i => `<li>📚 ${i.id}</li>`).join('') + '</ul>'
+                    : '<p style="color: #94a3b8;">No results found</p>';
+                document.getElementById('searchResults').innerHTML = html;
+            } catch (err) {
+                document.getElementById('searchResults').innerHTML = `<p style="color: #ef4444;">Error: ${err.message}</p>`;
+            }
+        }
+
+        async function doSentiment() {
+            const texts = document.getElementById('sentimentTexts').value.split('\n').filter(t => t.trim());
+            if (texts.length === 0) {
+                alert('Please enter at least one text sample');
+                return;
+            }
+            try {
+                document.getElementById('voteDisplay').innerHTML = '<span class="loading"></span>';
+                document.getElementById('sentimentOutput').textContent = 'Running sentiment analysis...';
+                
+                const data = await postJSON(`${API_BASE}/api/hf/run-sentiment`, { texts });
+                
+                const vote = data.vote || 0;
+                let voteClass = 'vote-neutral';
+                let voteEmoji = '😐';
+                if (vote > 0.2) { voteClass = 'vote-positive'; voteEmoji = '📈'; }
+                else if (vote < -0.2) { voteClass = 'vote-negative'; voteEmoji = '📉'; }
+                
+                document.getElementById('voteDisplay').innerHTML = `<span class="${voteClass}">${voteEmoji} ${vote.toFixed(3)}</span>`;
+                document.getElementById('sentimentOutput').textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                document.getElementById('voteDisplay').innerHTML = '<span style="color: #ef4444;">Error</span>';
+                document.getElementById('sentimentOutput').textContent = `Error: ${err.message}`;
+            }
+        }
+
+        // Auto-load health on page load
+        window.addEventListener('load', () => {
+            loadHealth();
+        });
+    </script>
+</body>
+</html>

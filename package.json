@@ -8,7 +8,9 @@
     "monitor:watch": "node api-monitor.js --continuous",
     "failover": "node failover-manager.js",
     "dashboard": "python3 -m http.server 8080",
-    "full-check": "node api-monitor.js && node failover-manager.js && echo 'Open http://localhost:8080/dashboard.html in your browser' && python3 -m http.server 8080"
+    "full-check": "node api-monitor.js && node failover-manager.js && echo 'Open http://localhost:8080/dashboard.html in your browser' && python3 -m http.server 8080",
+    "test:free-resources": "node free_resources_selftest.mjs",
+    "test:free-resources:win": "powershell -NoProfile -ExecutionPolicy Bypass -File test_free_endpoints.ps1"
   },
   "keywords": [
     "cryptocurrency",
