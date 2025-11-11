@@ -38,70 +38,124 @@ def calculate_staleness_minutes(data_timestamp: Optional[datetime]) -> Optional[
 
 async def get_the_graph_data() -> Dict[str, Any]:
     """
-    Fetch on-chain data from The Graph protocol (placeholder)
+    Fetch on-chain data from The Graph protocol - Uniswap V3 subgraph
 
     The Graph is a decentralized protocol for indexing and querying blockchain data.
-    This is a placeholder implementation that should be extended with:
-    - GraphQL queries for specific subgraphs
-    - Token analytics (volume, liquidity, holders)
-    - DeFi protocol metrics
-    - NFT marketplace data
+    This implementation queries the Uniswap V3 subgraph for DEX metrics.
 
     Returns:
         Dict with provider, category, data, timestamp, staleness, success, error
     """
     provider = "TheGraph"
     category = "onchain_analytics"
-    endpoint = "/subgraphs"
+    endpoint = "/subgraphs/uniswap-v3"
 
-    logger.info(f"Fetching on-chain data from {provider} (placeholder)")
+    logger.info(f"Fetching on-chain data from {provider}")
 
     try:
-        # Placeholder implementation
-        # In a real implementation, you would:
-        # 1. Query specific subgraphs via GraphQL
-        # 2. Parse the response data
-        # 3. Extract relevant metrics
+        client = get_client()
 
-        # Example subgraph URLs:
-        # - Uniswap V3: https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3
-        # - Aave V3: https://api.thegraph.com/subgraphs/name/aave/protocol-v3
-        # - ENS: https://api.thegraph.com/subgraphs/name/ensdomains/ens
+        # Uniswap V3 subgraph endpoint
+        url = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3"
 
-        placeholder_data = {
-            "status": "placeholder",
-            "message": "The Graph integration not yet implemented",
-            "planned_features": [
-                "DEX volume and liquidity tracking",
-                "Lending protocol metrics",
-                "Token holder analytics",
-                "NFT marketplace data",
-                "Cross-chain bridge activity"
-            ],
-            "example_subgraphs": [
-                "Uniswap V3",
-                "Aave V3",
-                "Compound",
-                "ENS",
-                "OpenSea"
-            ]
+        # GraphQL query to get top pools and overall stats
+        query = """
+        {
+          factories(first: 1) {
+            totalVolumeUSD
+            totalValueLockedUSD
+            txCount
+          }
+          pools(first: 10, orderBy: totalValueLockedUSD, orderDirection: desc) {
+            id
+            token0 {
+              symbol
+            }
+            token1 {
+              symbol
+            }
+            totalValueLockedUSD
+            volumeUSD
+            txCount
+          }
         }
+        """
+
+        payload = {"query": query}
+        headers = {"Content-Type": "application/json"}
+
+        # Make request
+        response = await client.post(url, json=payload, headers=headers, timeout=15)
+
+        # Log request
+        log_api_request(
+            logger,
+            provider,
+            endpoint,
+            response.get("response_time_ms", 0),
+            "success" if response["success"] else "error",
+            response.get("status_code")
+        )
+
+        if not response["success"]:
+            error_msg = response.get("error_message", "Unknown error")
+            log_error(logger, provider, response.get("error_type", "unknown"), error_msg, endpoint)
+            return {
+                "provider": provider,
+                "category": category,
+                "data": None,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "staleness_minutes": None,
+                "success": False,
+                "error": error_msg,
+                "error_type": response.get("error_type")
+            }
+
+        # Extract data
+        raw_data = response["data"]
+
+        graph_data = None
+        if isinstance(raw_data, dict) and "data" in raw_data:
+            data = raw_data["data"]
+            factories = data.get("factories", [])
+            pools = data.get("pools", [])
+
+            if factories:
+                factory = factories[0]
+                graph_data = {
+                    "protocol": "Uniswap V3",
+                    "total_volume_usd": float(factory.get("totalVolumeUSD", 0)),
+                    "total_tvl_usd": float(factory.get("totalValueLockedUSD", 0)),
+                    "total_transactions": int(factory.get("txCount", 0)),
+                    "top_pools": [
+                        {
+                            "pair": f"{pool.get('token0', {}).get('symbol', '?')}/{pool.get('token1', {}).get('symbol', '?')}",
+                            "tvl_usd": float(pool.get("totalValueLockedUSD", 0)),
+                            "volume_usd": float(pool.get("volumeUSD", 0)),
+                            "tx_count": int(pool.get("txCount", 0))
+                        }
+                        for pool in pools
+                    ]
+                }
 
         data_timestamp = datetime.now(timezone.utc)
-        staleness = 0.0
+        staleness = calculate_staleness_minutes(data_timestamp)
 
-        logger.info(f"{provider} - {endpoint} - Placeholder data returned")
+        logger.info(
+            f"{provider} - {endpoint} - TVL: ${graph_data.get('total_tvl_usd', 0):,.0f}"
+            if graph_data else f"{provider} - {endpoint} - No data"
+        )
 
         return {
             "provider": provider,
             "category": category,
-            "data": placeholder_data,
+            "data": graph_data,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "data_timestamp": data_timestamp.isoformat(),
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "response_time_ms": response.get("response_time_ms", 0)
         }
 
     except Exception as e:
@@ -121,15 +175,10 @@ async def get_the_graph_data() -> Dict[str, Any]:
 
 async def get_blockchair_data() -> Dict[str, Any]:
     """
-    Fetch blockchain statistics from Blockchair (placeholder)
+    Fetch blockchain statistics from Blockchair
 
     Blockchair is a blockchain explorer and analytics platform.
-    This is a placeholder implementation that should be extended with:
-    - Bitcoin/Ethereum/other chain statistics
-    - Transaction volume and fees
-    - Address analytics
-    - Mining/staking metrics
-    - Network health indicators
+    This implementation fetches Bitcoin and Ethereum network statistics.
 
     Returns:
         Dict with provider, category, data, timestamp, staleness, success, error
@@ -138,58 +187,97 @@ async def get_blockchair_data() -> Dict[str, Any]:
     category = "onchain_analytics"
     endpoint = "/stats"
 
-    logger.info(f"Fetching blockchain stats from {provider} (placeholder)")
+    logger.info(f"Fetching blockchain stats from {provider}")
 
     try:
-        # Placeholder implementation
-        # In a real implementation, you would:
-        # 1. Query Blockchair API endpoints
-        # 2. Fetch blockchain statistics
-        # 3. Parse and normalize the data
+        client = get_client()
 
-        # Example Blockchair API endpoints:
-        # - Bitcoin stats: https://api.blockchair.com/bitcoin/stats
-        # - Ethereum stats: https://api.blockchair.com/ethereum/stats
-        # - Address info: https://api.blockchair.com/bitcoin/dashboards/address/{address}
+        # Fetch stats for BTC and ETH
+        btc_url = "https://api.blockchair.com/bitcoin/stats"
+        eth_url = "https://api.blockchair.com/ethereum/stats"
 
-        placeholder_data = {
-            "status": "placeholder",
-            "message": "Blockchair integration not yet implemented",
-            "planned_features": [
-                "Multi-chain statistics",
-                "Transaction volume metrics",
-                "Address balance tracking",
-                "Mining/validator statistics",
-                "Network congestion monitoring",
-                "Fee estimation",
-                "Large transaction alerts"
-            ],
-            "supported_chains": [
-                "Bitcoin",
-                "Ethereum",
-                "Litecoin",
-                "Bitcoin Cash",
-                "Dogecoin",
-                "Cardano",
-                "Ripple"
-            ]
+        # Make concurrent requests
+        btc_response, eth_response = await asyncio.gather(
+            client.get(btc_url, timeout=10),
+            client.get(eth_url, timeout=10),
+            return_exceptions=True
+        )
+
+        # Log requests
+        if not isinstance(btc_response, Exception):
+            log_api_request(
+                logger,
+                provider,
+                f"{endpoint}/bitcoin",
+                btc_response.get("response_time_ms", 0),
+                "success" if btc_response["success"] else "error",
+                btc_response.get("status_code")
+            )
+
+        if not isinstance(eth_response, Exception):
+            log_api_request(
+                logger,
+                provider,
+                f"{endpoint}/ethereum",
+                eth_response.get("response_time_ms", 0),
+                "success" if eth_response["success"] else "error",
+                eth_response.get("status_code")
+            )
+
+        # Process Bitcoin data
+        btc_data = None
+        if not isinstance(btc_response, Exception) and btc_response.get("success"):
+            raw_btc = btc_response.get("data", {})
+            if isinstance(raw_btc, dict) and "data" in raw_btc:
+                btc_stats = raw_btc["data"]
+                btc_data = {
+                    "blocks": btc_stats.get("blocks"),
+                    "transactions": btc_stats.get("transactions"),
+                    "market_price_usd": btc_stats.get("market_price_usd"),
+                    "hashrate_24h": btc_stats.get("hashrate_24h"),
+                    "difficulty": btc_stats.get("difficulty"),
+                    "mempool_size": btc_stats.get("mempool_size"),
+                    "mempool_transactions": btc_stats.get("mempool_transactions")
+                }
+
+        # Process Ethereum data
+        eth_data = None
+        if not isinstance(eth_response, Exception) and eth_response.get("success"):
+            raw_eth = eth_response.get("data", {})
+            if isinstance(raw_eth, dict) and "data" in raw_eth:
+                eth_stats = raw_eth["data"]
+                eth_data = {
+                    "blocks": eth_stats.get("blocks"),
+                    "transactions": eth_stats.get("transactions"),
+                    "market_price_usd": eth_stats.get("market_price_usd"),
+                    "hashrate_24h": eth_stats.get("hashrate_24h"),
+                    "difficulty": eth_stats.get("difficulty"),
+                    "mempool_size": eth_stats.get("mempool_tps")
+                }
+
+        blockchair_data = {
+            "bitcoin": btc_data,
+            "ethereum": eth_data
         }
 
         data_timestamp = datetime.now(timezone.utc)
-        staleness = 0.0
+        staleness = calculate_staleness_minutes(data_timestamp)
 
-        logger.info(f"{provider} - {endpoint} - Placeholder data returned")
+        logger.info(
+            f"{provider} - {endpoint} - BTC blocks: {btc_data.get('blocks', 'N/A') if btc_data else 'N/A'}, "
+            f"ETH blocks: {eth_data.get('blocks', 'N/A') if eth_data else 'N/A'}"
+        )
 
         return {
             "provider": provider,
             "category": category,
-            "data": placeholder_data,
+            "data": blockchair_data,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "data_timestamp": data_timestamp.isoformat(),
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "response_time_ms": (btc_response.get("response_time_ms", 0) if not isinstance(btc_response, Exception) else 0)
         }
 
     except Exception as e:
