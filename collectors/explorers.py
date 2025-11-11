@@ -472,6 +472,71 @@ async def collect_explorer_data() -> List[Dict[str, Any]]:
     return processed_results
 
 
+class ExplorerDataCollector:
+    """
+    Explorer Data Collector class for WebSocket streaming interface
+    Wraps the standalone explorer data collection functions
+    """
+
+    def __init__(self, config: Any = None):
+        """
+        Initialize the explorer data collector
+
+        Args:
+            config: Configuration object (optional, for compatibility)
+        """
+        self.config = config
+        self.logger = logger
+
+    async def collect(self) -> Dict[str, Any]:
+        """
+        Collect blockchain explorer data from all sources
+
+        Returns:
+            Dict with aggregated explorer data
+        """
+        results = await collect_explorer_data()
+
+        # Aggregate data for WebSocket streaming
+        aggregated = {
+            "latest_block": None,
+            "network_hashrate": None,
+            "difficulty": None,
+            "mempool_size": None,
+            "transactions_count": None,
+            "gas_prices": {},
+            "sources": [],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        for result in results:
+            if result.get("success") and result.get("data"):
+                provider = result.get("provider", "unknown")
+                aggregated["sources"].append(provider)
+
+                data = result["data"]
+
+                # Parse gas price data
+                if "result" in data and isinstance(data["result"], dict):
+                    gas_data = data["result"]
+                    if provider == "Etherscan":
+                        aggregated["gas_prices"]["ethereum"] = {
+                            "safe": gas_data.get("SafeGasPrice"),
+                            "propose": gas_data.get("ProposeGasPrice"),
+                            "fast": gas_data.get("FastGasPrice")
+                        }
+                    elif provider == "BscScan":
+                        aggregated["gas_prices"]["bsc"] = gas_data.get("result")
+
+                # Parse network stats
+                if provider == "TronScan" and "data" in data:
+                    stats = data["data"]
+                    aggregated["latest_block"] = stats.get("latestBlock")
+                    aggregated["transactions_count"] = stats.get("totalTransaction")
+
+        return aggregated
+
+
 # Example usage
 if __name__ == "__main__":
     async def main():

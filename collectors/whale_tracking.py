@@ -465,6 +465,76 @@ async def collect_whale_tracking_data(whalealert_key: Optional[str] = None) -> L
     return processed_results
 
 
+class WhaleTrackingCollector:
+    """
+    Whale Tracking Collector class for WebSocket streaming interface
+    Wraps the standalone whale tracking collection functions
+    """
+
+    def __init__(self, config: Any = None):
+        """
+        Initialize the whale tracking collector
+
+        Args:
+            config: Configuration object (optional, for compatibility)
+        """
+        self.config = config
+        self.logger = logger
+
+    async def collect(self) -> Dict[str, Any]:
+        """
+        Collect whale tracking data from all sources
+
+        Returns:
+            Dict with aggregated whale tracking data
+        """
+        import os
+        whalealert_key = os.getenv("WHALEALERT_API_KEY")
+        results = await collect_whale_tracking_data(whalealert_key)
+
+        # Aggregate data for WebSocket streaming
+        aggregated = {
+            "large_transactions": [],
+            "whale_wallets": [],
+            "total_volume": 0,
+            "alert_threshold": 1000000,  # $1M default threshold
+            "alerts": [],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        for result in results:
+            if result.get("success") and result.get("data"):
+                provider = result.get("provider", "unknown")
+                data = result["data"]
+
+                # Skip placeholders
+                if isinstance(data, dict) and data.get("status") == "placeholder":
+                    continue
+
+                # Parse WhaleAlert transactions
+                if provider == "WhaleAlert" and isinstance(data, dict):
+                    transactions = data.get("transactions", [])
+                    for tx in transactions:
+                        aggregated["large_transactions"].append({
+                            "amount": tx.get("amount", 0),
+                            "amount_usd": tx.get("amount_usd", 0),
+                            "symbol": tx.get("symbol", "unknown"),
+                            "from": tx.get("from", {}).get("owner", "unknown"),
+                            "to": tx.get("to", {}).get("owner", "unknown"),
+                            "timestamp": tx.get("timestamp"),
+                            "source": provider
+                        })
+                    aggregated["total_volume"] += data.get("total_value_usd", 0)
+
+                # Parse other sources
+                elif isinstance(data, dict):
+                    tx_count = data.get("transaction_count", 0)
+                    total_value = data.get("total_value_usd", data.get("total_value", 0))
+                    aggregated["total_volume"] += total_value
+
+        return aggregated
+
+
 # Example usage
 if __name__ == "__main__":
     async def main():

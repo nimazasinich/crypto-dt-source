@@ -423,6 +423,58 @@ async def collect_onchain_data() -> List[Dict[str, Any]]:
     return processed_results
 
 
+class OnChainCollector:
+    """
+    On-Chain Analytics Collector class for WebSocket streaming interface
+    Wraps the standalone on-chain data collection functions
+    """
+
+    def __init__(self, config: Any = None):
+        """
+        Initialize the on-chain collector
+
+        Args:
+            config: Configuration object (optional, for compatibility)
+        """
+        self.config = config
+        self.logger = logger
+
+    async def collect(self) -> Dict[str, Any]:
+        """
+        Collect on-chain analytics data from all sources
+
+        Returns:
+            Dict with aggregated on-chain data
+        """
+        results = await collect_onchain_data()
+
+        # Aggregate data for WebSocket streaming
+        aggregated = {
+            "active_addresses": None,
+            "transaction_count": None,
+            "total_fees": None,
+            "gas_price": None,
+            "network_utilization": None,
+            "contract_events": [],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        for result in results:
+            if result.get("success") and result.get("data"):
+                provider = result.get("provider", "unknown")
+                data = result["data"]
+
+                # Skip placeholders but still return basic structure
+                if isinstance(data, dict) and data.get("status") == "placeholder":
+                    continue
+
+                # Parse data from various providers (when implemented)
+                # Currently all are placeholders, so this will be empty
+                pass
+
+        return aggregated
+
+
 # Example usage
 if __name__ == "__main__":
     async def main():

@@ -213,6 +213,63 @@ async def collect_sentiment_data() -> List[Dict[str, Any]]:
     return processed_results
 
 
+# Alias for backward compatibility
+collect_sentiment = collect_sentiment_data
+
+
+class SentimentCollector:
+    """
+    Sentiment Collector class for WebSocket streaming interface
+    Wraps the standalone sentiment collection functions
+    """
+
+    def __init__(self, config: Any = None):
+        """
+        Initialize the sentiment collector
+
+        Args:
+            config: Configuration object (optional, for compatibility)
+        """
+        self.config = config
+        self.logger = logger
+
+    async def collect(self) -> Dict[str, Any]:
+        """
+        Collect sentiment data from all sources
+
+        Returns:
+            Dict with aggregated sentiment data
+        """
+        results = await collect_sentiment_data()
+
+        # Aggregate data for WebSocket streaming
+        aggregated = {
+            "overall_sentiment": None,
+            "sentiment_score": None,
+            "social_volume": None,
+            "trending_topics": [],
+            "by_source": {},
+            "social_trends": [],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        for result in results:
+            if result.get("success") and result.get("data"):
+                provider = result.get("provider", "unknown")
+
+                # Parse Fear & Greed Index
+                if provider == "Alternative.me" and "data" in result["data"]:
+                    index_data = result["data"]["data"][0] if result["data"]["data"] else {}
+                    aggregated["sentiment_score"] = int(index_data.get("value", 0))
+                    aggregated["overall_sentiment"] = index_data.get("value_classification", "neutral")
+                    aggregated["by_source"][provider] = {
+                        "value": aggregated["sentiment_score"],
+                        "classification": aggregated["overall_sentiment"]
+                    }
+
+        return aggregated
+
+
 # Example usage
 if __name__ == "__main__":
     async def main():

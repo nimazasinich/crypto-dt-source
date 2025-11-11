@@ -436,6 +436,92 @@ async def collect_market_data() -> List[Dict[str, Any]]:
     return processed_results
 
 
+class MarketDataCollector:
+    """
+    Market Data Collector class for WebSocket streaming interface
+    Wraps the standalone market data collection functions
+    """
+
+    def __init__(self, config: Any = None):
+        """
+        Initialize the market data collector
+
+        Args:
+            config: Configuration object (optional, for compatibility)
+        """
+        self.config = config
+        self.logger = logger
+
+    async def collect(self) -> Dict[str, Any]:
+        """
+        Collect market data from all sources
+
+        Returns:
+            Dict with aggregated market data
+        """
+        results = await collect_market_data()
+
+        # Aggregate data for WebSocket streaming
+        aggregated = {
+            "prices": {},
+            "volumes": {},
+            "market_caps": {},
+            "price_changes": {},
+            "sources": [],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        for result in results:
+            if result.get("success") and result.get("data"):
+                provider = result.get("provider", "unknown")
+                aggregated["sources"].append(provider)
+
+                data = result["data"]
+
+                # Parse CoinGecko data
+                if provider == "CoinGecko" and isinstance(data, dict):
+                    for coin_id, coin_data in data.items():
+                        if isinstance(coin_data, dict):
+                            symbol = coin_id.upper()
+                            if "usd" in coin_data:
+                                aggregated["prices"][symbol] = coin_data["usd"]
+                            if "usd_market_cap" in coin_data:
+                                aggregated["market_caps"][symbol] = coin_data["usd_market_cap"]
+                            if "usd_24h_vol" in coin_data:
+                                aggregated["volumes"][symbol] = coin_data["usd_24h_vol"]
+                            if "usd_24h_change" in coin_data:
+                                aggregated["price_changes"][symbol] = coin_data["usd_24h_change"]
+
+                # Parse CoinMarketCap data
+                elif provider == "CoinMarketCap" and isinstance(data, dict):
+                    if "data" in data:
+                        for symbol, coin_data in data["data"].items():
+                            if isinstance(coin_data, dict) and "quote" in coin_data:
+                                quote = coin_data.get("quote", {}).get("USD", {})
+                                if "price" in quote:
+                                    aggregated["prices"][symbol] = quote["price"]
+                                if "market_cap" in quote:
+                                    aggregated["market_caps"][symbol] = quote["market_cap"]
+                                if "volume_24h" in quote:
+                                    aggregated["volumes"][symbol] = quote["volume_24h"]
+                                if "percent_change_24h" in quote:
+                                    aggregated["price_changes"][symbol] = quote["percent_change_24h"]
+
+                # Parse Binance data
+                elif provider == "Binance" and isinstance(data, list):
+                    for ticker in data:
+                        if isinstance(ticker, dict):
+                            symbol = ticker.get("symbol", "").replace("USDT", "")
+                            if "lastPrice" in ticker:
+                                aggregated["prices"][symbol] = float(ticker["lastPrice"])
+                            if "volume" in ticker:
+                                aggregated["volumes"][symbol] = float(ticker["volume"])
+                            if "priceChangePercent" in ticker:
+                                aggregated["price_changes"][symbol] = float(ticker["priceChangePercent"])
+
+        return aggregated
+
+
 # Example usage
 if __name__ == "__main__":
     async def main():
