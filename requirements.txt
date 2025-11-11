@@ -2,23 +2,23 @@
 gradio==4.14.0
 pandas==2.1.4
 plotly==5.18.0
+
+# Task Scheduling
 APScheduler==3.10.4
 
 # API & HTTP
 aiohttp==3.9.1
 requests==2.31.0
 
-# FastAPI (for alternative API mode)
+# FastAPI (for API mode)
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
 python-multipart==0.0.6
-
-# Database
-sqlalchemy==2.0.23
-
-# WebSocket
 websockets==12.0
 
-# Environment
+# Database
+SQLAlchemy==2.0.23
+
+# Configuration
 python-dotenv==1.0.0

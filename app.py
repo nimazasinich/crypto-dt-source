@@ -1,121 +1,476 @@
 """
-Crypto API Monitor - FastAPI Backend
-Real-time cryptocurrency API monitoring and management
+Crypto API Monitoring System - Main Application
+Production-ready FastAPI application with comprehensive monitoring and WebSocket support
 """
 
-from fastapi import FastAPI, WebSocket
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from contextlib import asynccontextmanager
-import logging
 import asyncio
+import uvicorn
+from datetime import datetime
+from contextlib import asynccontextmanager
 
-from config import config
-from database.db import init_database
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+# Import API modules
 from api.endpoints import router as api_router
-from api.websocket import websocket_endpoint, manager
-from monitoring.health_monitor import health_monitor
+from api.websocket import router as websocket_router, manager as ws_manager
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Import monitoring and database modules
+from monitoring.scheduler import task_scheduler
+from monitoring.rate_limiter import rate_limiter
+from database.db_manager import db_manager
+from config import config
+from utils.logger import setup_logger
 
-# Background tasks
-background_tasks = set()
+# Setup logger
+logger = setup_logger("main", level="INFO")
 
+
+# ============================================================================
+# Lifespan Context Manager for Startup/Shutdown Events
+# ============================================================================
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup and shutdown events"""
-    # Startup
-    logger.info("Starting Crypto API Monitor...")
+    """
+    Lifespan context manager for application startup and shutdown
 
-    # Initialize database
-    init_database()
+    Handles:
+    - Database initialization
+    - Scheduler startup
+    - Rate limiter configuration
+    - WebSocket background tasks
+    - Graceful shutdown
+    """
+    logger.info("=" * 80)
+    logger.info("Starting Crypto API Monitoring System")
+    logger.info("=" * 80)
 
-    # Start health monitoring
-    task = asyncio.create_task(health_monitor.start())
-    background_tasks.add(task)
-    task.add_done_callback(background_tasks.discard)
+    try:
+        # ===== STARTUP SEQUENCE =====
 
-    logger.info("Crypto API Monitor started successfully")
-    logger.info(f"Monitoring {len(config.PROVIDERS)} providers")
-    logger.info(f"API Keys loaded: {', '.join([k for k, v in config.API_KEYS.items() if v])}")
+        # 1. Initialize database
+        logger.info("Initializing database...")
+        db_manager.init_database()
 
-    yield
+        # Verify database health
+        db_health = db_manager.health_check()
+        if db_health.get('status') == 'healthy':
+            logger.info(f"Database initialized successfully: {db_health.get('database_path')}")
+        else:
+            logger.error(f"Database health check failed: {db_health}")
 
-    # Shutdown
-    logger.info("Shutting down...")
-    health_monitor.stop()
+        # 2. Configure rate limiters for all providers
+        logger.info("Configuring rate limiters...")
+        providers = config.get_all_providers()
 
-    # Cancel all background tasks
-    for task in background_tasks:
-        task.cancel()
+        for provider in providers:
+            if provider.rate_limit_type and provider.rate_limit_value:
+                rate_limiter.configure_limit(
+                    provider=provider.name,
+                    limit_type=provider.rate_limit_type,
+                    limit_value=provider.rate_limit_value
+                )
+                logger.info(
+                    f"Configured rate limit for {provider.name}: "
+                    f"{provider.rate_limit_value} {provider.rate_limit_type}"
+                )
 
-    await asyncio.gather(*background_tasks, return_exceptions=True)
+        logger.info(f"Configured rate limiters for {len(providers)} providers")
 
-    logger.info("Shutdown complete")
+        # 3. Populate database with provider configurations
+        logger.info("Populating database with provider configurations...")
+
+        for provider in providers:
+            # Check if provider already exists in database
+            db_provider = db_manager.get_provider(name=provider.name)
+
+            if not db_provider:
+                # Create new provider in database
+                db_provider = db_manager.create_provider(
+                    name=provider.name,
+                    category=provider.category,
+                    endpoint_url=provider.endpoint_url,
+                    requires_key=provider.requires_key,
+                    api_key_masked=provider._mask_key() if provider.api_key else None,
+                    rate_limit_type=provider.rate_limit_type,
+                    rate_limit_value=provider.rate_limit_value,
+                    timeout_ms=provider.timeout_ms,
+                    priority_tier=provider.priority_tier
+                )
+
+                if db_provider:
+                    logger.info(f"Added provider to database: {provider.name}")
+
+                    # Create schedule configuration for the provider
+                    # Set interval based on category
+                    interval_map = {
+                        'market_data': 'every_1_min',
+                        'blockchain_explorers': 'every_5_min',
+                        'news': 'every_10_min',
+                        'sentiment': 'every_15_min',
+                        'onchain_analytics': 'every_5_min',
+                        'rpc_nodes': 'every_5_min',
+                        'cors_proxies': 'every_30_min'
+                    }
+
+                    schedule_interval = interval_map.get(provider.category, 'every_5_min')
+
+                    schedule_config = db_manager.create_schedule_config(
+                        provider_id=db_provider.id,
+                        schedule_interval=schedule_interval,
+                        enabled=True
+                    )
+
+                    if schedule_config:
+                        logger.info(
+                            f"Created schedule config for {provider.name}: {schedule_interval}"
+                        )
+
+        # 4. Start WebSocket background tasks
+        logger.info("Starting WebSocket background tasks...")
+        await ws_manager.start_background_tasks()
+        logger.info("WebSocket background tasks started")
+
+        # 5. Start task scheduler
+        logger.info("Starting task scheduler...")
+        task_scheduler.start()
+        logger.info("Task scheduler started successfully")
+
+        # Log startup summary
+        logger.info("=" * 80)
+        logger.info("Crypto API Monitoring System started successfully")
+        logger.info(f"Total providers configured: {len(providers)}")
+        logger.info(f"Database: {db_health.get('database_path')}")
+        logger.info(f"Scheduler running: {task_scheduler.is_running()}")
+        logger.info(f"WebSocket manager active: {ws_manager._is_running}")
+        logger.info("=" * 80)
+
+        yield  # Application runs here
+
+        # ===== SHUTDOWN SEQUENCE =====
+
+        logger.info("=" * 80)
+        logger.info("Shutting down Crypto API Monitoring System...")
+        logger.info("=" * 80)
+
+        # 1. Stop task scheduler
+        logger.info("Stopping task scheduler...")
+        task_scheduler.stop()
+        logger.info("Task scheduler stopped")
+
+        # 2. Stop WebSocket background tasks
+        logger.info("Stopping WebSocket background tasks...")
+        await ws_manager.stop_background_tasks()
+        logger.info("WebSocket background tasks stopped")
+
+        # 3. Close all WebSocket connections
+        logger.info("Closing WebSocket connections...")
+        await ws_manager.close_all_connections()
+        logger.info("WebSocket connections closed")
+
+        logger.info("=" * 80)
+        logger.info("Crypto API Monitoring System shut down successfully")
+        logger.info("=" * 80)
+
+    except Exception as e:
+        logger.error(f"Error during application lifecycle: {e}", exc_info=True)
+        raise
 
 
-# Create FastAPI app
+# ============================================================================
+# Create FastAPI Application
+# ============================================================================
+
 app = FastAPI(
-    title="Crypto API Monitor",
-    description="Real-time cryptocurrency API resource monitoring",
-    version="1.0.0",
-    lifespan=lifespan
+    title="Crypto API Monitoring System",
+    description="""
+    Comprehensive cryptocurrency API monitoring system with real-time updates.
+
+    Features:
+    - Multi-provider API monitoring
+    - Real-time WebSocket updates
+    - Rate limit tracking
+    - Automated health checks
+    - Scheduled data collection
+    - Failure detection and alerts
+    - Historical analytics
+
+    WebSocket Endpoint: /ws/live
+    """,
+    version="2.0.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
-# CORS middleware
+
+# ============================================================================
+# CORS Middleware Configuration
+# ============================================================================
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=["*"],  # In production, specify allowed origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(api_router)
+
+# ============================================================================
+# Exception Handlers
+# ============================================================================
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    Global exception handler for unhandled exceptions
+
+    Args:
+        request: Request object
+        exc: Exception that was raised
+
+    Returns:
+        JSON error response
+    """
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "detail": str(exc),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
 
 
-# WebSocket endpoint
-@app.websocket("/ws/live")
-async def websocket_route(websocket: WebSocket):
-    await websocket_endpoint(websocket)
+# ============================================================================
+# Include Routers
+# ============================================================================
+
+# Include API endpoints router
+app.include_router(
+    api_router,
+    prefix="/api",
+    tags=["API"]
+)
+
+# Include WebSocket router
+app.include_router(
+    websocket_router,
+    tags=["WebSocket"]
+)
 
 
-# Health check
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "providers": len(config.PROVIDERS),
-        "websocket_clients": len(manager.active_connections),
-        "api_keys_configured": sum(1 for v in config.API_KEYS.values() if v)
-    }
+# ============================================================================
+# Root Endpoints
+# ============================================================================
 
-
-# Root endpoint
-@app.get("/")
+@app.get("/", tags=["Root"])
 async def root():
+    """
+    Root endpoint with API information and available endpoints
+
+    Returns:
+        API information and endpoint listing
+    """
     return {
-        "message": "Crypto API Monitor Backend",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "health": "/health",
-        "websocket": "/ws/live"
+        "name": "Crypto API Monitoring System",
+        "version": "2.0.0",
+        "description": "Comprehensive cryptocurrency API monitoring with real-time updates",
+        "status": "online",
+        "timestamp": datetime.utcnow().isoformat(),
+        "endpoints": {
+            "documentation": {
+                "swagger": "/docs",
+                "redoc": "/redoc"
+            },
+            "health": "/health",
+            "api": {
+                "providers": "/api/providers",
+                "status": "/api/status",
+                "rate_limits": "/api/rate-limits",
+                "logs": "/api/logs/{log_type}",
+                "alerts": "/api/alerts",
+                "scheduler": "/api/scheduler/status",
+                "database": "/api/database/stats",
+                "analytics": "/api/analytics/failures"
+            },
+            "websocket": {
+                "live": "/ws/live",
+                "stats": "/ws/stats"
+            }
+        },
+        "features": [
+            "Multi-provider API monitoring",
+            "Real-time WebSocket updates",
+            "Rate limit tracking",
+            "Automated health checks",
+            "Scheduled data collection",
+            "Failure detection and alerts",
+            "Historical analytics"
+        ],
+        "system_info": {
+            "total_providers": len(config.get_all_providers()),
+            "categories": config.get_categories(),
+            "scheduler_running": task_scheduler.is_running(),
+            "websocket_connections": ws_manager.get_connection_count(),
+            "database_path": db_manager.db_path
+        }
     }
 
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """
+    Comprehensive health check endpoint
+
+    Returns:
+        System health status
+    """
+    try:
+        # Check database health
+        db_health = db_manager.health_check()
+
+        # Get latest system metrics
+        latest_metrics = db_manager.get_latest_system_metrics()
+
+        # Check scheduler status
+        scheduler_status = task_scheduler.is_running()
+
+        # Check WebSocket status
+        ws_status = ws_manager._is_running
+        ws_connections = ws_manager.get_connection_count()
+
+        # Determine overall health
+        overall_health = "healthy"
+
+        if db_health.get('status') != 'healthy':
+            overall_health = "degraded"
+
+        if not scheduler_status:
+            overall_health = "degraded"
+
+        if latest_metrics and latest_metrics.system_health == "critical":
+            overall_health = "critical"
+
+        return {
+            "status": overall_health,
+            "timestamp": datetime.utcnow().isoformat(),
+            "components": {
+                "database": {
+                    "status": db_health.get('status', 'unknown'),
+                    "path": db_health.get('database_path'),
+                    "size_mb": db_health.get('stats', {}).get('database_size_mb', 0)
+                },
+                "scheduler": {
+                    "status": "running" if scheduler_status else "stopped",
+                    "active_jobs": task_scheduler.get_job_status().get('total_jobs', 0)
+                },
+                "websocket": {
+                    "status": "running" if ws_status else "stopped",
+                    "active_connections": ws_connections
+                },
+                "providers": {
+                    "total": len(config.get_all_providers()),
+                    "online": latest_metrics.online_count if latest_metrics else 0,
+                    "degraded": latest_metrics.degraded_count if latest_metrics else 0,
+                    "offline": latest_metrics.offline_count if latest_metrics else 0
+                }
+            },
+            "metrics": {
+                "avg_response_time_ms": latest_metrics.avg_response_time_ms if latest_metrics else 0,
+                "total_requests_hour": latest_metrics.total_requests_hour if latest_metrics else 0,
+                "total_failures_hour": latest_metrics.total_failures_hour if latest_metrics else 0,
+                "system_health": latest_metrics.system_health if latest_metrics else "unknown"
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Health check error: {e}", exc_info=True)
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e)
+        }
+
+
+@app.get("/info", tags=["Root"])
+async def system_info():
+    """
+    Get detailed system information
+
+    Returns:
+        Detailed system information
+    """
+    try:
+        # Get configuration stats
+        config_stats = config.stats()
+
+        # Get database stats
+        db_stats = db_manager.get_database_stats()
+
+        # Get rate limit statuses
+        rate_limit_count = len(rate_limiter.get_all_statuses())
+
+        # Get scheduler info
+        scheduler_info = task_scheduler.get_job_status()
+
+        return {
+            "application": {
+                "name": "Crypto API Monitoring System",
+                "version": "2.0.0",
+                "environment": "production"
+            },
+            "configuration": config_stats,
+            "database": db_stats,
+            "rate_limits": {
+                "configured_providers": rate_limit_count
+            },
+            "scheduler": {
+                "running": task_scheduler.is_running(),
+                "total_jobs": scheduler_info.get('total_jobs', 0),
+                "jobs": scheduler_info.get('jobs', [])
+            },
+            "websocket": {
+                "active_connections": ws_manager.get_connection_count(),
+                "background_tasks_running": ws_manager._is_running
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"System info error: {e}", exc_info=True)
+        return {
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+
+# ============================================================================
+# Run Application
+# ============================================================================
 
 if __name__ == "__main__":
-    import uvicorn
+    """
+    Run the application with uvicorn
+
+    Configuration:
+    - Host: 0.0.0.0 (all interfaces)
+    - Port: 7860
+    - Log level: info
+    - Reload: disabled (production mode)
+    """
+    logger.info("Starting Crypto API Monitoring System on 0.0.0.0:7860")
+
     uvicorn.run(
-        "app:app",
-        host=config.HOST,
-        port=config.PORT,
-        reload=False,
-        log_level="info"
+        app,
+        host="0.0.0.0",
+        port=7860,
+        log_level="info",
+        access_log=True,
+        use_colors=True
     )
