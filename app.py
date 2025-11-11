@@ -17,6 +17,12 @@ from api.endpoints import router as api_router
 from api.websocket import router as websocket_router, manager as ws_manager
 from api.pool_endpoints import router as pool_router
 
+# Import new WebSocket service routers
+from api.ws_unified_router import router as ws_unified_router, start_all_websocket_streams
+from api.ws_data_services import router as ws_data_router
+from api.ws_monitoring_services import router as ws_monitoring_router
+from api.ws_integration_services import router as ws_integration_router
+
 # Import monitoring and database modules
 from monitoring.scheduler import task_scheduler
 from monitoring.rate_limiter import rate_limiter
@@ -152,6 +158,11 @@ async def lifespan(app: FastAPI):
         await ws_manager.start_background_tasks()
         logger.info("WebSocket background tasks started")
 
+        # 5.1 Start new WebSocket service streams
+        logger.info("Starting WebSocket service streams...")
+        asyncio.create_task(start_all_websocket_streams())
+        logger.info("WebSocket service streams started")
+
         # 6. Start task scheduler
         logger.info("Starting task scheduler...")
         task_scheduler.start()
@@ -205,18 +216,27 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Crypto API Monitoring System",
     description="""
-    Comprehensive cryptocurrency API monitoring system with real-time updates.
+    Comprehensive cryptocurrency API monitoring system with real-time WebSocket updates.
 
     Features:
     - Multi-provider API monitoring
-    - Real-time WebSocket updates
+    - Real-time WebSocket streaming for all services
+    - Data collection APIs: Market data, News, Sentiment, Whale tracking, RPC nodes, On-chain analytics
+    - Monitoring APIs: Health checks, Pool management, Scheduler status
+    - Integration APIs: HuggingFace AI/ML, Persistence services
+    - Subscription-based message routing
     - Rate limit tracking
     - Automated health checks
     - Scheduled data collection
     - Failure detection and alerts
     - Historical analytics
 
-    WebSocket Endpoint: /ws/live
+    WebSocket Endpoints:
+    - Master: /ws, /ws/master, /ws/all
+    - Data Collection: /ws/data, /ws/market_data, /ws/news, /ws/sentiment, /ws/whale_tracking
+    - Monitoring: /ws/monitoring, /ws/health, /ws/pool_status, /ws/scheduler_status
+    - Integration: /ws/integration, /ws/huggingface, /ws/ai, /ws/persistence
+    - Legacy: /ws/live
     """,
     version="2.0.0",
     lifespan=lifespan,
@@ -300,6 +320,29 @@ if HF_ROUTER_AVAILABLE:
     except Exception as e:
         logger.warning(f"Could not include HF router: {e}")
 
+# Include new WebSocket service routers
+app.include_router(
+    ws_unified_router,
+    tags=["WebSocket Services"]
+)
+
+app.include_router(
+    ws_data_router,
+    tags=["WebSocket - Data Collection"]
+)
+
+app.include_router(
+    ws_monitoring_router,
+    tags=["WebSocket - Monitoring"]
+)
+
+app.include_router(
+    ws_integration_router,
+    tags=["WebSocket - Integration"]
+)
+
+logger.info("All WebSocket service routers included successfully")
+
 
 # ============================================================================
 # Root Endpoints
@@ -336,18 +379,50 @@ async def root():
                 "analytics": "/api/analytics/failures"
             },
             "websocket": {
-                "live": "/ws/live",
-                "stats": "/ws/stats"
+                "master": {
+                    "default": "/ws",
+                    "master": "/ws/master",
+                    "all_services": "/ws/all",
+                    "stats": "/ws/stats",
+                    "services": "/ws/services",
+                    "endpoints": "/ws/endpoints"
+                },
+                "data_collection": {
+                    "unified": "/ws/data",
+                    "market_data": "/ws/market_data",
+                    "whale_tracking": "/ws/whale_tracking",
+                    "news": "/ws/news",
+                    "sentiment": "/ws/sentiment"
+                },
+                "monitoring": {
+                    "unified": "/ws/monitoring",
+                    "health": "/ws/health",
+                    "pool_status": "/ws/pool_status",
+                    "scheduler": "/ws/scheduler_status"
+                },
+                "integration": {
+                    "unified": "/ws/integration",
+                    "huggingface": "/ws/huggingface",
+                    "ai": "/ws/ai",
+                    "persistence": "/ws/persistence"
+                },
+                "legacy": {
+                    "live": "/ws/live"
+                }
             }
         },
         "features": [
             "Multi-provider API monitoring",
-            "Real-time WebSocket updates",
+            "Real-time WebSocket updates for all services",
+            "Data collection WebSocket APIs (market data, news, sentiment, whale tracking, etc.)",
+            "Monitoring WebSocket APIs (health checks, pool management, scheduler)",
+            "Integration WebSocket APIs (HuggingFace AI, persistence)",
             "Rate limit tracking",
             "Automated health checks",
             "Scheduled data collection",
             "Failure detection and alerts",
-            "Historical analytics"
+            "Historical analytics",
+            "Subscription-based message routing"
         ],
         "system_info": {
             "total_providers": len(config.get_all_providers()),
