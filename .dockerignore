@@ -1,0 +1,121 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+README*.md
+CHANGELOG.md
+LICENSE
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+tests/
+test_*.py
+
+# Logs and databases (will be created in container)
+*.log
+logs/
+data/*.db
+data/*.sqlite
+data/*.db-journal
+
+# Environment files (should be set via docker-compose or HF Secrets)
+.env
+.env.*
+!.env.example
+
+# Docker
+docker-compose*.yml
+!docker-compose.yml
+Dockerfile
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+temp/
+tmp/
+
+# Node modules (if any)
+node_modules/
+package-lock.json
+yarn.lock
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Model cache (models will be downloaded in container)
+models/
+.cache/
+.huggingface/
+
+# Large files that shouldn't be in image
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Screenshots and assets not needed
+screenshots/
+assets/*.png
+assets/*.jpg
