@@ -2681,13 +2681,79 @@
                             state.charts.health.update();
                         }
                         break;
-                    
+
                     case 'compliance':
                         const complianceData = await apiCall('/api/charts/compliance?days=7');
                         if (state.charts.compliance && complianceData) {
                             state.charts.compliance.data.labels = complianceData.dates;
                             state.charts.compliance.data.datasets[0].data = complianceData.compliance_percentage;
                             state.charts.compliance.update();
+                        }
+                        break;
+
+                    case 'rateLimit':
+                        const rateLimitData = await apiCall('/api/charts/rate-limit-history?hours=24');
+                        if (state.charts.rateLimit && rateLimitData) {
+                            state.charts.rateLimit.data.labels = rateLimitData.timestamps;
+
+                            // Clear existing datasets
+                            state.charts.rateLimit.data.datasets = [];
+
+                            // Add a dataset for each provider
+                            const colors = [
+                                'rgba(59, 130, 246, 0.8)',   // Blue
+                                'rgba(139, 92, 246, 0.8)',   // Purple
+                                'rgba(245, 158, 11, 0.8)',   // Orange
+                                'rgba(16, 185, 129, 0.8)',   // Green
+                                'rgba(239, 68, 68, 0.8)'     // Red
+                            ];
+
+                            rateLimitData.providers.forEach((provider, index) => {
+                                state.charts.rateLimit.data.datasets.push({
+                                    label: provider.name,
+                                    data: provider.usage_percentage,
+                                    borderColor: colors[index % colors.length],
+                                    backgroundColor: colors[index % colors.length].replace('0.8', '0.1'),
+                                    borderWidth: 2,
+                                    tension: 0.4,
+                                    fill: false
+                                });
+                            });
+
+                            state.charts.rateLimit.update();
+                        }
+                        break;
+
+                    case 'freshness':
+                        const freshnessData = await apiCall('/api/charts/freshness-history?hours=24');
+                        if (state.charts.freshness && freshnessData) {
+                            state.charts.freshness.data.labels = freshnessData.timestamps;
+
+                            // Clear existing datasets
+                            state.charts.freshness.data.datasets = [];
+
+                            // Add a dataset for each provider
+                            const colors = [
+                                'rgba(59, 130, 246, 0.8)',   // Blue
+                                'rgba(139, 92, 246, 0.8)',   // Purple
+                                'rgba(245, 158, 11, 0.8)',   // Orange
+                                'rgba(16, 185, 129, 0.8)',   // Green
+                                'rgba(239, 68, 68, 0.8)'     // Red
+                            ];
+
+                            freshnessData.providers.forEach((provider, index) => {
+                                state.charts.freshness.data.datasets.push({
+                                    label: provider.name,
+                                    data: provider.staleness_minutes,
+                                    borderColor: colors[index % colors.length],
+                                    backgroundColor: colors[index % colors.length].replace('0.8', '0.1'),
+                                    borderWidth: 2,
+                                    tension: 0.4,
+                                    fill: false
+                                });
+                            });
+
+                            state.charts.freshness.update();
                         }
                         break;
                 }
@@ -2742,6 +2808,7 @@
                 case 'ratelimit':
                     await loadRateLimits();
                     initializeCharts();
+                    await loadChartData('rateLimit');
                     break;
                 case 'logs':
                     await loadLogs();
@@ -2749,10 +2816,12 @@
                 case 'schedule':
                     await loadSchedule();
                     initializeCharts();
+                    await loadChartData('compliance');
                     break;
                 case 'freshness':
                     await loadFreshness();
                     initializeCharts();
+                    await loadChartData('freshness');
                     break;
                 case 'failures':
                     await loadFailures();

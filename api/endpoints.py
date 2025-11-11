@@ -950,134 +950,85 @@ async def get_compliance_history(
 
 @router.get("/charts/rate-limit-history")
 async def get_rate_limit_history(
-    hours: int = Query(24, ge=1, le=168, description="Hours of history (1-168)"),
-    providers: Optional[str] = Query(None, description="Comma-separated provider names (max 5)")
+    hours: int = Query(24, ge=1, le=168, description="Hours of history to retrieve")
 ):
     """
-    Get rate limit usage history for chart visualization
+    Get rate limit usage history data for charts
 
     Args:
-        hours: Number of hours of history to retrieve (1-168, default 24)
-        providers: Comma-separated list of provider names (max 5, default: top 5 by limit)
+        hours: Number of hours of history to retrieve
 
     Returns:
-        List of series objects with rate limit history per provider
-
-    Response Schema:
-        [
-            {
-                "provider": "coingecko",
-                "hours": 24,
-                "series": [
-                    {"t": "2025-11-10T13:00:00Z", "pct": 42.5},
-                    ...
-                ],
-                "meta": {
-                    "limit_type": "per_minute",
-                    "limit_value": 30
-                }
-            }
-        ]
+        Time series data for rate limit usage by provider
     """
     try:
-        # Security: Cap hours to prevent abuse
-        hours = min(max(hours, 1), 168)
+        # Get all providers with rate limits
+        providers = db_manager.get_all_providers()
+        providers_with_limits = [p for p in providers if p.rate_limit_type and p.rate_limit_value]
 
-        # Get all providers
-        all_providers = db_manager.get_all_providers()
+        if not providers_with_limits:
+            return {
+                "timestamps": [],
+                "providers": []
+            }
 
-        # Security: Validate and filter provider names
-        valid_provider_names = {p.name for p in all_providers}
-        selected_providers = []
+        # Generate hourly timestamps
+        end_time = datetime.utcnow()
+        start_time = end_time - timedelta(hours=hours)
 
-        if providers:
-            # Parse and validate provider list
-            provider_list = [p.strip() for p in providers.split(',') if p.strip()]
+        # Create hourly buckets
+        timestamps = []
+        current_time = start_time
+        while current_time <= end_time:
+            timestamps.append(current_time.strftime("%H:%M"))
+            current_time += timedelta(hours=1)
 
-            # Security: Limit to max 5 providers
-            provider_list = provider_list[:5]
+        # Get rate limit usage data for each provider
+        provider_data = []
 
-            # Security: Enforce allow-list (only valid provider names)
-            for prov_name in provider_list:
-                if prov_name not in valid_provider_names:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Invalid provider name: {prov_name}. Must be one of: {', '.join(sorted(valid_provider_names))}"
-                    )
-                selected_providers.append(prov_name)
-        else:
-            # Default: Select up to 5 providers with rate limits
-            providers_with_limits = [
-                p for p in all_providers
-                if p.rate_limit_type and p.rate_limit_value
-            ][:5]
-            selected_providers = [p.name for p in providers_with_limits]
-
-        if not selected_providers:
-            return []
-
-        # Build time series for each provider
-        result = []
-        now = datetime.utcnow()
-
-        for provider_name in selected_providers:
-            # Get provider object
-            provider = db_manager.get_provider(name=provider_name)
-            if not provider:
-                continue
-
-            # Get rate limit usage records
-            usage_records = db_manager.get_rate_limit_usage(
+        for provider in providers_with_limits[:5]:  # Limit to top 5 for readability
+            # Get rate limit usage records for this provider
+            rate_limit_records = db_manager.get_rate_limit_usage(
                 provider_id=provider.id,
                 hours=hours
             )
 
-            # Build hourly time series
-            points = []
-            hour_map = {}  # timestamp -> usage record
+            if not rate_limit_records:
+                continue
 
-            # Map records to hourly buckets
-            for record in usage_records:
-                # Round to hour bucket
-                hour_bucket = record.timestamp.replace(minute=0, second=0, microsecond=0)
-                # Keep most recent record per hour
-                if hour_bucket not in hour_map or record.timestamp > hour_map[hour_bucket].timestamp:
-                    hour_map[hour_bucket] = record
+            # Group by hour and calculate average percentage
+            usage_percentages = []
+            current_time = start_time
 
-            # Generate points for each hour (fill gaps with zeros)
-            for hour_offset in range(hours):
-                hour_time = now - timedelta(hours=hours - hour_offset - 1)
-                hour_bucket = hour_time.replace(minute=0, second=0, microsecond=0)
+            for _ in range(len(timestamps)):
+                hour_end = current_time + timedelta(hours=1)
 
-                if hour_bucket in hour_map:
-                    record = hour_map[hour_bucket]
-                    pct = round(record.percentage, 2)
+                # Get records in this hour bucket
+                hour_records = [
+                    r for r in rate_limit_records
+                    if current_time <= r.timestamp < hour_end
+                ]
+
+                if hour_records:
+                    # Calculate average percentage for this hour
+                    avg_percentage = sum(r.percentage for r in hour_records) / len(hour_records)
+                    usage_percentages.append(round(avg_percentage, 2))
                 else:
-                    pct = 0.0
+                    # No data for this hour, use 0
+                    usage_percentages.append(0.0)
 
-                points.append({
-                    "t": hour_bucket.isoformat() + "Z",
-                    "pct": pct
-                })
+                current_time = hour_end
 
-            # Get rate limit metadata
-            meta = {
-                "limit_type": provider.rate_limit_type,
-                "limit_value": provider.rate_limit_value
-            }
-
-            result.append({
-                "provider": provider_name,
-                "hours": hours,
-                "series": points,
-                "meta": meta
+            provider_data.append({
+                "name": provider.name,
+                "usage_percentage": usage_percentages
             })
 
-        logger.info(f"Rate limit history: {len(result)} providers, {hours}h")
-        return result
+        return {
+            "timestamps": timestamps,
+            "providers": provider_data
+        }
 
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error getting rate limit history: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get rate limit history: {str(e)}")
@@ -1089,162 +1040,100 @@ async def get_rate_limit_history(
 
 @router.get("/charts/freshness-history")
 async def get_freshness_history(
-    hours: int = Query(24, ge=1, le=168, description="Hours of history (1-168)"),
-    providers: Optional[str] = Query(None, description="Comma-separated provider names (max 5)")
+    hours: int = Query(24, ge=1, le=168, description="Hours of history to retrieve")
 ):
     """
-    Get data freshness/staleness history for chart visualization
+    Get data freshness (staleness) history for charts
 
     Args:
-        hours: Number of hours of history to retrieve (1-168, default 24)
-        providers: Comma-separated list of provider names (max 5, default: top 5 by activity)
+        hours: Number of hours of history to retrieve
 
     Returns:
-        List of series objects with freshness history per provider
-
-    Response Schema:
-        [
-            {
-                "provider": "coingecko",
-                "hours": 24,
-                "series": [
-                    {
-                        "t": "2025-11-10T13:00:00Z",
-                        "staleness_min": 7.2,
-                        "ttl_min": 15,
-                        "status": "fresh"
-                    },
-                    ...
-                ],
-                "meta": {
-                    "category": "market_data",
-                    "default_ttl": 1
-                }
-            }
-        ]
+        Time series data for data staleness by provider
     """
     try:
-        # Security: Cap hours to prevent abuse
-        hours = min(max(hours, 1), 168)
-
         # Get all providers
-        all_providers = db_manager.get_all_providers()
+        providers = db_manager.get_all_providers()
 
-        # Security: Validate and filter provider names
-        valid_provider_names = {p.name for p in all_providers}
-        selected_providers = []
-
-        if providers:
-            # Parse and validate provider list
-            provider_list = [p.strip() for p in providers.split(',') if p.strip()]
-
-            # Security: Limit to max 5 providers
-            provider_list = provider_list[:5]
-
-            # Security: Enforce allow-list (only valid provider names)
-            for prov_name in provider_list:
-                if prov_name not in valid_provider_names:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Invalid provider name: {prov_name}. Must be one of: {', '.join(sorted(valid_provider_names))}"
-                    )
-                selected_providers.append(prov_name)
-        else:
-            # Default: Select up to 5 most active providers
-            selected_providers = [p.name for p in all_providers[:5]]
-
-        if not selected_providers:
-            return []
-
-        # Build time series for each provider
-        result = []
-        now = datetime.utcnow()
-
-        for provider_name in selected_providers:
-            # Get provider object
-            provider = db_manager.get_provider(name=provider_name)
-            if not provider:
-                continue
-
-            # Get data collections
-            collections = db_manager.get_data_collections(
-                provider_id=provider.id,
-                hours=hours
-            )
-
-            # Determine TTL based on category
-            ttl_minutes = 5  # Default
-            if provider.category == "market_data":
-                ttl_minutes = 1
-            elif provider.category == "blockchain_explorers":
-                ttl_minutes = 5
-            elif provider.category == "news":
-                ttl_minutes = 15
-            elif provider.category == "defi":
-                ttl_minutes = 10
-
-            # Build hourly time series
-            points = []
-            hour_map = {}  # timestamp -> collection record
-
-            # Map records to hourly buckets (keep most recent per hour)
-            for collection in collections:
-                hour_bucket = collection.actual_fetch_time.replace(minute=0, second=0, microsecond=0)
-                if hour_bucket not in hour_map or collection.actual_fetch_time > hour_map[hour_bucket].actual_fetch_time:
-                    hour_map[hour_bucket] = collection
-
-            # Generate points for each hour
-            for hour_offset in range(hours):
-                hour_time = now - timedelta(hours=hours - hour_offset - 1)
-                hour_bucket = hour_time.replace(minute=0, second=0, microsecond=0)
-
-                if hour_bucket in hour_map:
-                    collection = hour_map[hour_bucket]
-
-                    # Calculate staleness (age of data at time of fetch)
-                    staleness_min = collection.staleness_minutes or 0.0
-
-                    # Determine status
-                    if staleness_min <= ttl_minutes:
-                        status = "fresh"
-                    elif staleness_min <= ttl_minutes * 2:
-                        status = "aging"
-                    else:
-                        status = "stale"
-
-                    points.append({
-                        "t": hour_bucket.isoformat() + "Z",
-                        "staleness_min": round(staleness_min, 2),
-                        "ttl_min": ttl_minutes,
-                        "status": status
-                    })
-                else:
-                    # No data for this hour - mark as stale
-                    points.append({
-                        "t": hour_bucket.isoformat() + "Z",
-                        "staleness_min": 999.0,
-                        "ttl_min": ttl_minutes,
-                        "status": "stale"
-                    })
-
-            # Get metadata
-            meta = {
-                "category": provider.category,
-                "default_ttl": ttl_minutes
+        if not providers:
+            return {
+                "timestamps": [],
+                "providers": []
             }
 
-            result.append({
-                "provider": provider_name,
-                "hours": hours,
-                "series": points,
-                "meta": meta
-            })
+        # Generate hourly timestamps
+        end_time = datetime.utcnow()
+        start_time = end_time - timedelta(hours=hours)
 
-        logger.info(f"Freshness history: {len(result)} providers, {hours}h")
-        return result
+        # Create hourly buckets
+        timestamps = []
+        current_time = start_time
+        while current_time <= end_time:
+            timestamps.append(current_time.strftime("%H:%M"))
+            current_time += timedelta(hours=1)
 
-    except HTTPException:
-        raise
+        # Get freshness data for each provider
+        provider_data = []
+
+        for provider in providers[:5]:  # Limit to top 5 for readability
+            # Get data collection records for this provider
+            collections = db_manager.get_data_collections(
+                provider_id=provider.id,
+                hours=hours,
+                limit=1000  # Get more records for analysis
+            )
+
+            if not collections:
+                continue
+
+            # Group by hour and calculate average staleness
+            staleness_values = []
+            current_time = start_time
+
+            for _ in range(len(timestamps)):
+                hour_end = current_time + timedelta(hours=1)
+
+                # Get records in this hour bucket
+                hour_records = [
+                    c for c in collections
+                    if current_time <= c.actual_fetch_time < hour_end
+                ]
+
+                if hour_records:
+                    # Calculate average staleness for this hour
+                    staleness_list = []
+                    for record in hour_records:
+                        if record.staleness_minutes is not None:
+                            staleness_list.append(record.staleness_minutes)
+                        elif record.data_timestamp and record.actual_fetch_time:
+                            # Calculate staleness if not already stored
+                            staleness_seconds = (record.actual_fetch_time - record.data_timestamp).total_seconds()
+                            staleness_minutes = staleness_seconds / 60
+                            staleness_list.append(staleness_minutes)
+
+                    if staleness_list:
+                        avg_staleness = sum(staleness_list) / len(staleness_list)
+                        staleness_values.append(round(avg_staleness, 2))
+                    else:
+                        staleness_values.append(0.0)
+                else:
+                    # No data for this hour, use null
+                    staleness_values.append(None)
+
+                current_time = hour_end
+
+            # Only add provider if it has some data
+            if any(v is not None and v > 0 for v in staleness_values):
+                provider_data.append({
+                    "name": provider.name,
+                    "staleness_minutes": staleness_values
+                })
+
+        return {
+            "timestamps": timestamps,
+            "providers": provider_data
+        }
+
     except Exception as e:
         logger.error(f"Error getting freshness history: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get freshness history: {str(e)}")
