@@ -1,24 +1,19 @@
-# Stage 1: Build Frontend
+# Stage 1: Prepare Frontend Assets
 FROM node:18-slim AS frontend-builder
 
-WORKDIR /app
+WORKDIR /frontend
 
-# Copy frontend package files
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install Node dependencies (if needed for any frontend tools)
+RUN npm install || true
 
-# Copy frontend source files
+# Copy all frontend static files
 COPY *.html ./
 COPY *.js ./
-COPY config.js ./
 
-# Note: This project uses static HTML/JS files, no build step needed
-# If you add a build step later, uncomment the next line
-# RUN npm run build
-
-# Stage 2: Setup Backend and Serve
+# Stage 2: Build Backend and Final Image
 FROM python:3.10-slim
 
 WORKDIR /app
@@ -30,25 +25,16 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend requirements
+# Copy and install Python dependencies first (for better layer caching)
 COPY requirements.txt ./
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code
-COPY backend/ ./backend/
-
-# Copy other Python files
+# Copy Python application files
 COPY *.py ./
 
-# Copy built frontend from previous stage
-COPY --from=frontend-builder /app/*.html ./
-COPY --from=frontend-builder /app/*.js ./
-COPY --from=frontend-builder /app/config.js ./
-
-# Copy additional directories
+# Copy application directories
 COPY api/ ./api/
+COPY backend/ ./backend/
 COPY collectors/ ./collectors/
 COPY database/ ./database/
 COPY monitoring/ ./monitoring/
@@ -56,21 +42,27 @@ COPY scripts/ ./scripts/
 COPY tests/ ./tests/
 COPY utils/ ./utils/
 
-# Copy data files
+# Copy data and config files
 COPY *.json ./
+COPY .env.example ./
+
+# Copy frontend static files from builder stage
+COPY --from=frontend-builder /frontend/*.html ./
+COPY --from=frontend-builder /frontend/*.js ./
 
 # Create necessary directories
-RUN mkdir -p data logs
+RUN mkdir -p data logs static
 
 # Set proper permissions
-RUN chmod -R 755 data logs
+RUN chmod -R 755 data logs static
 
 # Expose Hugging Face Space port
 EXPOSE 7860
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=7860
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \

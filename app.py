@@ -307,6 +307,16 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # ============================================================================
+# Mount Static Files
+# ============================================================================
+
+# Mount static files for serving HTML, CSS, JS
+import os
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+    logger.info("Mounted /static directory")
+
+# ============================================================================
 # Include Routers
 # ============================================================================
 
@@ -388,6 +398,61 @@ async def root():
     except Exception as e:
         logger.error(f"Error serving index.html: {e}")
         return HTMLResponse(content=f"<h1>Error loading dashboard</h1><p>{str(e)}</p>", status_code=500)
+
+
+@app.get("/dashboard", response_class=HTMLResponse, tags=["Root"])
+async def dashboard():
+    """Serve dashboard.html"""
+    try:
+        with open("dashboard.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        logger.error(f"Error serving dashboard.html: {e}")
+        return HTMLResponse(content=f"<h1>Error loading dashboard</h1><p>{str(e)}</p>", status_code=500)
+
+
+@app.get("/admin", response_class=HTMLResponse, tags=["Root"])
+async def admin():
+    """Serve admin.html"""
+    try:
+        with open("admin.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        logger.error(f"Error serving admin.html: {e}")
+        return HTMLResponse(content=f"<h1>Error loading admin page</h1><p>{str(e)}</p>", status_code=500)
+
+
+@app.get("/enhanced", response_class=HTMLResponse, tags=["Root"])
+async def enhanced_dashboard():
+    """Serve enhanced_dashboard.html"""
+    try:
+        with open("enhanced_dashboard.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        logger.error(f"Error serving enhanced_dashboard.html: {e}")
+        return HTMLResponse(content=f"<h1>Error loading enhanced dashboard</h1><p>{str(e)}</p>", status_code=500)
+
+
+@app.get("/pool", response_class=HTMLResponse, tags=["Root"])
+async def pool_management():
+    """Serve pool_management.html"""
+    try:
+        with open("pool_management.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        logger.error(f"Error serving pool_management.html: {e}")
+        return HTMLResponse(content=f"<h1>Error loading pool management</h1><p>{str(e)}</p>", status_code=500)
+
+
+@app.get("/hf", response_class=HTMLResponse, tags=["Root"])
+async def hf_console():
+    """Serve hf_console.html"""
+    try:
+        with open("hf_console.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        logger.error(f"Error serving hf_console.html: {e}")
+        return HTMLResponse(content=f"<h1>Error loading HF console</h1><p>{str(e)}</p>", status_code=500)
 
 
 @app.get("/api-info", tags=["Root"])
