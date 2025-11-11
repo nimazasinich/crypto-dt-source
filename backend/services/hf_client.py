@@ -34,3 +34,24 @@ def run_sentiment(texts: List[str], model: str | None = None) -> Dict[str, Any]:
     scores = [_label_to_score(p.get("label","")) * float(p.get("score",0)) for p in preds]
     vote = sum(scores) / max(1, len(scores))
     return {"enabled": True, "model": name, "vote": vote, "samples": preds}
+
+
+class HFClient:
+    """HuggingFace client for AI/ML operations"""
+
+    def __init__(self):
+        self.enabled = ENABLE_SENTIMENT
+        self.social_model = SOCIAL_MODEL
+        self.news_model = NEWS_MODEL
+
+    def analyze_sentiment(self, texts: List[str], model: str | None = None) -> Dict[str, Any]:
+        """Analyze sentiment of texts"""
+        return run_sentiment(texts, model)
+
+    def get_status(self) -> Dict[str, Any]:
+        """Get HuggingFace client status"""
+        return {
+            "enabled": self.enabled,
+            "social_model": self.social_model,
+            "news_model": self.news_model
+        }
