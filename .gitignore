@@ -35,6 +35,8 @@ env/
 data/*.db
 data/*.db-journal
 data/exports/
+crypto_monitor.db
+crypto_monitor.db-journal
 
 # Environment
 .env
