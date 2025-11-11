@@ -1,591 +1,476 @@
 """
-Hugging Face Resource Aggregator
-A centralized API aggregator for cryptocurrency resources
+Crypto API Monitoring System - Main Application
+Production-ready FastAPI application with comprehensive monitoring and WebSocket support
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+import asyncio
+import uvicorn
+from datetime import datetime
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import uvicorn
-import json
-import asyncio
-import aiohttp
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-import logging
-from pydantic import BaseModel
-import sqlite3
-from contextlib import contextmanager
-import os
-import time
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Import API modules
+from api.endpoints import router as api_router
+from api.websocket import router as websocket_router, manager as ws_manager
 
-# Initialize FastAPI app
+# Import monitoring and database modules
+from monitoring.scheduler import task_scheduler
+from monitoring.rate_limiter import rate_limiter
+from database.db_manager import db_manager
+from config import config
+from utils.logger import setup_logger
+
+# Setup logger
+logger = setup_logger("main", level="INFO")
+
+
+# ============================================================================
+# Lifespan Context Manager for Startup/Shutdown Events
+# ============================================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for application startup and shutdown
+
+    Handles:
+    - Database initialization
+    - Scheduler startup
+    - Rate limiter configuration
+    - WebSocket background tasks
+    - Graceful shutdown
+    """
+    logger.info("=" * 80)
+    logger.info("Starting Crypto API Monitoring System")
+    logger.info("=" * 80)
+
+    try:
+        # ===== STARTUP SEQUENCE =====
+
+        # 1. Initialize database
+        logger.info("Initializing database...")
+        db_manager.init_database()
+
+        # Verify database health
+        db_health = db_manager.health_check()
+        if db_health.get('status') == 'healthy':
+            logger.info(f"Database initialized successfully: {db_health.get('database_path')}")
+        else:
+            logger.error(f"Database health check failed: {db_health}")
+
+        # 2. Configure rate limiters for all providers
+        logger.info("Configuring rate limiters...")
+        providers = config.get_all_providers()
+
+        for provider in providers:
+            if provider.rate_limit_type and provider.rate_limit_value:
+                rate_limiter.configure_limit(
+                    provider=provider.name,
+                    limit_type=provider.rate_limit_type,
+                    limit_value=provider.rate_limit_value
+                )
+                logger.info(
+                    f"Configured rate limit for {provider.name}: "
+                    f"{provider.rate_limit_value} {provider.rate_limit_type}"
+                )
+
+        logger.info(f"Configured rate limiters for {len(providers)} providers")
+
+        # 3. Populate database with provider configurations
+        logger.info("Populating database with provider configurations...")
+
+        for provider in providers:
+            # Check if provider already exists in database
+            db_provider = db_manager.get_provider(name=provider.name)
+
+            if not db_provider:
+                # Create new provider in database
+                db_provider = db_manager.create_provider(
+                    name=provider.name,
+                    category=provider.category,
+                    endpoint_url=provider.endpoint_url,
+                    requires_key=provider.requires_key,
+                    api_key_masked=provider._mask_key() if provider.api_key else None,
+                    rate_limit_type=provider.rate_limit_type,
+                    rate_limit_value=provider.rate_limit_value,
+                    timeout_ms=provider.timeout_ms,
+                    priority_tier=provider.priority_tier
+                )
+
+                if db_provider:
+                    logger.info(f"Added provider to database: {provider.name}")
+
+                    # Create schedule configuration for the provider
+                    # Set interval based on category
+                    interval_map = {
+                        'market_data': 'every_1_min',
+                        'blockchain_explorers': 'every_5_min',
+                        'news': 'every_10_min',
+                        'sentiment': 'every_15_min',
+                        'onchain_analytics': 'every_5_min',
+                        'rpc_nodes': 'every_5_min',
+                        'cors_proxies': 'every_30_min'
+                    }
+
+                    schedule_interval = interval_map.get(provider.category, 'every_5_min')
+
+                    schedule_config = db_manager.create_schedule_config(
+                        provider_id=db_provider.id,
+                        schedule_interval=schedule_interval,
+                        enabled=True
+                    )
+
+                    if schedule_config:
+                        logger.info(
+                            f"Created schedule config for {provider.name}: {schedule_interval}"
+                        )
+
+        # 4. Start WebSocket background tasks
+        logger.info("Starting WebSocket background tasks...")
+        await ws_manager.start_background_tasks()
+        logger.info("WebSocket background tasks started")
+
+        # 5. Start task scheduler
+        logger.info("Starting task scheduler...")
+        task_scheduler.start()
+        logger.info("Task scheduler started successfully")
+
+        # Log startup summary
+        logger.info("=" * 80)
+        logger.info("Crypto API Monitoring System started successfully")
+        logger.info(f"Total providers configured: {len(providers)}")
+        logger.info(f"Database: {db_health.get('database_path')}")
+        logger.info(f"Scheduler running: {task_scheduler.is_running()}")
+        logger.info(f"WebSocket manager active: {ws_manager._is_running}")
+        logger.info("=" * 80)
+
+        yield  # Application runs here
+
+        # ===== SHUTDOWN SEQUENCE =====
+
+        logger.info("=" * 80)
+        logger.info("Shutting down Crypto API Monitoring System...")
+        logger.info("=" * 80)
+
+        # 1. Stop task scheduler
+        logger.info("Stopping task scheduler...")
+        task_scheduler.stop()
+        logger.info("Task scheduler stopped")
+
+        # 2. Stop WebSocket background tasks
+        logger.info("Stopping WebSocket background tasks...")
+        await ws_manager.stop_background_tasks()
+        logger.info("WebSocket background tasks stopped")
+
+        # 3. Close all WebSocket connections
+        logger.info("Closing WebSocket connections...")
+        await ws_manager.close_all_connections()
+        logger.info("WebSocket connections closed")
+
+        logger.info("=" * 80)
+        logger.info("Crypto API Monitoring System shut down successfully")
+        logger.info("=" * 80)
+
+    except Exception as e:
+        logger.error(f"Error during application lifecycle: {e}", exc_info=True)
+        raise
+
+
+# ============================================================================
+# Create FastAPI Application
+# ============================================================================
+
 app = FastAPI(
-    title="Crypto Resource Aggregator",
-    description="Centralized aggregator for free and key-based cryptocurrency resources",
-    version="1.0.0"
+    title="Crypto API Monitoring System",
+    description="""
+    Comprehensive cryptocurrency API monitoring system with real-time updates.
+
+    Features:
+    - Multi-provider API monitoring
+    - Real-time WebSocket updates
+    - Rate limit tracking
+    - Automated health checks
+    - Scheduled data collection
+    - Failure detection and alerts
+    - Historical analytics
+
+    WebSocket Endpoint: /ws/live
+    """,
+    version="2.0.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
-# Enable CORS
+
+# ============================================================================
+# CORS Middleware Configuration
+# ============================================================================
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # In production, specify allowed origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Global state
-RESOURCES = {}
-RESOURCE_STATUS = {}
-RESOURCE_METADATA = {}
 
-# Database setup
-@contextmanager
-def get_db():
-    """Context manager for database connections"""
-    conn = sqlite3.connect('history.db')
-    try:
-        yield conn
-    finally:
-        conn.close()
+# ============================================================================
+# Exception Handlers
+# ============================================================================
 
-def init_db():
-    """Initialize the history database"""
-    with get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS query_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                resource_type TEXT NOT NULL,
-                resource_name TEXT NOT NULL,
-                endpoint TEXT NOT NULL,
-                status TEXT NOT NULL,
-                response_time REAL,
-                error_message TEXT
-            )
-        ''')
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS resource_status (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                resource_name TEXT NOT NULL UNIQUE,
-                last_check DATETIME DEFAULT CURRENT_TIMESTAMP,
-                status TEXT NOT NULL,
-                consecutive_failures INTEGER DEFAULT 0,
-                last_success DATETIME,
-                last_error TEXT
-            )
-        ''')
-        conn.commit()
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    Global exception handler for unhandled exceptions
 
-def log_query(resource_type: str, resource_name: str, endpoint: str,
-              status: str, response_time: float = None, error_message: str = None):
-    """Log a query to the history database"""
-    with get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO query_history
-            (resource_type, resource_name, endpoint, status, response_time, error_message)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (resource_type, resource_name, endpoint, status, response_time, error_message))
-        conn.commit()
+    Args:
+        request: Request object
+        exc: Exception that was raised
 
-def update_resource_status(resource_name: str, status: str, error: str = None):
-    """Update the status of a resource"""
-    with get_db() as conn:
-        cursor = conn.cursor()
-        if status == "online":
-            cursor.execute('''
-                INSERT INTO resource_status (resource_name, status, last_success, consecutive_failures)
-                VALUES (?, ?, CURRENT_TIMESTAMP, 0)
-                ON CONFLICT(resource_name) DO UPDATE SET
-                    status = ?,
-                    last_check = CURRENT_TIMESTAMP,
-                    last_success = CURRENT_TIMESTAMP,
-                    consecutive_failures = 0
-            ''', (resource_name, status, status))
-        else:
-            cursor.execute('''
-                INSERT INTO resource_status (resource_name, status, last_error, consecutive_failures)
-                VALUES (?, ?, ?, 1)
-                ON CONFLICT(resource_name) DO UPDATE SET
-                    status = ?,
-                    last_check = CURRENT_TIMESTAMP,
-                    last_error = ?,
-                    consecutive_failures = consecutive_failures + 1
-            ''', (resource_name, status, error, status, error))
-        conn.commit()
+    Returns:
+        JSON error response
+    """
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
 
-# Pydantic models
-class ResourceQuery(BaseModel):
-    resource_type: str
-    resource_name: Optional[str] = None
-    endpoint: Optional[str] = None
-    params: Optional[Dict[str, Any]] = {}
-
-class ResourceResponse(BaseModel):
-    success: bool
-    resource_type: str
-    resource_name: str
-    data: Optional[Any] = None
-    error: Optional[str] = None
-    response_time: float
-    timestamp: str
-
-# Resource loader
-def load_resources():
-    """Load resources from the JSON file"""
-    global RESOURCES, RESOURCE_METADATA
-
-    try:
-        with open('all_apis_merged_2025.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)
-
-        RESOURCE_METADATA = data.get('metadata', {})
-        logger.info(f"Loaded metadata: {RESOURCE_METADATA.get('name', 'Unknown')}")
-
-        # Parse resources from raw files
-        raw_files = data.get('raw_files', [])
-
-        # Initialize resource categories
-        RESOURCES = {
-            'block_explorers': {},
-            'market_data': {},
-            'rpc_endpoints': {},
-            'news_apis': {},
-            'sentiment_apis': {},
-            'whale_tracking': {},
-            'on_chain_analytics': {},
-            'cors_proxies': []
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "detail": str(exc),
+            "timestamp": datetime.utcnow().isoformat()
         }
-
-        # Parse the content from raw files
-        for raw_file in raw_files:
-            content = raw_file.get('content', '')
-            parse_api_content(content)
-
-        # Parse extracted API keys
-        api_keys = data.get('extracted_api_keys', {})
-        for category, keys in api_keys.items():
-            if category not in RESOURCES:
-                RESOURCES[category] = {}
-            RESOURCES[category].update(keys)
-
-        logger.info(f"Loaded {len(RESOURCES)} resource categories")
-
-        # Initialize all resources as unchecked
-        for category, resources in RESOURCES.items():
-            if isinstance(resources, dict):
-                for resource_name in resources.keys():
-                    RESOURCE_STATUS[f"{category}.{resource_name}"] = {
-                        "status": "unchecked",
-                        "last_check": None,
-                        "consecutive_failures": 0
-                    }
-
-        return True
-    except Exception as e:
-        logger.error(f"Error loading resources: {str(e)}")
-        return False
-
-def parse_api_content(content: str):
-    """Parse API content from raw text files"""
-    # Extract API keys
-    if "TronScan:" in content:
-        key = content.split("TronScan:")[1].split()[0].strip()
-        if 'tron' not in RESOURCES['block_explorers']:
-            RESOURCES['block_explorers']['tronscan'] = {
-                'base_url': 'https://apilist.tronscanapi.com/api',
-                'api_key': key,
-                'type': 'tron_explorer'
-            }
-
-    if "BscScan:" in content:
-        key = content.split("BscScan:")[1].split()[0].strip()
-        if 'bscscan' not in RESOURCES['block_explorers']:
-            RESOURCES['block_explorers']['bscscan'] = {
-                'base_url': 'https://api.bscscan.com/api',
-                'api_key': key,
-                'type': 'bsc_explorer'
-            }
-
-    if "Etherscan:" in content:
-        key = content.split("Etherscan:")[1].split()[0].strip()
-        if 'etherscan' not in RESOURCES['block_explorers']:
-            RESOURCES['block_explorers']['etherscan'] = {
-                'base_url': 'https://api.etherscan.io/api',
-                'api_key': key,
-                'type': 'ethereum_explorer'
-            }
-
-    if "CoinMarketCap:" in content:
-        key = content.split("CoinMarketCap:")[1].split()[0].strip()
-        if 'coinmarketcap' not in RESOURCES['market_data']:
-            RESOURCES['market_data']['coinmarketcap'] = {
-                'base_url': 'https://pro-api.coinmarketcap.com/v1',
-                'api_key': key,
-                'type': 'market_data',
-                'requires_header': True
-            }
-
-    # Add CoinGecko (no key required)
-    if 'coingecko' not in RESOURCES['market_data']:
-        RESOURCES['market_data']['coingecko'] = {
-            'base_url': 'https://api.coingecko.com/api/v3',
-            'api_key': '',
-            'type': 'market_data',
-            'free': True
-        }
-
-    # Parse CORS proxies
-    cors_proxies = [
-        'https://api.allorigins.win/get?url=',
-        'https://proxy.cors.sh/',
-        'https://proxy.corsfix.com/?url=',
-        'https://api.codetabs.com/v1/proxy?quest='
-    ]
-    RESOURCES['cors_proxies'] = cors_proxies
-
-# Resource fetcher with retry logic
-async def fetch_resource(session: aiohttp.ClientSession, url: str,
-                         headers: Dict = None, timeout: int = 10) -> Dict:
-    """Fetch data from a resource with error handling"""
-    start_time = time.time()
-
-    try:
-        async with session.get(url, headers=headers, timeout=timeout) as response:
-            response_time = time.time() - start_time
-
-            if response.status == 200:
-                data = await response.json()
-                return {
-                    "success": True,
-                    "data": data,
-                    "status_code": response.status,
-                    "response_time": response_time
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": f"HTTP {response.status}",
-                    "status_code": response.status,
-                    "response_time": response_time
-                }
-    except asyncio.TimeoutError:
-        return {
-            "success": False,
-            "error": "Timeout",
-            "response_time": time.time() - start_time
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "response_time": time.time() - start_time
-        }
-
-# Health check endpoint
-async def check_resource_health(resource_type: str, resource_name: str, resource_config: Dict) -> Dict:
-    """Check if a resource is online"""
-    base_url = resource_config.get('base_url', '')
-
-    # Define health check endpoints
-    health_endpoints = {
-        'etherscan': f"{base_url}?module=gastracker&action=gasoracle&apikey={resource_config.get('api_key', '')}",
-        'bscscan': f"{base_url}?module=stats&action=bnbprice&apikey={resource_config.get('api_key', '')}",
-        'tronscan': f"{base_url}/system/status",
-        'coingecko': f"{base_url}/ping",
-        'coinmarketcap': f"{base_url}/cryptocurrency/listings/latest?limit=1"
-    }
-
-    endpoint = health_endpoints.get(resource_name, base_url)
-
-    headers = {}
-    if resource_config.get('requires_header') and resource_config.get('api_key'):
-        headers['X-CMC_PRO_API_KEY'] = resource_config['api_key']
-
-    async with aiohttp.ClientSession() as session:
-        result = await fetch_resource(session, endpoint, headers=headers)
-
-        status = "online" if result.get('success') else "offline"
-        error = result.get('error')
-
-        update_resource_status(f"{resource_type}.{resource_name}", status, error)
-
-        return {
-            "resource": f"{resource_type}.{resource_name}",
-            "status": status,
-            "response_time": result.get('response_time', 0),
-            "error": error,
-            "timestamp": datetime.now().isoformat()
-        }
-
-# API Endpoints
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize the application"""
-    logger.info("Starting Crypto Resource Aggregator...")
-    init_db()
-    load_resources()
-    logger.info("Application started successfully")
-
-@app.get("/")
-async def root():
-    """Root endpoint with API information"""
-    return {
-        "name": "Crypto Resource Aggregator",
-        "version": "1.0.0",
-        "description": "Centralized aggregator for cryptocurrency resources",
-        "endpoints": {
-            "/resources": "List all available resources",
-            "/resources/{category}": "List resources in a category",
-            "/query": "Query a specific resource (POST)",
-            "/status": "Check status of all resources",
-            "/status/{category}/{name}": "Check status of a specific resource",
-            "/history": "Get query history",
-            "/health": "System health check"
-        },
-        "metadata": RESOURCE_METADATA
-    }
-
-@app.get("/resources")
-async def list_resources():
-    """List all available resources"""
-    resource_summary = {}
-
-    for category, resources in RESOURCES.items():
-        if isinstance(resources, dict):
-            resource_summary[category] = list(resources.keys())
-        elif isinstance(resources, list):
-            resource_summary[category] = len(resources)
-
-    return {
-        "total_categories": len(RESOURCES),
-        "resources": resource_summary,
-        "timestamp": datetime.now().isoformat()
-    }
-
-@app.get("/resources/{category}")
-async def get_category_resources(category: str):
-    """Get all resources in a specific category"""
-    if category not in RESOURCES:
-        raise HTTPException(status_code=404, detail=f"Category '{category}' not found")
-
-    return {
-        "category": category,
-        "resources": RESOURCES[category],
-        "count": len(RESOURCES[category]) if isinstance(RESOURCES[category], dict) else len(RESOURCES[category]),
-        "timestamp": datetime.now().isoformat()
-    }
-
-@app.post("/query")
-async def query_resource(query: ResourceQuery):
-    """Query a specific resource"""
-    category = query.resource_type
-
-    if category not in RESOURCES:
-        raise HTTPException(status_code=404, detail=f"Category '{category}' not found")
-
-    category_resources = RESOURCES[category]
-
-    # If no specific resource specified, use the first available
-    if not query.resource_name and isinstance(category_resources, dict):
-        query.resource_name = list(category_resources.keys())[0]
-
-    if isinstance(category_resources, dict) and query.resource_name not in category_resources:
-        raise HTTPException(status_code=404, detail=f"Resource '{query.resource_name}' not found in category '{category}'")
-
-    resource_config = category_resources.get(query.resource_name, {})
-    base_url = resource_config.get('base_url', '')
-    api_key = resource_config.get('api_key', '')
-
-    # Build the query URL
-    if query.endpoint:
-        url = f"{base_url}{query.endpoint}"
-    else:
-        url = base_url
-
-    # Add API key if required
-    if api_key and not resource_config.get('requires_header'):
-        separator = '&' if '?' in url else '?'
-        url = f"{url}{separator}apikey={api_key}"
-
-    # Add query parameters
-    if query.params:
-        separator = '&' if '?' in url else '?'
-        params_str = '&'.join([f"{k}={v}" for k, v in query.params.items()])
-        url = f"{url}{separator}{params_str}"
-
-    # Prepare headers
-    headers = {}
-    if resource_config.get('requires_header') and api_key:
-        headers['X-CMC_PRO_API_KEY'] = api_key
-
-    # Fetch the data
-    start_time = time.time()
-    async with aiohttp.ClientSession() as session:
-        result = await fetch_resource(session, url, headers=headers)
-
-    response_time = time.time() - start_time
-
-    # Log the query
-    log_query(
-        category,
-        query.resource_name,
-        url,
-        "success" if result.get('success') else "error",
-        response_time,
-        result.get('error')
     )
 
-    if result.get('success'):
-        return ResourceResponse(
-            success=True,
-            resource_type=category,
-            resource_name=query.resource_name,
-            data=result.get('data'),
-            response_time=response_time,
-            timestamp=datetime.now().isoformat()
-        )
-    else:
-        # If primary fails, try fallbacks if available
-        return ResourceResponse(
-            success=False,
-            resource_type=category,
-            resource_name=query.resource_name,
-            error=result.get('error'),
-            response_time=response_time,
-            timestamp=datetime.now().isoformat()
-        )
 
-@app.get("/status")
-async def get_all_status():
-    """Get status of all resources"""
-    status_list = []
+# ============================================================================
+# Include Routers
+# ============================================================================
 
-    for category, resources in RESOURCES.items():
-        if isinstance(resources, dict):
-            for resource_name, resource_config in resources.items():
-                health = await check_resource_health(category, resource_name, resource_config)
-                status_list.append(health)
+# Include API endpoints router
+app.include_router(
+    api_router,
+    prefix="/api",
+    tags=["API"]
+)
 
-    online_count = sum(1 for s in status_list if s['status'] == 'online')
-    offline_count = len(status_list) - online_count
+# Include WebSocket router
+app.include_router(
+    websocket_router,
+    tags=["WebSocket"]
+)
 
+
+# ============================================================================
+# Root Endpoints
+# ============================================================================
+
+@app.get("/", tags=["Root"])
+async def root():
+    """
+    Root endpoint with API information and available endpoints
+
+    Returns:
+        API information and endpoint listing
+    """
     return {
-        "total_resources": len(status_list),
-        "online": online_count,
-        "offline": offline_count,
-        "resources": status_list,
-        "timestamp": datetime.now().isoformat()
+        "name": "Crypto API Monitoring System",
+        "version": "2.0.0",
+        "description": "Comprehensive cryptocurrency API monitoring with real-time updates",
+        "status": "online",
+        "timestamp": datetime.utcnow().isoformat(),
+        "endpoints": {
+            "documentation": {
+                "swagger": "/docs",
+                "redoc": "/redoc"
+            },
+            "health": "/health",
+            "api": {
+                "providers": "/api/providers",
+                "status": "/api/status",
+                "rate_limits": "/api/rate-limits",
+                "logs": "/api/logs/{log_type}",
+                "alerts": "/api/alerts",
+                "scheduler": "/api/scheduler/status",
+                "database": "/api/database/stats",
+                "analytics": "/api/analytics/failures"
+            },
+            "websocket": {
+                "live": "/ws/live",
+                "stats": "/ws/stats"
+            }
+        },
+        "features": [
+            "Multi-provider API monitoring",
+            "Real-time WebSocket updates",
+            "Rate limit tracking",
+            "Automated health checks",
+            "Scheduled data collection",
+            "Failure detection and alerts",
+            "Historical analytics"
+        ],
+        "system_info": {
+            "total_providers": len(config.get_all_providers()),
+            "categories": config.get_categories(),
+            "scheduler_running": task_scheduler.is_running(),
+            "websocket_connections": ws_manager.get_connection_count(),
+            "database_path": db_manager.db_path
+        }
     }
 
-@app.get("/status/{category}/{name}")
-async def get_resource_status(category: str, name: str):
-    """Get status of a specific resource"""
-    if category not in RESOURCES:
-        raise HTTPException(status_code=404, detail=f"Category '{category}' not found")
 
-    if isinstance(RESOURCES[category], dict) and name not in RESOURCES[category]:
-        raise HTTPException(status_code=404, detail=f"Resource '{name}' not found")
-
-    resource_config = RESOURCES[category][name]
-    health = await check_resource_health(category, name, resource_config)
-
-    return health
-
-@app.get("/history")
-async def get_history(limit: int = 100, resource_type: Optional[str] = None):
-    """Get query history"""
-    with get_db() as conn:
-        cursor = conn.cursor()
-
-        if resource_type:
-            cursor.execute('''
-                SELECT * FROM query_history
-                WHERE resource_type = ?
-                ORDER BY timestamp DESC
-                LIMIT ?
-            ''', (resource_type, limit))
-        else:
-            cursor.execute('''
-                SELECT * FROM query_history
-                ORDER BY timestamp DESC
-                LIMIT ?
-            ''', (limit,))
-
-        rows = cursor.fetchall()
-
-        history = []
-        for row in rows:
-            history.append({
-                "id": row[0],
-                "timestamp": row[1],
-                "resource_type": row[2],
-                "resource_name": row[3],
-                "endpoint": row[4],
-                "status": row[5],
-                "response_time": row[6],
-                "error_message": row[7]
-            })
-
-        return {
-            "count": len(history),
-            "history": history
-        }
-
-@app.get("/history/stats")
-async def get_history_stats():
-    """Get statistics from query history"""
-    with get_db() as conn:
-        cursor = conn.cursor()
-
-        # Total queries
-        cursor.execute('SELECT COUNT(*) FROM query_history')
-        total_queries = cursor.fetchone()[0]
-
-        # Success rate
-        cursor.execute('SELECT COUNT(*) FROM query_history WHERE status = "success"')
-        successful_queries = cursor.fetchone()[0]
-
-        # Most queried resources
-        cursor.execute('''
-            SELECT resource_name, COUNT(*) as count
-            FROM query_history
-            GROUP BY resource_name
-            ORDER BY count DESC
-            LIMIT 10
-        ''')
-        most_queried = [{"resource": row[0], "count": row[1]} for row in cursor.fetchall()]
-
-        # Average response time
-        cursor.execute('SELECT AVG(response_time) FROM query_history WHERE response_time IS NOT NULL')
-        avg_response_time = cursor.fetchone()[0]
-
-        return {
-            "total_queries": total_queries,
-            "successful_queries": successful_queries,
-            "success_rate": (successful_queries / total_queries * 100) if total_queries > 0 else 0,
-            "most_queried_resources": most_queried,
-            "average_response_time": avg_response_time,
-            "timestamp": datetime.now().isoformat()
-        }
-
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 async def health_check():
-    """System health check"""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "resources_loaded": len(RESOURCES) > 0,
-        "database_connected": True
-    }
+    """
+    Comprehensive health check endpoint
+
+    Returns:
+        System health status
+    """
+    try:
+        # Check database health
+        db_health = db_manager.health_check()
+
+        # Get latest system metrics
+        latest_metrics = db_manager.get_latest_system_metrics()
+
+        # Check scheduler status
+        scheduler_status = task_scheduler.is_running()
+
+        # Check WebSocket status
+        ws_status = ws_manager._is_running
+        ws_connections = ws_manager.get_connection_count()
+
+        # Determine overall health
+        overall_health = "healthy"
+
+        if db_health.get('status') != 'healthy':
+            overall_health = "degraded"
+
+        if not scheduler_status:
+            overall_health = "degraded"
+
+        if latest_metrics and latest_metrics.system_health == "critical":
+            overall_health = "critical"
+
+        return {
+            "status": overall_health,
+            "timestamp": datetime.utcnow().isoformat(),
+            "components": {
+                "database": {
+                    "status": db_health.get('status', 'unknown'),
+                    "path": db_health.get('database_path'),
+                    "size_mb": db_health.get('stats', {}).get('database_size_mb', 0)
+                },
+                "scheduler": {
+                    "status": "running" if scheduler_status else "stopped",
+                    "active_jobs": task_scheduler.get_job_status().get('total_jobs', 0)
+                },
+                "websocket": {
+                    "status": "running" if ws_status else "stopped",
+                    "active_connections": ws_connections
+                },
+                "providers": {
+                    "total": len(config.get_all_providers()),
+                    "online": latest_metrics.online_count if latest_metrics else 0,
+                    "degraded": latest_metrics.degraded_count if latest_metrics else 0,
+                    "offline": latest_metrics.offline_count if latest_metrics else 0
+                }
+            },
+            "metrics": {
+                "avg_response_time_ms": latest_metrics.avg_response_time_ms if latest_metrics else 0,
+                "total_requests_hour": latest_metrics.total_requests_hour if latest_metrics else 0,
+                "total_failures_hour": latest_metrics.total_failures_hour if latest_metrics else 0,
+                "system_health": latest_metrics.system_health if latest_metrics else "unknown"
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Health check error: {e}", exc_info=True)
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e)
+        }
+
+
+@app.get("/info", tags=["Root"])
+async def system_info():
+    """
+    Get detailed system information
+
+    Returns:
+        Detailed system information
+    """
+    try:
+        # Get configuration stats
+        config_stats = config.stats()
+
+        # Get database stats
+        db_stats = db_manager.get_database_stats()
+
+        # Get rate limit statuses
+        rate_limit_count = len(rate_limiter.get_all_statuses())
+
+        # Get scheduler info
+        scheduler_info = task_scheduler.get_job_status()
+
+        return {
+            "application": {
+                "name": "Crypto API Monitoring System",
+                "version": "2.0.0",
+                "environment": "production"
+            },
+            "configuration": config_stats,
+            "database": db_stats,
+            "rate_limits": {
+                "configured_providers": rate_limit_count
+            },
+            "scheduler": {
+                "running": task_scheduler.is_running(),
+                "total_jobs": scheduler_info.get('total_jobs', 0),
+                "jobs": scheduler_info.get('jobs', [])
+            },
+            "websocket": {
+                "active_connections": ws_manager.get_connection_count(),
+                "background_tasks_running": ws_manager._is_running
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"System info error: {e}", exc_info=True)
+        return {
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+
+# ============================================================================
+# Run Application
+# ============================================================================
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    """
+    Run the application with uvicorn
+
+    Configuration:
+    - Host: 0.0.0.0 (all interfaces)
+    - Port: 7860
+    - Log level: info
+    - Reload: disabled (production mode)
+    """
+    logger.info("Starting Crypto API Monitoring System on 0.0.0.0:7860")
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=7860,
+        log_level="info",
+        access_log=True,
+        use_colors=True
+    )
