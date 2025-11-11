@@ -527,6 +527,89 @@ async def collect_rpc_data(
     return all_results
 
 
+class RPCNodeCollector:
+    """
+    RPC Node Collector class for WebSocket streaming interface
+    Wraps the standalone RPC node collection functions
+    """
+
+    def __init__(self, config: Any = None):
+        """
+        Initialize the RPC node collector
+
+        Args:
+            config: Configuration object (optional, for compatibility)
+        """
+        self.config = config
+        self.logger = logger
+
+    async def collect(self) -> Dict[str, Any]:
+        """
+        Collect RPC node data from all sources
+
+        Returns:
+            Dict with aggregated RPC node data
+        """
+        import os
+        infura_key = os.getenv("INFURA_API_KEY")
+        alchemy_key = os.getenv("ALCHEMY_API_KEY")
+        results = await collect_rpc_data(infura_key, alchemy_key)
+
+        # Aggregate data for WebSocket streaming
+        aggregated = {
+            "nodes": [],
+            "active_nodes": 0,
+            "total_nodes": 0,
+            "average_latency": 0,
+            "events": [],
+            "block_number": None,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        total_latency = 0
+        latency_count = 0
+
+        for result in results:
+            aggregated["total_nodes"] += 1
+
+            if result.get("success"):
+                aggregated["active_nodes"] += 1
+                provider = result.get("provider", "unknown")
+                response_time = result.get("response_time_ms", 0)
+                data = result.get("data", {})
+
+                # Track latency
+                if response_time:
+                    total_latency += response_time
+                    latency_count += 1
+
+                # Add node info
+                node_info = {
+                    "provider": provider,
+                    "response_time_ms": response_time,
+                    "status": "active",
+                    "data": data
+                }
+
+                # Extract block number
+                if "result" in data and isinstance(data["result"], str):
+                    try:
+                        block_number = int(data["result"], 16)
+                        node_info["block_number"] = block_number
+                        if aggregated["block_number"] is None or block_number > aggregated["block_number"]:
+                            aggregated["block_number"] = block_number
+                    except:
+                        pass
+
+                aggregated["nodes"].append(node_info)
+
+        # Calculate average latency
+        if latency_count > 0:
+            aggregated["average_latency"] = total_latency / latency_count
+
+        return aggregated
+
+
 # Example usage
 if __name__ == "__main__":
     async def main():

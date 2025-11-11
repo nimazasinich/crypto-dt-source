@@ -358,6 +358,77 @@ async def collect_news_data() -> List[Dict[str, Any]]:
     return processed_results
 
 
+# Alias for backward compatibility
+collect_news = collect_news_data
+
+
+class NewsCollector:
+    """
+    News Collector class for WebSocket streaming interface
+    Wraps the standalone news collection functions
+    """
+
+    def __init__(self, config: Any = None):
+        """
+        Initialize the news collector
+
+        Args:
+            config: Configuration object (optional, for compatibility)
+        """
+        self.config = config
+        self.logger = logger
+
+    async def collect(self) -> Dict[str, Any]:
+        """
+        Collect news data from all sources
+
+        Returns:
+            Dict with aggregated news data
+        """
+        results = await collect_news_data()
+
+        # Aggregate data for WebSocket streaming
+        aggregated = {
+            "articles": [],
+            "sources": [],
+            "categories": [],
+            "breaking": [],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+        for result in results:
+            if result.get("success") and result.get("data"):
+                provider = result.get("provider", "unknown")
+                aggregated["sources"].append(provider)
+
+                data = result["data"]
+
+                # Parse CryptoPanic posts
+                if provider == "CryptoPanic" and "results" in data:
+                    for post in data["results"][:10]:  # Take top 10
+                        aggregated["articles"].append({
+                            "title": post.get("title"),
+                            "url": post.get("url"),
+                            "source": post.get("source", {}).get("title"),
+                            "published_at": post.get("published_at"),
+                            "kind": post.get("kind"),
+                            "votes": post.get("votes", {})
+                        })
+
+                # Parse NewsAPI articles
+                elif provider == "NewsAPI" and "articles" in data:
+                    for article in data["articles"][:10]:  # Take top 10
+                        aggregated["articles"].append({
+                            "title": article.get("title"),
+                            "url": article.get("url"),
+                            "source": article.get("source", {}).get("name"),
+                            "published_at": article.get("publishedAt"),
+                            "description": article.get("description")
+                        })
+
+        return aggregated
+
+
 # Example usage
 if __name__ == "__main__":
     async def main():
