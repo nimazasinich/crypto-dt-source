@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  crypto-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crypto-api-monitor
+    ports:
+      - "7860:7860"
+    environment:
+      # Optional: Add your API keys here or use .env file
+      - ETHERSCAN_KEY=${ETHERSCAN_KEY:-}
+      - BSCSCAN_KEY=${BSCSCAN_KEY:-}
+      - TRONSCAN_KEY=${TRONSCAN_KEY:-}
+      - CMC_KEY=${CMC_KEY:-}
+      - CRYPTOCOMPARE_KEY=${CRYPTOCOMPARE_KEY:-}
+      - NEWSAPI_KEY=${NEWSAPI_KEY:-}
+      - INFURA_KEY=${INFURA_KEY:-}
+      - ALCHEMY_KEY=${ALCHEMY_KEY:-}
+      - ENABLE_SENTIMENT=${ENABLE_SENTIMENT:-false}
+    volumes:
+      # Persist database and logs
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - crypto-network
+
+networks:
+  crypto-network:
+    driver: bridge
