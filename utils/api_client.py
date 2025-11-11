@@ -66,19 +66,26 @@ class APIClient:
         self.retry_attempts = retry_attempts
         self.retry_delay = retry_delay
 
-        # Connection pool configuration
-        self.connector = aiohttp.TCPConnector(
-            limit=max_connections,
-            limit_per_host=10,
-            ttl_dns_cache=300,
-            enable_cleanup_closed=True
-        )
+        # Connection pool configuration (lazy initialization)
+        self._connector = None
 
         # Default headers
         self.default_headers = {
             "User-Agent": "CryptoAPIMonitor/1.0",
             "Accept": "application/json"
         }
+
+    @property
+    def connector(self):
+        """Lazy initialize connector when first accessed"""
+        if self._connector is None:
+            self._connector = aiohttp.TCPConnector(
+                limit=self.max_connections,
+                limit_per_host=10,
+                ttl_dns_cache=300,
+                enable_cleanup_closed=True
+            )
+        return self._connector
 
     async def _make_request(
         self,

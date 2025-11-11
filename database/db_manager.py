@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any, Tuple
 from pathlib import Path
 
-from sqlalchemy import create_engine, func, and_, or_, desc
+from sqlalchemy import create_engine, func, and_, or_, desc, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
@@ -61,7 +61,8 @@ class DatabaseManager:
         self.SessionLocal = sessionmaker(
             autocommit=False,
             autoflush=False,
-            bind=self.engine
+            bind=self.engine,
+            expire_on_commit=False  # Allow access to attributes after commit
         )
 
         logger.info(f"Database manager initialized with database: {self.db_path}")
@@ -1459,7 +1460,7 @@ class DatabaseManager:
         try:
             with self.get_session() as session:
                 # Test connection with a simple query
-                result = session.execute("SELECT 1").scalar()
+                result = session.execute(text("SELECT 1")).scalar()
 
                 # Get stats
                 stats = self.get_database_stats()
