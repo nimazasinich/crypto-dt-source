@@ -945,6 +945,201 @@ async def get_compliance_history(
 
 
 # ============================================================================
+# GET /api/charts/rate-limit-history - Rate Limit History for Charts
+# ============================================================================
+
+@router.get("/charts/rate-limit-history")
+async def get_rate_limit_history(
+    hours: int = Query(24, ge=1, le=168, description="Hours of history to retrieve")
+):
+    """
+    Get rate limit usage history data for charts
+
+    Args:
+        hours: Number of hours of history to retrieve
+
+    Returns:
+        Time series data for rate limit usage by provider
+    """
+    try:
+        # Get all providers with rate limits
+        providers = db_manager.get_all_providers()
+        providers_with_limits = [p for p in providers if p.rate_limit_type and p.rate_limit_value]
+
+        if not providers_with_limits:
+            return {
+                "timestamps": [],
+                "providers": []
+            }
+
+        # Generate hourly timestamps
+        end_time = datetime.utcnow()
+        start_time = end_time - timedelta(hours=hours)
+
+        # Create hourly buckets
+        timestamps = []
+        current_time = start_time
+        while current_time <= end_time:
+            timestamps.append(current_time.strftime("%H:%M"))
+            current_time += timedelta(hours=1)
+
+        # Get rate limit usage data for each provider
+        provider_data = []
+
+        for provider in providers_with_limits[:5]:  # Limit to top 5 for readability
+            # Get rate limit usage records for this provider
+            rate_limit_records = db_manager.get_rate_limit_usage(
+                provider_id=provider.id,
+                hours=hours
+            )
+
+            if not rate_limit_records:
+                continue
+
+            # Group by hour and calculate average percentage
+            usage_percentages = []
+            current_time = start_time
+
+            for _ in range(len(timestamps)):
+                hour_end = current_time + timedelta(hours=1)
+
+                # Get records in this hour bucket
+                hour_records = [
+                    r for r in rate_limit_records
+                    if current_time <= r.timestamp < hour_end
+                ]
+
+                if hour_records:
+                    # Calculate average percentage for this hour
+                    avg_percentage = sum(r.percentage for r in hour_records) / len(hour_records)
+                    usage_percentages.append(round(avg_percentage, 2))
+                else:
+                    # No data for this hour, use 0
+                    usage_percentages.append(0.0)
+
+                current_time = hour_end
+
+            provider_data.append({
+                "name": provider.name,
+                "usage_percentage": usage_percentages
+            })
+
+        return {
+            "timestamps": timestamps,
+            "providers": provider_data
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting rate limit history: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get rate limit history: {str(e)}")
+
+
+# ============================================================================
+# GET /api/charts/freshness-history - Data Freshness History for Charts
+# ============================================================================
+
+@router.get("/charts/freshness-history")
+async def get_freshness_history(
+    hours: int = Query(24, ge=1, le=168, description="Hours of history to retrieve")
+):
+    """
+    Get data freshness (staleness) history for charts
+
+    Args:
+        hours: Number of hours of history to retrieve
+
+    Returns:
+        Time series data for data staleness by provider
+    """
+    try:
+        # Get all providers
+        providers = db_manager.get_all_providers()
+
+        if not providers:
+            return {
+                "timestamps": [],
+                "providers": []
+            }
+
+        # Generate hourly timestamps
+        end_time = datetime.utcnow()
+        start_time = end_time - timedelta(hours=hours)
+
+        # Create hourly buckets
+        timestamps = []
+        current_time = start_time
+        while current_time <= end_time:
+            timestamps.append(current_time.strftime("%H:%M"))
+            current_time += timedelta(hours=1)
+
+        # Get freshness data for each provider
+        provider_data = []
+
+        for provider in providers[:5]:  # Limit to top 5 for readability
+            # Get data collection records for this provider
+            collections = db_manager.get_data_collections(
+                provider_id=provider.id,
+                hours=hours,
+                limit=1000  # Get more records for analysis
+            )
+
+            if not collections:
+                continue
+
+            # Group by hour and calculate average staleness
+            staleness_values = []
+            current_time = start_time
+
+            for _ in range(len(timestamps)):
+                hour_end = current_time + timedelta(hours=1)
+
+                # Get records in this hour bucket
+                hour_records = [
+                    c for c in collections
+                    if current_time <= c.actual_fetch_time < hour_end
+                ]
+
+                if hour_records:
+                    # Calculate average staleness for this hour
+                    staleness_list = []
+                    for record in hour_records:
+                        if record.staleness_minutes is not None:
+                            staleness_list.append(record.staleness_minutes)
+                        elif record.data_timestamp and record.actual_fetch_time:
+                            # Calculate staleness if not already stored
+                            staleness_seconds = (record.actual_fetch_time - record.data_timestamp).total_seconds()
+                            staleness_minutes = staleness_seconds / 60
+                            staleness_list.append(staleness_minutes)
+
+                    if staleness_list:
+                        avg_staleness = sum(staleness_list) / len(staleness_list)
+                        staleness_values.append(round(avg_staleness, 2))
+                    else:
+                        staleness_values.append(0.0)
+                else:
+                    # No data for this hour, use null
+                    staleness_values.append(None)
+
+                current_time = hour_end
+
+            # Only add provider if it has some data
+            if any(v is not None and v > 0 for v in staleness_values):
+                provider_data.append({
+                    "name": provider.name,
+                    "staleness_minutes": staleness_values
+                })
+
+        return {
+            "timestamps": timestamps,
+            "providers": provider_data
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting freshness history: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get freshness history: {str(e)}")
+
+
+# ============================================================================
 # Health Check Endpoint
 # ============================================================================
 
