@@ -196,3 +196,79 @@ class SystemMetrics(Base):
     total_requests_hour = Column(Integer, default=0)
     total_failures_hour = Column(Integer, default=0)
     system_health = Column(String(50), default="healthy")
+
+
+class SourcePool(Base):
+    """Source pools for intelligent rotation"""
+    __tablename__ = 'source_pools'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False, unique=True)
+    category = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    rotation_strategy = Column(String(50), default="round_robin")  # round_robin, least_used, priority
+    enabled = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    pool_members = relationship("PoolMember", back_populates="pool", cascade="all, delete-orphan")
+    rotation_history = relationship("RotationHistory", back_populates="pool", cascade="all, delete-orphan")
+
+
+class PoolMember(Base):
+    """Members of source pools"""
+    __tablename__ = 'pool_members'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pool_id = Column(Integer, ForeignKey('source_pools.id'), nullable=False, index=True)
+    provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, index=True)
+    priority = Column(Integer, default=1)  # Higher number = higher priority
+    weight = Column(Integer, default=1)  # For weighted rotation
+    enabled = Column(Boolean, default=True)
+    last_used = Column(DateTime, nullable=True)
+    use_count = Column(Integer, default=0)
+    success_count = Column(Integer, default=0)
+    failure_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    pool = relationship("SourcePool", back_populates="pool_members")
+    provider = relationship("Provider")
+
+
+class RotationHistory(Base):
+    """History of source rotations"""
+    __tablename__ = 'rotation_history'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pool_id = Column(Integer, ForeignKey('source_pools.id'), nullable=False, index=True)
+    from_provider_id = Column(Integer, ForeignKey('providers.id'), nullable=True, index=True)
+    to_provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, index=True)
+    rotation_reason = Column(String(100), nullable=False)  # rate_limit, failure, manual, scheduled
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    success = Column(Boolean, default=True)
+    notes = Column(Text, nullable=True)
+
+    # Relationships
+    pool = relationship("SourcePool", back_populates="rotation_history")
+    from_provider = relationship("Provider", foreign_keys=[from_provider_id])
+    to_provider = relationship("Provider", foreign_keys=[to_provider_id])
+
+
+class RotationState(Base):
+    """Current rotation state for each pool"""
+    __tablename__ = 'rotation_state'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pool_id = Column(Integer, ForeignKey('source_pools.id'), nullable=False, unique=True, index=True)
+    current_provider_id = Column(Integer, ForeignKey('providers.id'), nullable=True)
+    last_rotation = Column(DateTime, nullable=True)
+    next_rotation = Column(DateTime, nullable=True)
+    rotation_count = Column(Integer, default=0)
+    state_data = Column(Text, nullable=True)  # JSON field for additional state
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    pool = relationship("SourcePool")
+    current_provider = relationship("Provider")

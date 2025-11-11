@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Source Pool Management - Crypto API Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-hover: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --success: #10b981;
+            --success-bg: #d1fae5;
+            --warning: #f59e0b;
+            --warning-bg: #fef3c7;
+            --danger: #ef4444;
+            --danger-bg: #fee2e2;
+            --info: #06b6d4;
+            --info-bg: #cffafe;
+            --border: #e2e8f0;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .pools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .pool-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .pool-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .pool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .pool-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .pool-category {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: var(--info-bg);
+            color: var(--info);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .pool-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .stat-item {
+            background: var(--bg-hover);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .pool-members {
+            margin-top: 16px;
+        }
+
+        .member-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg-hover);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .member-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .member-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: var(--success);
+        }
+
+        .status-warning {
+            background: var(--warning);
+        }
+
+        .status-offline {
+            background: var(--danger);
+        }
+
+        .rotation-history {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-left: 3px solid var(--accent-primary);
+            background: var(--bg-hover);
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .history-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .history-desc {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: var(--success-bg);
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-error {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .rate-limit-bar {
+            height: 8px;
+            background: var(--bg-hover);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .rate-limit-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, var(--warning) 50%, var(--danger) 100%);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Source Pool Management</h1>
+            <p>Intelligent API source rotation and failover management</p>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="showCreatePoolModal()">➕ Create New Pool</button>
+                <button class="btn btn-secondary" onclick="loadPools()">🔄 Refresh</button>
+                <button class="btn btn-secondary" onclick="window.location.href='index.html'">← Back to Dashboard</button>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div id="poolsContainer" class="pools-grid">
+            <!-- Pools will be loaded here -->
+        </div>
+
+        <div class="rotation-history" style="margin-top: 24px;">
+            <h2 style="margin-bottom: 16px;">Recent Rotation Events</h2>
+            <div id="historyContainer">
+                <!-- History will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Pool Modal -->
+    <div id="createPoolModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-header">Create New Source Pool</h2>
+            <form id="createPoolForm">
+                <div class="form-group">
+                    <label class="form-label">Pool Name</label>
+                    <input type="text" class="form-input" id="poolName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="poolCategory" required>
+                        <option value="market_data">Market Data</option>
+                        <option value="blockchain_explorers">Blockchain Explorers</option>
+                        <option value="news">News</option>
+                        <option value="sentiment">Sentiment</option>
+                        <option value="onchain_analytics">On-Chain Analytics</option>
+                        <option value="rpc_nodes">RPC Nodes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Rotation Strategy</label>
+                    <select class="form-select" id="rotationStrategy" required>
+                        <option value="round_robin">Round Robin</option>
+                        <option value="least_used">Least Used</option>
+                        <option value="priority">Priority Based</option>
+                        <option value="weighted">Weighted</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" id="poolDescription"></textarea>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreatePoolModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Pool</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div id="addMemberModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-header">Add Provider to Pool</h2>
+            <form id="addMemberForm">
+                <div class="form-group">
+                    <label class="form-label">Provider</label>
+                    <select class="form-select" id="memberProvider" required>
+                        <!-- Will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priority (higher = better)</label>
+                    <input type="number" class="form-input" id="memberPriority" value="1" min="1" max="10">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Weight</label>
+                    <input type="number" class="form-input" id="memberWeight" value="1" min="1" max="100">
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddMemberModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentPoolId = null;
+        let allProviders = [];
+
+        // Load pools on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPools();
+            loadProviders();
+        });
+
+        async function loadPools() {
+            try {
+                const response = await fetch(`${API_BASE}/api/pools`);
+                const data = await response.json();
+
+                const container = document.getElementById('poolsContainer');
+                container.innerHTML = '';
+
+                if (data.pools.length === 0) {
+                    container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No pools configured. Create your first pool to get started.</p>';
+                    return;
+                }
+
+                data.pools.forEach(pool => {
+                    container.appendChild(createPoolCard(pool));
+                });
+            } catch (error) {
+                console.error('Error loading pools:', error);
+                showAlert('Failed to load pools', 'error');
+            }
+        }
+
+        function createPoolCard(pool) {
+            const card = document.createElement('div');
+            card.className = 'pool-card';
+
+            const currentProvider = pool.current_provider
+                ? `<div style="margin-bottom: 12px;">
+                     <span class="status-indicator status-online"></span>
+                     Current: <strong>${pool.current_provider.name}</strong>
+                   </div>`
+                : '<div style="margin-bottom: 12px; color: var(--text-muted);">No active provider</div>';
+
+            const membersHTML = pool.members.map(member => {
+                const successRate = member.success_rate || 0;
+                const statusClass = successRate >= 90 ? 'status-online' : successRate >= 70 ? 'status-warning' : 'status-offline';
+
+                let rateLimitHTML = '';
+                if (member.rate_limit) {
+                    const percentage = member.rate_limit.percentage;
+                    rateLimitHTML = `
+                        <div style="margin-top: 4px;">
+                            <div style="font-size: 11px; color: var(--text-muted);">
+                                ${member.rate_limit.usage}/${member.rate_limit.limit} (${percentage}%)
+                            </div>
+                            <div class="rate-limit-bar">
+                                <div class="rate-limit-fill" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="member-item">
+                        <div>
+                            <span class="status-indicator ${statusClass}"></span>
+                            <span class="member-name">${member.provider_name}</span>
+                            <div class="member-stats">
+                                <span>Used: ${member.use_count}</span>
+                                <span>Success: ${successRate.toFixed(1)}%</span>
+                                <span>Priority: ${member.priority}</span>
+                            </div>
+                            ${rateLimitHTML}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            card.innerHTML = `
+                <div class="pool-header">
+                    <div>
+                        <div class="pool-title">${pool.pool_name}</div>
+                        <span class="pool-category">${pool.category}</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-secondary" onclick="addMember(${pool.pool_id})">➕</button>
+                        <button class="btn btn-sm btn-primary" onclick="rotatePool(${pool.pool_id})">🔄</button>
+                        <button class="btn btn-sm btn-danger" onclick="deletePool(${pool.pool_id}, '${pool.pool_name}')">🗑️</button>
+                    </div>
+                </div>
+
+                ${currentProvider}
+
+                <div class="pool-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Strategy</div>
+                        <div class="stat-value" style="font-size: 14px;">${pool.rotation_strategy}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Total Rotations</div>
+                        <div class="stat-value">${pool.total_rotations}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Members</div>
+                        <div class="stat-value">${pool.members.length}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Status</div>
+                        <div class="stat-value">
+                            <span class="badge ${pool.enabled ? 'badge-success' : 'badge-danger'}">
+                                ${pool.enabled ? 'Enabled' : 'Disabled'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pool-members">
+                    <div style="font-weight: 600; margin-bottom: 12px;">Pool Members</div>
+                    ${membersHTML || '<div style="color: var(--text-muted); font-size: 14px;">No members</div>'}
+                </div>
+            `;
+
+            return card;
+        }
+
+        async function loadProviders() {
+            try {
+                const response = await fetch(`${API_BASE}/api/providers`);
+                const providers = await response.json();
+                allProviders = providers;
+
+                const select = document.getElementById('memberProvider');
+                select.innerHTML = providers.map(p =>
+                    `<option value="${p.id}">${p.name} (${p.category})</option>`
+                ).join('');
+            } catch (error) {
+                console.error('Error loading providers:', error);
+            }
+        }
+
+        function showCreatePoolModal() {
+            document.getElementById('createPoolModal').classList.add('active');
+        }
+
+        function closeCreatePoolModal() {
+            document.getElementById('createPoolModal').classList.remove('active');
+            document.getElementById('createPoolForm').reset();
+        }
+
+        function showAddMemberModal() {
+            document.getElementById('addMemberModal').classList.add('active');
+        }
+
+        function closeAddMemberModal() {
+            document.getElementById('addMemberModal').classList.remove('active');
+            document.getElementById('addMemberForm').reset();
+        }
+
+        function addMember(poolId) {
+            currentPoolId = poolId;
+            showAddMemberModal();
+        }
+
+        document.getElementById('createPoolForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                name: document.getElementById('poolName').value,
+                category: document.getElementById('poolCategory').value,
+                rotation_strategy: document.getElementById('rotationStrategy').value,
+                description: document.getElementById('poolDescription').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/pools`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showAlert('Pool created successfully', 'success');
+                    closeCreatePoolModal();
+                    loadPools();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.detail || 'Failed to create pool', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating pool:', error);
+                showAlert('Failed to create pool', 'error');
+            }
+        });
+
+        document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                provider_id: parseInt(document.getElementById('memberProvider').value),
+                priority: parseInt(document.getElementById('memberPriority').value),
+                weight: parseInt(document.getElementById('memberWeight').value)
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/pools/${currentPoolId}/members`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showAlert('Member added successfully', 'success');
+                    closeAddMemberModal();
+                    loadPools();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.detail || 'Failed to add member', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding member:', error);
+                showAlert('Failed to add member', 'error');
+            }
+        });
+
+        async function rotatePool(poolId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/pools/${poolId}/rotate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: 'manual' })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showAlert(`Rotated to ${result.provider_name}`, 'success');
+                    loadPools();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.detail || 'Failed to rotate', 'error');
+                }
+            } catch (error) {
+                console.error('Error rotating pool:', error);
+                showAlert('Failed to rotate pool', 'error');
+            }
+        }
+
+        async function deletePool(poolId, poolName) {
+            if (!confirm(`Are you sure you want to delete pool "${poolName}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/pools/${poolId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showAlert('Pool deleted successfully', 'success');
+                    loadPools();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.detail || 'Failed to delete pool', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting pool:', error);
+                showAlert('Failed to delete pool', 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
