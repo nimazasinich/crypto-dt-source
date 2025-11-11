@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 # Import API modules
 from api.endpoints import router as api_router
 from api.websocket import router as websocket_router, manager as ws_manager
+from api.pool_endpoints import router as pool_router
 
 # Import monitoring and database modules
 from monitoring.scheduler import task_scheduler
@@ -280,6 +281,12 @@ app.include_router(
 app.include_router(
     websocket_router,
     tags=["WebSocket"]
+)
+
+# Include Pool Management router
+app.include_router(
+    pool_router,
+    tags=["Pool Management"]
 )
 
 # Include HF router (if available)
