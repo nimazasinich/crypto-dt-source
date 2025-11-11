@@ -1,53 +1,65 @@
 ---
-title: Crypto API Monitor Backend
+title: Crypto API Monitor - Vidya UI
 emoji: 📊
 colorFrom: blue
-colorTo: green
+colorTo: purple
 sdk: docker
 app_port: 7860
 pinned: false
 license: mit
 ---
 
-# Crypto API Monitoring System
+# 📊 Cryptocurrency API Monitor - Vidya Dashboard
 
-A comprehensive, production-ready backend system for monitoring cryptocurrency API health, tracking rate limits, collecting market data, and providing real-time status updates.
+> **Production-ready real-time cryptocurrency API monitoring with beautiful Vidya HTML UI**
 
-## Features
+A comprehensive monitoring system that tracks the health, performance, and availability of 162+ cryptocurrency APIs including market data, blockchain explorers, RPC nodes, news sources, sentiment analyzers, and more. Features a stunning real-time dashboard with WebSocket support.
 
-### Real-Time API Health Monitoring
-- **Automated Health Checks**: Monitors 9+ cryptocurrency APIs every 5 minutes
-- **Smart Status Detection**: Online/Degraded/Offline status based on response times and error rates
-- **Failure Tracking**: Detailed logging of all failures with root cause analysis
-- **Consecutive Failure Detection**: Automatic offline marking after 3+ failures
+## 🌟 Features
 
-### Data Collection
-- **Market Data**: CoinGecko, CoinMarketCap, CryptoCompare, Binance
-- **Blockchain Explorers**: Etherscan, BscScan, TronScan
-- **News**: CryptoPanic, NewsAPI
-- **Sentiment**: Alternative.me Fear & Greed Index
-- **On-Chain Analytics**: Placeholder support for The Graph, Blockchair, Glassnode
+### Beautiful Vidya HTML UI
+- **Modern Design**: Gradient-based UI with smooth animations and transitions
+- **Real-time Updates**: WebSocket-powered live data streaming
+- **Interactive Dashboard**: KPI cards, charts, and data visualizations
+- **Multiple Views**: Dashboard, Inventory, Logs, Analytics, and HuggingFace Integration
+- **Responsive**: Works perfectly on desktop, tablet, and mobile devices
 
-### Rate Limit Management
-- **Per-Provider Tracking**: Monitors usage against limits (per_second, per_minute, per_hour, per_day)
-- **Auto-Reset**: Automatic counter reset based on limit period
-- **Warnings**: Alerts when usage reaches 80%
-- **Blocking**: Prevents requests when limit reached
+### Core Capabilities
+- **Real-Time Monitoring**: Track 162+ API endpoints with live status updates
+- **WebSocket Streaming**: Real-time data feeds for all services
+- **Multi-Category Support**: Market Data, Blockchain Explorers, RPC Nodes, News, Sentiment, On-chain Analytics
+- **Health Tracking**: Response times, uptime percentages, failure detection
+- **Rate Limit Management**: Automatic rate limiting with configurable rules
+- **Database Persistence**: SQLite-based historical data storage
+- **Automated Scheduling**: Background tasks for continuous monitoring
+- **Alert System**: Real-time alerts for critical failures
+- **HuggingFace Integration**: AI/ML capabilities with sentiment analysis
 
-### Schedule Compliance
-- **Configurable Schedules**: Different intervals per provider category
-  - Market Data: Every 1 minute
-  - Explorers: Every 5 minutes
-  - News: Every 10 minutes
-  - Sentiment: Every 15 minutes
-- **Compliance Tracking**: Monitors on-time vs late execution
-- **Skip Reasons**: Logs why tasks were skipped (rate limit, provider offline, etc.)
+### WebSocket Services
+The application provides comprehensive WebSocket APIs for real-time streaming:
 
-### Data Freshness Validation
-- **Timestamp Extraction**: Reads data timestamps from API responses
-- **Staleness Calculation**: Measures age in minutes
-- **TTL-Based Status**: Fresh/Aging/Stale based on category-specific TTLs
-- **Alerts**: Notifications when data is stale despite on-schedule fetching
+#### Data Collection Streams
+- `/ws/market_data` - Live market data updates
+- `/ws/news` - Real-time crypto news feed
+- `/ws/sentiment` - Sentiment analysis stream
+- `/ws/whale_tracking` - Whale transaction alerts
+- `/ws/data` - Unified data collection stream
+
+#### Monitoring Streams
+- `/ws/health` - System health status
+- `/ws/pool_status` - Pool management updates
+- `/ws/scheduler_status` - Scheduler activity
+- `/ws/monitoring` - Unified monitoring stream
+
+#### Integration Streams
+- `/ws/huggingface` - HuggingFace AI/ML integration
+- `/ws/ai` - AI services stream
+- `/ws/persistence` - Persistence service updates
+- `/ws/integration` - Unified integration stream
+
+#### Master Streams
+- `/ws` or `/ws/master` - All services combined
+- `/ws/live` - Legacy live updates (compatible with older clients)
 
 ## API Endpoints
 
@@ -150,27 +162,45 @@ export NEWSAPI_KEY="your_key"
 export HUGGINGFACE_KEY="your_key"
 ```
 
-## Quick Start
+## 🚀 Quick Start
+
+### Hugging Face Spaces Deployment (Recommended)
+
+This application is configured for **Docker SDK** deployment on Hugging Face Spaces:
+
+1. **Create a new Space** on [Hugging Face](https://huggingface.co/spaces)
+2. **Select SDK**: Choose "Docker" as the SDK
+3. **Link Repository**: Connect this GitHub repository
+4. **Configure Secrets** (Optional - for API keys):
+   ```
+   ETHERSCAN_KEY
+   BSCSCAN_KEY
+   TRONSCAN_KEY
+   CMC_KEY
+   CRYPTOCOMPARE_KEY
+   NEWSAPI_KEY
+   INFURA_KEY
+   ALCHEMY_KEY
+   ```
+5. **Deploy**: Push to your repository - auto-deploy triggers!
+
+The application will be available at `https://YOUR_USERNAME-SPACE_NAME.hf.space`
 
 ### Local Development
 
 ```bash
 # Clone repository
-git clone <repository_url>
+git clone https://github.com/nimazasinich/crypto-dt-source.git
 cd crypto-dt-source
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Set environment variables (optional)
-cp .env.example .env
-# Edit .env with your API keys
-
 # Run the application
 python app.py
 ```
 
-The application will start on http://localhost:7860
+Visit `http://localhost:7860` to access the Vidya dashboard.
 
 ### Docker Deployment
 
@@ -179,18 +209,8 @@ The application will start on http://localhost:7860
 docker build -t crypto-api-monitor .
 
 # Run container
-docker run -p 7860:7860 \
-  -e ETHERSCAN_KEY_1="your_key" \
-  -e COINMARKETCAP_KEY_1="your_key" \
-  crypto-api-monitor
+docker run -p 7860:7860 crypto-api-monitor
 ```
-
-### Hugging Face Spaces
-
-This app is configured for Hugging Face Spaces deployment:
-1. Fork/upload this repository to Hugging Face
-2. Set environment variables in Space settings
-3. The app will auto-deploy with Docker SDK
 
 ## API Documentation
 

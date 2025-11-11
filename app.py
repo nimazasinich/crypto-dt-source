@@ -10,7 +10,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 # Import API modules
 from api.endpoints import router as api_router
@@ -373,10 +374,26 @@ logger.info("All WebSocket service routers included successfully")
 # Root Endpoints
 # ============================================================================
 
-@app.get("/", tags=["Root"])
+@app.get("/", response_class=HTMLResponse, tags=["Root"])
 async def root():
     """
-    Root endpoint with API information and available endpoints
+    Serve the Vidya HTML UI dashboard
+
+    Returns:
+        HTML dashboard interface
+    """
+    try:
+        with open("index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        logger.error(f"Error serving index.html: {e}")
+        return HTMLResponse(content=f"<h1>Error loading dashboard</h1><p>{str(e)}</p>", status_code=500)
+
+
+@app.get("/api-info", tags=["Root"])
+async def api_info():
+    """
+    API information and available endpoints
 
     Returns:
         API information and endpoint listing

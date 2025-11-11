@@ -24,11 +24,11 @@ SQLAlchemy==2.0.23
 # Configuration
 python-dotenv==1.0.0
 
-# HuggingFace Integration (optional)
-transformers>=4.44.0
-datasets>=3.0.0
-huggingface_hub>=0.24.0
-torch>=2.0.0
+# HuggingFace Integration (optional - uncomment if needed)
+# transformers>=4.44.0
+# datasets>=3.0.0
+# huggingface_hub>=0.24.0
+# torch>=2.0.0
 
 # RSS Feed Parsing
 feedparser==6.0.11
