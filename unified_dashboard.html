@@ -3027,7 +3027,25 @@ Crypto market is bullish today</textarea>
                 if (!stats.market || typeof stats.market !== 'object' || stats.market === null || Array.isArray(stats.market)) {
                     console.error('Invalid stats.market:', stats.market);
                     console.error('Full stats object:', JSON.stringify(stats, null, 2));
-                    throw new Error('آمار نامعتبر است: stats.market object not found');
+                    // Handle both old structure (stats.market) and new structure (stats.summary)
+                    // Check if it's the new structure (with summary and providers)
+                    if (stats.summary && stats.providers) {
+                        // New structure - convert to old structure for compatibility
+                        stats.market = {
+                            total_market_cap: stats.summary.total_market_cap || 0,
+                            total_volume: stats.summary.total_volume || 0,
+                            btc_dominance: stats.summary.btc_dominance || 0,
+                            active_cryptos: stats.summary.active_cryptos || 0
+                        };
+                    } else {
+                        // Create default market object if missing
+                        stats.market = {
+                            total_market_cap: 0,
+                            total_volume: 0,
+                            btc_dominance: 0,
+                            active_cryptos: 0
+                        };
+                    }
                 }
                 if (!sentiment || typeof sentiment !== 'object' || sentiment === null) {
                     throw new Error('داده‌های احساسات نامعتبر است: sentiment object not found');
@@ -3494,7 +3512,17 @@ Crypto market is bullish today</textarea>
 
                 // Validate data
                 if (!status || typeof status.total_providers === 'undefined') throw new Error('داده‌های وضعیت نامعتبر است');
-                if (!providers || !Array.isArray(providers)) throw new Error('لیست APIها نامعتبر است');
+                
+                // Handle providers as both array and object
+                let providersArray = [];
+                if (Array.isArray(providers)) {
+                    providersArray = providers;
+                } else if (providers && typeof providers === 'object') {
+                    // Convert object to array
+                    providersArray = Object.values(providers);
+                } else {
+                    throw new Error('لیست APIها نامعتبر است');
+                }
 
                 if (document.getElementById('totalAPIs')) {
                     document.getElementById('totalAPIs').textContent = status.total_providers || 0;
@@ -3510,10 +3538,10 @@ Crypto market is bullish today</textarea>
                 }
 
                 if (tbody) {
-                    if (providers.length === 0) {
+                    if (providersArray.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-secondary);">هیچ APIای یافت نشد</td></tr>';
                     } else {
-                tbody.innerHTML = providers.map(p => {
+                tbody.innerHTML = providersArray.map(p => {
                     let statusClass = 'badge-success';
                     if (p.status === 'offline') statusClass = 'badge-danger';
                     else if (p.status === 'degraded') statusClass = 'badge-warning';
@@ -3589,18 +3617,68 @@ Crypto market is bullish today</textarea>
         async function loadAdvancedData() {
             try {
                 const response = await fetch('/api/v2/status');
+                if (!response.ok) {
+                    // Fallback to /api/status if /api/v2/status doesn't exist
+                    const fallbackResponse = await fetch('/api/status');
+                    const fallbackData = await fallbackResponse.json();
+                    
+                    if (document.getElementById('totalApis')) {
+                        document.getElementById('totalApis').textContent = fallbackData.total_providers || 0;
+                    }
+                    if (document.getElementById('activeTasks')) {
+                        document.getElementById('activeTasks').textContent = 'N/A';
+                    }
+                    if (document.getElementById('cachedData')) {
+                        document.getElementById('cachedData').textContent = 'N/A';
+                    }
+                    if (document.getElementById('wsConnections')) {
+                        document.getElementById('wsConnections').textContent = 'N/A';
+                    }
+                    return;
+                }
+                
                 const data = await response.json();
 
-                document.getElementById('totalApis').textContent = data.services.config_loader.apis_loaded;
-                document.getElementById('activeTasks').textContent = data.services.scheduler.total_tasks;
-                document.getElementById('cachedData').textContent = data.services.persistence.cached_apis;
-                document.getElementById('wsConnections').textContent = data.services.websocket.total_connections;
+                // Safe property access
+                if (document.getElementById('totalApis')) {
+                    document.getElementById('totalApis').textContent = data?.services?.config_loader?.apis_loaded || data?.summary?.total_providers || 0;
+                }
+                if (document.getElementById('activeTasks')) {
+                    document.getElementById('activeTasks').textContent = data?.services?.scheduler?.total_tasks || 'N/A';
+                }
+                if (document.getElementById('cachedData')) {
+                    document.getElementById('cachedData').textContent = data?.services?.persistence?.cached_apis || 'N/A';
+                }
+                if (document.getElementById('wsConnections')) {
+                    document.getElementById('wsConnections').textContent = data?.services?.websocket?.total_connections || 'N/A';
+                }
 
-                const apisResponse = await fetch('/api/v2/config/apis');
-                const apisData = await apisResponse.json();
-                displayAPIs(apisData.apis);
+                try {
+                    const apisResponse = await fetch('/api/v2/config/apis');
+                    if (apisResponse.ok) {
+                        const apisData = await apisResponse.json();
+                        if (apisData?.apis) {
+                            displayAPIs(apisData.apis);
+                        }
+                    }
+                } catch (apiError) {
+                    console.warn('Could not load API config:', apiError);
+                }
             } catch (error) {
                 console.error('Error loading advanced data:', error);
+                // Set default values
+                if (document.getElementById('totalApis')) {
+                    document.getElementById('totalApis').textContent = 'N/A';
+                }
+                if (document.getElementById('activeTasks')) {
+                    document.getElementById('activeTasks').textContent = 'N/A';
+                }
+                if (document.getElementById('cachedData')) {
+                    document.getElementById('cachedData').textContent = 'N/A';
+                }
+                if (document.getElementById('wsConnections')) {
+                    document.getElementById('wsConnections').textContent = 'N/A';
+                }
             }
         }
 
@@ -3722,12 +3800,24 @@ Crypto market is bullish today</textarea>
                     fetch('/api/providers').then(r => r.json())
                 ]);
 
-                document.getElementById('statTotal').textContent = status.total_providers;
-                document.getElementById('statOnline').textContent = status.online;
-                document.getElementById('statOffline').textContent = status.offline;
+                document.getElementById('statTotal').textContent = status.total_providers || 0;                                                                      
+                document.getElementById('statOnline').textContent = status.online || 0;                                                                              
+                document.getElementById('statOffline').textContent = status.offline || 0;                                                                            
+
+                // Handle providers as both array and object
+                let providersArray = [];
+                if (Array.isArray(providers)) {
+                    providersArray = providers;
+                } else if (providers && typeof providers === 'object') {
+                    // Convert object to array
+                    providersArray = Object.values(providers);
+                }
 
                 const list = document.getElementById('apisList');
-                list.innerHTML = providers.map(api => `
+                if (providersArray.length === 0) {
+                    list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">هیچ APIای یافت نشد</div>';
+                } else {
+                    list.innerHTML = providersArray.map(api => `
                     <div style="background: rgba(17, 24, 39, 0.6); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <div style="font-weight: 600;">${api.name}</div>
