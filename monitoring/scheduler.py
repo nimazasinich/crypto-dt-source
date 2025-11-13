@@ -21,9 +21,6 @@ from database.db_manager import db_manager
 from utils.logger import setup_logger
 from config import config
 
-# Import master collector for data collection tasks
-from collectors.master_collector import DataSourceCollector
-
 # Setup logger
 logger = setup_logger("scheduler", level="INFO")
 
@@ -45,9 +42,6 @@ class TaskScheduler:
         self.db_path = db_path
         self.health_checker = HealthChecker(db_path=db_path)
         self.lock = Lock()
-
-        # Initialize data collector
-        self.collector = DataSourceCollector()
 
         # Track next expected run times for compliance
         self.expected_run_times: Dict[str, datetime] = {}
@@ -242,16 +236,10 @@ class TaskScheduler:
 
             logger.info(f"Collecting market data from {len(providers)} providers")
 
-            # Collect actual market data using the master collector
-            async def collect_data():
-                results = await self.collector.collect_all_market_data()
-                logger.info(f"Market data collected: {len(results)} results")
-                return results
-
-            # Run async collection
-            results = asyncio.run(collect_data())
-
-            logger.info(f"Market data collection completed: {len(results)} items")
+            # TODO: Implement actual data collection logic
+            # For now, just log the execution
+            for provider in providers:
+                logger.debug(f"Would collect market data from: {provider.name}")
 
         except Exception as e:
             logger.error(f"Market data collection failed: {e}", exc_info=True)
@@ -268,16 +256,9 @@ class TaskScheduler:
 
             logger.info(f"Collecting explorer data from {len(providers)} providers")
 
-            # Collect actual blockchain data using the master collector
-            async def collect_data():
-                results = await self.collector.collect_all_blockchain_data()
-                logger.info(f"Blockchain data collected: {len(results)} results")
-                return results
-
-            # Run async collection
-            results = asyncio.run(collect_data())
-
-            logger.info(f"Explorer data collection completed: {len(results)} items")
+            # TODO: Implement actual data collection logic
+            for provider in providers:
+                logger.debug(f"Would collect explorer data from: {provider.name}")
 
         except Exception as e:
             logger.error(f"Explorer data collection failed: {e}", exc_info=True)
@@ -294,16 +275,9 @@ class TaskScheduler:
 
             logger.info(f"Collecting news from {len(providers)} providers")
 
-            # Collect actual news data using the master collector
-            async def collect_data():
-                results = await self.collector.collect_all_news()
-                logger.info(f"News data collected: {len(results)} results")
-                return results
-
-            # Run async collection
-            results = asyncio.run(collect_data())
-
-            logger.info(f"News collection completed: {len(results)} items")
+            # TODO: Implement actual news collection logic
+            for provider in providers:
+                logger.debug(f"Would collect news from: {provider.name}")
 
         except Exception as e:
             logger.error(f"News collection failed: {e}", exc_info=True)
@@ -320,16 +294,9 @@ class TaskScheduler:
 
             logger.info(f"Collecting sentiment data from {len(providers)} providers")
 
-            # Collect actual sentiment data using the master collector
-            async def collect_data():
-                results = await self.collector.collect_all_sentiment()
-                logger.info(f"Sentiment data collected: {len(results)} results")
-                return results
-
-            # Run async collection
-            results = asyncio.run(collect_data())
-
-            logger.info(f"Sentiment collection completed: {len(results)} items")
+            # TODO: Implement actual sentiment collection logic
+            for provider in providers:
+                logger.debug(f"Would collect sentiment data from: {provider.name}")
 
         except Exception as e:
             logger.error(f"Sentiment collection failed: {e}", exc_info=True)
