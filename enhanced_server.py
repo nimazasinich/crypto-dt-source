@@ -2,6 +2,12 @@
 Enhanced Production Server
 Integrates all services for comprehensive crypto data tracking
 with real-time updates, persistence, and scheduling
+
+DEPRECATED: This file is kept for backward compatibility only.
+For production use, please use app.py instead:
+    python app.py
+    or
+    python start_server.py
 """
 import asyncio
 import logging
