@@ -1188,18 +1188,24 @@ async def get_last_diagnostics():
 # ===== Main =====
 
 if __name__ == "__main__":
-    print("""
+    import os
+
+    # Support for Hugging Face Spaces and other platforms
+    port = int(os.getenv("PORT", "8000"))
+
+    print(f"""
     ╔═══════════════════════════════════════════════════════════╗
     ║   🚀 Crypto Monitor Extended API Server                  ║
-    ║   Version: 2.0.0                                          ║
+    ║   Version: 3.0.0                                          ║
     ║   با پشتیبانی کامل از Provider Management & Pools       ║
+    ║   Port: {port}                                                   ║
     ╚═══════════════════════════════════════════════════════════╝
     """)
-    
+
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=8000,
+        port=port,
         log_level="info"
     )
 
