@@ -1,4 +1,11 @@
-"""Simple FastAPI server for testing HF integration"""
+"""Simple FastAPI server for testing HF integration
+
+DEPRECATED: This file is kept for backward compatibility only.
+For production use, please use app.py instead:
+    python app.py
+    or
+    python start_server.py
+"""
 import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
