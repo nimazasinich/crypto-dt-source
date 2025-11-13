@@ -162,12 +162,8 @@ Or use the process manager to stop process ID 6
 
 ## 🔄 Restart the Server
 
-```bash
-# Production server (recommended)
-python app.py
-
-# Or use the convenient launcher
-python start_server.py
+```powershell
+python simple_server.py
 ```
 
 ## 📝 Notes
