@@ -1,182 +1,221 @@
-# 🚀 Quick Start Guide - Crypto API Monitor with HuggingFace Integration
+# 🚀 راهنمای سریع شروع - Quick Start Guide
 
-## ✅ Server is Running!
+## ⚡ نصب و راه‌اندازی سریع
 
-Your application is now live at: **http://localhost:7860**
-
-## 📱 Access Points
-
-### 1. Main Dashboard (Full Features)
-**URL:** http://localhost:7860/index.html
-
-Features:
-- Real-time API monitoring
-- Provider inventory
-- Rate limit tracking
-- Connection logs
-- Schedule management
-- Data freshness monitoring
-- Failure analysis
-- **🤗 HuggingFace Tab** (NEW!)
-
-### 2. HuggingFace Console (Standalone)
-**URL:** http://localhost:7860/hf_console.html
-
-Features:
-- HF Health Status
-- Models Registry Browser
-- Datasets Registry Browser
-- Local Search (snapshot)
-- Sentiment Analysis (local pipeline)
-
-### 3. API Documentation
-**URL:** http://localhost:7860/docs
-
-Interactive API documentation with all endpoints
-
-## 🤗 HuggingFace Features
-
-### Available Endpoints:
-
-1. **Health Check**
-   ```
-   GET /api/hf/health
-   ```
-   Returns: Registry health, last refresh time, model/dataset counts
-
-2. **Force Refresh Registry**
-   ```
-   POST /api/hf/refresh
-   ```
-   Manually trigger registry update from HuggingFace Hub
-
-3. **Get Models Registry**
-   ```
-   GET /api/hf/registry?kind=models
-   ```
-   Returns: List of all cached crypto-related models
-
-4. **Get Datasets Registry**
-   ```
-   GET /api/hf/registry?kind=datasets
-   ```
-   Returns: List of all cached crypto-related datasets
-
-5. **Search Registry**
-   ```
-   GET /api/hf/search?q=crypto&kind=models
-   ```
-   Search local snapshot for models or datasets
-
-6. **Run Sentiment Analysis**
-   ```
-   POST /api/hf/run-sentiment
-   Body: {"texts": ["BTC strong", "ETH weak"]}
-   ```
-   Analyze crypto sentiment using local transformers
-
-## 🎯 How to Use
-
-### Option 1: Main Dashboard
-1. Open http://localhost:7860/index.html in your browser
-2. Click on the **"🤗 HuggingFace"** tab at the top
-3. Explore:
-   - Health status
-   - Models and datasets registries
-   - Search functionality
-   - Sentiment analysis
-
-### Option 2: Standalone HF Console
-1. Open http://localhost:7860/hf_console.html
-2. All HF features in a clean, focused interface
-3. Perfect for testing and development
-
-## 🧪 Test the Integration
-
-### Test 1: Check Health
-```powershell
-Invoke-WebRequest -Uri "http://localhost:7860/api/hf/health" -UseBasicParsing | Select-Object -ExpandProperty Content
+### 1️⃣ نصب وابستگی‌ها
+```bash
+pip install -r requirements.txt
 ```
 
-### Test 2: Refresh Registry
-```powershell
-Invoke-WebRequest -Uri "http://localhost:7860/api/hf/refresh" -Method POST -UseBasicParsing | Select-Object -ExpandProperty Content
+### 2️⃣ Import منابع از فایل‌های JSON
+```bash
+python import_resources.py
+```
+این اسکریپت به‌طور خودکار همه منابع را از فایل‌های JSON موجود import می‌کند.
+
+### 3️⃣ راه‌اندازی سرور
+```bash
+# روش 1: استفاده از اسکریپت راه‌انداز
+python start_server.py
+
+# روش 2: مستقیم
+python api_server_extended.py
+
+# روش 3: با uvicorn
+uvicorn api_server_extended:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Test 3: Get Models
-```powershell
-Invoke-WebRequest -Uri "http://localhost:7860/api/hf/registry?kind=models" -UseBasicParsing | Select-Object -ExpandProperty Content
+### 4️⃣ دسترسی به داشبورد
+```
+http://localhost:8000
 ```
 
-### Test 4: Run Sentiment Analysis
-```powershell
-$body = @{texts = @("BTC strong breakout", "ETH looks weak")} | ConvertTo-Json
-Invoke-WebRequest -Uri "http://localhost:7860/api/hf/run-sentiment" -Method POST -Body $body -ContentType "application/json" -UseBasicParsing | Select-Object -ExpandProperty Content
+## 📋 تب‌های داشبورد
+
+### 📊 Market
+- آمار کلی بازار
+- لیست کریپتوکارنسی‌ها
+- نمودارها و ترندینگ
+
+### 📡 API Monitor
+- وضعیت همه ارائه‌دهندگان
+- زمان پاسخ
+- Health Check
+
+### ⚡ Advanced
+- Export JSON/CSV
+- Backup
+- Clear Cache
+- Activity Logs
+
+### ⚙️ Admin
+- افزودن API جدید
+- تنظیمات
+- آمار کلی
+
+### 🤗 HuggingFace
+- مدل‌های Sentiment Analysis
+- Datasets
+- جستجو در Registry
+
+### 🔄 Pools
+- مدیریت Pool‌ها
+- افزودن/حذف اعضا
+- چرخش دستی
+
+### 📋 Logs (جدید!)
+- نمایش لاگ‌ها با فیلتر
+- Export به JSON/CSV
+- جستجو و آمار
+
+### 📦 Resources (جدید!)
+- مدیریت منابع API
+- Import/Export
+- Backup
+- فیلتر بر اساس Category
+
+## 🔧 استفاده از API
+
+### دریافت لاگ‌ها
+```bash
+# همه لاگ‌ها
+curl http://localhost:8000/api/logs
+
+# فیلتر بر اساس Level
+curl http://localhost:8000/api/logs?level=error
+
+# جستجو
+curl http://localhost:8000/api/logs?search=timeout
 ```
 
-## 📊 What's Included
+### Export لاگ‌ها
+```bash
+# Export به JSON
+curl http://localhost:8000/api/logs/export/json?level=error
 
-### Seed Models (Always Available):
-- ElKulako/cryptobert
-- kk08/CryptoBERT
-
-### Seed Datasets (Always Available):
-- linxy/CryptoCoin
-- WinkingFace/CryptoLM-Bitcoin-BTC-USDT
-- WinkingFace/CryptoLM-Ethereum-ETH-USDT
-- WinkingFace/CryptoLM-Solana-SOL-USDT
-- WinkingFace/CryptoLM-Ripple-XRP-USDT
-
-### Auto-Discovery:
-- Searches HuggingFace Hub for crypto-related models
-- Searches for sentiment-analysis models
-- Auto-refreshes every 6 hours (configurable)
-
-## ⚙️ Configuration
-
-Edit `.env` file to customize:
-
-```env
-# HuggingFace Token (optional, for higher rate limits)
-HUGGINGFACE_TOKEN=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
-
-# Enable/disable local sentiment analysis
-ENABLE_SENTIMENT=true
-
-# Model selection
-SENTIMENT_SOCIAL_MODEL=ElKulako/cryptobert
-SENTIMENT_NEWS_MODEL=kk08/CryptoBERT
-
-# Refresh interval (seconds)
-HF_REGISTRY_REFRESH_SEC=21600
-
-# HTTP timeout (seconds)
-HF_HTTP_TIMEOUT=8.0
+# Export به CSV
+curl http://localhost:8000/api/logs/export/csv
 ```
 
-## 🛑 Stop the Server
+### مدیریت منابع
+```bash
+# دریافت همه منابع
+curl http://localhost:8000/api/resources
 
-Press `CTRL+C` in the terminal where the server is running
+# Export منابع
+curl http://localhost:8000/api/resources/export/json
 
-Or use the process manager to stop process ID 6
+# Backup
+curl -X POST http://localhost:8000/api/resources/backup
 
-## 🔄 Restart the Server
-
-```powershell
-python simple_server.py
+# Import
+curl -X POST "http://localhost:8000/api/resources/import/json?file_path=api-resources/crypto_resources_unified_2025-11-11.json&merge=true"
 ```
 
-## 📝 Notes
+## 📝 مثال‌های استفاده
 
-- **First Load**: The first sentiment analysis may take 30-60 seconds as models download
-- **Registry**: Auto-refreshes every 6 hours, or manually via the UI
-- **Free Resources**: All endpoints use free HuggingFace APIs
-- **No API Key Required**: Works without authentication (with rate limits)
-- **Local Inference**: Sentiment analysis runs locally using transformers
+### افزودن Provider جدید
+```python
+from resource_manager import ResourceManager
 
-## 🎉 You're All Set!
+manager = ResourceManager()
 
-The application is running and ready to use. Open your browser and explore!
+provider = {
+    "id": "my_new_api",
+    "name": "My New API",
+    "category": "market_data",
+    "base_url": "https://api.example.com",
+    "requires_auth": False,
+    "priority": 5,
+    "weight": 50,
+    "free": True
+}
 
-**Main Dashboard:** http://localhost:7860/index.html
-**HF Console:** http://localhost:7860/hf_console.html
+manager.add_provider(provider)
+manager.save_resources()
+```
+
+### ثبت لاگ
+```python
+from log_manager import log_info, log_error, LogCategory
+
+# لاگ Info
+log_info(LogCategory.PROVIDER, "Provider health check completed", 
+         provider_id="coingecko", response_time=234.5)
+
+# لاگ Error
+log_error(LogCategory.PROVIDER, "Provider failed", 
+          provider_id="etherscan", error="Timeout")
+```
+
+### استفاده از Provider Manager
+```python
+from provider_manager import ProviderManager
+import asyncio
+
+async def main():
+    manager = ProviderManager()
+    
+    # Health Check
+    await manager.health_check_all()
+    
+    # دریافت Provider از Pool
+    provider = manager.get_next_from_pool("primary_market_data_pool")
+    if provider:
+        print(f"Selected: {provider.name}")
+    
+    await manager.close_session()
+
+asyncio.run(main())
+```
+
+## 🐳 استفاده با Docker
+
+```bash
+# Build
+docker build -t crypto-monitor .
+
+# Run
+docker run -p 8000:8000 crypto-monitor
+
+# یا با docker-compose
+docker-compose up -d
+```
+
+## 🔍 عیب‌یابی
+
+### مشکل: Port در حال استفاده است
+```bash
+# تغییر پورت
+uvicorn api_server_extended:app --port 8001
+```
+
+### مشکل: فایل‌های JSON یافت نشد
+```bash
+# بررسی وجود فایل‌ها
+ls -la api-resources/
+ls -la providers_config*.json
+```
+
+### مشکل: Import منابع ناموفق
+```bash
+# بررسی ساختار JSON
+python -m json.tool api-resources/crypto_resources_unified_2025-11-11.json | head -20
+```
+
+## 📚 مستندات بیشتر
+
+- [README.md](README.md) - مستندات کامل انگلیسی
+- [README_FA.md](README_FA.md) - مستندات کامل فارسی
+- [api-resources/README.md](api-resources/README.md) - راهنمای منابع API
+
+## 🆘 پشتیبانی
+
+در صورت بروز مشکل:
+1. لاگ‌ها را بررسی کنید: `logs/app.log`
+2. از تب Logs در داشبورد استفاده کنید
+3. آمار سیستم را بررسی کنید: `/api/status`
+
+---
+
+**موفق باشید! 🚀**

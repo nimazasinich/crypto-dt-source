@@ -1,373 +1,488 @@
-# 🚀 Crypto Monitor ULTIMATE - Real API Integration
+# 🚀 Crypto Monitor ULTIMATE - Extended Edition
 
-## نسخه حرفه‌ای با APIهای واقعی رایگان
+A powerful cryptocurrency monitoring and analysis system with support for **100+ free API providers** and advanced **Provider Pool Management** system.
 
-یک سیستم مانیتورینگ کامل با **100+ API رایگان واقعی**
+[🇮🇷 نسخه فارسی (Persian Version)](README_FA.md)
 
----
+## 📁 Project Structure
 
-## ✨ ویژگی‌ها
+**📖 برای مشاهده ساختار کامل پروژه:**
+- [🌳 ساختار کامل پروژه (فارسی)](PROJECT_STRUCTURE_FA.md) - توضیحات کامل و تفصیلی
+- [⚡ مرجع سریع (فارسی)](QUICK_REFERENCE_FA.md) - فهرست سریع فایل‌های فعال
+- [🌲 ساختار درختی بصری](TREE_STRUCTURE.txt) - نمایش درختی ASCII art
 
-### 🔴 داده‌های LIVE و واقعی:
-- ✅ **CoinGecko API** - داده بازار 10,000+ ارز
-- ✅ **CoinCap API** - قیمت‌های real-time
-- ✅ **CoinStats API** - اخبار و تحلیل
-- ✅ **Binance API** - داده‌های صرافی
-- ✅ **Coinbase API** - نرخ ارز
-- ✅ **Kraken API** - داده‌های معاملاتی
-- ✅ **Fear & Greed Index** - شاخص احساسات بازار
-- ✅ **DeFi Llama API** - TVL و داده‌های DeFi
-- ✅ **Cryptorank API** - رتبه‌بندی ارزها
+**🎯 فایل‌های اصلی:**
+- `api_server_extended.py` - سرور اصلی FastAPI
+- `unified_dashboard.html` - داشبورد اصلی
+- `providers_config_extended.json` - پیکربندی ProviderManager
+- `providers_config_ultimate.json` - پیکربندی ResourceManager
 
-### 💎 قابلیت‌های داشبورد:
-- 📊 **20 ارز برتر** با داده واقعی
-- 📈 **نمودارهای تعاملی** (Market Dominance, Fear & Greed)
-- 🔥 **Trending Coins** - ارزهای داغ لحظه‌ای
-- 🏦 **Top 10 DeFi Protocols** با TVL واقعی
-- 💰 **آمار کلی بازار** (Market Cap, Volume, Dominance)
-- 😱 **Fear & Greed Index** - شاخص ترس و طمع
-- ⚡ **WebSocket Real-time** - آپدیت زنده
-- 🎨 **UI حرفه‌ای** - طراحی مدرن و زیبا
+## ✨ Key Features
 
----
+### 🎯 Provider Management
+- ✅ **100+ Free API Providers** across multiple categories
+- 🔄 **Pool System with Multiple Rotation Strategies**
+  - Round Robin
+  - Priority-based
+  - Weighted Random
+  - Least Used
+  - Fastest Response
+- 🛡️ **Circuit Breaker** to prevent repeated requests to failed services
+- ⚡ **Smart Rate Limiting** for each provider
+- 📊 **Detailed Performance Statistics** for every provider
+- 🔍 **Automatic Health Checks** with periodic monitoring
 
-## 🎯 APIهای استفاده شده
+### 📈 Provider Categories
 
-### Market Data:
+#### 💰 Market Data
+- CoinGecko, CoinPaprika, CoinCap
+- CryptoCompare, Nomics, Messari
+- LiveCoinWatch, Cryptorank, CoinLore, CoinCodex
+
+#### 🔗 Blockchain Explorers
+- Etherscan, BscScan, PolygonScan
+- Arbiscan, Optimistic Etherscan
+- Blockchair, Blockchain.info, Ethplorer
+
+#### 🏦 DeFi Protocols
+- DefiLlama, Aave, Compound
+- Uniswap V3, PancakeSwap, SushiSwap
+- Curve Finance, 1inch, Yearn Finance
+
+#### 🖼️ NFT
+- OpenSea, Rarible, Reservoir, NFTPort
+
+#### 📰 News & Social
+- CryptoPanic, NewsAPI
+- CoinDesk RSS, Cointelegraph RSS, Bitcoinist RSS
+- Reddit Crypto, LunarCrush
+
+#### 💭 Sentiment Analysis
+- Alternative.me (Fear & Greed Index)
+- Santiment, LunarCrush
+
+#### 📊 Analytics
+- Glassnode, IntoTheBlock
+- Coin Metrics, Kaiko
+
+#### 💱 Exchanges
+- Binance, Kraken, Coinbase
+- Bitfinex, Huobi, KuCoin
+- OKX, Gate.io, Bybit
+
+#### 🤗 Hugging Face Models
+- Sentiment Analysis models
+- Text Classification models
+- Zero-Shot Classification models
+
+## 🏗️ System Architecture
+
 ```
-✓ CoinGecko     - https://api.coingecko.com/api/v3
-✓ CoinCap       - https://api.coincap.io/v2
-✓ CoinStats     - https://api.coinstats.app
-✓ Cryptorank    - https://api.cryptorank.io/v1
+┌─────────────────────────────────────────────────┐
+│        Unified Dashboard (HTML/JS)              │
+│  📊 Data Display | 🔄 Pool Management | 📈 Stats│
+└────────────────────┬────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────┐
+│         FastAPI Server (Python)                 │
+│  🌐 REST API | WebSocket | Background Tasks    │
+└────────────────────┬────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────┐
+│      Provider Manager (Core Logic)              │
+│  🔄 Rotation | 🛡️ Circuit Breaker | 📊 Stats   │
+└────────────────────┬────────────────────────────┘
+                     │
+     ┌───────────────┼───────────────┐
+     ▼               ▼               ▼
+┌─────────┐    ┌─────────┐    ┌─────────┐
+│ Pool 1  │    │ Pool 2  │    │ Pool N  │
+│ Market  │    │  DeFi   │    │   NFT   │
+└────┬────┘    └────┬────┘    └────┬────┘
+     │              │              │
+     └──────┬───────┴──────┬───────┘
+            ▼              ▼
+    ┌──────────────┐  ┌──────────────┐
+    │  Provider 1  │  │  Provider N  │
+    │ (CoinGecko)  │  │  (Binance)   │
+    └──────────────┘  └──────────────┘
 ```
 
-### Exchanges:
-```
-✓ Binance       - https://api.binance.com/api/v3
-✓ Coinbase      - https://api.coinbase.com/v2
-✓ Kraken        - https://api.kraken.com/0/public
-```
+## 📦 Installation
 
-### Sentiment & Analytics:
-```
-✓ Fear & Greed  - https://api.alternative.me/fng
-✓ DeFi Llama    - https://api.llama.fi
-```
-
-### News:
-```
-✓ CoinStats News - https://api.coinstats.app/public/v1/news
-✓ CoinDesk RSS   - https://www.coindesk.com/arc/outboundfeeds/rss
-✓ Cointelegraph  - https://cointelegraph.com/rss
-```
-
----
-
-## 🚀 نصب و راه‌اندازی
-
-### پیش‌نیاز:
-- Python 3.8+
-- اینترنت فعال
-
-### روش 1: اتوماتیک (توصیه می‌شود)
+### Prerequisites
 ```bash
-دابل کلیک روی start.bat
+Python 3.8+
+pip
 ```
 
-### روش 2: دستی
+### Install Dependencies
 ```bash
-# ایجاد محیط مجازی
-python -m venv venv
-
-# فعال‌سازی
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Linux/Mac
-
-# نصب پکیج‌ها
 pip install -r requirements.txt
-
-# اجرا
-python app.py
 ```
 
-### مشاهده داشبورد:
-```
-http://localhost:8000/dashboard
-```
-
----
-
-## 📊 API Endpoints
-
-### Market Data
+### Quick Start
 ```bash
-GET /api/market           # داده بازار از CoinGecko/CoinCap
-GET /api/trending         # ارزهای trending
-GET /api/sentiment        # Fear & Greed Index
-GET /api/defi             # DeFi protocols & TVL
+# Method 1: Direct run
+python api_server_extended.py
+
+# Method 2: Using launcher script
+python start_server.py
+
+# Method 3: With uvicorn
+uvicorn api_server_extended:app --reload --host 0.0.0.0 --port 8000
+
+# Method 4: Using Docker
+docker-compose up -d
 ```
+
+### Access Dashboard
+```
+http://localhost:8000
+```
+
+## 🔧 API Usage
+
+### 🌐 Main Endpoints
+
+#### **System Status**
+```http
+GET /health
+GET /api/status
+GET /api/stats
+```
+
+#### **Provider Management**
+```http
+GET    /api/providers                     # List all
+GET    /api/providers/{provider_id}       # Get details
+POST   /api/providers/{provider_id}/health-check
+GET    /api/providers/category/{category}
+```
+
+#### **Pool Management**
+```http
+GET    /api/pools                        # List all pools
+GET    /api/pools/{pool_id}              # Get pool details
+POST   /api/pools                        # Create new pool
+DELETE /api/pools/{pool_id}              # Delete pool
+
+POST   /api/pools/{pool_id}/members      # Add member
+DELETE /api/pools/{pool_id}/members/{provider_id}
+POST   /api/pools/{pool_id}/rotate       # Manual rotation
+GET    /api/pools/history                # Rotation history
+```
+
+### 📝 Usage Examples
+
+#### Create New Pool
+```bash
+curl -X POST http://localhost:8000/api/pools \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "My Market Pool",
+    "category": "market_data",
+    "rotation_strategy": "weighted",
+    "description": "Pool for market data providers"
+  }'
+```
+
+#### Add Provider to Pool
+```bash
+curl -X POST http://localhost:8000/api/pools/my_market_pool/members \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider_id": "coingecko",
+    "priority": 10,
+    "weight": 100
+  }'
+```
+
+#### Rotate Pool
+```bash
+curl -X POST http://localhost:8000/api/pools/my_market_pool/rotate \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "manual rotation"}'
+```
+
+## 🎮 Python API Usage
+
+```python
+import asyncio
+from provider_manager import ProviderManager
+
+async def main():
+    # Create manager
+    manager = ProviderManager()
+    
+    # Health check all providers
+    await manager.health_check_all()
+    
+    # Get provider from pool
+    provider = manager.get_next_from_pool("primary_market_data_pool")
+    if provider:
+        print(f"Selected: {provider.name}")
+        print(f"Success Rate: {provider.success_rate}%")
+    
+    # Get overall stats
+    stats = manager.get_all_stats()
+    print(f"Total Providers: {stats['summary']['total_providers']}")
+    print(f"Online: {stats['summary']['online']}")
+    
+    # Export stats
+    manager.export_stats("my_stats.json")
+    
+    await manager.close_session()
+
+asyncio.run(main())
+```
+
+## 📊 Pool Rotation Strategies
+
+### 1️⃣ Round Robin
+Each provider is selected in turn.
+```python
+rotation_strategy = "round_robin"
+```
+
+### 2️⃣ Priority-Based
+Provider with highest priority is selected.
+```python
+rotation_strategy = "priority"
+# Provider with priority=10 selected over priority=5
+```
+
+### 3️⃣ Weighted Random
+Random selection with weights.
+```python
+rotation_strategy = "weighted"
+# Provider with weight=100 has 2x chance vs weight=50
+```
+
+### 4️⃣ Least Used
+Provider with least usage is selected.
+```python
+rotation_strategy = "least_used"
+```
+
+### 5️⃣ Fastest Response
+Provider with fastest response time is selected.
+```python
+rotation_strategy = "fastest_response"
+```
+
+## 🛡️ Circuit Breaker
+
+The Circuit Breaker system automatically disables problematic providers:
+
+- **Threshold**: 5 consecutive failures
+- **Timeout**: 60 seconds
+- **Auto Recovery**: After timeout expires
+
+```python
+# Automatic Circuit Breaker in Provider
+if provider.consecutive_failures >= 5:
+    provider.circuit_breaker_open = True
+    provider.circuit_breaker_open_until = time.time() + 60
+```
+
+## 📈 Monitoring & Logging
+
+### Periodic Health Checks
+The system automatically checks all provider health every 30 seconds.
 
 ### Statistics
+- **Total Requests**
+- **Successful/Failed Requests**
+- **Success Rate**
+- **Average Response Time**
+- **Pool Rotation Count**
+
+### Export Stats
+```python
+manager.export_stats("stats_export.json")
+```
+
+## 🔐 API Key Management
+
+For providers requiring API keys:
+
+1. Create `.env` file (copy from `.env.example`):
+```env
+# Market Data
+COINMARKETCAP_API_KEY=your_key_here
+CRYPTOCOMPARE_API_KEY=your_key_here
+
+# Blockchain Data
+ALCHEMY_API_KEY=your_key_here
+INFURA_API_KEY=your_key_here
+
+# News
+NEWSAPI_KEY=your_key_here
+
+# Analytics
+GLASSNODE_API_KEY=your_key_here
+```
+
+2. Use in your code with `python-dotenv`:
+```python
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+api_key = os.getenv("COINMARKETCAP_API_KEY")
+```
+
+## 🎨 Web Dashboard
+
+The dashboard includes these tabs:
+
+### 📊 Market
+- Global market stats
+- Top cryptocurrencies list
+- Charts (Dominance, Fear & Greed)
+- Trending & DeFi protocols
+
+### 📡 API Monitor
+- All provider status
+- Response times
+- Last health check
+- Sentiment analysis (HuggingFace)
+
+### ⚡ Advanced
+- API list
+- Export JSON/CSV
+- Backup creation
+- Cache clearing
+- Activity logs
+
+### ⚙️ Admin
+- Add new APIs
+- Settings management
+- Overall statistics
+
+### 🤗 HuggingFace
+- Health status
+- Models & datasets list
+- Registry search
+- Online sentiment analysis
+
+### 🔄 Pools
+- Pool management
+- Add/remove members
+- Manual rotation
+- Rotation history
+- Detailed statistics
+
+## 🐳 Docker Deployment
+
 ```bash
-GET /api/stats            # آمار کامل
-GET /api/providers        # وضعیت providerها
-GET /health               # سلامت سیستم
+# Build and run with Docker Compose
+docker-compose up -d
+
+# View logs
+docker-compose logs -f crypto-monitor
+
+# Stop services
+docker-compose down
+
+# Rebuild
+docker-compose up -d --build
 ```
 
-### WebSocket
+## 🧪 Testing
+
 ```bash
-WS  /ws/live              # آپدیت real-time
+# Test Provider Manager
+python provider_manager.py
+
+# Run test suite
+python test_providers.py
+
+# Test API server
+python api_server_extended.py
 ```
 
----
+## 📄 Project Files
 
-## 🎨 UI Features
-
-### صفحه اصلی:
-- ✅ 4 KPI Card با داده live
-- ✅ جدول 20 ارز برتر
-- ✅ نمودار Market Dominance
-- ✅ نمایشگر Fear & Greed
-- ✅ بخش Trending Coins
-- ✅ لیست Top DeFi Protocols
-
-### طراحی:
-- ✅ Dark Mode حرفه‌ای
-- ✅ Gradient های زیبا
-- ✅ انیمیشن‌های smooth
-- ✅ Responsive Design
-- ✅ نمادهای LIVE
-- ✅ Color-coded Changes
-
----
-
-## 📈 نمونه داده‌های واقعی
-
-### Market Data Response:
-```json
-{
-  "cryptocurrencies": [
-    {
-      "symbol": "BTC",
-      "name": "Bitcoin",
-      "price": 43250.50,
-      "change_24h": 3.25,
-      "market_cap": 845000000000,
-      "volume_24h": 28000000000,
-      "rank": 1,
-      "image": "https://..."
-    }
-  ],
-  "global": {
-    "total_market_cap": 1750000000000,
-    "total_volume": 95000000000,
-    "btc_dominance": 48.5,
-    "eth_dominance": 17.2
-  }
-}
+```
+crypto-monitor-hf-full-fixed-v4-realapis/
+├── unified_dashboard.html           # Main web dashboard
+├── providers_config_extended.json   # 100+ provider configs
+├── provider_manager.py              # Core Provider & Pool logic
+├── api_server_extended.py           # FastAPI server
+├── start_server.py                  # Launcher script
+├── test_providers.py                # Test suite
+├── requirements.txt                 # Python dependencies
+├── Dockerfile                       # Docker configuration
+├── docker-compose.yml               # Docker Compose setup
+├── README.md                        # This file (English)
+└── README_FA.md                     # Persian documentation
 ```
 
-### Fear & Greed:
-```json
-{
-  "fear_greed_index": {
-    "value": 72,
-    "classification": "Greed",
-    "timestamp": "1699728000"
-  }
-}
-```
+## ✅ Latest Features
+
+### 📡 Real-time WebSocket Support
+- **Full WebSocket API** for instant data updates
+- **Session Management** with client tracking
+- **Live connection counter** showing online users
+- **Auto-reconnection** with heartbeat monitoring
+- **Subscribe/Unsubscribe** to different data channels
+- **Beautiful UI components** for connection status
+
+[📖 Read WebSocket Guide](WEBSOCKET_GUIDE.md) | [🧪 Test Page](http://localhost:8000/test_websocket.html)
+
+### 🔍 Auto-Discovery Service
+- **Intelligent search** for new free APIs
+- **HuggingFace integration** for smart filtering
+- **Automatic validation** and integration
+- **Background scheduling** with configurable intervals
+
+### 🛡️ Startup Validation
+- **Pre-flight checks** for all critical resources
+- **Network connectivity** validation
+- **Provider health** verification
+- **Graceful failure handling**
+
+## 🚀 Future Features
+
+- [ ] Queue system for heavy requests
+- [ ] Redis caching
+- [ ] Advanced dashboard with React/Vue
+- [ ] Alerting system (Telegram/Email)
+- [ ] ML-based provider selection
+- [ ] Multi-tenant support
+- [ ] Kubernetes deployment
+
+## 🤝 Contributing
+
+To contribute:
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+## 💬 Support
+
+For issues or questions:
+- Open an issue on GitHub
+- Visit the Discussions section
+
+## 🙏 Acknowledgments
+
+Thanks to all free API providers that made this project possible:
+- CoinGecko, CoinPaprika, CoinCap
+- Etherscan, BscScan and all Block Explorers
+- DefiLlama, OpenSea and more
+- Hugging Face for ML models
 
 ---
 
-## 🔧 تنظیمات
-
-### تغییر پورت:
-در `app.py` خط آخر:
-```python
-uvicorn.run(app, host="0.0.0.0", port=8000)  # تغییر port
-```
-
-### Cache TTL:
-در `app.py`:
-```python
-cache = {
-    "market_data": {"data": None, "timestamp": None, "ttl": 60},  # 1 min
-    "news": {"data": None, "timestamp": None, "ttl": 300},        # 5 min
-    "sentiment": {"data": None, "timestamp": None, "ttl": 3600},  # 1 hour
-    "defi": {"data": None, "timestamp": None, "ttl": 300}         # 5 min
-}
-```
-
----
-
-## 🌟 مزایای این نسخه
-
-### در مقایسه با نسخه Mock:
-| ویژگی | Mock | ULTIMATE |
-|-------|------|----------|
-| داده‌ها | تصادفی | **واقعی** |
-| قیمت‌ها | ثابت | **Live** |
-| Trending | ندارد | **✓ دارد** |
-| Fear & Greed | ندارد | **✓ دارد** |
-| DeFi TVL | ندارد | **✓ دارد** |
-| News | ندارد | **✓ دارد** |
-| API Count | 8 mock | **100+ real** |
-| Production Ready | خیر | **✓ بله** |
-
----
-
-## 🔥 ویژگی‌های پیشرفته
-
-### 1. Retry Mechanism
-```python
-async def fetch_with_retry(session, url, retries=3):
-    # اگر API fail شد، 3 بار retry می‌کنه
-```
-
-### 2. Cache System
-```python
-# داده‌ها cache میشن تا API رو spam نکنیم
-if is_cache_valid(cache_entry):
-    return cache_entry["data"]
-```
-
-### 3. Fallback Strategy
-```python
-# اگر CoinGecko کار نکرد، CoinCap رو امتحان می‌کنه
-if not data:
-    data = await fetch_coincap()
-```
-
-### 4. Error Handling
-```python
-try:
-    data = await fetch_api()
-except Exception as e:
-    print(f"Error: {e}")
-    return fallback_data
-```
-
----
-
-## 📊 نمونه استفاده
-
-### Python:
-```python
-import requests
-
-# دریافت داده بازار
-response = requests.get('http://localhost:8000/api/market')
-data = response.json()
-
-for crypto in data['cryptocurrencies']:
-    print(f"{crypto['name']}: ${crypto['price']}")
-```
-
-### JavaScript:
-```javascript
-// WebSocket برای real-time
-const ws = new WebSocket('ws://localhost:8000/ws/live');
-
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.type === 'market_update') {
-        console.log('New prices:', data.data);
-    }
-};
-```
-
----
-
-## 🐛 مشکلات رایج
-
-### API Error 429 (Rate Limit):
-✅ Cache افزایش داده شده
-✅ Retry با delay
-✅ Fallback به API دیگه
-
-### WebSocket Disconnect:
-✅ Auto-reconnect
-✅ 5 ثانیه تلاش مجدد
-
-### Slow Response:
-✅ Async requests
-✅ Parallel API calls
-✅ Cache system
-
----
-
-## 🎓 یادگیری بیشتر
-
-### مستندات APIها:
-- [CoinGecko API](https://www.coingecko.com/en/api/documentation)
-- [CoinCap API](https://docs.coincap.io/)
-- [Binance API](https://binance-docs.github.io/apidocs/)
-- [DeFi Llama API](https://defillama.com/docs/api)
-
----
-
-## 📞 پشتیبانی
-
-### مشکل دارید؟
-1. Cache رو پاک کنید (restart کنید)
-2. اینترنت رو چک کنید
-3. Console errors رو ببینید (F12)
-4. API rate limit رو چک کنید
-
----
-
-## 🎉 تفاوت‌ها با نسخه‌های قبل
-
-### ❌ v1-basic:
-- Mock data
-- 8 Provider
-- داده تصادفی
-
-### ❌ v2-pro:
-- Mock data
-- 40 Provider
-- UI خوب
-- ولی داده fake
-
-### ✅ v3-ultimate (این نسخه):
-- **✓ Real APIs**
-- **✓ Live Data**
-- **✓ 100+ Providers**
-- **✓ Production Ready**
-- **✓ Cache & Retry**
-- **✓ Fallback Strategy**
-
----
-
-## 🚀 آماده برای Production
-
-این نسخه کاملاً آماده برای استفاده واقعی است:
-- ✅ داده واقعی
-- ✅ Error handling
-- ✅ Rate limit handling
-- ✅ Cache system
-- ✅ Retry mechanism
-- ✅ Fallback APIs
-- ✅ Real-time WebSocket
-- ✅ Professional UI
-
----
-
-## 💡 نکته مهم
-
-**همه APIها رایگان هستند!** 
-هیچ API key یا پرداختی لازم نیست.
-
----
-
-**ساخته شده با ❤️ برای Niema**
-
-**Features:**
-- 100+ Real Free APIs
-- Live Market Data
-- Real-time Updates
-- Professional Dashboard
-- Production Ready
-
-**موفق باشی! 🎊**
+**Made with ❤️ for the Crypto Community**

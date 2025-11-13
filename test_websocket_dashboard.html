@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست WebSocket - Crypto Monitor</title>
+    <link rel="stylesheet" href="/static/css/connection-status.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        h2 {
+            color: #4b5563;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .status-value {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .status-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .log-container {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #e2e8f0;
+        }
+
+        .log-entry {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-left: 3px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 4px;
+        }
+
+        .log-time {
+            color: #94a3b8;
+            margin-left: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.05);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- WebSocket Status Indicator -->
+    <div id="ws-connection-status" class="ws-status-indicator disconnected">
+        <div id="ws-status-dot" class="status-dot status-dot-offline"></div>
+        <span id="ws-status-text" class="ws-status-text">در حال اتصال...</span>
+        <div id="online-users-badge" class="badge badge-info" style="margin-right: 10px;">0</div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h1>🚀 تست WebSocket - Crypto Monitor</h1>
+            <p style="color: #6b7280; margin-bottom: 20px;">
+                این صفحه برای تست اتصال WebSocket و نمایش آمار بلادرنگ طراحی شده است.
+            </p>
+
+            <div class="status-grid">
+                <div class="status-card">
+                    <div class="status-label">کاربران آنلاین</div>
+                    <div class="status-value pulse" id="active-users-count">0</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">کل نشست‌ها</div>
+                    <div class="status-value" id="total-sessions-count">0</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">پیام‌های دریافتی</div>
+                    <div class="status-value" id="messages-received">0</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">پیام‌های ارسالی</div>
+                    <div class="status-value" id="messages-sent">0</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" onclick="requestStats()">📊 درخواست آمار</button>
+                <button class="btn btn-success" onclick="sendPing()">🏓 Ping</button>
+                <button class="btn btn-primary" onclick="subscribe('market')">📈 Subscribe Market</button>
+                <button class="btn btn-danger" onclick="clearLogs()">🗑️ پاک کردن لاگ</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 لاگ رویدادها</h2>
+            <div id="log-container" class="log-container">
+                <div class="log-entry">
+                    <span class="log-time">[--:--:--]</span>
+                    در انتظار اتصال WebSocket...
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 اطلاعات Session</h2>
+            <div id="session-info" style="font-family: monospace; background: #f3f4f6; padding: 15px; border-radius: 8px;">
+                <strong>Session ID:</strong> <span id="session-id">-</span><br>
+                <strong>وضعیت اتصال:</strong> <span id="connection-status">قطع شده</span><br>
+                <strong>تلاش‌های اتصال:</strong> <span id="reconnect-attempts">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/websocket-client.js"></script>
+    <script>
+        let messageCount = 0;
+        let sentCount = 0;
+
+        // منتظر بمانیم تا WebSocket Client آماده شود
+        setTimeout(() => {
+            if (window.wsClient) {
+                setupWebSocketHandlers();
+            } else {
+                addLog('❌ خطا: WebSocket Client آماده نیست');
+            }
+        }, 1000);
+
+        function setupWebSocketHandlers() {
+            addLog('✅ WebSocket Client آماده شد');
+
+            // Session ID
+            window.wsClient.onConnection((connected) => {
+                document.getElementById('connection-status').textContent = connected ? 'متصل ✅' : 'قطع شده ❌';
+                document.getElementById('reconnect-attempts').textContent = window.wsClient.reconnectAttempts;
+            });
+
+            // دریافت پیام welcome
+            window.wsClient.on('welcome', (message) => {
+                addLog(`🎉 خوش آمدید! Session ID: ${message.session_id}`);
+                document.getElementById('session-id').textContent = message.session_id;
+                messageCount++;
+                updateMessageCount();
+            });
+
+            // دریافت آمار
+            window.wsClient.on('stats_update', (message) => {
+                addLog('📊 آمار جدید دریافت شد');
+                const data = message.data;
+                
+                if (data.active_connections !== undefined) {
+                    document.getElementById('active-users-count').textContent = data.active_connections;
+                }
+                if (data.total_sessions !== undefined) {
+                    document.getElementById('total-sessions-count').textContent = data.total_sessions;
+                }
+                
+                messageCount++;
+                updateMessageCount();
+            });
+
+            // پاسخ به آمار
+            window.wsClient.on('stats_response', (message) => {
+                addLog('📡 پاسخ آمار Provider دریافت شد');
+                console.log('Provider Stats:', message.data);
+                messageCount++;
+                updateMessageCount();
+            });
+
+            // پاسخ pong
+            window.wsClient.on('pong', (message) => {
+                addLog('🏓 Pong دریافت شد');
+                messageCount++;
+                updateMessageCount();
+            });
+
+            // Subscribe
+            window.wsClient.on('subscribed', (message) => {
+                addLog(`✅ Subscribe شد به: ${message.group}`);
+                messageCount++;
+                updateMessageCount();
+            });
+
+            // Provider Stats
+            window.wsClient.on('provider_stats', (message) => {
+                addLog('📡 آمار Provider به‌روز شد');
+                messageCount++;
+                updateMessageCount();
+            });
+
+            // درخواست اولیه آمار
+            setTimeout(() => {
+                requestStats();
+            }, 2000);
+        }
+
+        function requestStats() {
+            if (window.wsClient && window.wsClient.isConnected) {
+                window.wsClient.requestStats();
+                addLog('📤 درخواست آمار ارسال شد');
+                sentCount++;
+                updateSentCount();
+            } else {
+                addLog('⚠️ WebSocket متصل نیست');
+            }
+        }
+
+        function sendPing() {
+            if (window.wsClient && window.wsClient.isConnected) {
+                window.wsClient.send({ type: 'ping' });
+                addLog('📤 Ping ارسال شد');
+                sentCount++;
+                updateSentCount();
+            } else {
+                addLog('⚠️ WebSocket متصل نیست');
+            }
+        }
+
+        function subscribe(group) {
+            if (window.wsClient && window.wsClient.isConnected) {
+                window.wsClient.subscribe(group);
+                addLog(`📤 درخواست Subscribe به ${group} ارسال شد`);
+                sentCount++;
+                updateSentCount();
+            } else {
+                addLog('⚠️ WebSocket متصل نیست');
+            }
+        }
+
+        function addLog(message) {
+            const container = document.getElementById('log-container');
+            const time = new Date().toLocaleTimeString('fa-IR');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
+            container.insertBefore(entry, container.firstChild);
+
+            // حداکثر 50 لاگ نگه دار
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('log-container').innerHTML = '';
+            addLog('🗑️ لاگ‌ها پاک شدند');
+        }
+
+        function updateMessageCount() {
+            document.getElementById('messages-received').textContent = messageCount;
+        }
+
+        function updateSentCount() {
+            document.getElementById('messages-sent').textContent = sentCount;
+        }
+
+        // درخواست خودکار آمار هر 10 ثانیه
+        setInterval(() => {
+            if (window.wsClient && window.wsClient.isConnected) {
+                requestStats();
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
+

@@ -1,12 +1,6 @@
 """
 Production Crypto API Monitor Server
 Complete implementation with ALL API sources and HuggingFace integration
-
-DEPRECATED: This file is kept for backward compatibility only.
-For production use, please use app.py instead:
-    python app.py
-    or
-    python start_server.py
 """
 import asyncio
 import httpx

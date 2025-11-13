@@ -1,92 +1,102 @@
 version: '3.8'
 
 services:
+  # سرور اصلی Crypto Monitor
   crypto-monitor:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: crypto-api-monitor
-    image: crypto-api-monitor:latest
-
-    # Port mapping (HuggingFace Spaces standard port)
+    build: .
+    container_name: crypto-monitor-app
     ports:
-      - "7860:7860"
-
-    # Environment variables
+      - "8000:8000"
     environment:
-      - PYTHONUNBUFFERED=1
-      - ENABLE_SENTIMENT=true
-      - HF_REGISTRY_REFRESH_SEC=21600
-      - HF_HTTP_TIMEOUT=8.0
-      # Add your HuggingFace token here or via .env file
-      # - HUGGINGFACE_TOKEN=your_token_here
-
-      # Sentiment models (optional customization)
-      - SENTIMENT_SOCIAL_MODEL=ElKulako/cryptobert
-      - SENTIMENT_NEWS_MODEL=kk08/CryptoBERT
-
-    # Optional: Load environment variables from .env file
-    env_file:
-      - .env
-
-    # Volume mounts for data persistence
+      - HOST=0.0.0.0
+      - PORT=8000
+      - LOG_LEVEL=INFO
+      - ENABLE_AUTO_DISCOVERY=false
     volumes:
-      # Persist SQLite database
-      - ./data:/app/data
-
-      # Persist logs
       - ./logs:/app/logs
-
-      # Optional: Mount config for live updates during development
-      # - ./config.py:/app/config.py
-      # - ./all_apis_merged_2025.json:/app/all_apis_merged_2025.json
-
-      # Optional: Mount frontend files for live updates
-      # - ./index.html:/app/index.html
-      # - ./hf_console.html:/app/hf_console.html
-      # - ./config.js:/app/config.js
-
-    # Health check configuration
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - crypto-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
-      start_period: 40s
       retries: 3
+      start_period: 10s
 
-    # Restart policy
+  # Redis برای Cache (اختیاری)
+  redis:
+    image: redis:7-alpine
+    container_name: crypto-monitor-redis
+    profiles: ["observability"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
     restart: unless-stopped
+    networks:
+      - crypto-network
+    command: redis-server --appendonly yes
 
-    # Resource limits (adjust based on your system)
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 4G
-        reservations:
-          cpus: '0.5'
-          memory: 1G
-
-    # Network configuration
+  # PostgreSQL برای ذخیره داده‌ها (اختیاری)
+  postgres:
+    image: postgres:15-alpine
+    container_name: crypto-monitor-db
+    profiles: ["observability"]
+    environment:
+      POSTGRES_DB: crypto_monitor
+      POSTGRES_USER: crypto_user
+      POSTGRES_PASSWORD: crypto_pass_change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
     networks:
       - crypto-network
 
-    # Logging configuration
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+  # Prometheus برای مانیتورینگ (اختیاری)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: crypto-monitor-prometheus
+    profiles: ["observability"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - crypto-network
 
-# Network definition
+  # Grafana برای نمایش داده‌ها (اختیاری)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: crypto-monitor-grafana
+    profiles: ["observability"]
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin_change_me
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - crypto-network
+    depends_on:
+      - prometheus
+
 networks:
   crypto-network:
     driver: bridge
-    name: crypto-monitor-network
 
-# Volume definitions (optional - for named volumes instead of bind mounts)
 volumes:
-  crypto-data:
-    name: crypto-monitor-data
-  crypto-logs:
-    name: crypto-monitor-logs
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:

@@ -1,11 +1,4 @@
-"""Real data server - fetches actual data from free crypto APIs
-
-DEPRECATED: This file is kept for backward compatibility only.
-For production use, please use app.py instead:
-    python app.py
-    or
-    python start_server.py
-"""
+"""Real data server - fetches actual data from free crypto APIs"""
 import asyncio
 import httpx
 from datetime import datetime, timedelta

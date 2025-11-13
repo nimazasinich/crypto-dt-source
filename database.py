@@ -6,6 +6,7 @@ Stores health metrics, incidents, and historical data
 import sqlite3
 import json
 import logging
+import time
 from typing import List, Dict, Optional, Tuple
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -115,6 +116,51 @@ class Database:
                 )
             """)
 
+            # Pools table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS pools (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    rotation_strategy TEXT NOT NULL,
+                    description TEXT,
+                    enabled INTEGER DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # Pool members table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS pool_members (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    pool_id INTEGER NOT NULL,
+                    provider_id TEXT NOT NULL,
+                    provider_name TEXT NOT NULL,
+                    priority INTEGER DEFAULT 1,
+                    weight INTEGER DEFAULT 1,
+                    use_count INTEGER DEFAULT 0,
+                    success_rate REAL DEFAULT 0,
+                    rate_limit_usage INTEGER DEFAULT 0,
+                    rate_limit_limit INTEGER DEFAULT 0,
+                    rate_limit_percentage REAL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (pool_id) REFERENCES pools(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Pool rotation history
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS pool_rotations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    pool_id INTEGER NOT NULL,
+                    provider_id TEXT NOT NULL,
+                    provider_name TEXT NOT NULL,
+                    reason TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (pool_id) REFERENCES pools(id) ON DELETE CASCADE
+                )
+            """)
+
             # Create indexes
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_status_log_provider
@@ -127,6 +173,14 @@ class Database:
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_incidents_provider
                 ON incidents(provider_name, start_time)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_pool_members_pool
+                ON pool_members(pool_id, provider_id)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_pool_rotations_pool
+                ON pool_rotations(pool_id, created_at)
             """)
 
             logger.info("Database initialized successfully")
@@ -478,3 +532,245 @@ class Database:
                         writer.writerow(dict(row))
 
                 logger.info(f"Exported {len(rows)} rows to {output_path}")
+
+    # ------------------------------------------------------------------
+    # Pool management helpers
+    # ------------------------------------------------------------------
+
+    def create_pool(
+        self,
+        name: str,
+        category: str,
+        rotation_strategy: str,
+        description: Optional[str] = None,
+        enabled: bool = True
+    ) -> int:
+        """Create a new pool and return its ID"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO pools (name, category, rotation_strategy, description, enabled)
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, category, rotation_strategy, description, int(enabled)))
+            return cursor.lastrowid
+
+    def update_pool_usage(self, pool_id: int, enabled: Optional[bool] = None):
+        """Update pool properties"""
+        if enabled is None:
+            return
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE pools
+                SET enabled = ?, created_at = created_at
+                WHERE id = ?
+            """, (int(enabled), pool_id))
+
+    def delete_pool(self, pool_id: int):
+        """Delete pool and cascade members/history"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM pools WHERE id = ?", (pool_id,))
+
+    def add_pool_member(
+        self,
+        pool_id: int,
+        provider_id: str,
+        provider_name: str,
+        priority: int = 1,
+        weight: int = 1,
+        success_rate: float = 0.0,
+        rate_limit_usage: int = 0,
+        rate_limit_limit: int = 0,
+        rate_limit_percentage: float = 0.0
+    ) -> int:
+        """Add a provider to a pool"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO pool_members
+                (pool_id, provider_id, provider_name, priority, weight,
+                 success_rate, rate_limit_usage, rate_limit_limit, rate_limit_percentage)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                pool_id,
+                provider_id,
+                provider_name,
+                priority,
+                weight,
+                success_rate,
+                rate_limit_usage,
+                rate_limit_limit,
+                rate_limit_percentage
+            ))
+            return cursor.lastrowid
+
+    def remove_pool_member(self, pool_id: int, provider_id: str):
+        """Remove provider from pool"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                DELETE FROM pool_members
+                WHERE pool_id = ? AND provider_id = ?
+            """, (pool_id, provider_id))
+
+    def increment_member_use(self, pool_id: int, provider_id: str):
+        """Increment use count for pool member"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE pool_members
+                SET use_count = use_count + 1
+                WHERE pool_id = ? AND provider_id = ?
+            """, (pool_id, provider_id))
+
+    def update_member_stats(
+        self,
+        pool_id: int,
+        provider_id: str,
+        success_rate: Optional[float] = None,
+        rate_limit_usage: Optional[int] = None,
+        rate_limit_limit: Optional[int] = None,
+        rate_limit_percentage: Optional[float] = None
+    ):
+        """Update success/rate limit stats"""
+        updates = []
+        params = []
+
+        if success_rate is not None:
+            updates.append("success_rate = ?")
+            params.append(success_rate)
+        if rate_limit_usage is not None:
+            updates.append("rate_limit_usage = ?")
+            params.append(rate_limit_usage)
+        if rate_limit_limit is not None:
+            updates.append("rate_limit_limit = ?")
+            params.append(rate_limit_limit)
+        if rate_limit_percentage is not None:
+            updates.append("rate_limit_percentage = ?")
+            params.append(rate_limit_percentage)
+
+        if not updates:
+            return
+
+        params.extend([pool_id, provider_id])
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"""
+                UPDATE pool_members
+                SET {', '.join(updates)}
+                WHERE pool_id = ? AND provider_id = ?
+            """, params)
+
+    def log_pool_rotation(
+        self,
+        pool_id: int,
+        provider_id: str,
+        provider_name: str,
+        reason: str
+    ):
+        """Log rotation event"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO pool_rotations
+                (pool_id, provider_id, provider_name, reason)
+                VALUES (?, ?, ?, ?)
+            """, (pool_id, provider_id, provider_name, reason))
+
+    def get_pools(self) -> List[Dict]:
+        """Get all pools with members and stats"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT p.*,
+                       COALESCE((SELECT COUNT(*) FROM pool_rotations pr WHERE pr.pool_id = p.id), 0) as rotation_count
+                FROM pools p
+                ORDER BY p.created_at DESC
+            """)
+            pools = [dict(row) for row in cursor.fetchall()]
+
+            for pool in pools:
+                cursor.execute("""
+                    SELECT * FROM pool_members
+                    WHERE pool_id = ?
+                    ORDER BY priority DESC, weight DESC, provider_name
+                """, (pool['id'],))
+                pool['members'] = [dict(row) for row in cursor.fetchall()]
+
+            return pools
+
+    def get_pool(self, pool_id: int) -> Optional[Dict]:
+        """Get single pool"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT p.*,
+                       COALESCE((SELECT COUNT(*) FROM pool_rotations pr WHERE pr.pool_id = p.id), 0) as rotation_count
+                FROM pools p
+                WHERE p.id = ?
+            """, (pool_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            pool = dict(row)
+            cursor.execute("""
+                SELECT * FROM pool_members
+                WHERE pool_id = ?
+                ORDER BY priority DESC, weight DESC, provider_name
+            """, (pool_id,))
+            pool['members'] = [dict(r) for r in cursor.fetchall()]
+            return pool
+
+    def get_pool_rotation_history(self, pool_id: Optional[int] = None, limit: int = 50) -> List[Dict]:
+        """Get rotation history (optionally filtered by pool)"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            if pool_id is not None:
+                cursor.execute("""
+                    SELECT * FROM pool_rotations
+                    WHERE pool_id = ?
+                    ORDER BY created_at DESC
+                    LIMIT ?
+                """, (pool_id, limit))
+            else:
+                cursor.execute("""
+                    SELECT * FROM pool_rotations
+                    ORDER BY created_at DESC
+                    LIMIT ?
+                """, (limit,))
+            return [dict(row) for row in cursor.fetchall()]
+
+    # ------------------------------------------------------------------
+    # Provider health logging
+    # ------------------------------------------------------------------
+
+    def log_provider_status(
+        self,
+        provider_name: str,
+        category: str,
+        status: str,
+        response_time: Optional[float] = None,
+        status_code: Optional[int] = None,
+        endpoint_tested: Optional[str] = None,
+        error_message: Optional[str] = None
+    ):
+        """Log provider status in status_log table"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO status_log
+                (provider_name, category, status, response_time, status_code,
+                 error_message, endpoint_tested, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                provider_name,
+                category,
+                status,
+                response_time,
+                status_code,
+                error_message,
+                endpoint_tested,
+                time.time()
+            ))

@@ -492,39 +492,90 @@ Market is bullish today</textarea>
     <script>
         async function loadData() {
             try {
+                // Show loading state
+                const tbody = document.getElementById('providersTable');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px;"><div class="loading"></div><div style="margin-top: 10px; color: #6c757d;">در حال بارگذاری...</div></td></tr>';
+                }
+                if (document.getElementById('lastUpdate')) {
+                    document.getElementById('lastUpdate').textContent = 'در حال بارگذاری...';
+                }
+
                 // Load status
                 const statusRes = await fetch('/api/status');
+                if (!statusRes.ok) {
+                    throw new Error(`خطا در دریافت وضعیت: ${statusRes.status} ${statusRes.statusText}`);
+                }
                 const status = await statusRes.json();
                 
-                document.getElementById('totalAPIs').textContent = status.total_providers;
-                document.getElementById('onlineAPIs').textContent = status.online;
-                document.getElementById('offlineAPIs').textContent = status.offline;
-                document.getElementById('avgResponse').textContent = status.avg_response_time_ms + 'ms';
-                document.getElementById('lastUpdate').textContent = new Date(status.timestamp).toLocaleString();
+                if (!status || typeof status.total_providers === 'undefined') {
+                    throw new Error('داده‌های وضعیت نامعتبر است');
+                }
+
+                if (document.getElementById('totalAPIs')) {
+                    document.getElementById('totalAPIs').textContent = status.total_providers || 0;
+                }
+                if (document.getElementById('onlineAPIs')) {
+                    document.getElementById('onlineAPIs').textContent = status.online || 0;
+                }
+                if (document.getElementById('offlineAPIs')) {
+                    document.getElementById('offlineAPIs').textContent = status.offline || 0;
+                }
+                if (document.getElementById('avgResponse')) {
+                    document.getElementById('avgResponse').textContent = (status.avg_response_time_ms || 0) + 'ms';
+                }
+                if (document.getElementById('lastUpdate')) {
+                    document.getElementById('lastUpdate').textContent = status.timestamp ? new Date(status.timestamp).toLocaleString('fa-IR') : 'نامشخص';
+                }
                 
                 // Load providers
                 const providersRes = await fetch('/api/providers');
+                if (!providersRes.ok) {
+                    throw new Error(`خطا در دریافت لیست APIها: ${providersRes.status} ${providersRes.statusText}`);
+                }
                 const providers = await providersRes.json();
                 
-                const tbody = document.getElementById('providersTable');
-                tbody.innerHTML = providers.map(p => {
-                    let responseClass = 'response-fast';
-                    if (p.response_time_ms > 3000) responseClass = 'response-slow';
-                    else if (p.response_time_ms > 1000) responseClass = 'response-medium';
-                    
-                    return `
-                    <tr>
-                        <td><strong style="font-size: 15px;">${p.name}</strong></td>
-                        <td><span style="background: #f8f9fa; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600;">${p.category}</span></td>
-                        <td><span class="status-badge status-${p.status}">${p.status.toUpperCase()}</span></td>
-                        <td><span class="response-time ${responseClass}">${p.response_time_ms}ms</span></td>
-                        <td style="color: #6c757d; font-size: 13px;">${new Date(p.last_fetch).toLocaleTimeString()}</td>
-                    </tr>
-                `}).join('');
+                if (!providers || !Array.isArray(providers)) {
+                    throw new Error('لیست APIها نامعتبر است');
+                }
+
+                if (tbody) {
+                    if (providers.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #6c757d;">هیچ APIای یافت نشد</td></tr>';
+                    } else {
+                        tbody.innerHTML = providers.map(p => {
+                            let responseClass = 'response-fast';
+                            const responseTime = p.response_time_ms || p.avg_response_time_ms || 0;
+                            if (responseTime > 3000) responseClass = 'response-slow';
+                            else if (responseTime > 1000) responseClass = 'response-medium';
+                            
+                            return `
+                            <tr>
+                                <td><strong style="font-size: 15px;">${p.name || 'نامشخص'}</strong></td>
+                                <td><span style="background: #f8f9fa; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600;">${p.category || 'نامشخص'}</span></td>
+                                <td><span class="status-badge status-${p.status || 'unknown'}">${(p.status || 'unknown').toUpperCase()}</span></td>
+                                <td><span class="response-time ${responseClass}">${responseTime}ms</span></td>
+                                <td style="color: #6c757d; font-size: 13px;">${p.last_fetch ? new Date(p.last_fetch).toLocaleTimeString('fa-IR') : 'نامشخص'}</td>
+                            </tr>
+                        `}).join('');
+                    }
+                }
                 
             } catch (error) {
                 console.error('Error loading data:', error);
-                alert('Error loading data: ' + error.message);
+                const tbody = document.getElementById('providersTable');
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: #ef4444;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
+                        <div style="font-weight: 600; margin-bottom: 5px;">خطا در بارگذاری داده‌ها</div>
+                        <div style="font-size: 14px; color: #6c757d; margin-bottom: 15px;">${error.message || 'خطای نامشخص'}</div>
+                        <button onclick="loadData()" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px; color: white; cursor: pointer; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">تلاش مجدد</button>
+                    </td></tr>`;
+                }
+                if (document.getElementById('lastUpdate')) {
+                    document.getElementById('lastUpdate').textContent = 'خطا در بارگذاری';
+                }
+                alert('❌ خطا در بارگذاری داده‌ها:\n' + (error.message || 'خطای نامشخص'));
             }
         }
 
