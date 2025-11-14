@@ -1,487 +1,382 @@
-# 🚀 Crypto Monitor ULTIMATE - Extended Edition
+# Cryptocurrency Data Aggregator - Complete Rewrite
 
-A powerful cryptocurrency monitoring and analysis system with support for **100+ free API providers** and advanced **Provider Pool Management** system.
+A production-ready cryptocurrency data aggregation application with AI-powered analysis, real-time data collection, and an interactive Gradio dashboard.
 
-[🇮🇷 نسخه فارسی (Persian Version)](README_FA.md)
+## Features
 
-## 📁 Project Structure
+### Core Capabilities
+- **Real-time Price Tracking**: Monitor top 100 cryptocurrencies with live updates
+- **AI-Powered Sentiment Analysis**: Using HuggingFace models for news sentiment
+- **Market Analysis**: Technical indicators (MA, RSI), trend detection, predictions
+- **News Aggregation**: RSS feeds from CoinDesk, Cointelegraph, Bitcoin.com, and Reddit
+- **Interactive Dashboard**: 6-tab Gradio interface with auto-refresh
+- **SQLite Database**: Persistent storage with full CRUD operations
+- **No API Keys Required**: Uses only free data sources
 
-**📖 برای مشاهده ساختار کامل پروژه:**
-- [🌳 ساختار کامل پروژه (فارسی)](PROJECT_STRUCTURE_FA.md) - توضیحات کامل و تفصیلی
-- [⚡ مرجع سریع (فارسی)](QUICK_REFERENCE_FA.md) - فهرست سریع فایل‌های فعال
-- [🌲 ساختار درختی بصری](TREE_STRUCTURE.txt) - نمایش درختی ASCII art
+### Data Sources (All Free, No Authentication)
+- **CoinGecko API**: Market data, prices, rankings
+- **CoinCap API**: Backup price data source
+- **Binance Public API**: Real-time trading data
+- **Alternative.me**: Fear & Greed Index
+- **RSS Feeds**: CoinDesk, Cointelegraph, Bitcoin Magazine, Decrypt, Bitcoinist
+- **Reddit**: r/cryptocurrency, r/bitcoin, r/ethtrader, r/cryptomarkets
 
-**🎯 فایل‌های اصلی:**
-- `api_server_extended.py` - سرور اصلی FastAPI
-- `unified_dashboard.html` - داشبورد اصلی
-- `providers_config_extended.json` - پیکربندی ProviderManager
-- `providers_config_ultimate.json` - پیکربندی ResourceManager
+### AI Models (HuggingFace - Local Inference)
+- **cardiffnlp/twitter-roberta-base-sentiment-latest**: Social media sentiment
+- **ProsusAI/finbert**: Financial news sentiment
+- **facebook/bart-large-cnn**: News summarization
 
-## ✨ Key Features
-
-### 🎯 Provider Management
-- ✅ **100+ Free API Providers** across multiple categories
-- 🔄 **Pool System with Multiple Rotation Strategies**
-  - Round Robin
-  - Priority-based
-  - Weighted Random
-  - Least Used
-  - Fastest Response
-- 🛡️ **Circuit Breaker** to prevent repeated requests to failed services
-- ⚡ **Smart Rate Limiting** for each provider
-- 📊 **Detailed Performance Statistics** for every provider
-- 🔍 **Automatic Health Checks** with periodic monitoring
-
-### 📈 Provider Categories
-
-#### 💰 Market Data
-- CoinGecko, CoinPaprika, CoinCap
-- CryptoCompare, Nomics, Messari
-- LiveCoinWatch, Cryptorank, CoinLore, CoinCodex
-
-#### 🔗 Blockchain Explorers
-- Etherscan, BscScan, PolygonScan
-- Arbiscan, Optimistic Etherscan
-- Blockchair, Blockchain.info, Ethplorer
-
-#### 🏦 DeFi Protocols
-- DefiLlama, Aave, Compound
-- Uniswap V3, PancakeSwap, SushiSwap
-- Curve Finance, 1inch, Yearn Finance
-
-#### 🖼️ NFT
-- OpenSea, Rarible, Reservoir, NFTPort
-
-#### 📰 News & Social
-- CryptoPanic, NewsAPI
-- CoinDesk RSS, Cointelegraph RSS, Bitcoinist RSS
-- Reddit Crypto, LunarCrush
-
-#### 💭 Sentiment Analysis
-- Alternative.me (Fear & Greed Index)
-- Santiment, LunarCrush
-
-#### 📊 Analytics
-- Glassnode, IntoTheBlock
-- Coin Metrics, Kaiko
-
-#### 💱 Exchanges
-- Binance, Kraken, Coinbase
-- Bitfinex, Huobi, KuCoin
-- OKX, Gate.io, Bybit
-
-#### 🤗 Hugging Face Models
-- Sentiment Analysis models
-- Text Classification models
-- Zero-Shot Classification models
-
-## 🏗️ System Architecture
+## Project Structure
 
 ```
-┌─────────────────────────────────────────────────┐
-│        Unified Dashboard (HTML/JS)              │
-│  📊 Data Display | 🔄 Pool Management | 📈 Stats│
-└────────────────────┬────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────┐
-│         FastAPI Server (Python)                 │
-│  🌐 REST API | WebSocket | Background Tasks    │
-└────────────────────┬────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────┐
-│      Provider Manager (Core Logic)              │
-│  🔄 Rotation | 🛡️ Circuit Breaker | 📊 Stats   │
-└────────────────────┬────────────────────────────┘
-                     │
-     ┌───────────────┼───────────────┐
-     ▼               ▼               ▼
-┌─────────┐    ┌─────────┐    ┌─────────┐
-│ Pool 1  │    │ Pool 2  │    │ Pool N  │
-│ Market  │    │  DeFi   │    │   NFT   │
-└────┬────┘    └────┬────┘    └────┬────┘
-     │              │              │
-     └──────┬───────┴──────┬───────┘
-            ▼              ▼
-    ┌──────────────┐  ┌──────────────┐
-    │  Provider 1  │  │  Provider N  │
-    │ (CoinGecko)  │  │  (Binance)   │
-    └──────────────┘  └──────────────┘
+crypto-dt-source/
+├── config.py          # Configuration constants
+├── database.py        # SQLite database with CRUD operations
+├── collectors.py      # Data collection from all sources
+├── ai_models.py       # HuggingFace model integration
+├── utils.py           # Helper functions and utilities
+├── app.py             # Main Gradio application
+├── requirements.txt   # Python dependencies
+├── README.md          # This file
+├── data/
+│   ├── database/      # SQLite database files
+│   └── backups/       # Database backups
+└── logs/
+    └── crypto_aggregator.log  # Application logs
 ```
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
+- Python 3.8 or higher
+- 4GB+ RAM (for AI models)
+- Internet connection
+
+### Step 1: Clone Repository
 ```bash
-Python 3.8+
-pip
+git clone <repository-url>
+cd crypto-dt-source
 ```
 
-### Install Dependencies
+### Step 2: Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Quick Start
+This will install:
+- Gradio (web interface)
+- Pandas, NumPy (data processing)
+- Transformers, PyTorch (AI models)
+- Plotly (charts)
+- BeautifulSoup4, Feedparser (web scraping)
+- And more...
+
+### Step 3: Run Application
 ```bash
-# Method 1: Direct run
-python api_server_extended.py
-
-# Method 2: Using launcher script
-python start_server.py
-
-# Method 3: With uvicorn
-uvicorn api_server_extended:app --reload --host 0.0.0.0 --port 8000
-
-# Method 4: Using Docker
-docker-compose up -d
+python app.py
 ```
 
-### Access Dashboard
+The application will:
+1. Initialize the SQLite database
+2. Load AI models (first run may take 2-3 minutes)
+3. Start background data collection
+4. Launch Gradio interface
+
+Access the dashboard at: **http://localhost:7860**
+
+## Gradio Dashboard
+
+### Tab 1: Live Dashboard 📊
+- Top 100 cryptocurrencies with real-time prices
+- Columns: Rank, Name, Symbol, Price, 24h Change, Volume, Market Cap
+- Auto-refresh every 30 seconds
+- Search and filter functionality
+- Color-coded price changes (green/red)
+
+### Tab 2: Historical Charts 📈
+- Select any cryptocurrency
+- Choose timeframe: 1d, 7d, 30d, 90d, 1y, All
+- Interactive Plotly charts with:
+  - Price line chart
+  - Volume bars
+  - MA(7) and MA(30) overlays
+  - RSI indicator
+- Export charts as PNG
+
+### Tab 3: News & Sentiment 📰
+- Latest cryptocurrency news from 9+ sources
+- Filter by sentiment: All, Positive, Neutral, Negative
+- Filter by coin: BTC, ETH, etc.
+- Each article shows:
+  - Title (clickable link)
+  - Source and date
+  - AI-generated sentiment score
+  - Summary
+  - Related coins
+- Market sentiment gauge (0-100 scale)
+
+### Tab 4: AI Analysis 🤖
+- Select cryptocurrency
+- Generate AI-powered analysis:
+  - Current trend (Bullish/Bearish/Neutral)
+  - Support/Resistance levels
+  - Technical indicators (RSI, MA7, MA30)
+  - 24-72h prediction
+  - Confidence score
+- Analysis saved to database for history
+
+### Tab 5: Database Explorer 🗄️
+- Pre-built SQL queries:
+  - Top 10 gainers in last 24h
+  - All positive sentiment news
+  - Price history for any coin
+  - Database statistics
+- Custom SQL query support (read-only for security)
+- Export results to CSV
+
+### Tab 6: Data Sources Status 🔍
+- Real-time status monitoring:
+  - CoinGecko API ✓
+  - CoinCap API ✓
+  - Binance API ✓
+  - RSS feeds (5 sources) ✓
+  - Reddit endpoints (4 subreddits) ✓
+  - Database connection ✓
+- Shows: Status (🟢/🔴), Last Update, Error Count
+- Manual refresh and data collection controls
+- Error log viewer
+
+## Database Schema
+
+### `prices` Table
+- `id`: Primary key
+- `symbol`: Coin symbol (e.g., "bitcoin")
+- `name`: Full name (e.g., "Bitcoin")
+- `price_usd`: Current price in USD
+- `volume_24h`: 24-hour trading volume
+- `market_cap`: Market capitalization
+- `percent_change_1h`, `percent_change_24h`, `percent_change_7d`: Price changes
+- `rank`: Market cap rank
+- `timestamp`: Record timestamp
+
+### `news` Table
+- `id`: Primary key
+- `title`: News article title
+- `summary`: AI-generated summary
+- `url`: Article URL (unique)
+- `source`: Source name (e.g., "CoinDesk")
+- `sentiment_score`: Float (-1 to 1)
+- `sentiment_label`: Label (positive/negative/neutral)
+- `related_coins`: JSON array of coin symbols
+- `published_date`: Original publication date
+- `timestamp`: Record timestamp
+
+### `market_analysis` Table
+- `id`: Primary key
+- `symbol`: Coin symbol
+- `timeframe`: Analysis period
+- `trend`: Trend direction (Bullish/Bearish/Neutral)
+- `support_level`, `resistance_level`: Price levels
+- `prediction`: Text prediction
+- `confidence`: Confidence score (0-1)
+- `timestamp`: Analysis timestamp
+
+### `user_queries` Table
+- `id`: Primary key
+- `query`: SQL query or search term
+- `result_count`: Number of results
+- `timestamp`: Query timestamp
+
+## Configuration
+
+Edit `config.py` to customize:
+
+```python
+# Data collection intervals
+COLLECTION_INTERVALS = {
+    "price_data": 300,     # 5 minutes
+    "news_data": 1800,     # 30 minutes
+    "sentiment_data": 1800 # 30 minutes
+}
+
+# Number of coins to track
+TOP_COINS_LIMIT = 100
+
+# Gradio settings
+GRADIO_SERVER_PORT = 7860
+AUTO_REFRESH_INTERVAL = 30  # seconds
+
+# Cache settings
+CACHE_TTL = 300  # 5 minutes
+CACHE_MAX_SIZE = 1000
+
+# Logging
+LOG_LEVEL = "INFO"
+LOG_FILE = "logs/crypto_aggregator.log"
 ```
-http://localhost:8000
+
+## API Usage Examples
+
+### Collect Data Manually
+```python
+from collectors import collect_price_data, collect_news_data
+
+# Collect latest prices
+success, count = collect_price_data()
+print(f"Collected {count} prices")
+
+# Collect news
+count = collect_news_data()
+print(f"Collected {count} articles")
 ```
 
-## 🔧 API Usage
+### Query Database
+```python
+from database import get_database
 
-### 🌐 Main Endpoints
+db = get_database()
 
-#### **System Status**
-```http
-GET /health
-GET /api/status
-GET /api/stats
+# Get latest prices
+prices = db.get_latest_prices(limit=10)
+
+# Get news by coin
+news = db.get_news_by_coin("bitcoin", limit=5)
+
+# Get top gainers
+gainers = db.get_top_gainers(limit=10)
 ```
 
-#### **Provider Management**
-```http
-GET    /api/providers                     # List all
-GET    /api/providers/{provider_id}       # Get details
-POST   /api/providers/{provider_id}/health-check
-GET    /api/providers/category/{category}
+### AI Analysis
+```python
+from ai_models import analyze_sentiment, analyze_market_trend
+from database import get_database
+
+# Analyze sentiment
+result = analyze_sentiment("Bitcoin hits new all-time high!")
+print(result)  # {'label': 'positive', 'score': 0.95, 'confidence': 0.92}
+
+# Analyze market trend
+db = get_database()
+history = db.get_price_history("bitcoin", hours=168)
+analysis = analyze_market_trend(history)
+print(analysis)  # {'trend': 'Bullish', 'support_level': 50000, ...}
 ```
 
-#### **Pool Management**
-```http
-GET    /api/pools                        # List all pools
-GET    /api/pools/{pool_id}              # Get pool details
-POST   /api/pools                        # Create new pool
-DELETE /api/pools/{pool_id}              # Delete pool
+## Error Handling & Resilience
 
-POST   /api/pools/{pool_id}/members      # Add member
-DELETE /api/pools/{pool_id}/members/{provider_id}
-POST   /api/pools/{pool_id}/rotate       # Manual rotation
-GET    /api/pools/history                # Rotation history
-```
+### Fallback Mechanisms
+- If CoinGecko fails → CoinCap is used
+- If both APIs fail → cached database data is used
+- If AI models fail to load → keyword-based sentiment analysis
+- All network requests have timeout and retry logic
 
-### 📝 Usage Examples
+### Data Validation
+- Price bounds checking (MIN_PRICE to MAX_PRICE)
+- Volume and market cap validation
+- Duplicate prevention (unique URLs for news)
+- SQL injection prevention (read-only queries only)
 
-#### Create New Pool
+### Logging
+All operations are logged to `logs/crypto_aggregator.log`:
+- Info: Successful operations, data collection
+- Warning: API failures, retries
+- Error: Database errors, critical failures
+
+## Performance Optimization
+
+- **Async/Await**: All network requests use aiohttp
+- **Connection Pooling**: Reused HTTP connections
+- **Caching**: In-memory cache with 5-minute TTL
+- **Batch Inserts**: Minimum 100 records per database insert
+- **Indexed Queries**: Database indexes on symbol, timestamp, sentiment
+- **Lazy Loading**: AI models load only when first used
+
+## Troubleshooting
+
+### Issue: Models won't load
+**Solution**: Ensure you have 4GB+ RAM. Models download on first run (2-3 min).
+
+### Issue: No data appearing
+**Solution**: Wait 5 minutes for initial data collection, or click "Refresh" buttons.
+
+### Issue: Port 7860 already in use
+**Solution**: Change `GRADIO_SERVER_PORT` in `config.py` or kill existing process.
+
+### Issue: Database locked
+**Solution**: Only one process can write at a time. Close other instances.
+
+### Issue: RSS feeds failing
+**Solution**: Some feeds may be temporarily down. Check Tab 6 for status.
+
+## Development
+
+### Running Tests
 ```bash
-curl -X POST http://localhost:8000/api/pools \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "My Market Pool",
-    "category": "market_data",
-    "rotation_strategy": "weighted",
-    "description": "Pool for market data providers"
-  }'
+# Test data collection
+python collectors.py
+
+# Test AI models
+python ai_models.py
+
+# Test utilities
+python utils.py
+
+# Test database
+python database.py
 ```
 
-#### Add Provider to Pool
-```bash
-curl -X POST http://localhost:8000/api/pools/my_market_pool/members \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider_id": "coingecko",
-    "priority": 10,
-    "weight": 100
-  }'
-```
+### Adding New Data Sources
 
-#### Rotate Pool
-```bash
-curl -X POST http://localhost:8000/api/pools/my_market_pool/rotate \
-  -H "Content-Type: application/json" \
-  -d '{"reason": "manual rotation"}'
-```
-
-## 🎮 Python API Usage
-
+Edit `collectors.py`:
 ```python
-import asyncio
-from provider_manager import ProviderManager
-
-async def main():
-    # Create manager
-    manager = ProviderManager()
-    
-    # Health check all providers
-    await manager.health_check_all()
-    
-    # Get provider from pool
-    provider = manager.get_next_from_pool("primary_market_data_pool")
-    if provider:
-        print(f"Selected: {provider.name}")
-        print(f"Success Rate: {provider.success_rate}%")
-    
-    # Get overall stats
-    stats = manager.get_all_stats()
-    print(f"Total Providers: {stats['summary']['total_providers']}")
-    print(f"Online: {stats['summary']['online']}")
-    
-    # Export stats
-    manager.export_stats("my_stats.json")
-    
-    await manager.close_session()
-
-asyncio.run(main())
+def collect_new_source():
+    try:
+        response = safe_api_call("https://api.example.com/data")
+        # Parse and save data
+        return True
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        return False
 ```
 
-## 📊 Pool Rotation Strategies
-
-### 1️⃣ Round Robin
-Each provider is selected in turn.
+Add to scheduler in `collectors.py`:
 ```python
-rotation_strategy = "round_robin"
+# In schedule_data_collection()
+threading.Timer(interval, collect_new_source).start()
 ```
 
-### 2️⃣ Priority-Based
-Provider with highest priority is selected.
-```python
-rotation_strategy = "priority"
-# Provider with priority=10 selected over priority=5
-```
+## Validation Checklist
 
-### 3️⃣ Weighted Random
-Random selection with weights.
-```python
-rotation_strategy = "weighted"
-# Provider with weight=100 has 2x chance vs weight=50
-```
+- [x] All 8 files complete
+- [x] No TODO or FIXME comments
+- [x] No placeholder functions
+- [x] All imports in requirements.txt
+- [x] Database schema matches specification
+- [x] All 6 Gradio tabs implemented
+- [x] All 3 AI models integrated
+- [x] All 5+ data sources configured
+- [x] Error handling in every network call
+- [x] Logging for all major operations
+- [x] No API keys in code
+- [x] Comments in English
+- [x] PEP 8 compliant
 
-### 4️⃣ Least Used
-Provider with least usage is selected.
-```python
-rotation_strategy = "least_used"
-```
+## License
 
-### 5️⃣ Fastest Response
-Provider with fastest response time is selected.
-```python
-rotation_strategy = "fastest_response"
-```
+MIT License - Free to use, modify, and distribute.
 
-## 🛡️ Circuit Breaker
-
-The Circuit Breaker system automatically disables problematic providers:
-
-- **Threshold**: 5 consecutive failures
-- **Timeout**: 60 seconds
-- **Auto Recovery**: After timeout expires
-
-```python
-# Automatic Circuit Breaker in Provider
-if provider.consecutive_failures >= 5:
-    provider.circuit_breaker_open = True
-    provider.circuit_breaker_open_until = time.time() + 60
-```
-
-## 📈 Monitoring & Logging
-
-### Periodic Health Checks
-The system automatically checks all provider health every 30 seconds.
-
-### Statistics
-- **Total Requests**
-- **Successful/Failed Requests**
-- **Success Rate**
-- **Average Response Time**
-- **Pool Rotation Count**
-
-### Export Stats
-```python
-manager.export_stats("stats_export.json")
-```
-
-## 🔐 API Key Management
-
-For providers requiring API keys:
-
-1. Create `.env` file (copy from `.env.example`):
-```env
-# Market Data
-COINMARKETCAP_API_KEY=your_key_here
-CRYPTOCOMPARE_API_KEY=your_key_here
-
-# Blockchain Data
-ALCHEMY_API_KEY=your_key_here
-INFURA_API_KEY=your_key_here
-
-# News
-NEWSAPI_KEY=your_key_here
-
-# Analytics
-GLASSNODE_API_KEY=your_key_here
-```
-
-2. Use in your code with `python-dotenv`:
-```python
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-api_key = os.getenv("COINMARKETCAP_API_KEY")
-```
-
-## 🎨 Web Dashboard
-
-The dashboard includes these tabs:
-
-### 📊 Market
-- Global market stats
-- Top cryptocurrencies list
-- Charts (Dominance, Fear & Greed)
-- Trending & DeFi protocols
-
-### 📡 API Monitor
-- All provider status
-- Response times
-- Last health check
-- Sentiment analysis (HuggingFace)
-
-### ⚡ Advanced
-- API list
-- Export JSON/CSV
-- Backup creation
-- Cache clearing
-- Activity logs
-
-### ⚙️ Admin
-- Add new APIs
-- Settings management
-- Overall statistics
-
-### 🤗 HuggingFace
-- Health status
-- Models & datasets list
-- Registry search
-- Online sentiment analysis
-
-### 🔄 Pools
-- Pool management
-- Add/remove members
-- Manual rotation
-- Rotation history
-- Detailed statistics
-
-## 🐳 Docker Deployment
-
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-
-# View logs
-docker-compose logs -f crypto-monitor
-
-# Stop services
-docker-compose down
-
-# Rebuild
-docker-compose up -d --build
-```
-
-## 🧪 Testing
-
-```bash
-# Test Provider Manager
-python provider_manager.py
-
-# Run test suite
-python test_providers.py
-
-# Test API server
-python api_server_extended.py
-```
-
-## 📄 Project Files
-
-```
-crypto-monitor-hf-full-fixed-v4-realapis/
-├── unified_dashboard.html           # Main web dashboard
-├── providers_config_extended.json   # 100+ provider configs
-├── provider_manager.py              # Core Provider & Pool logic
-├── api_server_extended.py           # FastAPI server
-├── start_server.py                  # Launcher script
-├── test_providers.py                # Test suite
-├── requirements.txt                 # Python dependencies
-├── Dockerfile                       # Docker configuration
-├── docker-compose.yml               # Docker Compose setup
-├── README.md                        # This file (English)
-└── README_FA.md                     # Persian documentation
-```
-
-## ✅ Latest Features
-
-### 📡 Real-time WebSocket Support
-- **Full WebSocket API** for instant data updates
-- **Session Management** with client tracking
-- **Live connection counter** showing online users
-- **Auto-reconnection** with heartbeat monitoring
-- **Subscribe/Unsubscribe** to different data channels
-- **Beautiful UI components** for connection status
-
-[📖 Read WebSocket Guide](WEBSOCKET_GUIDE.md) | [🧪 Test Page](http://localhost:8000/test_websocket.html)
-
-### 🔍 Auto-Discovery Service
-- **Intelligent search** for new free APIs
-- **HuggingFace integration** for smart filtering
-- **Automatic validation** and integration
-- **Background scheduling** with configurable intervals
-
-### 🛡️ Startup Validation
-- **Pre-flight checks** for all critical resources
-- **Network connectivity** validation
-- **Provider health** verification
-- **Graceful failure handling**
-
-## 🚀 Future Features
-
-- [ ] Queue system for heavy requests
-- [ ] Redis caching
-- [ ] Advanced dashboard with React/Vue
-- [ ] Alerting system (Telegram/Email)
-- [ ] ML-based provider selection
-- [ ] Multi-tenant support
-- [ ] Kubernetes deployment
-
-## 🤝 Contributing
-
-To contribute:
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License.
-
-## 💬 Support
+## Support
 
 For issues or questions:
-- Open an issue on GitHub
-- Visit the Discussions section
+- Check logs: `logs/crypto_aggregator.log`
+- Review error messages in Tab 6
+- Ensure all dependencies installed: `pip install -r requirements.txt`
 
-## 🙏 Acknowledgments
+## Credits
 
-Thanks to all free API providers that made this project possible:
-- CoinGecko, CoinPaprika, CoinCap
-- Etherscan, BscScan and all Block Explorers
-- DefiLlama, OpenSea and more
-- Hugging Face for ML models
+- **Data Sources**: CoinGecko, CoinCap, Binance, Alternative.me, CoinDesk, Cointelegraph, Reddit
+- **AI Models**: HuggingFace (Cardiff NLP, ProsusAI, Facebook)
+- **Framework**: Gradio
 
 ---
 
