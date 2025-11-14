@@ -1,776 +1,665 @@
+#!/usr/bin/env python3
 """
-SQLite Database Module for Persistent Storage
-Stores health metrics, incidents, and historical data
+Database module for Crypto Data Aggregator
+Complete CRUD operations with the exact schema specified
 """
 
 import sqlite3
+import threading
 import json
-import logging
-import time
-from typing import List, Dict, Optional, Tuple
 from datetime import datetime, timedelta
-from pathlib import Path
+from typing import List, Dict, Optional, Any, Tuple
 from contextlib import contextmanager
-from monitor import HealthCheckResult, HealthStatus
+import logging
 
+import config
+
+# Setup logging
+logging.basicConfig(
+    level=getattr(logging, config.LOG_LEVEL),
+    format=config.LOG_FORMAT,
+    handlers=[
+        logging.FileHandler(config.LOG_FILE),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 
-class Database:
-    """SQLite database manager for metrics and history"""
+class CryptoDatabase:
+    """
+    Database manager for cryptocurrency data with full CRUD operations
+    Thread-safe implementation using context managers
+    """
 
-    def __init__(self, db_path: str = "data/health_metrics.db"):
-        """Initialize database connection"""
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self, db_path: str = None):
+        """Initialize database with connection pooling"""
+        self.db_path = str(db_path or config.DATABASE_PATH)
+        self._local = threading.local()
         self._init_database()
+        logger.info(f"Database initialized at {self.db_path}")
 
     @contextmanager
     def get_connection(self):
-        """Context manager for database connections"""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row  # Enable column access by name
+        """Get thread-safe database connection"""
+        if not hasattr(self._local, 'conn'):
+            self._local.conn = sqlite3.connect(
+                self.db_path,
+                check_same_thread=False,
+                timeout=30.0
+            )
+            self._local.conn.row_factory = sqlite3.Row
+
         try:
-            yield conn
-            conn.commit()
+            yield self._local.conn
         except Exception as e:
-            conn.rollback()
+            self._local.conn.rollback()
             logger.error(f"Database error: {e}")
             raise
-        finally:
-            conn.close()
 
     def _init_database(self):
-        """Initialize database schema"""
+        """Initialize all database tables with exact schema"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
-            # Status log table
+            # ==================== PRICES TABLE ====================
             cursor.execute("""
-                CREATE TABLE IF NOT EXISTS status_log (
+                CREATE TABLE IF NOT EXISTS prices (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    provider_name TEXT NOT NULL,
-                    category TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    response_time REAL,
-                    status_code INTEGER,
-                    error_message TEXT,
-                    endpoint_tested TEXT,
-                    timestamp REAL NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    symbol TEXT NOT NULL,
+                    name TEXT,
+                    price_usd REAL NOT NULL,
+                    volume_24h REAL,
+                    market_cap REAL,
+                    percent_change_1h REAL,
+                    percent_change_24h REAL,
+                    percent_change_7d REAL,
+                    rank INTEGER,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
 
-            # Response times table (aggregated)
+            # ==================== NEWS TABLE ====================
             cursor.execute("""
-                CREATE TABLE IF NOT EXISTS response_times (
+                CREATE TABLE IF NOT EXISTS news (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    provider_name TEXT NOT NULL,
-                    avg_response_time REAL NOT NULL,
-                    min_response_time REAL NOT NULL,
-                    max_response_time REAL NOT NULL,
-                    sample_count INTEGER NOT NULL,
-                    period_start TIMESTAMP NOT NULL,
-                    period_end TIMESTAMP NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    title TEXT NOT NULL,
+                    summary TEXT,
+                    url TEXT UNIQUE,
+                    source TEXT,
+                    sentiment_score REAL,
+                    sentiment_label TEXT,
+                    related_coins TEXT,
+                    published_date DATETIME,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
 
-            # Incidents table
+            # ==================== MARKET ANALYSIS TABLE ====================
             cursor.execute("""
-                CREATE TABLE IF NOT EXISTS incidents (
+                CREATE TABLE IF NOT EXISTS market_analysis (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    provider_name TEXT NOT NULL,
-                    category TEXT NOT NULL,
-                    incident_type TEXT NOT NULL,
-                    description TEXT,
-                    severity TEXT,
-                    start_time TIMESTAMP NOT NULL,
-                    end_time TIMESTAMP,
-                    duration_seconds INTEGER,
-                    resolved BOOLEAN DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    symbol TEXT NOT NULL,
+                    timeframe TEXT,
+                    trend TEXT,
+                    support_level REAL,
+                    resistance_level REAL,
+                    prediction TEXT,
+                    confidence REAL,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
 
-            # Alerts table
+            # ==================== USER QUERIES TABLE ====================
             cursor.execute("""
-                CREATE TABLE IF NOT EXISTS alerts (
+                CREATE TABLE IF NOT EXISTS user_queries (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    provider_name TEXT NOT NULL,
-                    alert_type TEXT NOT NULL,
-                    message TEXT,
-                    threshold_value REAL,
-                    actual_value REAL,
-                    triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    acknowledged BOOLEAN DEFAULT 0
+                    query TEXT,
+                    result_count INTEGER,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
 
-            # Configuration table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS configuration (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-
-            # Pools table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS pools (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    category TEXT NOT NULL,
-                    rotation_strategy TEXT NOT NULL,
-                    description TEXT,
-                    enabled INTEGER DEFAULT 1,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-
-            # Pool members table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS pool_members (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    pool_id INTEGER NOT NULL,
-                    provider_id TEXT NOT NULL,
-                    provider_name TEXT NOT NULL,
-                    priority INTEGER DEFAULT 1,
-                    weight INTEGER DEFAULT 1,
-                    use_count INTEGER DEFAULT 0,
-                    success_rate REAL DEFAULT 0,
-                    rate_limit_usage INTEGER DEFAULT 0,
-                    rate_limit_limit INTEGER DEFAULT 0,
-                    rate_limit_percentage REAL DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (pool_id) REFERENCES pools(id) ON DELETE CASCADE
-                )
-            """)
-
-            # Pool rotation history
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS pool_rotations (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    pool_id INTEGER NOT NULL,
-                    provider_id TEXT NOT NULL,
-                    provider_name TEXT NOT NULL,
-                    reason TEXT NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (pool_id) REFERENCES pools(id) ON DELETE CASCADE
-                )
-            """)
-
-            # Create indexes
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_status_log_provider
-                ON status_log(provider_name, timestamp)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_status_log_timestamp
-                ON status_log(timestamp)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_incidents_provider
-                ON incidents(provider_name, start_time)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_pool_members_pool
-                ON pool_members(pool_id, provider_id)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_pool_rotations_pool
-                ON pool_rotations(pool_id, created_at)
-            """)
-
-            logger.info("Database initialized successfully")
-
-    def save_health_check(self, result: HealthCheckResult):
-        """Save a single health check result"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO status_log
-                (provider_name, category, status, response_time, status_code,
-                 error_message, endpoint_tested, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                result.provider_name,
-                result.category,
-                result.status.value,
-                result.response_time,
-                result.status_code,
-                result.error_message,
-                result.endpoint_tested,
-                result.timestamp
-            ))
-
-    def save_health_checks(self, results: List[HealthCheckResult]):
-        """Save multiple health check results"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.executemany("""
-                INSERT INTO status_log
-                (provider_name, category, status, response_time, status_code,
-                 error_message, endpoint_tested, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, [
-                (r.provider_name, r.category, r.status.value, r.response_time,
-                 r.status_code, r.error_message, r.endpoint_tested, r.timestamp)
-                for r in results
-            ])
-        logger.info(f"Saved {len(results)} health check results")
-
-    def get_recent_status(
-        self,
-        provider_name: Optional[str] = None,
-        hours: int = 24,
-        limit: int = 1000
-    ) -> List[Dict]:
-        """Get recent status logs"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-
-            cutoff_time = datetime.now() - timedelta(hours=hours)
-
-            if provider_name:
-                query = """
-                    SELECT * FROM status_log
-                    WHERE provider_name = ? AND created_at >= ?
-                    ORDER BY timestamp DESC
-                    LIMIT ?
-                """
-                cursor.execute(query, (provider_name, cutoff_time, limit))
-            else:
-                query = """
-                    SELECT * FROM status_log
-                    WHERE created_at >= ?
-                    ORDER BY timestamp DESC
-                    LIMIT ?
-                """
-                cursor.execute(query, (cutoff_time, limit))
-
-            return [dict(row) for row in cursor.fetchall()]
-
-    def get_uptime_percentage(
-        self,
-        provider_name: str,
-        hours: int = 24
-    ) -> float:
-        """Calculate uptime percentage from database"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-
-            cutoff_time = datetime.now() - timedelta(hours=hours)
-
-            cursor.execute("""
-                SELECT
-                    COUNT(*) as total,
-                    SUM(CASE WHEN status = 'online' THEN 1 ELSE 0 END) as online
-                FROM status_log
-                WHERE provider_name = ? AND created_at >= ?
-            """, (provider_name, cutoff_time))
-
-            row = cursor.fetchone()
-            if row['total'] > 0:
-                return round((row['online'] / row['total']) * 100, 2)
-            return 0.0
-
-    def get_avg_response_time(
-        self,
-        provider_name: str,
-        hours: int = 24
-    ) -> float:
-        """Get average response time from database"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-
-            cutoff_time = datetime.now() - timedelta(hours=hours)
-
-            cursor.execute("""
-                SELECT AVG(response_time) as avg_time
-                FROM status_log
-                WHERE provider_name = ?
-                  AND created_at >= ?
-                  AND response_time IS NOT NULL
-            """, (provider_name, cutoff_time))
-
-            row = cursor.fetchone()
-            return round(row['avg_time'], 2) if row['avg_time'] else 0.0
-
-    def create_incident(
-        self,
-        provider_name: str,
-        category: str,
-        incident_type: str,
-        description: str,
-        severity: str = "medium"
-    ) -> int:
-        """Create a new incident"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO incidents
-                (provider_name, category, incident_type, description, severity, start_time)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (provider_name, category, incident_type, description, severity, datetime.now()))
-            return cursor.lastrowid
-
-    def resolve_incident(self, incident_id: int):
-        """Resolve an incident"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-
-            # Get start time
-            cursor.execute("SELECT start_time FROM incidents WHERE id = ?", (incident_id,))
-            row = cursor.fetchone()
-            if not row:
-                return
-
-            start_time = datetime.fromisoformat(row['start_time'])
-            end_time = datetime.now()
-            duration = int((end_time - start_time).total_seconds())
-
-            cursor.execute("""
-                UPDATE incidents
-                SET end_time = ?, duration_seconds = ?, resolved = 1
-                WHERE id = ?
-            """, (end_time, duration, incident_id))
-
-    def get_active_incidents(self) -> List[Dict]:
-        """Get all active incidents"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT * FROM incidents
-                WHERE resolved = 0
-                ORDER BY start_time DESC
-            """)
-            return [dict(row) for row in cursor.fetchall()]
-
-    def get_incident_history(self, hours: int = 24, limit: int = 100) -> List[Dict]:
-        """Get incident history"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-
-            cutoff_time = datetime.now() - timedelta(hours=hours)
-
-            cursor.execute("""
-                SELECT * FROM incidents
-                WHERE start_time >= ?
-                ORDER BY start_time DESC
-                LIMIT ?
-            """, (cutoff_time, limit))
-
-            return [dict(row) for row in cursor.fetchall()]
-
-    def create_alert(
-        self,
-        provider_name: str,
-        alert_type: str,
-        message: str,
-        threshold_value: Optional[float] = None,
-        actual_value: Optional[float] = None
-    ) -> int:
-        """Create a new alert"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO alerts
-                (provider_name, alert_type, message, threshold_value, actual_value)
-                VALUES (?, ?, ?, ?, ?)
-            """, (provider_name, alert_type, message, threshold_value, actual_value))
-            return cursor.lastrowid
-
-    def get_unacknowledged_alerts(self) -> List[Dict]:
-        """Get all unacknowledged alerts"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT * FROM alerts
-                WHERE acknowledged = 0
-                ORDER BY triggered_at DESC
-            """)
-            return [dict(row) for row in cursor.fetchall()]
-
-    def acknowledge_alert(self, alert_id: int):
-        """Acknowledge an alert"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE alerts
-                SET acknowledged = 1
-                WHERE id = ?
-            """, (alert_id,))
-
-    def aggregate_response_times(self, period_hours: int = 1):
-        """Aggregate response times for the period"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-
-            period_start = datetime.now() - timedelta(hours=period_hours)
-
-            cursor.execute("""
-                INSERT INTO response_times
-                (provider_name, avg_response_time, min_response_time, max_response_time,
-                 sample_count, period_start, period_end)
-                SELECT
-                    provider_name,
-                    AVG(response_time) as avg_time,
-                    MIN(response_time) as min_time,
-                    MAX(response_time) as max_time,
-                    COUNT(*) as count,
-                    ? as period_start,
-                    ? as period_end
-                FROM status_log
-                WHERE created_at >= ? AND response_time IS NOT NULL
-                GROUP BY provider_name
-            """, (period_start, datetime.now(), period_start))
-
-            logger.info(f"Aggregated response times for period: {period_start}")
-
-    def cleanup_old_data(self, days: int = 7):
-        """Clean up data older than specified days"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-
-            cutoff_date = datetime.now() - timedelta(days=days)
-
-            # Delete old status logs
-            cursor.execute("""
-                DELETE FROM status_log
-                WHERE created_at < ?
-            """, (cutoff_date,))
-            deleted_logs = cursor.rowcount
-
-            # Delete old resolved incidents
-            cursor.execute("""
-                DELETE FROM incidents
-                WHERE resolved = 1 AND end_time < ?
-            """, (cutoff_date,))
-            deleted_incidents = cursor.rowcount
-
-            # Delete old acknowledged alerts
-            cursor.execute("""
-                DELETE FROM alerts
-                WHERE acknowledged = 1 AND triggered_at < ?
-            """, (cutoff_date,))
-            deleted_alerts = cursor.rowcount
-
-            logger.info(
-                f"Cleanup: {deleted_logs} logs, {deleted_incidents} incidents, "
-                f"{deleted_alerts} alerts older than {days} days"
-            )
-
-    def get_provider_stats(self, provider_name: str, hours: int = 24) -> Dict:
-        """Get comprehensive stats for a provider"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-
-            cutoff_time = datetime.now() - timedelta(hours=hours)
-
-            # Get status distribution
-            cursor.execute("""
-                SELECT
-                    status,
-                    COUNT(*) as count
-                FROM status_log
-                WHERE provider_name = ? AND created_at >= ?
-                GROUP BY status
-            """, (provider_name, cutoff_time))
-
-            status_dist = {row['status']: row['count'] for row in cursor.fetchall()}
-
-            # Get response time stats
-            cursor.execute("""
-                SELECT
-                    AVG(response_time) as avg_time,
-                    MIN(response_time) as min_time,
-                    MAX(response_time) as max_time,
-                    COUNT(*) as total_checks
-                FROM status_log
-                WHERE provider_name = ?
-                  AND created_at >= ?
-                  AND response_time IS NOT NULL
-            """, (provider_name, cutoff_time))
-
-            row = cursor.fetchone()
-
-            return {
-                'provider_name': provider_name,
-                'period_hours': hours,
-                'status_distribution': status_dist,
-                'avg_response_time': round(row['avg_time'], 2) if row['avg_time'] else 0,
-                'min_response_time': round(row['min_time'], 2) if row['min_time'] else 0,
-                'max_response_time': round(row['max_time'], 2) if row['max_time'] else 0,
-                'total_checks': row['total_checks'] or 0,
-                'uptime_percentage': self.get_uptime_percentage(provider_name, hours)
-            }
-
-    def export_to_csv(self, output_path: str, hours: int = 24):
-        """Export recent data to CSV"""
-        import csv
-
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-
-            cutoff_time = datetime.now() - timedelta(hours=hours)
-
-            cursor.execute("""
-                SELECT * FROM status_log
-                WHERE created_at >= ?
-                ORDER BY timestamp DESC
-            """, (cutoff_time,))
-
-            rows = cursor.fetchall()
-
-            if rows:
-                with open(output_path, 'w', newline='') as csvfile:
-                    writer = csv.DictWriter(csvfile, fieldnames=rows[0].keys())
-                    writer.writeheader()
-                    for row in rows:
-                        writer.writerow(dict(row))
-
-                logger.info(f"Exported {len(rows)} rows to {output_path}")
-
-    # ------------------------------------------------------------------
-    # Pool management helpers
-    # ------------------------------------------------------------------
-
-    def create_pool(
-        self,
-        name: str,
-        category: str,
-        rotation_strategy: str,
-        description: Optional[str] = None,
-        enabled: bool = True
-    ) -> int:
-        """Create a new pool and return its ID"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO pools (name, category, rotation_strategy, description, enabled)
-                VALUES (?, ?, ?, ?, ?)
-            """, (name, category, rotation_strategy, description, int(enabled)))
-            return cursor.lastrowid
-
-    def update_pool_usage(self, pool_id: int, enabled: Optional[bool] = None):
-        """Update pool properties"""
-        if enabled is None:
-            return
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE pools
-                SET enabled = ?, created_at = created_at
-                WHERE id = ?
-            """, (int(enabled), pool_id))
-
-    def delete_pool(self, pool_id: int):
-        """Delete pool and cascade members/history"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM pools WHERE id = ?", (pool_id,))
-
-    def add_pool_member(
-        self,
-        pool_id: int,
-        provider_id: str,
-        provider_name: str,
-        priority: int = 1,
-        weight: int = 1,
-        success_rate: float = 0.0,
-        rate_limit_usage: int = 0,
-        rate_limit_limit: int = 0,
-        rate_limit_percentage: float = 0.0
-    ) -> int:
-        """Add a provider to a pool"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO pool_members
-                (pool_id, provider_id, provider_name, priority, weight,
-                 success_rate, rate_limit_usage, rate_limit_limit, rate_limit_percentage)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                pool_id,
-                provider_id,
-                provider_name,
-                priority,
-                weight,
-                success_rate,
-                rate_limit_usage,
-                rate_limit_limit,
-                rate_limit_percentage
-            ))
-            return cursor.lastrowid
-
-    def remove_pool_member(self, pool_id: int, provider_id: str):
-        """Remove provider from pool"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                DELETE FROM pool_members
-                WHERE pool_id = ? AND provider_id = ?
-            """, (pool_id, provider_id))
-
-    def increment_member_use(self, pool_id: int, provider_id: str):
-        """Increment use count for pool member"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                UPDATE pool_members
-                SET use_count = use_count + 1
-                WHERE pool_id = ? AND provider_id = ?
-            """, (pool_id, provider_id))
-
-    def update_member_stats(
-        self,
-        pool_id: int,
-        provider_id: str,
-        success_rate: Optional[float] = None,
-        rate_limit_usage: Optional[int] = None,
-        rate_limit_limit: Optional[int] = None,
-        rate_limit_percentage: Optional[float] = None
-    ):
-        """Update success/rate limit stats"""
-        updates = []
-        params = []
-
-        if success_rate is not None:
-            updates.append("success_rate = ?")
-            params.append(success_rate)
-        if rate_limit_usage is not None:
-            updates.append("rate_limit_usage = ?")
-            params.append(rate_limit_usage)
-        if rate_limit_limit is not None:
-            updates.append("rate_limit_limit = ?")
-            params.append(rate_limit_limit)
-        if rate_limit_percentage is not None:
-            updates.append("rate_limit_percentage = ?")
-            params.append(rate_limit_percentage)
-
-        if not updates:
-            return
-
-        params.extend([pool_id, provider_id])
-
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(f"""
-                UPDATE pool_members
-                SET {', '.join(updates)}
-                WHERE pool_id = ? AND provider_id = ?
-            """, params)
-
-    def log_pool_rotation(
-        self,
-        pool_id: int,
-        provider_id: str,
-        provider_name: str,
-        reason: str
-    ):
-        """Log rotation event"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO pool_rotations
-                (pool_id, provider_id, provider_name, reason)
-                VALUES (?, ?, ?, ?)
-            """, (pool_id, provider_id, provider_name, reason))
-
-    def get_pools(self) -> List[Dict]:
-        """Get all pools with members and stats"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT p.*,
-                       COALESCE((SELECT COUNT(*) FROM pool_rotations pr WHERE pr.pool_id = p.id), 0) as rotation_count
-                FROM pools p
-                ORDER BY p.created_at DESC
-            """)
-            pools = [dict(row) for row in cursor.fetchall()]
-
-            for pool in pools:
+            # ==================== CREATE INDEXES ====================
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_prices_symbol ON prices(symbol)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_prices_timestamp ON prices(timestamp)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_prices_rank ON prices(rank)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_news_url ON news(url)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_news_published ON news(published_date)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_news_sentiment ON news(sentiment_label)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_analysis_symbol ON market_analysis(symbol)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_analysis_timestamp ON market_analysis(timestamp)")
+
+            conn.commit()
+            logger.info("Database tables and indexes created successfully")
+
+    # ==================== PRICES CRUD OPERATIONS ====================
+
+    def save_price(self, price_data: Dict[str, Any]) -> bool:
+        """
+        Save a single price record
+
+        Args:
+            price_data: Dictionary containing price information
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
                 cursor.execute("""
-                    SELECT * FROM pool_members
-                    WHERE pool_id = ?
-                    ORDER BY priority DESC, weight DESC, provider_name
-                """, (pool['id'],))
-                pool['members'] = [dict(row) for row in cursor.fetchall()]
+                    INSERT INTO prices
+                    (symbol, name, price_usd, volume_24h, market_cap,
+                     percent_change_1h, percent_change_24h, percent_change_7d, rank)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    price_data.get('symbol'),
+                    price_data.get('name'),
+                    price_data.get('price_usd', 0.0),
+                    price_data.get('volume_24h'),
+                    price_data.get('market_cap'),
+                    price_data.get('percent_change_1h'),
+                    price_data.get('percent_change_24h'),
+                    price_data.get('percent_change_7d'),
+                    price_data.get('rank')
+                ))
+                conn.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Error saving price: {e}")
+            return False
 
-            return pools
+    def save_prices_batch(self, prices: List[Dict[str, Any]]) -> int:
+        """
+        Save multiple price records in batch (minimum 100 records for efficiency)
 
-    def get_pool(self, pool_id: int) -> Optional[Dict]:
-        """Get single pool"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT p.*,
-                       COALESCE((SELECT COUNT(*) FROM pool_rotations pr WHERE pr.pool_id = p.id), 0) as rotation_count
-                FROM pools p
-                WHERE p.id = ?
-            """, (pool_id,))
-            row = cursor.fetchone()
-            if not row:
-                return None
-            pool = dict(row)
-            cursor.execute("""
-                SELECT * FROM pool_members
-                WHERE pool_id = ?
-                ORDER BY priority DESC, weight DESC, provider_name
-            """, (pool_id,))
-            pool['members'] = [dict(r) for r in cursor.fetchall()]
-            return pool
+        Args:
+            prices: List of price dictionaries
 
-    def get_pool_rotation_history(self, pool_id: Optional[int] = None, limit: int = 50) -> List[Dict]:
-        """Get rotation history (optionally filtered by pool)"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            if pool_id is not None:
+        Returns:
+            int: Number of records saved
+        """
+        saved_count = 0
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                for price_data in prices:
+                    try:
+                        cursor.execute("""
+                            INSERT INTO prices
+                            (symbol, name, price_usd, volume_24h, market_cap,
+                             percent_change_1h, percent_change_24h, percent_change_7d, rank)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            price_data.get('symbol'),
+                            price_data.get('name'),
+                            price_data.get('price_usd', 0.0),
+                            price_data.get('volume_24h'),
+                            price_data.get('market_cap'),
+                            price_data.get('percent_change_1h'),
+                            price_data.get('percent_change_24h'),
+                            price_data.get('percent_change_7d'),
+                            price_data.get('rank')
+                        ))
+                        saved_count += 1
+                    except Exception as e:
+                        logger.warning(f"Error saving individual price: {e}")
+                        continue
+                conn.commit()
+                logger.info(f"Batch saved {saved_count} price records")
+        except Exception as e:
+            logger.error(f"Error in batch save: {e}")
+        return saved_count
+
+    def get_latest_prices(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Get latest prices for top cryptocurrencies
+
+        Args:
+            limit: Maximum number of records to return
+
+        Returns:
+            List of price dictionaries
+        """
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
                 cursor.execute("""
-                    SELECT * FROM pool_rotations
-                    WHERE pool_id = ?
-                    ORDER BY created_at DESC
-                    LIMIT ?
-                """, (pool_id, limit))
-            else:
-                cursor.execute("""
-                    SELECT * FROM pool_rotations
-                    ORDER BY created_at DESC
+                    SELECT DISTINCT ON (symbol) *
+                    FROM prices
+                    WHERE timestamp >= datetime('now', '-1 hour')
+                    ORDER BY symbol, timestamp DESC, rank ASC
                     LIMIT ?
                 """, (limit,))
-            return [dict(row) for row in cursor.fetchall()]
 
-    # ------------------------------------------------------------------
-    # Provider health logging
-    # ------------------------------------------------------------------
+                # SQLite doesn't support DISTINCT ON, use subquery instead
+                cursor.execute("""
+                    SELECT p1.*
+                    FROM prices p1
+                    INNER JOIN (
+                        SELECT symbol, MAX(timestamp) as max_ts
+                        FROM prices
+                        WHERE timestamp >= datetime('now', '-1 hour')
+                        GROUP BY symbol
+                    ) p2 ON p1.symbol = p2.symbol AND p1.timestamp = p2.max_ts
+                    ORDER BY p1.rank ASC, p1.market_cap DESC
+                    LIMIT ?
+                """, (limit,))
 
-    def log_provider_status(
-        self,
-        provider_name: str,
-        category: str,
-        status: str,
-        response_time: Optional[float] = None,
-        status_code: Optional[int] = None,
-        endpoint_tested: Optional[str] = None,
-        error_message: Optional[str] = None
-    ):
-        """Log provider status in status_log table"""
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO status_log
-                (provider_name, category, status, response_time, status_code,
-                 error_message, endpoint_tested, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                provider_name,
-                category,
-                status,
-                response_time,
-                status_code,
-                error_message,
-                endpoint_tested,
-                time.time()
-            ))
+                return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Error getting latest prices: {e}")
+            return []
+
+    def get_price_history(self, symbol: str, hours: int = 24) -> List[Dict[str, Any]]:
+        """
+        Get price history for a specific symbol
+
+        Args:
+            symbol: Cryptocurrency symbol
+            hours: Number of hours to look back
+
+        Returns:
+            List of price dictionaries
+        """
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT * FROM prices
+                    WHERE symbol = ?
+                    AND timestamp >= datetime('now', '-' || ? || ' hours')
+                    ORDER BY timestamp ASC
+                """, (symbol, hours))
+                return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Error getting price history: {e}")
+            return []
+
+    def get_top_gainers(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get top gaining cryptocurrencies in last 24h"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT p1.*
+                    FROM prices p1
+                    INNER JOIN (
+                        SELECT symbol, MAX(timestamp) as max_ts
+                        FROM prices
+                        WHERE timestamp >= datetime('now', '-1 hour')
+                        GROUP BY symbol
+                    ) p2 ON p1.symbol = p2.symbol AND p1.timestamp = p2.max_ts
+                    WHERE p1.percent_change_24h IS NOT NULL
+                    ORDER BY p1.percent_change_24h DESC
+                    LIMIT ?
+                """, (limit,))
+                return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Error getting top gainers: {e}")
+            return []
+
+    def delete_old_prices(self, days: int = 30) -> int:
+        """
+        Delete price records older than specified days
+
+        Args:
+            days: Number of days to keep
+
+        Returns:
+            Number of deleted records
+        """
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    DELETE FROM prices
+                    WHERE timestamp < datetime('now', '-' || ? || ' days')
+                """, (days,))
+                conn.commit()
+                deleted = cursor.rowcount
+                logger.info(f"Deleted {deleted} old price records")
+                return deleted
+        except Exception as e:
+            logger.error(f"Error deleting old prices: {e}")
+            return 0
+
+    # ==================== NEWS CRUD OPERATIONS ====================
+
+    def save_news(self, news_data: Dict[str, Any]) -> bool:
+        """
+        Save a single news record
+
+        Args:
+            news_data: Dictionary containing news information
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT OR IGNORE INTO news
+                    (title, summary, url, source, sentiment_score,
+                     sentiment_label, related_coins, published_date)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    news_data.get('title'),
+                    news_data.get('summary'),
+                    news_data.get('url'),
+                    news_data.get('source'),
+                    news_data.get('sentiment_score'),
+                    news_data.get('sentiment_label'),
+                    json.dumps(news_data.get('related_coins', [])),
+                    news_data.get('published_date')
+                ))
+                conn.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Error saving news: {e}")
+            return False
+
+    def get_latest_news(self, limit: int = 50, sentiment: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get latest news articles
+
+        Args:
+            limit: Maximum number of articles
+            sentiment: Filter by sentiment label (optional)
+
+        Returns:
+            List of news dictionaries
+        """
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+
+                if sentiment:
+                    cursor.execute("""
+                        SELECT * FROM news
+                        WHERE sentiment_label = ?
+                        ORDER BY published_date DESC, timestamp DESC
+                        LIMIT ?
+                    """, (sentiment, limit))
+                else:
+                    cursor.execute("""
+                        SELECT * FROM news
+                        ORDER BY published_date DESC, timestamp DESC
+                        LIMIT ?
+                    """, (limit,))
+
+                results = []
+                for row in cursor.fetchall():
+                    news_dict = dict(row)
+                    if news_dict.get('related_coins'):
+                        try:
+                            news_dict['related_coins'] = json.loads(news_dict['related_coins'])
+                        except:
+                            news_dict['related_coins'] = []
+                    results.append(news_dict)
+
+                return results
+        except Exception as e:
+            logger.error(f"Error getting latest news: {e}")
+            return []
+
+    def get_news_by_coin(self, coin: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """Get news related to a specific coin"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT * FROM news
+                    WHERE related_coins LIKE ?
+                    ORDER BY published_date DESC
+                    LIMIT ?
+                """, (f'%{coin}%', limit))
+
+                results = []
+                for row in cursor.fetchall():
+                    news_dict = dict(row)
+                    if news_dict.get('related_coins'):
+                        try:
+                            news_dict['related_coins'] = json.loads(news_dict['related_coins'])
+                        except:
+                            news_dict['related_coins'] = []
+                    results.append(news_dict)
+
+                return results
+        except Exception as e:
+            logger.error(f"Error getting news by coin: {e}")
+            return []
+
+    def update_news_sentiment(self, news_id: int, sentiment_score: float, sentiment_label: str) -> bool:
+        """Update sentiment for a news article"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE news
+                    SET sentiment_score = ?, sentiment_label = ?
+                    WHERE id = ?
+                """, (sentiment_score, sentiment_label, news_id))
+                conn.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Error updating news sentiment: {e}")
+            return False
+
+    def delete_old_news(self, days: int = 30) -> int:
+        """Delete news older than specified days"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    DELETE FROM news
+                    WHERE timestamp < datetime('now', '-' || ? || ' days')
+                """, (days,))
+                conn.commit()
+                deleted = cursor.rowcount
+                logger.info(f"Deleted {deleted} old news records")
+                return deleted
+        except Exception as e:
+            logger.error(f"Error deleting old news: {e}")
+            return 0
+
+    # ==================== MARKET ANALYSIS CRUD OPERATIONS ====================
+
+    def save_analysis(self, analysis_data: Dict[str, Any]) -> bool:
+        """Save market analysis"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO market_analysis
+                    (symbol, timeframe, trend, support_level, resistance_level,
+                     prediction, confidence)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    analysis_data.get('symbol'),
+                    analysis_data.get('timeframe'),
+                    analysis_data.get('trend'),
+                    analysis_data.get('support_level'),
+                    analysis_data.get('resistance_level'),
+                    analysis_data.get('prediction'),
+                    analysis_data.get('confidence')
+                ))
+                conn.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Error saving analysis: {e}")
+            return False
+
+    def get_latest_analysis(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Get latest analysis for a symbol"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT * FROM market_analysis
+                    WHERE symbol = ?
+                    ORDER BY timestamp DESC
+                    LIMIT 1
+                """, (symbol,))
+                row = cursor.fetchone()
+                return dict(row) if row else None
+        except Exception as e:
+            logger.error(f"Error getting latest analysis: {e}")
+            return None
+
+    def get_all_analyses(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get all market analyses"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT * FROM market_analysis
+                    ORDER BY timestamp DESC
+                    LIMIT ?
+                """, (limit,))
+                return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Error getting all analyses: {e}")
+            return []
+
+    # ==================== USER QUERIES CRUD OPERATIONS ====================
+
+    def log_user_query(self, query: str, result_count: int) -> bool:
+        """Log a user query"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO user_queries (query, result_count)
+                    VALUES (?, ?)
+                """, (query, result_count))
+                conn.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Error logging user query: {e}")
+            return False
+
+    def get_recent_queries(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get recent user queries"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT * FROM user_queries
+                    ORDER BY timestamp DESC
+                    LIMIT ?
+                """, (limit,))
+                return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Error getting recent queries: {e}")
+            return []
+
+    # ==================== UTILITY OPERATIONS ====================
+
+    def execute_safe_query(self, query: str, params: Tuple = ()) -> List[Dict[str, Any]]:
+        """
+        Execute a safe read-only query
+
+        Args:
+            query: SQL query (must start with SELECT)
+            params: Query parameters
+
+        Returns:
+            List of result dictionaries
+        """
+        try:
+            # Security: Only allow SELECT queries
+            if not query.strip().upper().startswith('SELECT'):
+                logger.warning(f"Attempted non-SELECT query: {query}")
+                return []
+
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, params)
+                return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.error(f"Error executing safe query: {e}")
+            return []
+
+    def get_database_stats(self) -> Dict[str, Any]:
+        """Get database statistics"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+
+                stats = {}
+
+                # Count records in each table
+                for table in ['prices', 'news', 'market_analysis', 'user_queries']:
+                    cursor.execute(f"SELECT COUNT(*) as count FROM {table}")
+                    stats[f'{table}_count'] = cursor.fetchone()['count']
+
+                # Get unique symbols
+                cursor.execute("SELECT COUNT(DISTINCT symbol) as count FROM prices")
+                stats['unique_symbols'] = cursor.fetchone()['count']
+
+                # Get latest price update
+                cursor.execute("SELECT MAX(timestamp) as latest FROM prices")
+                stats['latest_price_update'] = cursor.fetchone()['latest']
+
+                # Get latest news update
+                cursor.execute("SELECT MAX(timestamp) as latest FROM news")
+                stats['latest_news_update'] = cursor.fetchone()['latest']
+
+                # Database file size
+                import os
+                if os.path.exists(self.db_path):
+                    stats['database_size_bytes'] = os.path.getsize(self.db_path)
+                    stats['database_size_mb'] = stats['database_size_bytes'] / (1024 * 1024)
+
+                return stats
+        except Exception as e:
+            logger.error(f"Error getting database stats: {e}")
+            return {}
+
+    def vacuum_database(self) -> bool:
+        """Vacuum database to reclaim space"""
+        try:
+            with self.get_connection() as conn:
+                conn.execute("VACUUM")
+                logger.info("Database vacuumed successfully")
+                return True
+        except Exception as e:
+            logger.error(f"Error vacuuming database: {e}")
+            return False
+
+    def backup_database(self, backup_path: Optional[str] = None) -> bool:
+        """Create database backup"""
+        try:
+            import shutil
+            if backup_path is None:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_path = config.DATABASE_BACKUP_DIR / f"backup_{timestamp}.db"
+
+            shutil.copy2(self.db_path, backup_path)
+            logger.info(f"Database backed up to {backup_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error backing up database: {e}")
+            return False
+
+    def close(self):
+        """Close database connection"""
+        if hasattr(self._local, 'conn'):
+            self._local.conn.close()
+            delattr(self._local, 'conn')
+            logger.info("Database connection closed")
+
+
+# Singleton instance
+_db_instance = None
+
+
+def get_database() -> CryptoDatabase:
+    """Get database singleton instance"""
+    global _db_instance
+    if _db_instance is None:
+        _db_instance = CryptoDatabase()
+    return _db_instance
