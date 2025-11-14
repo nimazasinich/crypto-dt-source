@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Monitor Ultimate - Enterprise Dashboard</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+
+    <!-- Existing CSS -->
+    <link rel="stylesheet" href="/static/css/design-tokens.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/toast.css">
+    <link rel="stylesheet" href="/static/css/accessibility.css">
+    <link rel="stylesheet" href="/static/css/mobile-responsive.css">
+
+    <!-- Ultimate Dashboard CSS -->
+    <link rel="stylesheet" href="/static/css/ultimate-dashboard.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Color Palette */
+            --color-primary: #667eea;
+            --color-secondary: #764ba2;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --color-info: #3b82f6;
+            --color-bg-light: #f9fafb;
+            --color-bg-dark: #111827;
+            --color-text-primary: #1f2937;
+            --color-text-secondary: #6b7280;
+
+            /* Dark Mode Colors */
+            --color-dark-bg: #0f172a;
+            --color-dark-card: #1e293b;
+            --color-dark-text: #f1f5f9;
+            --color-dark-border: #334155;
+
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+
+            /* Border Radius */
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+            /* Transitions */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--color-bg-light);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        body.dark-mode {
+            background: var(--color-dark-bg);
+            color: var(--color-dark-text);
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        body.dark-mode .header {
+            background: rgba(30, 41, 59, 0.8);
+            border-bottom: 1px solid var(--color-dark-border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+
+        .logo svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .logo-text {
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .logo-text {
+                display: inline;
+            }
+        }
+
+        .global-search {
+            display: none;
+            position: relative;
+        }
+
+        @media (min-width: 768px) {
+            .global-search {
+                display: block;
+                width: 400px;
+            }
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            padding-left: 40px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            transition: var(--transition-base);
+        }
+
+        body.dark-mode .search-input {
+            background: rgba(15, 23, 42, 0.6);
+            border-color: var(--color-dark-border);
+            color: var(--color-dark-text);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-text-secondary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .header-btn {
+            position: relative;
+            padding: var(--space-sm);
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--color-text-primary);
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+
+        body.dark-mode .header-btn {
+            color: var(--color-dark-text);
+        }
+
+        .header-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .header-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            background: var(--color-danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Connection Status Bar */
+        .connection-bar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-lg);
+            font-size: 13px;
+        }
+
+        body.dark-mode .connection-bar {
+            background: rgba(30, 41, 59, 0.95);
+            border-bottom: 1px solid var(--color-dark-border);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: var(--color-success);
+        }
+
+        .status-dot.offline {
+            background: var(--color-danger);
+            animation: none;
+        }
+
+        .status-dot.degraded {
+            background: var(--color-warning);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            position: fixed;
+            top: 110px;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            z-index: 998;
+            overflow-x: auto;
+            display: none;
+        }
+
+        body.dark-mode .nav-tabs {
+            background: rgba(30, 41, 59, 0.95);
+            border-bottom: 1px solid var(--color-dark-border);
+        }
+
+        @media (min-width: 768px) {
+            .nav-tabs {
+                display: block;
+            }
+        }
+
+        .nav-tabs-container {
+            display: flex;
+            padding: 0 var(--space-lg);
+            min-width: max-content;
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-md) var(--space-lg);
+            border: none;
+            background: transparent;
+            color: var(--color-text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        body.dark-mode .nav-tab {
+            color: var(--color-dark-text);
+        }
+
+        .nav-tab:hover {
+            color: var(--color-primary);
+        }
+
+        .nav-tab.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 110px;
+            padding: var(--space-lg);
+            min-height: calc(100vh - 110px);
+        }
+
+        @media (min-width: 768px) {
+            .main-content {
+                margin-top: 158px;
+                padding: var(--space-2xl);
+                min-height: calc(100vh - 158px);
+            }
+        }
+
+        @media (min-width: 768px) {
+            .main-content.with-mobile-nav {
+                margin-bottom: 70px;
+            }
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition-base);
+        }
+
+        body.dark-mode .card {
+            background: var(--color-dark-card);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        body.dark-mode .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+
+        @media (min-width: 640px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+        }
+
+        body.dark-mode .stat-label {
+            color: var(--color-dark-text);
+            opacity: 0.8;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: var(--space-xs);
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            color: var(--color-success);
+        }
+
+        .stat-change.negative {
+            color: var(--color-danger);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: var(--space-sm) var(--space-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--color-text-secondary);
+            color: var(--color-text-primary);
+        }
+
+        body.dark-mode .btn-secondary {
+            border-color: var(--color-dark-border);
+            color: var(--color-dark-text);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile Bottom Navigation */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 var(--space-sm);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .mobile-nav {
+            background: rgba(30, 41, 59, 0.95);
+            border-top: 1px solid var(--color-dark-border);
+        }
+
+        @media (min-width: 768px) {
+            .mobile-nav {
+                display: none;
+            }
+        }
+
+        .mobile-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: var(--space-sm);
+            background: transparent;
+            border: none;
+            color: var(--color-text-secondary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            flex: 1;
+        }
+
+        body.dark-mode .mobile-nav-btn {
+            color: var(--color-dark-text);
+        }
+
+        .mobile-nav-btn.active {
+            color: var(--color-primary);
+        }
+
+        .mobile-nav-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        body.dark-mode .data-table {
+            background: var(--color-dark-card);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: var(--space-md);
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .data-table th,
+        body.dark-mode .data-table td {
+            border-bottom: 1px solid var(--color-dark-border);
+        }
+
+        .data-table th {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        body.dark-mode .data-table th {
+            color: var(--color-dark-text);
+            opacity: 0.8;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .mt-lg {
+            margin-top: var(--space-lg);
+        }
+
+        .mb-lg {
+            margin-bottom: var(--space-lg);
+        }
+
+        /* Skeleton Loader */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: var(--radius-sm);
+        }
+
+        body.dark-mode .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-text {
+            height: 16px;
+            margin-bottom: var(--space-sm);
+        }
+
+        .skeleton-title {
+            height: 24px;
+            width: 60%;
+            margin-bottom: var(--space-md);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <a href="/" class="logo">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z"/>
+                </svg>
+                <span class="logo-text">Crypto Monitor HF</span>
+            </a>
+
+            <div class="global-search">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" class="search-input" placeholder="Search coins, providers, logs..." id="globalSearch">
+            </div>
+        </div>
+
+        <div class="header-right">
+            <button class="header-btn" id="themeToggle" title="Toggle theme">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+            </button>
+
+            <button class="header-btn" id="notificationBtn" title="Notifications">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="badge" id="notificationBadge">3</span>
+            </button>
+
+            <button class="header-btn" id="settingsBtn" title="Settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6m0-6h6M6 12H0"></path>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Connection Status Bar -->
+    <div class="connection-bar">
+        <div class="connection-status">
+            <div class="status-item">
+                <span class="status-dot online" id="wsStatusDot"></span>
+                <span id="wsStatusText">WebSocket Connected</span>
+            </div>
+            <div class="status-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span id="activeUsers">1 active user</span>
+            </div>
+        </div>
+        <div class="connection-status">
+            <div class="status-item">
+                <span id="lastSync">Last sync: Just now</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Navigation Tabs -->
+    <nav class="nav-tabs">
+        <div class="nav-tabs-container">
+            <button class="nav-tab active" data-tab="market">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="20" x2="12" y2="10"></line>
+                    <line x1="18" y1="20" x2="18" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="16"></line>
+                </svg>
+                Market
+            </button>
+            <button class="nav-tab" data-tab="monitor">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                API Monitor
+            </button>
+            <button class="nav-tab" data-tab="advanced">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                Advanced
+            </button>
+            <button class="nav-tab" data-tab="admin">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6"></path>
+                </svg>
+                Admin
+            </button>
+            <button class="nav-tab" data-tab="huggingface">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                HuggingFace
+            </button>
+            <button class="nav-tab" data-tab="pools">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 12a11.05 11.05 0 0 0-22 0zm-5 7a3 3 0 0 1-6 0v-7"></path>
+                </svg>
+                Pools
+            </button>
+            <button class="nav-tab" data-tab="providers">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                Providers
+            </button>
+            <button class="nav-tab" data-tab="logs">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Logs
+            </button>
+            <button class="nav-tab" data-tab="reports">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                Reports
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Market Tab -->
+        <div class="tab-content active" id="marketTab">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: var(--space-2xl);">Cryptocurrency Market Overview</h1>
+
+            <!-- Global Stats Cards -->
+            <div class="stats-grid">
+                <div class="card stat-card glass-card">
+                    <div class="stat-card-header">
+                        <span class="stat-label">Total Market Cap</span>
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalMarketCap">$2.1T</div>
+                    <div class="stat-change positive">
+                        <span>↑</span>
+                        <span id="marketCapChange">+3.2%</span>
+                        <span style="color: var(--color-text-secondary); margin-left: 4px;">24h</span>
+                    </div>
+                </div>
+
+                <div class="card stat-card glass-card">
+                    <div class="stat-card-header">
+                        <span class="stat-label">24h Volume</span>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                <line x1="12" y1="20" x2="12" y2="10"></line>
+                                <line x1="18" y1="20" x2="18" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="16"></line>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalVolume">$98.5B</div>
+                    <div class="stat-change positive">
+                        <span>↑</span>
+                        <span id="volumeChange">+5.7%</span>
+                        <span style="color: var(--color-text-secondary); margin-left: 4px;">24h</span>
+                    </div>
+                </div>
+
+                <div class="card stat-card glass-card">
+                    <div class="stat-card-header">
+                        <span class="stat-label">BTC Dominance</span>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="btcDominance">48.3%</div>
+                    <div class="stat-change negative">
+                        <span>↓</span>
+                        <span id="btcDominanceChange">-0.5%</span>
+                        <span style="color: var(--color-text-secondary); margin-left: 4px;">24h</span>
+                    </div>
+                </div>
+
+                <div class="card stat-card glass-card">
+                    <div class="stat-card-header">
+                        <span class="stat-label">Fear & Greed Index</span>
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="fearGreedIndex">62</div>
+                    <div class="stat-change positive">
+                        <span id="fearGreedLabel">Greed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Cryptocurrencies Section -->
+            <div class="card" style="margin-top: var(--space-2xl);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-lg);">
+                    <h2 style="font-size: 24px; font-weight: 700;">Top Cryptocurrencies</h2>
+                    <div style="display: flex; gap: var(--space-sm);">
+                        <button class="btn btn-secondary btn-sm" id="refreshMarketBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                        <button class="btn btn-secondary btn-sm" id="exportMarketBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Export CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div id="marketTableContainer">
+                    <div style="text-align: center; padding: var(--space-3xl);">
+                        <div class="spinner" style="margin: 0 auto;"></div>
+                        <p style="margin-top: var(--space-md); color: var(--color-text-secondary);">Loading market data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other tabs will be loaded here -->
+        <div class="tab-content" id="monitorTab">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: var(--space-2xl);">API Provider Health Monitor</h1>
+            <div id="monitorContent">
+                <div style="text-align: center; padding: var(--space-3xl);">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p style="margin-top: var(--space-md); color: var(--color-text-secondary);">Loading provider status...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="advancedTab">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: var(--space-2xl);">Advanced Analytics</h1>
+            <p style="color: var(--color-text-secondary);">Advanced analytics content coming soon...</p>
+        </div>
+
+        <div class="tab-content" id="adminTab">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: var(--space-2xl);">Admin Configuration</h1>
+            <p style="color: var(--color-text-secondary);">Admin configuration content coming soon...</p>
+        </div>
+
+        <div class="tab-content" id="huggingfaceTab">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: var(--space-2xl);">HuggingFace AI Integration</h1>
+            <p style="color: var(--color-text-secondary);">HuggingFace integration content coming soon...</p>
+        </div>
+
+        <div class="tab-content" id="poolsTab">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: var(--space-2xl);">Provider Pool Management</h1>
+            <p style="color: var(--color-text-secondary);">Pool management content coming soon...</p>
+        </div>
+
+        <div class="tab-content" id="providersTab">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: var(--space-2xl);">Provider Details</h1>
+            <p style="color: var(--color-text-secondary);">Provider details content coming soon...</p>
+        </div>
+
+        <div class="tab-content" id="logsTab">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: var(--space-2xl);">System Logs</h1>
+            <p style="color: var(--color-text-secondary);">System logs content coming soon...</p>
+        </div>
+
+        <div class="tab-content" id="reportsTab">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: var(--space-2xl);">Reports & Analytics</h1>
+            <p style="color: var(--color-text-secondary);">Reports content coming soon...</p>
+        </div>
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <button class="mobile-nav-btn active" data-tab="market">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="20" x2="12" y2="10"></line>
+                <line x1="18" y1="20" x2="18" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+            <span>Market</span>
+        </button>
+        <button class="mobile-nav-btn" data-tab="monitor">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span>Monitor</span>
+        </button>
+        <button class="mobile-nav-btn" data-tab="providers">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span>Providers</span>
+        </button>
+        <button class="mobile-nav-btn" data-tab="logs">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>Logs</span>
+        </button>
+        <button class="mobile-nav-btn" data-tab="admin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6"></path>
+            </svg>
+            <span>Admin</span>
+        </button>
+    </nav>
+
+    <!-- Existing JavaScript Modules -->
+    <script src="/static/js/toast.js"></script>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/ws-client.js"></script>
+
+    <!-- UI Components Library -->
+    <script src="/static/js/components.js"></script>
+
+    <!-- Tab Implementations -->
+    <script src="/static/js/tab-implementations.js"></script>
+
+    <!-- Ultimate Dashboard Controller -->
+    <script src="/static/js/ultimate-dashboard.js"></script>
+</body>
+</html>

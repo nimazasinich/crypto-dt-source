@@ -1498,6 +1498,23 @@ async def pool_management():
     except:
         return HTMLResponse("<h1>Pool Management not found</h1>", 404)
 
+@app.get("/ultimate", response_class=HTMLResponse)
+async def ultimate_dashboard():
+    """Crypto Monitor Ultimate - Enterprise-grade dashboard with 9-tab navigation"""
+    try:
+        with open("crypto_monitor_ultimate.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except:
+        return HTMLResponse("<h1>Ultimate Dashboard not found</h1>", 404)
+
+@app.get("/crypto_monitor_ultimate.html", response_class=HTMLResponse)
+async def crypto_monitor_ultimate_html():
+    """Direct access to Crypto Monitor Ultimate dashboard"""
+    try:
+        with open("crypto_monitor_ultimate.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except:
+        return HTMLResponse("<h1>Ultimate Dashboard not found</h1>", 404)
 
 
 # --- UI helper endpoints for categories, rate limits, logs, alerts, and HuggingFace registry ---
