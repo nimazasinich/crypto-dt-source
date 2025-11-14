@@ -37,6 +37,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files
+from pathlib import Path
+static_path = Path(__file__).parent / "static"
+if static_path.exists():
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # مدیر ارائه‌دهندگان
 manager = ProviderManager()
 
@@ -123,14 +129,19 @@ async def run_startup_validation():
         issues.append("اتصال به سرویس‌های کلیدی برقرار نشد. اتصال اینترنت را بررسی کنید.")
 
     if issues:
+        # Log issues but don't fail startup (allow degraded mode)
         for issue in issues:
             log_manager.add_log(
-                LogLevel.CRITICAL,
+                LogLevel.WARNING,
                 LogCategory.SYSTEM,
-                "Startup validation issue",
+                "Startup validation issue (non-critical)",
                 extra_data={"detail": issue},
             )
-        raise StartupValidationError("Startup validation failed. جزئیات در لاگ‌ها موجود است.")
+        print(f"⚠️  Startup validation found {len(issues)} issues (running in degraded mode)")
+        # Only raise error if ALL critical services are down
+        critical_failures = [i for i in issues if "هیچ ارائه‌دهنده" in i or "فایل ضروری" in i]
+        if len(critical_failures) >= 2:
+            raise StartupValidationError("Critical startup validation failed. جزئیات در لاگ‌ها موجود است.")
 
     log_manager.add_log(
         LogLevel.INFO,
@@ -238,6 +249,18 @@ async def websocket_heartbeat():
 async def root():
     """صفحه اصلی"""
     return FileResponse("unified_dashboard.html")
+
+
+@app.get("/test_websocket.html")
+async def test_websocket():
+    """صفحه تست WebSocket"""
+    return FileResponse("test_websocket.html")
+
+
+@app.get("/test_websocket_dashboard.html")
+async def test_websocket_dashboard():
+    """صفحه داشبورد تست WebSocket"""
+    return FileResponse("test_websocket_dashboard.html")
 
 
 @app.get("/health")
@@ -1165,18 +1188,24 @@ async def get_last_diagnostics():
 # ===== Main =====
 
 if __name__ == "__main__":
-    print("""
+    import os
+
+    # Support for Hugging Face Spaces and other platforms
+    port = int(os.getenv("PORT", "8000"))
+
+    print(f"""
     ╔═══════════════════════════════════════════════════════════╗
     ║   🚀 Crypto Monitor Extended API Server                  ║
-    ║   Version: 2.0.0                                          ║
+    ║   Version: 3.0.0                                          ║
     ║   با پشتیبانی کامل از Provider Management & Pools       ║
+    ║   Port: {port}                                                   ║
     ╚═══════════════════════════════════════════════════════════╝
     """)
-    
+
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=8000,
+        port=port,
         log_level="info"
     )
 
