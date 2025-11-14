@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Monitor - Complete Overview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #999;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-card.green .value { color: #10b981; }
+        .stat-card.blue .value { color: #3b82f6; }
+        .stat-card.orange .value { color: #f59e0b; }
+        .stat-card.red .value { color: #ef4444; }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .providers-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .provider-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            border-left: 4px solid #ddd;
+        }
+
+        .provider-item.online { 
+            border-left-color: #10b981; 
+            background: linear-gradient(to right, #f0fdf4, #f8f9fa);
+        }
+        .provider-item.offline { 
+            border-left-color: #ef4444; 
+            background: linear-gradient(to right, #fef2f2, #f8f9fa);
+        }
+        .provider-item.degraded { 
+            border-left-color: #f59e0b; 
+            background: linear-gradient(to right, #fffbeb, #f8f9fa);
+        }
+
+        .provider-item .name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .provider-item .info {
+            font-size: 0.75em;
+            color: #666;
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .category-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .category-item .name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .category-item .stats {
+            display: flex;
+            gap: 10px;
+            font-size: 0.85em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🚀 Crypto API Monitor</h1>
+                <p style="color: #666; margin-top: 5px;">Complete System Overview</p>
+            </div>
+            <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <h3>Total APIs</h3>
+                <div class="value" id="total">-</div>
+            </div>
+            <div class="stat-card green">
+                <h3>Online</h3>
+                <div class="value" id="online">-</div>
+            </div>
+            <div class="stat-card orange">
+                <h3>Degraded</h3>
+                <div class="value" id="degraded">-</div>
+            </div>
+            <div class="stat-card red">
+                <h3>Offline</h3>
+                <div class="value" id="offline">-</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="card">
+                <h2>📊 All Providers</h2>
+                <div class="providers-list" id="providers">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📁 Categories</h2>
+                <div class="category-list" id="categories">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const response = await fetch('/api/providers');
+                const providers = await response.json();
+                
+                // Calculate stats
+                const online = providers.filter(p => p.status === 'online').length;
+                const offline = providers.filter(p => p.status === 'offline').length;
+                const degraded = providers.filter(p => p.status === 'degraded').length;
+
+                // Update stats
+                document.getElementById('total').textContent = providers.length;
+                document.getElementById('online').textContent = online;
+                document.getElementById('degraded').textContent = degraded;
+                document.getElementById('offline').textContent = offline;
+
+                // Group by category
+                const categories = {};
+                providers.forEach(p => {
+                    if (!categories[p.category]) {
+                        categories[p.category] = { online: 0, offline: 0, degraded: 0 };
+                    }
+                    categories[p.category][p.status]++;
+                });
+
+                // Display providers
+                const providersHtml = providers.map(p => `
+                    <div class="provider-item ${p.status}">
+                        <div class="name">${p.name}</div>
+                        <div class="info">${p.category}</div>
+                        <div class="info" style="color: ${p.status === 'online' ? '#10b981' : p.status === 'degraded' ? '#f59e0b' : '#ef4444'}">
+                            ${p.status.toUpperCase()}
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('providers').innerHTML = providersHtml;
+
+                // Display categories
+                const categoriesHtml = Object.entries(categories).map(([name, stats]) => `
+                    <div class="category-item">
+                        <div class="name">${name}</div>
+                        <div class="stats">
+                            <span style="color: #10b981;">✓ ${stats.online}</span>
+                            <span style="color: #f59e0b;">⚠ ${stats.degraded}</span>
+                            <span style="color: #ef4444;">✗ ${stats.offline}</span>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('categories').innerHTML = categoriesHtml;
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('providers').innerHTML = '<div class="loading">Error loading data</div>';
+            }
+        }
+
+        // Load on start
+        loadData();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
+

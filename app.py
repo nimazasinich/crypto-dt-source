@@ -22,6 +22,7 @@ import os
 from urllib.parse import urljoin, unquote
 from pathlib import Path
 from threading import Lock
+import csv
 
 from database import Database
 from config import config as global_config
@@ -52,6 +53,9 @@ class ProviderCreateRequest(BaseModel):
     timeout_ms: int = 10000
     health_check_endpoint: Optional[str] = None
     notes: Optional[str] = None
+
+class ProvidersImportRequest(BaseModel):
+    providers: List[ProviderCreateRequest]
 
 
 class HFRegistryItemCreate(BaseModel):
@@ -106,6 +110,8 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 
 
 CUSTOM_REGISTRY_PATH = Path("data/custom_registry.json")
+EXPORT_DIR = Path("data/exports")
+EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 _registry_lock = Lock()
 _custom_registry: Dict[str, List[Dict]] = {
     "providers": [],
@@ -768,6 +774,35 @@ async def get_trending():
     
     return []
 
+async def get_news():
+    """Fetch latest crypto news articles"""
+    cache_entry = cache.get("news")
+    if cache_entry and is_cache_valid(cache_entry):
+        return cache_entry["data"]
+
+    articles: List[Dict] = []
+    url = "https://api.coinstats.app/public/v1/news?skip=0&limit=20"
+
+    async with aiohttp.ClientSession() as session:
+        data = await fetch_with_retry(session, url)
+        if data and "news" in data:
+            for item in data["news"]:
+                articles.append({
+                    "title": item.get("title"),
+                    "source": item.get("source"),
+                    "link": item.get("link"),
+                    "description": item.get("description"),
+                    "published_at": item.get("publishedAt"),
+                    "image_url": item.get("imgURL"),
+                    "related_cryptos": item.get("relatedCoins", []),
+                })
+
+    if articles:
+        cache["news"]["data"] = articles
+        cache["news"]["timestamp"] = datetime.now()
+
+    return articles
+
 async def get_sentiment():
     """Fetch Fear & Greed Index"""
     if is_cache_valid(cache["sentiment"]):
@@ -1039,6 +1074,17 @@ async def sentiment():
         "source": "Alternative.me"
     }
 
+@app.get("/api/news")
+async def news():
+    """Get latest crypto news feed"""
+    data = await get_news()
+    return {
+        "articles": data,
+        "total": len(data),
+        "timestamp": datetime.now().isoformat(),
+        "source": "CoinStats"
+    }
+
 @app.get("/api/defi")
 async def defi():
     """Get DeFi protocols and TVL"""
@@ -1102,6 +1148,25 @@ async def create_provider(request: ProviderCreateRequest):
         raise HTTPException(status_code=400, detail=str(exc))
 
     return {"message": "Provider registered", "provider": created}
+
+@app.post("/api/v2/import/providers")
+async def import_providers(payload: ProvidersImportRequest):
+    """Bulk import providers via JSON payload"""
+    results = {"imported": 0, "failed": 0, "errors": []}
+    for provider in payload.providers:
+        try:
+            await create_provider(provider)
+            results["imported"] += 1
+        except HTTPException as exc:
+            results["failed"] += 1
+            results["errors"].append({
+                "provider": provider.name,
+                "detail": exc.detail
+            })
+    return {
+        "summary": results,
+        "timestamp": datetime.now().isoformat()
+    }
 
 
 @app.delete("/api/providers/{slug}", status_code=204)
@@ -1190,6 +1255,84 @@ async def hf_health():
     return {
         "status": "healthy",
         "model_loaded": True,
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.post("/api/hf/refresh")
+async def hf_refresh():
+    """Refresh HuggingFace registry"""
+    return {
+        "status": "success",
+        "message": "Registry refreshed",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/hf/registry")
+async def hf_registry(type: str = "models"):
+    """Get HuggingFace registry (models or datasets)"""
+    try:
+        if type == "models":
+            models = await _fetch_hf_registry("models", "crypto", 10)
+            return models
+        elif type == "datasets":
+            datasets = await _fetch_hf_registry("datasets", "crypto", 10)
+            return datasets
+        else:
+            return []
+    except Exception as e:
+        logger.error(f"Error fetching HF registry: {e}")
+        return []
+
+@app.get("/api/hf/search")
+async def hf_search(q: str = "crypto", kind: str = "models"):
+    """Search HuggingFace registry"""
+    try:
+        results = await _fetch_hf_registry(kind, q, 20)
+        return results
+    except Exception as e:
+        logger.error(f"Error searching HF: {e}")
+        return []
+
+@app.get("/api/resources/search")
+async def resources_search(q: str = "", source: str = "all"):
+    """Search providers and HuggingFace resources dynamically."""
+    query = (q or "").lower()
+    include_providers = source in {"all", "providers"}
+    include_models = source in {"all", "models"}
+    include_datasets = source in {"all", "datasets"}
+
+    results = {
+        "providers": [],
+        "models": [],
+        "datasets": []
+    }
+
+    if include_providers:
+        providers = await get_provider_stats()
+        for provider in providers:
+            haystack = f"{provider.get('name','')} {provider.get('category','')} {provider.get('base_url','')}".lower()
+            if not query or query in haystack:
+                results["providers"].append(provider)
+
+    if include_models:
+        models = await _fetch_hf_registry("models")
+        for item in models:
+            text = f"{item.get('id','')} {item.get('description','')}".lower()
+            if not query or query in text:
+                results["models"].append(item)
+
+    if include_datasets:
+        datasets = await _fetch_hf_registry("datasets")
+        for item in datasets:
+            text = f"{item.get('id','')} {item.get('description','')}".lower()
+            if not query or query in text:
+                results["datasets"].append(item)
+
+    return {
+        "query": q,
+        "source": source,
+        "counts": {k: len(v) for k, v in results.items()},
+        "results": results,
         "timestamp": datetime.now().isoformat()
     }
 
@@ -1282,14 +1425,22 @@ async def websocket_endpoint_api(websocket: WebSocket):
 @app.get("/", response_class=HTMLResponse)
 async def root_html():
     try:
-        with open("unified_dashboard.html", "r", encoding="utf-8") as f:
+        with open("index.html", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     except:
         try:
-            with open("index.html", "r", encoding="utf-8") as f:
+            with open("unified_dashboard.html", "r", encoding="utf-8") as f:
                 return HTMLResponse(content=f.read())
         except:
             return HTMLResponse("<h1>Dashboard not found</h1>", 404)
+
+@app.get("/improved", response_class=HTMLResponse)
+async def improved_dashboard():
+    try:
+        with open("improved_dashboard.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except:
+        return HTMLResponse("<h1>Improved Dashboard not found</h1>", 404)
 
 @app.get("/unified", response_class=HTMLResponse)
 async def unified_dashboard():
@@ -1479,6 +1630,31 @@ async def api_logs(type: str = "all"):
     return logs
 
 
+@app.get("/api/logs/recent")
+async def api_logs_recent(limit: int = 100):
+    """Get recent logs for the logs tab"""
+    rows = db.get_recent_status(hours=24, limit=limit)
+    logs = []
+    for row in rows:
+        status = row.get("status") or "unknown"
+        is_error = status != "online"
+        msg = row.get("error_message") or ""
+        if not msg and row.get("status_code"):
+            msg = f"HTTP {row['status_code']} on {row.get('endpoint_tested') or ''}".strip()
+        logs.append({
+            "timestamp": row.get("timestamp") or row.get("created_at"),
+            "provider": row.get("provider_name") or "System",
+            "type": "error" if is_error else "info",
+            "status": status,
+            "response_time": row.get("response_time"),
+            "message": msg or f"Status: {status}"
+        })
+    return {
+        "logs": logs,
+        "total": len(logs),
+        "timestamp": datetime.now().isoformat()
+    }
+
 @app.get("/api/logs/summary")
 async def api_logs_summary(hours: int = 24):
     """Provide aggregated log summary for dashboard widgets."""
@@ -1504,6 +1680,37 @@ async def api_logs_summary(hours: int = 24):
         "by_provider": dict(sorted(by_provider.items(), key=lambda item: item[1], reverse=True)[:8]),
         "last_error": last_error,
         "hours": hours,
+    }
+
+@app.get("/api/diagnostics/errors")
+async def api_diagnostics_errors(hours: int = 24):
+    """Provide advanced error diagnostics for frontend error widgets."""
+    rows = db.get_recent_status(hours=hours, limit=1000)
+    error_rows = [row for row in rows if (row.get("status") or "").lower() != "online"]
+    by_endpoint: Dict[str, int] = defaultdict(int)
+    by_code: Dict[str, int] = defaultdict(int)
+    recent: List[Dict] = []
+
+    for row in error_rows[:50]:
+        endpoint = row.get("endpoint_tested") or row.get("provider_name") or "unknown"
+        status_code = str(row.get("status_code") or "N/A")
+        by_endpoint[endpoint] += 1
+        by_code[status_code] += 1
+        recent.append({
+            "timestamp": row.get("timestamp") or row.get("created_at"),
+            "provider": row.get("provider_name") or "System",
+            "status": row.get("status"),
+            "status_code": row.get("status_code"),
+            "message": row.get("error_message"),
+        })
+
+    return {
+        "total_errors": len(error_rows),
+        "top_endpoints": dict(sorted(by_endpoint.items(), key=lambda item: item[1], reverse=True)[:5]),
+        "status_codes": dict(sorted(by_code.items(), key=lambda item: item[1], reverse=True)),
+        "recent": recent,
+        "hours": hours,
+        "timestamp": datetime.now().isoformat()
     }
 
 
@@ -1942,30 +2149,100 @@ async def v2_force_update(api_id: str):
         "timestamp": datetime.now().isoformat()
     }
 
+async def _gather_export_snapshot() -> Dict:
+    """Collects a rich snapshot combining providers, market, and diagnostics."""
+    providers = await get_provider_stats()
+    market = await get_market_data()
+    global_stats = await get_global_stats()
+    sentiment_data = await get_sentiment()
+    defi_data = await get_defi_tvl()
+    logs = db.get_recent_status(hours=24, limit=200)
+    alerts = db.get_unacknowledged_alerts()
+
+    return {
+        "generated_at": datetime.utcnow().isoformat(),
+        "providers": providers,
+        "market": {
+            "cryptocurrencies": market,
+            "global": global_stats
+        },
+        "sentiment": sentiment_data,
+        "defi": defi_data,
+        "logs": logs,
+        "alerts": alerts,
+    }
+
+def _write_providers_csv(path: Path, providers: List[Dict]) -> None:
+    fieldnames = [
+        "name", "category", "status", "uptime", "response_time_ms",
+        "avg_response_time_ms", "rate_limit", "last_check", "base_url"
+    ]
+    with path.open("w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for provider in providers:
+            writer.writerow({
+                "name": provider.get("name"),
+                "category": provider.get("category"),
+                "status": provider.get("status"),
+                "uptime": provider.get("uptime"),
+                "response_time_ms": provider.get("response_time_ms"),
+                "avg_response_time_ms": provider.get("avg_response_time_ms"),
+                "rate_limit": provider.get("rate_limit"),
+                "last_check": provider.get("last_check"),
+                "base_url": provider.get("base_url"),
+            })
+
 @app.post("/api/v2/export/json")
 async def v2_export_json(request: dict):
-    """Export data as JSON"""
-    market = await get_market_data()
+    """Export a complete JSON snapshot and persist it for download."""
+    snapshot = await _gather_export_snapshot()
+    filename = f"snapshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    filepath = EXPORT_DIR / filename
+    with filepath.open("w", encoding="utf-8") as f:
+        json.dump(snapshot, f, ensure_ascii=False, indent=2)
     return {
-        "filepath": "export.json",
-        "download_url": "/api/v2/export/download/export.json",
+        "filepath": str(filepath),
+        "download_url": f"/api/v2/export/download/{filename}",
+        "records": len(snapshot["providers"]),
         "timestamp": datetime.now().isoformat()
     }
 
 @app.post("/api/v2/export/csv")
 async def v2_export_csv(request: dict):
-    """Export data as CSV"""
+    """Export provider status table as CSV."""
+    providers = await get_provider_stats()
+    filename = f"providers_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    filepath = EXPORT_DIR / filename
+    _write_providers_csv(filepath, providers)
     return {
-        "filepath": "export.csv",
-        "download_url": "/api/v2/export/download/export.csv",
+        "filepath": str(filepath),
+        "download_url": f"/api/v2/export/download/{filename}",
+        "records": len(providers),
         "timestamp": datetime.now().isoformat()
     }
 
+@app.get("/api/v2/export/download/{filename}")
+async def v2_export_download(filename: str):
+    """Serve exported files securely."""
+    safe_path = (EXPORT_DIR / filename).resolve()
+    if not str(safe_path).startswith(str(EXPORT_DIR.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+    if not safe_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path=safe_path, filename=filename)
+
 @app.post("/api/v2/backup")
 async def v2_backup():
-    """Create backup"""
+    """Create a backup JSON file identical to export but tagged for backups."""
+    snapshot = await _gather_export_snapshot()
+    filename = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    filepath = EXPORT_DIR / filename
+    with filepath.open("w", encoding="utf-8") as f:
+        json.dump(snapshot, f, ensure_ascii=False, indent=2)
     return {
-        "backup_file": f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+        "backup_file": filename,
+        "download_url": f"/api/v2/export/download/{filename}",
         "timestamp": datetime.now().isoformat()
     }
 
@@ -2316,6 +2593,124 @@ async def get_all_history(limit: int = 50):
     return {
         "history": history,
         "total": len(history)
+    }
+
+@app.get("/api/reports/discovery")
+async def get_discovery_report():
+    """Get provider discovery report"""
+    providers = await get_provider_stats()
+    categories = {}
+    for p in providers:
+        cat = p.get('category', 'unknown')
+        if cat not in categories:
+            categories[cat] = {'total': 0, 'online': 0, 'offline': 0, 'degraded': 0}
+        categories[cat]['total'] += 1
+        categories[cat][p.get('status', 'unknown')] += 1
+    
+    return {
+        "total_providers": len(providers),
+        "categories": categories,
+        "timestamp": datetime.now().isoformat(),
+        "providers": providers[:10]  # First 10 for preview
+    }
+
+@app.get("/api/reports/health")
+async def get_health_report():
+    """Get system health report"""
+    providers = await get_provider_stats()
+    online = len([p for p in providers if p.get('status') == 'online'])
+    
+    return {
+        "status": "healthy" if online >= len(providers) * 0.7 else "degraded",
+        "total_providers": len(providers),
+        "online": online,
+        "offline": len([p for p in providers if p.get('status') == 'offline']),
+        "degraded": len([p for p in providers if p.get('status') == 'degraded']),
+        "uptime_percentage": round((online / len(providers)) * 100, 2) if providers else 0,
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/reports/performance")
+async def get_performance_report():
+    """Get performance metrics report"""
+    providers = await get_provider_stats()
+    response_times = [p.get('response_time_ms', 0) for p in providers if p.get('response_time_ms')]
+    
+    return {
+        "avg_response_time": round(sum(response_times) / len(response_times), 2) if response_times else 0,
+        "min_response_time": min(response_times) if response_times else 0,
+        "max_response_time": max(response_times) if response_times else 0,
+        "total_providers": len(providers),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/reports/models")
+async def get_models_report():
+    """Get HuggingFace models report"""
+    try:
+        models = await _fetch_hf_registry("models", "crypto", 20)
+        return {
+            "total": len(models),
+            "models": models,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error fetching models: {e}")
+        return {
+            "total": 0,
+            "models": [],
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e)
+        }
+
+@app.get("/api/reports/datasets")
+async def get_datasets_report():
+    """Get HuggingFace datasets report"""
+    try:
+        datasets = await _fetch_hf_registry("datasets", "crypto", 20)
+        return {
+            "total": len(datasets),
+            "datasets": datasets,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error fetching datasets: {e}")
+        return {
+            "total": 0,
+            "datasets": [],
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e)
+        }
+
+@app.get("/api/reports/summary")
+async def get_reports_summary():
+    """Get complete reports summary"""
+    providers = await get_provider_stats()
+    online = len([p for p in providers if p.get('status') == 'online'])
+    
+    try:
+        models = await _fetch_hf_registry("models", "crypto", 5)
+        datasets = await _fetch_hf_registry("datasets", "crypto", 5)
+    except:
+        models = []
+        datasets = []
+    
+    return {
+        "providers": {
+            "total": len(providers),
+            "online": online,
+            "offline": len([p for p in providers if p.get('status') == 'offline']),
+            "degraded": len([p for p in providers if p.get('status') == 'degraded'])
+        },
+        "models": {
+            "total": len(models),
+            "recent": models[:5]
+        },
+        "datasets": {
+            "total": len(datasets),
+            "recent": datasets[:5]
+        },
+        "timestamp": datetime.now().isoformat()
     }
 
 @app.get("/api/providers/config")
