@@ -1,0 +1,442 @@
+/**
+ * Mobile-First Responsive CSS
+ * Crypto Monitor HF - Enterprise Edition
+ * Breakpoints: 320px, 480px, 768px, 1024px, 1440px
+ */
+
+/* ===== Base Mobile Styles (320px+) ===== */
+@media (max-width: 1023px) {
+    /* Hide desktop navigation */
+    .desktop-nav {
+        display: none;
+    }
+
+    /* Show mobile navigation */
+    .mobile-nav {
+        display: block;
+    }
+
+    /* Adjust main content for mobile */
+    .dashboard-main {
+        margin-left: 0;
+        margin-bottom: var(--mobile-nav-height);
+        padding: var(--spacing-md);
+    }
+
+    /* Make header more compact */
+    .dashboard-header {
+        padding: 0 var(--spacing-md);
+    }
+
+    .header-logo-text {
+        display: none;
+    }
+
+    .header-search {
+        max-width: 200px;
+    }
+
+    /* Connection status bar */
+    .connection-status-bar {
+        padding: 0 var(--spacing-md);
+        font-size: 0.7rem;
+    }
+
+    .connection-info {
+        gap: var(--spacing-sm);
+    }
+
+    /* Compact stats grid on mobile */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
+    }
+
+    /* Stack cards on mobile */
+    .cards-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+
+    /* Smaller stat cards */
+    .stat-card {
+        padding: var(--spacing-md);
+    }
+
+    .stat-value {
+        font-size: var(--font-size-xl);
+    }
+
+    .stat-label {
+        font-size: var(--font-size-xs);
+    }
+
+    /* Tab header */
+    .tab-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .tab-title {
+        font-size: var(--font-size-xl);
+    }
+
+    .tab-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .tab-actions .btn {
+        flex: 1;
+    }
+
+    /* Card spacing */
+    .card {
+        padding: var(--spacing-md);
+    }
+
+    /* Button adjustments */
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Chart containers */
+    .chart-container canvas {
+        max-height: 250px;
+    }
+
+    /* Modal adjustments */
+    .modal {
+        margin: var(--spacing-md);
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: var(--spacing-md);
+    }
+}
+
+/* ===== Small Phone (320px - 479px) ===== */
+@media (max-width: 479px) {
+    /* Even more compact header */
+    .header-center {
+        display: none;
+    }
+
+    .header-right {
+        gap: var(--spacing-sm);
+    }
+
+    /* Mobile nav with icons only on very small screens */
+    .mobile-nav-tab-label {
+        display: none;
+    }
+
+    .mobile-nav-tab-btn {
+        font-size: 0.65rem;
+    }
+
+    /* Single column stats */
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Smaller font sizes */
+    h1 { font-size: var(--font-size-xl); }
+    h2 { font-size: var(--font-size-lg); }
+    h3 { font-size: var(--font-size-base); }
+
+    /* Tighter spacing */
+    .dashboard-main {
+        padding: var(--spacing-sm);
+    }
+
+    .card {
+        padding: var(--spacing-sm);
+    }
+
+    /* Connection status */
+    .online-users {
+        padding: 2px var(--spacing-sm);
+        font-size: 0.65rem;
+    }
+
+    /* Table adjustments */
+    .table th,
+    .table td {
+        padding: var(--spacing-sm);
+        font-size: var(--font-size-xs);
+    }
+}
+
+/* ===== Normal Phone (480px - 767px) ===== */
+@media (min-width: 480px) and (max-width: 767px) {
+    /* Show labels on mobile nav */
+    .mobile-nav-tab-label {
+        display: block;
+    }
+
+    /* Stats grid - 2 columns */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Header search visible */
+    .header-search {
+        max-width: 250px;
+    }
+}
+
+/* ===== Small Tablet (768px - 1023px) ===== */
+@media (min-width: 768px) and (max-width: 1023px) {
+    /* 3 column stats grid on tablet */
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* 2 column cards */
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Show full header */
+    .header-logo-text {
+        display: inline;
+    }
+
+    .header-search {
+        max-width: 300px;
+    }
+
+    /* Larger charts */
+    .chart-container canvas {
+        max-height: 300px;
+    }
+
+    /* Tab actions inline */
+    .tab-header {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .tab-actions .btn {
+        flex: initial;
+        width: auto;
+    }
+}
+
+/* ===== Desktop (1024px - 1439px) ===== */
+@media (min-width: 1024px) and (max-width: 1439px) {
+    /* 4 column stats grid */
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* 3 column cards */
+    .cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== Large Desktop (1440px+) ===== */
+@media (min-width: 1440px) {
+    /* Wider sidebar */
+    .desktop-nav {
+        width: 280px;
+    }
+
+    .dashboard-main {
+        margin-left: 280px;
+    }
+
+    /* 5 column stats grid */
+    .stats-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    /* 4 column cards */
+    .cards-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* Larger fonts */
+    .tab-title {
+        font-size: var(--font-size-3xl);
+    }
+
+    /* Max width for content */
+    .dashboard-main {
+        max-width: 1600px;
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: 280px;
+    }
+}
+
+/* ===== Touch Target Enhancements ===== */
+@media (max-width: 1023px) {
+    /* Ensure all interactive elements meet 44x44px touch target */
+    button,
+    a,
+    input,
+    select,
+    textarea,
+    .nav-tab-btn,
+    .mobile-nav-tab-btn,
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Larger checkbox/radio inputs */
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Larger toggle switches */
+    .toggle-switch {
+        width: 56px;
+        height: 28px;
+    }
+
+    .toggle-slider:before {
+        height: 22px;
+        width: 22px;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(28px);
+    }
+}
+
+/* ===== Landscape Phone Orientation ===== */
+@media (max-width: 1023px) and (orientation: landscape) {
+    /* Reduce vertical spacing in landscape */
+    .dashboard-main {
+        padding-top: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+    }
+
+    .tab-header {
+        margin-bottom: var(--spacing-md);
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-sm);
+    }
+
+    .stat-card {
+        padding: var(--spacing-sm);
+    }
+
+    /* Smaller charts in landscape */
+    .chart-container canvas {
+        max-height: 180px;
+    }
+}
+
+/* ===== Print Styles ===== */
+@media print {
+    /* Hide navigation */
+    .desktop-nav,
+    .mobile-nav,
+    .dashboard-header,
+    .connection-status-bar {
+        display: none !important;
+    }
+
+    /* Reset margins */
+    .dashboard-main {
+        margin: 0;
+        padding: 0;
+    }
+
+    /* White background */
+    body {
+        background: white;
+        color: black;
+    }
+
+    .card {
+        border: 1px solid #ccc;
+        break-inside: avoid;
+    }
+
+    /* Remove shadows */
+    * {
+        box-shadow: none !important;
+    }
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ===== High Contrast Mode ===== */
+@media (prefers-contrast: high) {
+    :root {
+        --border-color: #000;
+        --text-secondary: #000;
+    }
+
+    .theme-dark {
+        --border-color: #fff;
+        --text-secondary: #fff;
+    }
+
+    .card,
+    .btn,
+    input,
+    select,
+    textarea {
+        border-width: 2px;
+    }
+}
+
+/* ===== Hover-Capable Devices Only ===== */
+@media (hover: hover) and (pointer: fine) {
+    /* Enhanced hover effects for desktop */
+    .card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .table tbody tr:hover {
+        transform: scale(1.01);
+    }
+}
+
+/* ===== No Hover Support (Touch Devices) ===== */
+@media (hover: none) {
+    /* Remove hover-dependent visual feedback */
+    .card:hover,
+    .stat-card:hover,
+    .table tbody tr:hover {
+        transform: none;
+    }
+
+    /* Add active states for touch */
+    .btn:active {
+        transform: scale(0.98);
+    }
+
+    .nav-tab-btn:active,
+    .mobile-nav-tab-btn:active {
+        background-color: var(--bg-tertiary);
+    }
+}
