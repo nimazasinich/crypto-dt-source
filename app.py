@@ -26,6 +26,7 @@ from threading import Lock
 from database import Database
 from config import config as global_config
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from backend.feature_flags import feature_flags, is_feature_enabled
 
 class SentimentRequest(BaseModel):
     texts: List[str]
@@ -59,6 +60,14 @@ class HFRegistryItemCreate(BaseModel):
     description: Optional[str] = None
     downloads: Optional[int] = None
     likes: Optional[int] = None
+
+class FeatureFlagUpdate(BaseModel):
+    flag_name: str
+    value: bool
+
+class FeatureFlagsUpdate(BaseModel):
+    flags: Dict[str, bool]
+
 logger = logging.getLogger("crypto_monitor")
 
 
@@ -528,23 +537,131 @@ cache = {
     "defi": {"data": None, "timestamp": None, "ttl": 300}
 }
 
-async def fetch_with_retry(session, url, retries=3):
-    """Fetch data with retry mechanism"""
+# Smart Proxy Mode - Cache which providers need proxy
+provider_proxy_cache: Dict[str, Dict] = {}
+
+# CORS proxy list (from config)
+CORS_PROXIES = [
+    'https://api.allorigins.win/get?url=',
+    'https://proxy.cors.sh/',
+    'https://corsproxy.io/?',
+]
+
+def should_use_proxy(provider_name: str) -> bool:
+    """Check if a provider should use proxy based on past failures"""
+    if not is_feature_enabled("enableProxyAutoMode"):
+        return False
+
+    cached = provider_proxy_cache.get(provider_name)
+    if not cached:
+        return False
+
+    # Check if cache is still valid (5 minutes)
+    if (datetime.now() - cached.get("timestamp", datetime.now())).total_seconds() > 300:
+        # Cache expired, remove it
+        provider_proxy_cache.pop(provider_name, None)
+        return False
+
+    return cached.get("use_proxy", False)
+
+def mark_provider_needs_proxy(provider_name: str):
+    """Mark a provider as needing proxy"""
+    provider_proxy_cache[provider_name] = {
+        "use_proxy": True,
+        "timestamp": datetime.now(),
+        "reason": "Network error or CORS issue"
+    }
+    logger.info(f"Provider '{provider_name}' marked for proxy routing")
+
+def mark_provider_direct_ok(provider_name: str):
+    """Mark a provider as working with direct connection"""
+    if provider_name in provider_proxy_cache:
+        provider_proxy_cache.pop(provider_name)
+        logger.info(f"Provider '{provider_name}' restored to direct routing")
+
+async def fetch_with_proxy(session, url: str, proxy_url: str = None):
+    """Fetch data through a CORS proxy"""
+    if not proxy_url:
+        proxy_url = CORS_PROXIES[0]  # Default to first proxy
+
+    try:
+        proxied_url = f"{proxy_url}{url}"
+        async with session.get(proxied_url, timeout=aiohttp.ClientTimeout(total=15)) as response:
+            if response.status == 200:
+                data = await response.json()
+                # Some proxies wrap the response
+                if isinstance(data, dict) and "contents" in data:
+                    return json.loads(data["contents"])
+                return data
+            return None
+    except Exception as e:
+        logger.debug(f"Proxy fetch failed for {url}: {e}")
+        return None
+
+async def smart_fetch(session, url: str, provider_name: str = None, retries=3):
+    """
+    Smart fetch with automatic proxy fallback
+
+    Flow:
+    1. If provider is marked for proxy -> use proxy directly
+    2. Otherwise, try direct connection
+    3. On failure (timeout, CORS, 403, connection error) -> fallback to proxy
+    4. Cache the proxy decision for the provider
+    """
+    # Check if we should go through proxy directly
+    if provider_name and should_use_proxy(provider_name):
+        logger.debug(f"Using proxy for {provider_name} (cached decision)")
+        return await fetch_with_proxy(session, url)
+
+    # Try direct connection first
     for attempt in range(retries):
         try:
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                 if response.status == 200:
+                    # Success! Mark provider as working directly
+                    if provider_name:
+                        mark_provider_direct_ok(provider_name)
                     return await response.json()
                 elif response.status == 429:  # Rate limit
                     await asyncio.sleep(2 ** attempt)
+                elif response.status in [403, 451]:  # Forbidden or CORS
+                    # Try proxy fallback
+                    if provider_name:
+                        mark_provider_needs_proxy(provider_name)
+                    logger.info(f"HTTP {response.status} on {url}, trying proxy...")
+                    return await fetch_with_proxy(session, url)
                 else:
                     return None
-        except Exception as e:
+        except asyncio.TimeoutError:
+            # Timeout - try proxy on last attempt
+            if attempt == retries - 1 and provider_name:
+                mark_provider_needs_proxy(provider_name)
+                logger.info(f"Timeout on {url}, trying proxy...")
+                return await fetch_with_proxy(session, url)
+            await asyncio.sleep(1)
+        except aiohttp.ClientError as e:
+            # Network error (connection refused, CORS, etc) - try proxy
+            if "CORS" in str(e) or "Connection" in str(e) or "SSL" in str(e):
+                if provider_name:
+                    mark_provider_needs_proxy(provider_name)
+                logger.info(f"Network error on {url} ({e}), trying proxy...")
+                return await fetch_with_proxy(session, url)
             if attempt == retries - 1:
-                print(f"Error fetching {url}: {e}")
+                logger.debug(f"Error fetching {url}: {e}")
                 return None
             await asyncio.sleep(1)
+        except Exception as e:
+            if attempt == retries - 1:
+                logger.debug(f"Error fetching {url}: {e}")
+                return None
+            await asyncio.sleep(1)
+
     return None
+
+# Keep old function for backward compatibility
+async def fetch_with_retry(session, url, retries=3):
+    """Fetch data with retry mechanism (uses smart_fetch internally)"""
+    return await smart_fetch(session, url, retries=retries)
 
 def is_cache_valid(cache_entry):
     """Check if cache is still valid"""
@@ -1581,6 +1698,89 @@ async def hf_search(q: str = "", kind: str = "models"):
         if not q_lower or q_lower in text:
             results.append(item)
     return results
+
+
+# Feature Flags Endpoints
+@app.get("/api/feature-flags")
+async def get_feature_flags():
+    """Get all feature flags and their status"""
+    return feature_flags.get_feature_info()
+
+
+@app.put("/api/feature-flags")
+async def update_feature_flags(request: FeatureFlagsUpdate):
+    """Update multiple feature flags"""
+    success = feature_flags.update_flags(request.flags)
+    if success:
+        return {
+            "success": True,
+            "message": f"Updated {len(request.flags)} feature flags",
+            "flags": feature_flags.get_all_flags()
+        }
+    else:
+        raise HTTPException(status_code=500, detail="Failed to update feature flags")
+
+
+@app.put("/api/feature-flags/{flag_name}")
+async def update_single_feature_flag(flag_name: str, request: FeatureFlagUpdate):
+    """Update a single feature flag"""
+    success = feature_flags.set_flag(flag_name, request.value)
+    if success:
+        return {
+            "success": True,
+            "message": f"Feature flag '{flag_name}' set to {request.value}",
+            "flag_name": flag_name,
+            "value": request.value
+        }
+    else:
+        raise HTTPException(status_code=500, detail="Failed to update feature flag")
+
+
+@app.post("/api/feature-flags/reset")
+async def reset_feature_flags():
+    """Reset all feature flags to default values"""
+    success = feature_flags.reset_to_defaults()
+    if success:
+        return {
+            "success": True,
+            "message": "Feature flags reset to defaults",
+            "flags": feature_flags.get_all_flags()
+        }
+    else:
+        raise HTTPException(status_code=500, detail="Failed to reset feature flags")
+
+
+@app.get("/api/feature-flags/{flag_name}")
+async def get_single_feature_flag(flag_name: str):
+    """Get a single feature flag value"""
+    value = feature_flags.get_flag(flag_name)
+    return {
+        "flag_name": flag_name,
+        "value": value,
+        "enabled": value
+    }
+
+
+@app.get("/api/proxy-status")
+async def get_proxy_status():
+    """Get provider proxy routing status"""
+    status = []
+    for provider_name, cache_data in provider_proxy_cache.items():
+        age_seconds = (datetime.now() - cache_data.get("timestamp", datetime.now())).total_seconds()
+        status.append({
+            "provider": provider_name,
+            "using_proxy": cache_data.get("use_proxy", False),
+            "reason": cache_data.get("reason", "Unknown"),
+            "cached_since": cache_data.get("timestamp", datetime.now()).isoformat(),
+            "cache_age_seconds": int(age_seconds)
+        })
+
+    return {
+        "proxy_auto_mode_enabled": is_feature_enabled("enableProxyAutoMode"),
+        "total_providers_using_proxy": len(status),
+        "providers": status,
+        "available_proxies": CORS_PROXIES
+    }
 
 
 @app.get("/providers", include_in_schema=False)

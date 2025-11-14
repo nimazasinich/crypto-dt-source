@@ -1,0 +1,540 @@
+/**
+ * Mobile-Responsive Styles for Crypto Monitor
+ * Optimized for phones, tablets, and desktop
+ */
+
+/* ===========================
+   MOBILE-FIRST BASE STYLES
+   =========================== */
+
+/* Feature Flags Styling */
+.feature-flags-container {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.feature-flags-container h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.feature-flags-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.feature-flag-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    transition: background 0.2s;
+}
+
+.feature-flag-item:hover {
+    background: #f0f0f0;
+}
+
+.feature-flag-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    flex: 1;
+    margin: 0;
+}
+
+.feature-flag-toggle {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.feature-flag-name {
+    font-size: 0.95rem;
+    color: #555;
+    flex: 1;
+}
+
+.feature-flag-status {
+    font-size: 0.85rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.feature-flag-status.enabled {
+    background: #d4edda;
+    color: #155724;
+}
+
+.feature-flag-status.disabled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.feature-flags-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+/* ===========================
+   MOBILE BREAKPOINTS
+   =========================== */
+
+/* Small phones (320px - 480px) */
+@media screen and (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+
+    /* Container adjustments */
+    .container {
+        padding: 10px !important;
+    }
+
+    /* Card layouts */
+    .card {
+        margin-bottom: 15px;
+        padding: 15px !important;
+    }
+
+    .card-header {
+        font-size: 1.1rem !important;
+        padding: 10px 15px !important;
+    }
+
+    .card-body {
+        padding: 15px !important;
+    }
+
+    /* Grid to stack */
+    .row {
+        flex-direction: column !important;
+    }
+
+    [class*="col-"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 15px;
+    }
+
+    /* Tables */
+    table {
+        font-size: 0.85rem;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Charts */
+    canvas {
+        max-height: 250px !important;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        border-radius: 4px !important;
+        margin-bottom: 5px;
+    }
+
+    /* Navigation */
+    .navbar {
+        flex-wrap: wrap;
+        padding: 10px;
+    }
+
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .navbar-nav {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .nav-item {
+        width: 100%;
+    }
+
+    .nav-link {
+        padding: 12px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    /* Stats cards */
+    .stat-card {
+        min-height: auto !important;
+        margin-bottom: 15px;
+    }
+
+    .stat-value {
+        font-size: 1.8rem !important;
+    }
+
+    /* Provider cards */
+    .provider-card {
+        margin-bottom: 10px;
+    }
+
+    .provider-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .provider-name {
+        margin-bottom: 8px;
+    }
+
+    /* Feature flags */
+    .feature-flag-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .feature-flag-status {
+        align-self: flex-end;
+    }
+
+    /* Modal */
+    .modal-dialog {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+
+    .modal-content {
+        border-radius: 8px;
+    }
+
+    /* Forms */
+    input, select, textarea {
+        font-size: 16px; /* Prevents zoom on iOS */
+        width: 100%;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    /* Hide less important columns on mobile */
+    .hide-mobile {
+        display: none !important;
+    }
+}
+
+/* Tablets (481px - 768px) */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    /* 2-column grid for medium tablets */
+    .col-md-6, .col-sm-6 {
+        width: 50% !important;
+    }
+
+    .col-md-4, .col-sm-4 {
+        width: 50% !important;
+    }
+
+    .col-md-3, .col-sm-3 {
+        width: 50% !important;
+    }
+
+    /* Charts */
+    canvas {
+        max-height: 300px !important;
+    }
+
+    /* Tables - show scrollbar */
+    .table-responsive {
+        overflow-x: auto;
+    }
+}
+
+/* Desktop and large tablets (769px+) */
+@media screen and (min-width: 769px) {
+    .mobile-only {
+        display: none !important;
+    }
+}
+
+/* ===========================
+   BOTTOM MOBILE NAVIGATION
+   =========================== */
+
+.mobile-nav-bottom {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-top: 2px solid #e0e0e0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 8px 0;
+}
+
+.mobile-nav-bottom .nav-items {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.mobile-nav-bottom .nav-item {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+}
+
+.mobile-nav-bottom .nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.75rem;
+    transition: color 0.2s;
+}
+
+.mobile-nav-bottom .nav-link:hover,
+.mobile-nav-bottom .nav-link.active {
+    color: #007bff;
+}
+
+.mobile-nav-bottom .nav-icon {
+    font-size: 1.5rem;
+}
+
+@media screen and (max-width: 768px) {
+    .mobile-nav-bottom {
+        display: block;
+    }
+
+    /* Add padding to body to prevent content being hidden under nav */
+    body {
+        padding-bottom: 70px;
+    }
+
+    /* Hide desktop navigation */
+    .desktop-nav {
+        display: none;
+    }
+}
+
+/* ===========================
+   TOUCH-FRIENDLY ELEMENTS
+   =========================== */
+
+/* Larger touch targets */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Swipe-friendly cards */
+.swipe-card {
+    touch-action: pan-y;
+}
+
+/* Prevent double-tap zoom on buttons */
+button, .btn, a {
+    touch-action: manipulation;
+}
+
+/* ===========================
+   RESPONSIVE PROVIDER HEALTH INDICATORS
+   =========================== */
+
+.provider-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.provider-status-badge.online {
+    background: #d4edda;
+    color: #155724;
+}
+
+.provider-status-badge.degraded {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.provider-status-badge.offline {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.provider-status-icon {
+    font-size: 1rem;
+}
+
+/* Response time indicator */
+.response-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+}
+
+.response-time.fast {
+    color: #28a745;
+}
+
+.response-time.medium {
+    color: #ffc107;
+}
+
+.response-time.slow {
+    color: #dc3545;
+}
+
+/* ===========================
+   RESPONSIVE CHARTS
+   =========================== */
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+@media screen and (max-width: 480px) {
+    .chart-container {
+        height: 250px;
+    }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .chart-container {
+        height: 350px;
+    }
+}
+
+@media screen and (min-width: 1025px) {
+    .chart-container {
+        height: 400px;
+    }
+}
+
+/* ===========================
+   LOADING & ERROR STATES
+   =========================== */
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.error-message {
+    padding: 12px;
+    background: #f8d7da;
+    color: #721c24;
+    border-radius: 4px;
+    border-left: 4px solid #dc3545;
+    margin: 10px 0;
+}
+
+.success-message {
+    padding: 12px;
+    background: #d4edda;
+    color: #155724;
+    border-radius: 4px;
+    border-left: 4px solid #28a745;
+    margin: 10px 0;
+}
+
+/* ===========================
+   ACCESSIBILITY
+   =========================== */
+
+/* Focus indicators */
+*:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Skip to content link */
+.skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #000;
+    color: #fff;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-to-content:focus {
+    top: 0;
+}
+
+/* ===========================
+   PRINT STYLES
+   =========================== */
+
+@media print {
+    .mobile-nav-bottom,
+    .navbar,
+    .btn,
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        padding-bottom: 0;
+    }
+
+    .card {
+        page-break-inside: avoid;
+    }
+}

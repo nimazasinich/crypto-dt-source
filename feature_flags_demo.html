@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Monitor - Feature Flags Demo</title>
+    <link rel="stylesheet" href="/static/css/mobile-responsive.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .provider-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .provider-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #ccc;
+        }
+
+        .provider-item.online {
+            border-left-color: #28a745;
+        }
+
+        .provider-item.degraded {
+            border-left-color: #ffc107;
+        }
+
+        .provider-item.offline {
+            border-left-color: #dc3545;
+        }
+
+        .provider-info {
+            flex: 1;
+        }
+
+        .provider-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .provider-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .proxy-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #fff3cd;
+            color: #856404;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        @media screen and (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Crypto Monitor - Feature Flags Demo</h1>
+        <p class="subtitle">Enterprise-Grade API Monitoring with Smart Proxy Mode</p>
+    </div>
+
+    <div class="dashboard">
+        <!-- Feature Flags Card -->
+        <div class="card">
+            <div id="feature-flags-container"></div>
+        </div>
+
+        <!-- System Status Card -->
+        <div class="card">
+            <h3>📊 System Status</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Total Providers</div>
+                    <div class="stat-value" id="stat-total">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Online</div>
+                    <div class="stat-value" id="stat-online" style="color: #28a745;">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Using Proxy</div>
+                    <div class="stat-value" id="stat-proxy" style="color: #ffc107;">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Avg Response</div>
+                    <div class="stat-value" id="stat-response">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Provider Health Card -->
+        <div class="card" style="grid-column: span 2;">
+            <h3>🔧 Provider Health Status</h3>
+            <div class="provider-list" id="provider-list">
+                <p style="color: #666;">Loading providers...</p>
+            </div>
+        </div>
+
+        <!-- Proxy Status Card -->
+        <div class="card">
+            <h3>🌐 Smart Proxy Status</h3>
+            <div id="proxy-status">
+                <p style="color: #666;">Loading proxy status...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Crypto Monitor ULTIMATE - Enterprise Edition &copy; 2025</p>
+        <p>Powered by Real APIs • Smart Proxy Mode • Feature Flags</p>
+    </div>
+
+    <!-- Mobile Navigation (shows on mobile only) -->
+    <div class="mobile-nav-bottom">
+        <div class="nav-items">
+            <div class="nav-item">
+                <a href="#" class="nav-link active">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <span class="nav-icon">🔧</span>
+                    <span>Providers</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/feature-flags.js"></script>
+    <script>
+        // Initialize Feature Flags UI
+        document.addEventListener('DOMContentLoaded', async () => {
+            await window.featureFlagsManager.init();
+            window.featureFlagsManager.renderUI('feature-flags-container');
+
+            // Load system status
+            loadSystemStatus();
+
+            // Load provider health
+            loadProviderHealth();
+
+            // Load proxy status
+            loadProxyStatus();
+
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                loadSystemStatus();
+                loadProviderHealth();
+                loadProxyStatus();
+            }, 30000);
+        });
+
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                document.getElementById('stat-total').textContent = data.total_providers || 0;
+                document.getElementById('stat-online').textContent = data.online || 0;
+                document.getElementById('stat-response').textContent =
+                    data.avg_response_time_ms ? `${Math.round(data.avg_response_time_ms)}ms` : '-';
+
+                // Get proxy status
+                const proxyResp = await fetch('/api/proxy-status');
+                const proxyData = await proxyResp.json();
+                document.getElementById('stat-proxy').textContent =
+                    proxyData.total_providers_using_proxy || 0;
+            } catch (error) {
+                console.error('Error loading system status:', error);
+            }
+        }
+
+        async function loadProviderHealth() {
+            try {
+                const response = await fetch('/api/providers');
+                const providers = await response.json();
+
+                if (!Array.isArray(providers)) {
+                    return;
+                }
+
+                const listEl = document.getElementById('provider-list');
+                let html = '';
+
+                providers.slice(0, 10).forEach(provider => {
+                    const status = provider.status || 'unknown';
+                    const statusClass = status.toLowerCase();
+
+                    html += `
+                        <div class="provider-item ${statusClass}">
+                            <div class="provider-info">
+                                <div class="provider-name">${provider.name}</div>
+                                <div class="provider-meta">
+                                    ${provider.category || 'unknown'} •
+                                    ${provider.response_time_ms ? provider.response_time_ms + 'ms' : 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="provider-status-badge ${statusClass}">
+                                    ${status === 'online' ? '✓' : status === 'degraded' ? '⚠' : '✗'}
+                                    ${status.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                listEl.innerHTML = html || '<p style="color: #666;">No providers found</p>';
+            } catch (error) {
+                console.error('Error loading provider health:', error);
+            }
+        }
+
+        async function loadProxyStatus() {
+            try {
+                const response = await fetch('/api/proxy-status');
+                const data = await response.json();
+
+                const statusEl = document.getElementById('proxy-status');
+
+                let html = `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Auto Mode:</strong>
+                        <span style="color: ${data.proxy_auto_mode_enabled ? '#28a745' : '#dc3545'}">
+                            ${data.proxy_auto_mode_enabled ? '✓ Enabled' : '✗ Disabled'}
+                        </span>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <strong>Providers Using Proxy:</strong> ${data.total_providers_using_proxy}
+                    </div>
+                `;
+
+                if (data.providers && data.providers.length > 0) {
+                    html += '<div style="margin-top: 15px;"><strong>Currently Proxied:</strong></div>';
+                    html += '<div class="provider-list">';
+                    data.providers.forEach(p => {
+                        html += `
+                            <div class="provider-item">
+                                <div class="provider-info">
+                                    <div class="provider-name">${p.provider}</div>
+                                    <div class="provider-meta">
+                                        ${p.reason} • Cached ${p.cache_age_seconds}s ago
+                                    </div>
+                                </div>
+                                <div class="proxy-indicator">🌐 PROXY</div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                } else {
+                    html += '<p style="color: #666; margin-top: 15px;">No providers currently using proxy</p>';
+                }
+
+                statusEl.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading proxy status:', error);
+            }
+        }
+    </script>
+</body>
+</html>
