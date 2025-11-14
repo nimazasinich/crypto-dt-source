@@ -1,0 +1,13 @@
+# Gradio Dashboard Requirements
+
+# Core Gradio
+gradio==4.12.0
+
+# Already in main requirements (but listed for completeness)
+httpx==0.26.0
+pandas==2.1.4
+fastapi==0.109.0
+
+# Additional for enhanced functionality
+plotly==5.18.0  # For advanced charts (optional)
+psutil==5.9.6   # For system monitoring (optional)
