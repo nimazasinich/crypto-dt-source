@@ -2318,6 +2318,64 @@ async def get_all_history(limit: int = 50):
         "total": len(history)
     }
 
+@app.get("/api/providers/config")
+async def get_providers_config():
+    """
+    Return complete provider configuration from providers_config_ultimate.json
+    This endpoint is used by the Provider Auto-Discovery Engine
+    """
+    try:
+        config_path = Path(__file__).parent / "providers_config_ultimate.json"
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        return config
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Provider config file not found")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Invalid JSON in provider config")
+
+@app.get("/api/providers/{provider_id}/health")
+async def check_provider_health_by_id(provider_id: str):
+    """
+    Check health status of a specific provider
+    Returns: { status: 'online'|'offline', response_time: number, error?: string }
+    """
+    try:
+        # Load provider config
+        config_path = Path(__file__).parent / "providers_config_ultimate.json"
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+
+        provider = config.get('providers', {}).get(provider_id)
+        if not provider:
+            raise HTTPException(status_code=404, detail=f"Provider '{provider_id}' not found")
+
+        # Try to ping the provider's base URL
+        base_url = provider.get('base_url')
+        if not base_url:
+            return {"status": "unknown", "error": "No base URL configured"}
+
+        import time
+        start_time = time.time()
+
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(base_url, timeout=aiohttp.ClientTimeout(total=5.0)) as response:
+                    response_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+                    status = "online" if response.status in [200, 201, 204, 301, 302, 404] else "offline"
+                    return {
+                        "status": status,
+                        "response_time": round(response_time, 2),
+                        "http_status": response.status
+                    }
+            except asyncio.TimeoutError:
+                return {"status": "offline", "error": "Timeout after 5s"}
+            except Exception as e:
+                return {"status": "offline", "error": str(e)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     print("🚀 Crypto Monitor ULTIMATE")
     print("📊 Real APIs: CoinGecko, CoinCap, Binance, DeFi Llama, Fear & Greed")
