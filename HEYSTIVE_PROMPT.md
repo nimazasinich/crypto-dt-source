@@ -105,6 +105,178 @@ The main screen should have ONLY:
 
 ---
 
+#### 🎨 Avatar Design Specification & Asset Generation
+
+**CRITICAL: The avatar is the SOUL of Heystive. Quality here is non-negotiable.**
+
+**Reference Character Design:**
+
+Heystive's avatar should embody these core characteristics:
+
+* **Style**: Clean, premium, futuristic, Pixar-like quality
+* **Character Type**: Friendly AI assistant robot/creature
+* **Body**:
+  * Smooth, rounded proportions (cute, approachable, non-threatening)
+  * White/light glossy material with soft reflections
+  * Modern 3D look with depth and polish
+  * Small, compact form factor (mascot-grade)
+
+* **Face/Head**:
+  * Dark glass face-screen or orb
+  * Glowing neon-blue expressive eyes (primary emotion indicator)
+  * Eyes should be capable of various expressions (shapes, positions, glow intensity)
+  * Optional: Simple mouth-light or expression line that animates when speaking
+
+* **Distinctive Features**:
+  * Neon/cyan accent colors (headphones, eyes, trim)
+  * Optional: Small badge/logo on chest (could be "H" for Heystive or abstract symbol)
+  * Clean, minimal design - no clutter
+
+* **Overall Aesthetic**: Premium Apple/Google product design meets Pixar character
+
+---
+
+**Avatar Expression & State Pack Requirements:**
+
+You must generate a **complete avatar asset pack** with consistent visual style across all variants.
+
+**Category 1: Facial Expressions** (12 variants minimum)
+
+Keep body identical, change only face/eyes/expression:
+
+1. **Default (Happy-Neutral)**: Friendly, welcoming eyes, slight smile
+2. **Listening**: Eyes wide and attentive, ears/headphones glowing, focused look
+3. **Thinking**: Eyes looking up-right, slight squint, small thinking particles around head
+4. **Speaking**: Mouth-light animating, eyes engaged, friendly
+5. **Excited**: Wide bright eyes, big smile, energetic glow
+6. **Happy/Smiling**: Warm eyes, gentle smile, soft glow
+7. **Calm/Relaxed**: Half-closed eyes, gentle breathing animation, soft colors
+8. **Tired/Sleepy**: Droopy eyes, dim glow, slower breathing
+9. **Confused**: Tilted head slightly, question mark eyes or puzzled look
+10. **Sad**: Downturned eyes, dim blue, slower movements
+11. **Surprised**: Wide eyes, open mouth-light, quick reaction pose
+12. **Offline**: Dark screen, no eye glow, dormant state
+
+**Category 2: Body Poses** (8 variants minimum)
+
+Keep face neutral, change pose:
+
+1. **Standing Normal**: Default upright pose, arms at sides or relaxed
+2. **Leaning Forward**: Engaged, listening pose
+3. **Thinking Pose**: Hand/appendage on head/chin area
+4. **Speaking Pose**: One hand slightly raised, gesturing gently
+5. **Waving**: Friendly hello gesture
+6. **Floating/Hovering**: Gentle floating animation, slightly elevated
+7. **Working/Typing**: Interacting with holographic interface or keyboard
+8. **Celebration**: Small jump or arms-up success pose
+
+**Category 3: Functional States** (8 variants minimum)
+
+Visual indicators for system status:
+
+1. **Online/Active**: Bright glowing eyes, full color, energetic
+2. **Offline/Dormant**: Dark screen, minimal glow, inactive
+3. **Processing/Loading**: Spinning particles, pulsing glow, "thinking" animation
+4. **Error/Warning**: Soft amber/yellow accent (friendly, not alarming)
+5. **Sleep Mode**: Eyes closed, very dim glow, breathing animation only
+6. **Active Listening**: Headphones glowing bright, sound wave visualization
+7. **Speaking/Talking**: Mouth-light animated, voice wave sync
+8. **Notification Mode**: Small blue pulses or badge indicators
+
+**Category 4: Mood-Adaptive Variants** (6 variants minimum)
+
+Avatar appearance shifts based on detected user mood:
+
+1. **User Stressed → Avatar Calm**: Softer colors (pastel blue), slower animations, gentle glow
+2. **User Tired → Avatar Gentle**: Warmer tones, slower movements, soothing presence
+3. **User Frustrated → Avatar Supportive**: Calm blue, reassuring expression, steady glow
+4. **User Excited → Avatar Energetic**: Brighter colors, faster micro-movements, vibrant
+5. **User Sad → Avatar Comforting**: Warm soft glow, gentle expression, supportive
+6. **User Neutral → Avatar Neutral**: Standard balanced colors and energy
+
+**Category 5: Theme Variants** (4 variants minimum)
+
+Same character, different rendering styles:
+
+1. **Light Mode**: Bright, clean, white/light gray body
+2. **Dark Mode**: Darker body (gray/charcoal), bright neon accents, strong contrast
+3. **Minimal/Flat**: Simplified 2D or flat-color version for low-resource mode
+4. **Hologram**: Semi-transparent, glowing edges, futuristic sci-fi look
+
+---
+
+**Technical Asset Requirements:**
+
+For EACH variant above, generate:
+
+* **Format**: PNG with transparency (or WebP if smaller)
+* **Resolution**: Minimum 1024×1024 pixels (higher for desktop: 2048×2048 recommended)
+* **Consistency**:
+  * Same character proportions across all variants
+  * Same lighting setup (unless theme variant)
+  * Same camera angle and framing
+  * Same material quality and reflections
+* **Naming Convention**:
+  * `heystive_avatar_[category]_[state].png`
+  * Example: `heystive_avatar_expression_listening.png`, `heystive_avatar_pose_waving.png`
+* **Organization**:
+  ```
+  desktop/ui/avatar/assets/
+  ├── expressions/
+  ├── poses/
+  ├── states/
+  ├── moods/
+  └── themes/
+  ```
+
+---
+
+**Animation Specification:**
+
+Each avatar state should support smooth transitions. Define:
+
+* **Idle Animation**: Gentle breathing (scale: 98%-102%), occasional blink (every 3-5 sec), slight floating bob
+* **Transition Speed**: 200-400ms between states for smooth feel
+* **Listening Pulse**: Subtle glow pulse synced to audio input level
+* **Speaking Animation**: Mouth-light or expression sync to TTS output frequency/amplitude
+* **Mood Transition**: Gradual color/brightness shift over 1-2 seconds
+
+**Animation Implementation**: Use CSS animations, Lottie, or Qt animations depending on tech stack choice.
+
+---
+
+**Design Tool Recommendations:**
+
+* **3D Rendering**: Blender (free, powerful, Cycles renderer for photorealistic look)
+* **2D Animation**: After Effects + Lottie export, or Spine for 2D skeletal animation
+* **Vector Assets**: Figma or Illustrator for flat/minimal variants
+* **Particle Effects**: Blender particles or programmatic (Qt/PyQt particle systems)
+
+**If you cannot generate visual assets directly:**
+- Provide detailed design specifications for each variant
+- Include color codes (hex), dimensions, animation timing
+- Create SVG mockups or wireframes
+- Recommend asset creation pipeline
+
+---
+
+**Quality Checklist:**
+
+Before finalizing avatar assets, verify:
+
+- [ ] All variants maintain consistent character identity
+- [ ] Expressions are clear and easily distinguishable
+- [ ] Animations are smooth and non-distracting
+- [ ] Colors are accessible (sufficient contrast)
+- [ ] Avatar looks good on both light and dark backgrounds
+- [ ] File sizes are optimized (not bloated)
+- [ ] All required states are covered
+- [ ] Avatar evokes positive emotion (friendly, trustworthy, helpful)
+
+**Remember: The avatar is what makes Heystive feel ALIVE. Invest the time to make it exceptional.**
+
+---
+
 **Settings Page (Separate Window):**
 
 All configuration in a dedicated Settings window with tabs/sections:
@@ -481,5 +653,181 @@ Use your **Agent Mode** capabilities to implement Heystive step-by-step accordin
 - Use your Agent Mode to handle multi-file changes efficiently
 
 **After Phase 1 is complete and validated**, we can proceed to Phase 2 (Mobile) and Phase 3 (Sync).
+
+---
+
+## 🤖 Gemini Code Assist Agent Mode - Best Practices
+
+**You are using Gemini Code Assist's Agent Mode** - leverage its full capabilities:
+
+### How to Work Efficiently with Agent Mode:
+
+1. **Multi-File Operations**:
+   - Analyze the ENTIRE codebase before making changes
+   - Plan changes across multiple files simultaneously
+   - Use your ability to see the big picture and maintain consistency
+
+2. **Incremental Development**:
+   - Break down large tasks into logical sub-tasks
+   - Present a clear plan BEFORE implementing
+   - Execute step-by-step, validating at each stage
+   - Report progress and issues as you go
+
+3. **Code Generation Quality**:
+   - Generate production-ready code, not prototypes
+   - Include proper error handling, logging, and documentation
+   - Follow Python PEP 8 style guidelines
+   - Use type hints where appropriate
+   - Write docstrings for all functions and classes
+
+4. **Testing & Validation**:
+   - After implementing each component, provide test scenarios
+   - Suggest how to verify the implementation works
+   - Include sample commands or usage examples
+   - Identify potential edge cases
+
+5. **Personalization Rules** (Apply these consistently):
+   - **Always add comprehensive docstrings** to functions and classes
+   - **Always include type hints** in function signatures
+   - **Always handle errors gracefully** with try-except and meaningful error messages
+   - **Always log important events** (voice input, file operations, errors)
+   - **Always ask for confirmation** before destructive operations
+   - **Always prioritize user privacy** - local-first, minimal data collection
+   - **Always optimize for Persian language** - RTL support, proper Unicode handling
+
+6. **Custom Commands** (Shortcuts for repetitive tasks):
+   - When scaffolding a new component, follow the project structure exactly
+   - When adding a new tool (file_tools, app_tools, etc.), include:
+     * Function implementation
+     * Error handling
+     * Logging
+     * Integration with the agent brain
+     * Test scenario
+   - When implementing avatar states, generate both:
+     * Code for rendering/animation
+     * Specification for visual asset (if assets needed)
+
+7. **Code Review & Refactoring**:
+   - After implementing a feature, review your own code
+   - Suggest improvements or optimizations
+   - Identify potential issues (performance, security, UX)
+   - Refactor when complexity grows
+
+8. **Documentation**:
+   - Maintain a clear README.md with setup instructions
+   - Document dependencies and installation steps
+   - Provide troubleshooting guide for common issues
+   - Include examples of voice commands and expected behavior
+
+### Agent Mode Workflow for Heystive:
+
+**Step 1: Analyze & Plan**
+```
+1. Read and understand this entire specification
+2. Analyze project structure requirements
+3. Identify dependencies and tech stack needs
+4. Create detailed implementation plan
+5. Present plan for review/approval
+```
+
+**Step 2: Foundation**
+```
+1. Set up project structure (all folders)
+2. Create requirements.txt with all dependencies
+3. Set up configuration system (settings.json)
+4. Implement basic logging infrastructure
+5. Create main entry point with minimal UI shell
+```
+
+**Step 3: Core Systems (in parallel where possible)**
+```
+1. Voice Pipeline:
+   - STT offline implementation (faster-whisper)
+   - TTS offline implementation (piper-tts)
+   - Audio I/O handling
+   - Hotkey registration
+
+2. Avatar System:
+   - Avatar renderer architecture
+   - Animation state machine
+   - Asset loading system
+   - Initial placeholder assets
+
+3. Agent Brain:
+   - Core logic and planning system
+   - Tool integration framework
+   - Memory/knowledge system foundation
+```
+
+**Step 4: Integration & Polish**
+```
+1. Connect voice to avatar (animation sync)
+2. Implement mood detection
+3. Wire up all tools (files, apps, system, web)
+4. Build settings UI
+5. Implement RTL support
+6. Add error handling everywhere
+7. Performance optimization
+8. Final testing and validation
+```
+
+### Communication Style:
+
+When working on Heystive:
+
+- **Be proactive**: Suggest improvements and best practices
+- **Be transparent**: Explain what you're doing and why
+- **Be thorough**: Don't skip error handling or edge cases
+- **Be efficient**: Use parallel operations when possible
+- **Be quality-focused**: This is production code, not a demo
+
+### Example Task Execution:
+
+**Bad approach:**
+```
+"I'll create a basic voice input function."
+[Creates minimal code without error handling]
+```
+
+**Good approach (Agent Mode):**
+```
+"I'll implement the offline voice pipeline with the following components:
+1. Audio input handler with device selection
+2. faster-whisper integration with Persian language model
+3. Voice activity detection
+4. Error handling for missing models, device issues
+5. Configuration system for model selection
+6. Logging for debugging
+
+Let me start with [component 1], then move to [component 2]..."
+[Implements with comprehensive error handling, logging, docs]
+[Provides test scenarios and validation steps]
+```
+
+---
+
+## 🎯 Success Criteria
+
+Before considering Phase 1 complete, ensure:
+
+- [ ] Desktop app runs on Windows, macOS, and Linux
+- [ ] Voice interaction works offline (STT + TTS)
+- [ ] Avatar is beautiful, smooth, and expressive
+- [ ] Avatar responds to all states (idle, listening, speaking, thinking, moods)
+- [ ] At least 2-3 avatar styles are available
+- [ ] Settings page is fully functional
+- [ ] All core tools work (files, apps, system info)
+- [ ] Local knowledge system stores and retrieves notes
+- [ ] Mood detection adapts avatar and voice appropriately
+- [ ] RTL support works perfectly for Persian
+- [ ] Hotkey works globally
+- [ ] Error handling is comprehensive
+- [ ] Code is clean, documented, and maintainable
+- [ ] Setup instructions are clear and complete
+- [ ] App feels polished and production-ready
+
+**Only then** move to Phase 2 (Mobile) and Phase 3 (Sync).
+
+---
 
 Let's build something amazing! 🚀
