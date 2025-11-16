@@ -1,39 +1,35 @@
-# استفاده از Python 3.11 Slim
-FROM python:3.11-slim
+FROM python:3.10
 
-# تنظیم متغیرهای محیطی
+# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    ENABLE_AUTO_DISCOVERY=false
+    USE_MOCK_DATA=false \
+    PORT=7860
 
-# نصب وابستگی‌های سیستمی
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# ساخت دایرکتوری کاری
+# Set working directory
 WORKDIR /app
 
-# کپی فایل‌های وابستگی
+# Create required directories
+RUN mkdir -p /app/logs /app/data /app/data/database /app/data/backups
+
+# Copy requirements file
 COPY requirements.txt .
 
-# نصب وابستگی‌های Python
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# کپی کد برنامه
+# Copy application code
 COPY . .
 
-# ساخت دایرکتوری برای لاگ‌ها
-RUN mkdir -p logs
+# Expose port
+EXPOSE 7860
 
-# Expose کردن پورت (پیش‌فرض Hugging Face ۷۸۶۰ است)
-EXPOSE 8000 7860
-
-# Health Check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import os, requests; requests.get('http://localhost:{}/health'.format(os.getenv('PORT', '8000')))" || exit 1
-
-# اجرای سرور (پشتیبانی از PORT متغیر محیطی برای Hugging Face)
-CMD ["sh", "-c", "python -m uvicorn api_server_extended:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Launch command
+CMD ["uvicorn", "api_server_extended:app", "--host", "0.0.0.0", "--port", "7860"]
