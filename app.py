@@ -1,1624 +1,1087 @@
 #!/usr/bin/env python3
 """
-Crypto Data Aggregator - Complete Gradio Dashboard
-6-tab comprehensive interface for cryptocurrency data analysis
+Crypto Data Aggregator - Admin Dashboard (Gradio App)
+STRICT REAL-DATA-ONLY implementation for Hugging Face Spaces
+
+7 Tabs:
+1. Status - System health & overview
+2. Providers - API provider management
+3. Market Data - Live cryptocurrency data
+4. APL Scanner - Auto Provider Loader
+5. HF Models - Hugging Face model status
+6. Diagnostics - System diagnostics & auto-repair
+7. Logs - System logs viewer
 """
 
-import pandas as pd
-from datetime import datetime, timedelta
-import json
-import threading
-import time
-import logging
-from typing import List, Dict, Optional, Tuple, Any
-import traceback
 import sys
+import os
+import logging
+from pathlib import Path
+from typing import Dict, List, Any, Tuple, Optional
+from datetime import datetime
+import json
+import traceback
+import asyncio
 
-# Check for required dependencies
-GRADIO_AVAILABLE = True
-PLOTLY_AVAILABLE = True
-
+# Check for Gradio
 try:
     import gradio as gr
 except ImportError:
-    GRADIO_AVAILABLE = False
-    print("ERROR: gradio library not installed. Please run: pip install gradio")
+    print("ERROR: gradio not installed. Run: pip install gradio")
     sys.exit(1)
+
+# Check for optional dependencies
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    print("WARNING: pandas not installed. Some features disabled.")
 
 try:
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
+    PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
-    print("WARNING: plotly library not installed. Chart features will be disabled.")
-    print("To enable charts, run: pip install plotly")
-    # Create dummy objects to prevent errors
-    class DummyPlotly:
-        def Figure(self, *args, **kwargs):
-            fig = type('Figure', (), {})()
-            fig.add_annotation = lambda *a, **k: None
-            fig.update_layout = lambda *a, **k: None
-            return fig
-    go = DummyPlotly()
-    make_subplots = lambda *args, **kwargs: go.Figure()
+    print("WARNING: plotly not installed. Charts disabled.")
 
 # Import local modules
 import config
 import database
 import collectors
-import ai_models
 
-# Setup logging with error handling
-utils_imported = False
-try:
-    import utils
-    utils_imported = True
-    logger = utils.setup_logging()
-except (AttributeError, ImportError) as e:
-    # Fallback logging setup if utils.setup_logging() is not available
-    print(f"Warning: Could not import utils.setup_logging(): {e}")
-    print("Using fallback logging configuration...")
-    import logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+# ==================== INDEPENDENT LOGGING SETUP ====================
+# DO NOT use utils.setup_logging() - set up independently
+
+logger = logging.getLogger("app")
+if not logger.handlers:
+    level_name = getattr(config, "LOG_LEVEL", "INFO")
+    level = getattr(logging, level_name.upper(), logging.INFO)
+    logger.setLevel(level)
+    
+    formatter = logging.Formatter(
+        getattr(config, "LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     )
-    logger = logging.getLogger('crypto_aggregator')
     
-    # Try to import utils module itself even if setup_logging failed
-    if not utils_imported:
-        try:
-            import utils
-            utils_imported = True
-        except ImportError:
-            pass
+    # Console handler
+    ch = logging.StreamHandler()
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
     
-    # If utils module wasn't imported, create a mock module with fallback functions
-    if not utils_imported:
-        print("ERROR: Could not import utils module. Using fallback implementations.")
-        # Create a mock utils module
-        class MockUtils:
-            @staticmethod
-            def format_number(num, decimals=2):
-                try:
-                    if num is None:
-                        return "N/A"
-                    num = float(num)
-                    if num >= 1_000_000_000:
-                        return f"${num / 1_000_000_000:.{decimals}f}B"
-                    elif num >= 1_000_000:
-                        return f"${num / 1_000_000:.{decimals}f}M"
-                    elif num >= 1_000:
-                        return f"${num / 1_000:.{decimals}f}K"
-                    else:
-                        return f"${num:.{decimals}f}"
-                except:
-                    return "N/A"
-            
-            @staticmethod
-            def calculate_moving_average(prices, period):
-                try:
-                    if len(prices) >= period:
-                        return sum(prices[-period:]) / period
-                    return None
-                except:
-                    return None
-            
-            @staticmethod
-            def calculate_rsi(prices, period=14):
-                try:
-                    if len(prices) < period + 1:
-                        return None
-                    deltas = [prices[i] - prices[i - 1] for i in range(1, len(prices))]
-                    gains = [d if d > 0 else 0 for d in deltas]
-                    losses = [-d if d < 0 else 0 for d in deltas]
-                    avg_gain = sum(gains[-period:]) / period
-                    avg_loss = sum(losses[-period:]) / period
-                    if avg_loss == 0:
-                        return 100.0 if avg_gain > 0 else 50.0
-                    rs = avg_gain / avg_loss
-                    return 100 - (100 / (1 + rs))
-                except:
-                    return 50.0  # Neutral RSI as fallback
-            
-            @staticmethod
-            def export_to_csv(data, filename):
-                try:
-                    import csv
-                    with open(filename, 'w', newline='', encoding='utf-8') as f:
-                        if data:
-                            writer = csv.DictWriter(f, fieldnames=data[0].keys())
-                            writer.writeheader()
-                            writer.writerows(data)
-                    return True
-                except:
-                    return False
-        
-        utils = MockUtils()
+    # File handler if log file exists
+    try:
+        if hasattr(config, 'LOG_FILE'):
+            fh = logging.FileHandler(config.LOG_FILE)
+            fh.setFormatter(formatter)
+            logger.addHandler(fh)
+    except Exception as e:
+        print(f"Warning: Could not setup file logging: {e}")
 
-# Log dependency status
-logger.info("Dependency Status:")
-logger.info(f"  - Gradio: {'✓ Available' if GRADIO_AVAILABLE else '✗ Missing'}")
-logger.info(f"  - Plotly: {'✓ Available' if PLOTLY_AVAILABLE else '✗ Missing (charts disabled)'}")
-logger.info(f"  - Transformers: {'✓ Available' if ai_models.TRANSFORMERS_AVAILABLE else '✗ Missing (AI features disabled)'}")
+logger.info("=" * 60)
+logger.info("Crypto Admin Dashboard Starting")
+logger.info("=" * 60)
 
 # Initialize database
 db = database.get_database()
 
-# Global state for background collection
-_collection_started = False
-_collection_lock = threading.Lock()
 
-# ==================== TAB 1: LIVE DASHBOARD ====================
+# ==================== TAB 1: STATUS ====================
 
-def get_live_dashboard(search_filter: str = "") -> pd.DataFrame:
+def get_status_tab() -> Tuple[str, str, str]:
     """
-    Get live dashboard data with top 100 cryptocurrencies
-
-    Args:
-        search_filter: Search/filter text for cryptocurrencies
-
-    Returns:
-        DataFrame with formatted cryptocurrency data
+    Get system status overview.
+    Returns: (markdown_summary, db_stats_json, system_info_json)
     """
     try:
-        logger.info("Fetching live dashboard data...")
-
-        # Get latest prices from database
-        prices = db.get_latest_prices(100)
-
-        if not prices:
-            logger.warning("No price data available")
-            return pd.DataFrame({
-                "Rank": [],
-                "Name": [],
-                "Symbol": [],
-                "Price (USD)": [],
-                "24h Change (%)": [],
-                "Volume": [],
-                "Market Cap": []
-            })
-
-        # Convert to DataFrame
-        df_data = []
-        for price in prices:
-            # Apply search filter if provided
-            if search_filter:
-                search_lower = search_filter.lower()
-                name_lower = (price.get('name') or '').lower()
-                symbol_lower = (price.get('symbol') or '').lower()
-
-                if search_lower not in name_lower and search_lower not in symbol_lower:
-                    continue
-
-            df_data.append({
-                "Rank": price.get('rank', 999),
-                "Name": price.get('name', 'Unknown'),
-                "Symbol": price.get('symbol', 'N/A').upper(),
-                "Price (USD)": f"${price.get('price_usd', 0):,.2f}" if price.get('price_usd') else "N/A",
-                "24h Change (%)": f"{price.get('percent_change_24h', 0):+.2f}%" if price.get('percent_change_24h') is not None else "N/A",
-                "Volume": utils.format_number(price.get('volume_24h', 0)),
-                "Market Cap": utils.format_number(price.get('market_cap', 0))
-            })
-
-        df = pd.DataFrame(df_data)
-
-        if df.empty:
-            logger.warning("No data matches filter criteria")
-            return pd.DataFrame({
-                "Rank": [],
-                "Name": [],
-                "Symbol": [],
-                "Price (USD)": [],
-                "24h Change (%)": [],
-                "Volume": [],
-                "Market Cap": []
-            })
-
-        # Sort by rank
-        df = df.sort_values('Rank')
-
-        logger.info(f"Dashboard loaded with {len(df)} cryptocurrencies")
-        return df
-
-    except Exception as e:
-        logger.error(f"Error in get_live_dashboard: {e}\n{traceback.format_exc()}")
-        return pd.DataFrame({
-            "Error": [f"Failed to load dashboard: {str(e)}"]
-        })
-
-
-def refresh_price_data() -> Tuple[pd.DataFrame, str]:
-    """
-    Manually trigger price data collection and refresh dashboard
-
-    Returns:
-        Tuple of (DataFrame, status_message)
-    """
-    try:
-        logger.info("Manual refresh triggered...")
-
-        # Collect fresh price data
-        success, count = collectors.collect_price_data()
-
-        if success:
-            message = f"✅ Successfully refreshed! Collected {count} price records."
+        # Get database stats
+        db_stats = db.get_database_stats()
+        
+        # Count providers
+        providers_config_path = config.BASE_DIR / "providers_config_extended.json"
+        provider_count = 0
+        if providers_config_path.exists():
+            with open(providers_config_path, 'r') as f:
+                providers_data = json.load(f)
+                provider_count = len(providers_data.get('providers', {}))
+        
+        # Pool count (from config)
+        pool_count = 0
+        if providers_config_path.exists():
+            with open(providers_config_path, 'r') as f:
+                providers_data = json.load(f)
+                pool_count = len(providers_data.get('pool_configurations', []))
+        
+        # Market snapshot
+        latest_prices = db.get_latest_prices(3)
+        market_snapshot = ""
+        if latest_prices:
+            for p in latest_prices[:3]:
+                symbol = p.get('symbol', 'N/A')
+                price = p.get('price_usd', 0)
+                change = p.get('percent_change_24h', 0)
+                market_snapshot += f"**{symbol}**: ${price:,.2f} ({change:+.2f}%)\n"
         else:
-            message = f"⚠️ Refresh completed with warnings. Collected {count} records."
+            market_snapshot = "No market data available yet."
+        
+        # Build summary
+        summary = f"""
+## 🎯 System Status
 
-        # Return updated dashboard
-        df = get_live_dashboard()
+**Overall Health**: {"🟢 Operational" if db_stats.get('prices_count', 0) > 0 else "🟡 Initializing"}
 
-        return df, message
+### Quick Stats
+- **Total Providers**: {provider_count}
+- **Active Pools**: {pool_count}
+- **Price Records**: {db_stats.get('prices_count', 0):,}
+- **News Articles**: {db_stats.get('news_count', 0):,}
+- **Unique Symbols**: {db_stats.get('unique_symbols', 0)}
 
+### Market Snapshot (Top 3)
+{market_snapshot}
+
+**Last Update**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+"""
+        
+        # System info
+        import platform
+        system_info = {
+            "Python Version": sys.version.split()[0],
+            "Platform": platform.platform(),
+            "Working Directory": str(config.BASE_DIR),
+            "Database Size": f"{db_stats.get('database_size_mb', 0):.2f} MB",
+            "Last Price Update": db_stats.get('latest_price_update', 'N/A'),
+            "Last News Update": db_stats.get('latest_news_update', 'N/A')
+        }
+        
+        return summary, json.dumps(db_stats, indent=2), json.dumps(system_info, indent=2)
+    
     except Exception as e:
-        logger.error(f"Error in refresh_price_data: {e}")
-        return get_live_dashboard(), f"❌ Refresh failed: {str(e)}"
+        logger.error(f"Error in get_status_tab: {e}\n{traceback.format_exc()}")
+        return f"⚠️ Error loading status: {str(e)}", "{}", "{}"
 
 
-# ==================== TAB 2: HISTORICAL CHARTS ====================
+def run_diagnostics_from_status(auto_fix: bool) -> str:
+    """Run diagnostics from status tab"""
+    try:
+        from backend.services.diagnostics_service import DiagnosticsService
+        
+        diagnostics = DiagnosticsService()
+        
+        # Run async in sync context
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        report = loop.run_until_complete(diagnostics.run_full_diagnostics(auto_fix=auto_fix))
+        loop.close()
+        
+        # Format output
+        output = f"""
+# Diagnostics Report
 
-def get_available_symbols() -> List[str]:
-    """Get list of available cryptocurrency symbols from database"""
+**Timestamp**: {report.timestamp}
+**Duration**: {report.duration_ms:.2f}ms
+
+## Summary
+- **Total Issues**: {report.total_issues}
+- **Critical**: {report.critical_issues}
+- **Warnings**: {report.warnings}
+- **Info**: {report.info_issues}
+- **Fixed**: {len(report.fixed_issues)}
+
+## Issues
+"""
+        for issue in report.issues:
+            emoji = {"critical": "🔴", "warning": "🟡", "info": "🔵"}.get(issue.severity, "⚪")
+            fixed_mark = " ✅ FIXED" if issue.auto_fixed else ""
+            output += f"\n### {emoji} [{issue.category.upper()}] {issue.title}{fixed_mark}\n"
+            output += f"{issue.description}\n"
+            if issue.fixable and not issue.auto_fixed:
+                output += f"**Fix**: `{issue.fix_action}`\n"
+        
+        return output
+    
+    except Exception as e:
+        logger.error(f"Error running diagnostics: {e}")
+        return f"❌ Diagnostics failed: {str(e)}"
+
+
+# ==================== TAB 2: PROVIDERS ====================
+
+def get_providers_table(category_filter: str = "All") -> Any:
+    """
+    Get providers from providers_config_extended.json
+    Returns: DataFrame or dict
+    """
+    try:
+        providers_path = config.BASE_DIR / "providers_config_extended.json"
+        
+        if not providers_path.exists():
+            if PANDAS_AVAILABLE:
+                return pd.DataFrame({"Error": ["providers_config_extended.json not found"]})
+            return {"error": "providers_config_extended.json not found"}
+        
+        with open(providers_path, 'r') as f:
+            data = json.load(f)
+        
+        providers = data.get('providers', {})
+        
+        # Build table data
+        table_data = []
+        for provider_id, provider_info in providers.items():
+            if category_filter != "All":
+                if provider_info.get('category', '').lower() != category_filter.lower():
+                    continue
+            
+            table_data.append({
+                "ID": provider_id,
+                "Name": provider_info.get('name', provider_id),
+                "Category": provider_info.get('category', 'unknown'),
+                "Type": provider_info.get('type', 'http_json'),
+                "Base URL": provider_info.get('base_url', 'N/A'),
+                "Requires Auth": provider_info.get('requires_auth', False),
+                "Priority": provider_info.get('priority', 'N/A'),
+                "Validated": provider_info.get('validated', False)
+            })
+        
+        if PANDAS_AVAILABLE:
+            return pd.DataFrame(table_data) if table_data else pd.DataFrame({"Message": ["No providers found"]})
+        else:
+            return {"providers": table_data} if table_data else {"error": "No providers found"}
+    
+    except Exception as e:
+        logger.error(f"Error loading providers: {e}")
+        if PANDAS_AVAILABLE:
+            return pd.DataFrame({"Error": [str(e)]})
+        return {"error": str(e)}
+
+
+def reload_providers_config() -> Tuple[Any, str]:
+    """Reload providers config and return updated table + message"""
+    try:
+        # Force reload by re-reading file
+        table = get_providers_table("All")
+        message = f"✅ Providers reloaded at {datetime.now().strftime('%H:%M:%S')}"
+        return table, message
+    except Exception as e:
+        logger.error(f"Error reloading providers: {e}")
+        return get_providers_table("All"), f"❌ Reload failed: {str(e)}"
+
+
+def get_provider_categories() -> List[str]:
+    """Get unique provider categories"""
+    try:
+        providers_path = config.BASE_DIR / "providers_config_extended.json"
+        if not providers_path.exists():
+            return ["All"]
+        
+        with open(providers_path, 'r') as f:
+            data = json.load(f)
+        
+        categories = set()
+        for provider in data.get('providers', {}).values():
+            cat = provider.get('category', 'unknown')
+            categories.add(cat)
+        
+        return ["All"] + sorted(list(categories))
+    except Exception as e:
+        logger.error(f"Error getting categories: {e}")
+        return ["All"]
+
+
+# ==================== TAB 3: MARKET DATA ====================
+
+def get_market_data_table(search_filter: str = "") -> Any:
+    """Get latest market data from database"""
     try:
         prices = db.get_latest_prices(100)
-        symbols = sorted(list(set([
-            f"{p.get('name', 'Unknown')} ({p.get('symbol', 'N/A').upper()})"
-            for p in prices if p.get('symbol')
-        ])))
-
-        if not symbols:
-            return ["BTC", "ETH", "BNB"]
-
-        return symbols
-
+        
+        if not prices:
+            if PANDAS_AVAILABLE:
+                return pd.DataFrame({"Message": ["No market data available. Click 'Refresh Prices' to collect data."]})
+            return {"error": "No data available"}
+        
+        # Filter if search provided
+        filtered_prices = prices
+        if search_filter:
+            search_lower = search_filter.lower()
+            filtered_prices = [
+                p for p in prices
+                if search_lower in p.get('name', '').lower() or search_lower in p.get('symbol', '').lower()
+            ]
+        
+        table_data = []
+        for p in filtered_prices:
+            table_data.append({
+                "Rank": p.get('rank', 999),
+                "Symbol": p.get('symbol', 'N/A'),
+                "Name": p.get('name', 'Unknown'),
+                "Price (USD)": f"${p.get('price_usd', 0):,.2f}" if p.get('price_usd') else "N/A",
+                "24h Change (%)": f"{p.get('percent_change_24h', 0):+.2f}%" if p.get('percent_change_24h') is not None else "N/A",
+                "Volume 24h": f"${p.get('volume_24h', 0):,.0f}" if p.get('volume_24h') else "N/A",
+                "Market Cap": f"${p.get('market_cap', 0):,.0f}" if p.get('market_cap') else "N/A"
+            })
+        
+        if PANDAS_AVAILABLE:
+            df = pd.DataFrame(table_data)
+            return df.sort_values('Rank') if not df.empty else pd.DataFrame({"Message": ["No matching data"]})
+        else:
+            return {"prices": table_data}
+    
     except Exception as e:
-        logger.error(f"Error getting symbols: {e}")
-        return ["BTC", "ETH", "BNB"]
+        logger.error(f"Error getting market data: {e}")
+        if PANDAS_AVAILABLE:
+            return pd.DataFrame({"Error": [str(e)]})
+        return {"error": str(e)}
 
 
-def generate_chart(symbol_display: str, timeframe: str) -> go.Figure:
-    """
-    Generate interactive plotly chart with price history and technical indicators
+def refresh_market_data() -> Tuple[Any, str]:
+    """Refresh market data by collecting from APIs"""
+    try:
+        logger.info("Refreshing market data...")
+        success, count = collectors.collect_price_data()
+        
+        if success:
+            message = f"✅ Collected {count} price records at {datetime.now().strftime('%H:%M:%S')}"
+        else:
+            message = f"⚠️ Collection completed with issues. {count} records collected."
+        
+        # Return updated table
+        table = get_market_data_table("")
+        return table, message
+    
+    except Exception as e:
+        logger.error(f"Error refreshing market data: {e}")
+        return get_market_data_table(""), f"❌ Refresh failed: {str(e)}"
 
-    Args:
-        symbol_display: Display name like "Bitcoin (BTC)"
-        timeframe: Time period (1d, 7d, 30d, 90d, 1y, All)
 
-    Returns:
-        Plotly figure with price chart, volume, MA, and RSI
-    """
-    # Check if Plotly is available
+def plot_price_history(symbol: str, timeframe: str) -> Any:
+    """Plot price history for a symbol"""
     if not PLOTLY_AVAILABLE:
-        logger.warning("Plotly not available - cannot generate chart")
-        fig = go.Figure()
-        fig.add_annotation(
-            text="Charts unavailable - Plotly library not installed<br>Run: pip install plotly",
-            xref="paper", yref="paper",
-            x=0.5, y=0.5, showarrow=False,
-            font=dict(size=16, color="red")
-        )
-        fig.update_layout(title="Plotly Not Installed", height=600)
-        return fig
+        return None
     
     try:
-        logger.info(f"Generating chart for {symbol_display} - {timeframe}")
-
-        # Extract symbol from display name
-        if '(' in symbol_display and ')' in symbol_display:
-            symbol = symbol_display.split('(')[1].split(')')[0].strip().upper()
-        else:
-            symbol = symbol_display.strip().upper()
-
-        # Determine hours to look back
-        timeframe_hours = {
-            "1d": 24,
-            "7d": 24 * 7,
-            "30d": 24 * 30,
-            "90d": 24 * 90,
-            "1y": 24 * 365,
-            "All": 24 * 365 * 10  # 10 years
-        }
-        hours = timeframe_hours.get(timeframe, 168)
-
-        # Get price history
-        history = db.get_price_history(symbol, hours)
-
-        if not history:
-            # Try to find by name instead
-            prices = db.get_latest_prices(100)
-            matching = [p for p in prices if symbol.lower() in (p.get('name') or '').lower()]
-
-            if matching:
-                symbol = matching[0].get('symbol', symbol)
-                history = db.get_price_history(symbol, hours)
-
+        # Parse timeframe
+        hours_map = {"24h": 24, "7d": 168, "30d": 720, "90d": 2160}
+        hours = hours_map.get(timeframe, 168)
+        
+        # Get history
+        history = db.get_price_history(symbol.upper(), hours)
+        
         if not history or len(history) < 2:
-            # Create empty chart with message
             fig = go.Figure()
             fig.add_annotation(
-                text=f"No historical data available for {symbol}<br>Try refreshing or selecting a different cryptocurrency",
+                text=f"No historical data for {symbol}",
                 xref="paper", yref="paper",
-                x=0.5, y=0.5, showarrow=False,
-                font=dict(size=16)
-            )
-            fig.update_layout(
-                title=f"{symbol} - No Data Available",
-                height=600
+                x=0.5, y=0.5, showarrow=False
             )
             return fig
-
+        
         # Extract data
         timestamps = [datetime.fromisoformat(h['timestamp'].replace('Z', '+00:00')) if isinstance(h['timestamp'], str) else datetime.now() for h in history]
-        prices_data = [h.get('price_usd', 0) for h in history]
-        volumes = [h.get('volume_24h', 0) for h in history]
-
-        # Calculate technical indicators
-        ma7_values = []
-        ma30_values = []
-        rsi_values = []
-
-        for i in range(len(prices_data)):
-            # MA7
-            if i >= 6:
-                ma7 = utils.calculate_moving_average(prices_data[:i+1], 7)
-                ma7_values.append(ma7)
-            else:
-                ma7_values.append(None)
-
-            # MA30
-            if i >= 29:
-                ma30 = utils.calculate_moving_average(prices_data[:i+1], 30)
-                ma30_values.append(ma30)
-            else:
-                ma30_values.append(None)
-
-            # RSI
-            if i >= 14:
-                rsi = utils.calculate_rsi(prices_data[:i+1], 14)
-                rsi_values.append(rsi)
-            else:
-                rsi_values.append(None)
-
-        # Create subplots: Price + Volume + RSI
-        fig = make_subplots(
-            rows=3, cols=1,
-            shared_xaxes=True,
-            vertical_spacing=0.05,
-            row_heights=[0.5, 0.25, 0.25],
-            subplot_titles=(f'{symbol} Price Chart', 'Volume', 'RSI (14)')
-        )
-
-        # Price line
-        fig.add_trace(
-            go.Scatter(
-                x=timestamps,
-                y=prices_data,
-                name='Price',
-                line=dict(color='#2962FF', width=2),
-                hovertemplate='<b>Price</b>: $%{y:,.2f}<br><b>Date</b>: %{x}<extra></extra>'
-            ),
-            row=1, col=1
-        )
-
-        # MA7
-        fig.add_trace(
-            go.Scatter(
-                x=timestamps,
-                y=ma7_values,
-                name='MA(7)',
-                line=dict(color='#FF6D00', width=1, dash='dash'),
-                hovertemplate='<b>MA(7)</b>: $%{y:,.2f}<extra></extra>'
-            ),
-            row=1, col=1
-        )
-
-        # MA30
-        fig.add_trace(
-            go.Scatter(
-                x=timestamps,
-                y=ma30_values,
-                name='MA(30)',
-                line=dict(color='#00C853', width=1, dash='dot'),
-                hovertemplate='<b>MA(30)</b>: $%{y:,.2f}<extra></extra>'
-            ),
-            row=1, col=1
-        )
-
-        # Volume bars
-        fig.add_trace(
-            go.Bar(
-                x=timestamps,
-                y=volumes,
-                name='Volume',
-                marker=dict(color='rgba(100, 149, 237, 0.5)'),
-                hovertemplate='<b>Volume</b>: %{y:,.0f}<extra></extra>'
-            ),
-            row=2, col=1
-        )
-
-        # RSI
-        fig.add_trace(
-            go.Scatter(
-                x=timestamps,
-                y=rsi_values,
-                name='RSI',
-                line=dict(color='#9C27B0', width=2),
-                hovertemplate='<b>RSI</b>: %{y:.2f}<extra></extra>'
-            ),
-            row=3, col=1
-        )
-
-        # Add RSI reference lines
-        fig.add_hline(y=70, line_dash="dash", line_color="red", opacity=0.5, row=3, col=1)
-        fig.add_hline(y=30, line_dash="dash", line_color="green", opacity=0.5, row=3, col=1)
-
-        # Update layout
-        fig.update_layout(
-            title=f'{symbol} - {timeframe} Analysis',
-            height=800,
-            hovermode='x unified',
-            showlegend=True,
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1
-            )
-        )
-
-        # Update axes
-        fig.update_xaxes(title_text="Date", row=3, col=1)
-        fig.update_yaxes(title_text="Price (USD)", row=1, col=1)
-        fig.update_yaxes(title_text="Volume", row=2, col=1)
-        fig.update_yaxes(title_text="RSI", row=3, col=1, range=[0, 100])
-
-        logger.info(f"Chart generated successfully for {symbol}")
-        return fig
-
-    except Exception as e:
-        logger.error(f"Error generating chart: {e}\n{traceback.format_exc()}")
-
-        # Return error chart
+        prices = [h.get('price_usd', 0) for h in history]
+        
+        # Create plot
         fig = go.Figure()
-        fig.add_annotation(
-            text=f"Error generating chart:<br>{str(e)}",
-            xref="paper", yref="paper",
-            x=0.5, y=0.5, showarrow=False,
-            font=dict(size=14, color="red")
+        fig.add_trace(go.Scatter(
+            x=timestamps,
+            y=prices,
+            mode='lines',
+            name='Price',
+            line=dict(color='#2962FF', width=2)
+        ))
+        
+        fig.update_layout(
+            title=f"{symbol} - {timeframe}",
+            xaxis_title="Time",
+            yaxis_title="Price (USD)",
+            hovermode='x unified',
+            height=400
         )
-        fig.update_layout(title="Chart Error", height=600)
+        
+        return fig
+    
+    except Exception as e:
+        logger.error(f"Error plotting price history: {e}")
+        fig = go.Figure()
+        fig.add_annotation(text=f"Error: {str(e)}", xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
         return fig
 
 
-# ==================== TAB 3: NEWS & SENTIMENT ====================
+# ==================== TAB 4: APL SCANNER ====================
 
-def get_news_feed(sentiment_filter: str = "All", coin_filter: str = "All") -> str:
-    """
-    Get news feed with sentiment analysis as HTML cards
-
-    Args:
-        sentiment_filter: Filter by sentiment (All, Positive, Neutral, Negative)
-        coin_filter: Filter by coin (All, BTC, ETH, etc.)
-
-    Returns:
-        HTML string with news cards
-    """
+def run_apl_scan() -> str:
+    """Run Auto Provider Loader scan"""
     try:
-        logger.info(f"Fetching news feed: sentiment={sentiment_filter}, coin={coin_filter}")
+        logger.info("Running APL scan...")
+        
+        # Import APL
+        import auto_provider_loader
+        
+        # Run scan
+        apl = auto_provider_loader.AutoProviderLoader()
+        
+        # Run async in sync context
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(apl.run())
+        loop.close()
+        
+        # Build summary
+        stats = apl.stats
+        output = f"""
+# APL Scan Complete
 
-        # Map sentiment filter
-        sentiment_map = {
-            "All": None,
-            "Positive": "positive",
-            "Neutral": "neutral",
-            "Negative": "negative",
-            "Very Positive": "very_positive",
-            "Very Negative": "very_negative"
-        }
+**Timestamp**: {stats.timestamp}
+**Execution Time**: {stats.execution_time_sec:.2f}s
 
-        sentiment_db = sentiment_map.get(sentiment_filter)
+## HTTP Providers
+- **Candidates**: {stats.total_http_candidates}
+- **Valid**: {stats.http_valid} ✅
+- **Invalid**: {stats.http_invalid} ❌
+- **Conditional**: {stats.http_conditional} ⚠️
 
-        # Get news from database
-        if coin_filter != "All":
-            news_list = db.get_news_by_coin(coin_filter, limit=50)
-        else:
-            news_list = db.get_latest_news(limit=50, sentiment=sentiment_db)
+## HuggingFace Models
+- **Candidates**: {stats.total_hf_candidates}
+- **Valid**: {stats.hf_valid} ✅
+- **Invalid**: {stats.hf_invalid} ❌
+- **Conditional**: {stats.hf_conditional} ⚠️
 
-        if not news_list:
-            return """
-            <div style='text-align: center; padding: 40px; color: #666;'>
-                <h3>No news articles found</h3>
-                <p>Try adjusting your filters or refresh the data</p>
-            </div>
-            """
+## Total Active Providers
+**{stats.total_active_providers}** providers are now active.
 
-        # Calculate overall market sentiment
-        sentiment_scores = [n.get('sentiment_score', 0) for n in news_list if n.get('sentiment_score') is not None]
-        avg_sentiment = sum(sentiment_scores) / len(sentiment_scores) if sentiment_scores else 0
-        sentiment_gauge = int((avg_sentiment + 1) * 50)  # Convert -1 to 1 -> 0 to 100
+---
 
-        # Determine gauge color
-        if sentiment_gauge >= 60:
-            gauge_color = "#4CAF50"
-            gauge_label = "Bullish"
-        elif sentiment_gauge <= 40:
-            gauge_color = "#F44336"
-            gauge_label = "Bearish"
-        else:
-            gauge_color = "#FF9800"
-            gauge_label = "Neutral"
+✅ All valid providers have been integrated into `providers_config_extended.json`.
 
-        # Build HTML
-        html = f"""
-        <style>
-            .sentiment-gauge {{
-                background: linear-gradient(90deg, #F44336 0%, #FF9800 50%, #4CAF50 100%);
-                height: 30px;
-                border-radius: 15px;
-                position: relative;
-                margin: 20px 0;
-            }}
-            .sentiment-indicator {{
-                position: absolute;
-                left: {sentiment_gauge}%;
-                top: -5px;
-                width: 40px;
-                height: 40px;
-                background: white;
-                border: 3px solid {gauge_color};
-                border-radius: 50%;
-                transform: translateX(-50%);
-            }}
-            .news-card {{
-                background: white;
-                border: 1px solid #e0e0e0;
-                border-radius: 8px;
-                padding: 16px;
-                margin: 12px 0;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                transition: box-shadow 0.3s;
-            }}
-            .news-card:hover {{
-                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            }}
-            .news-title {{
-                font-size: 18px;
-                font-weight: bold;
-                color: #333;
-                margin-bottom: 8px;
-            }}
-            .news-meta {{
-                font-size: 12px;
-                color: #666;
-                margin-bottom: 8px;
-            }}
-            .sentiment-badge {{
-                display: inline-block;
-                padding: 4px 12px;
-                border-radius: 12px;
-                font-size: 11px;
-                font-weight: bold;
-                margin-left: 8px;
-            }}
-            .sentiment-positive {{ background: #C8E6C9; color: #2E7D32; }}
-            .sentiment-very_positive {{ background: #81C784; color: #1B5E20; }}
-            .sentiment-neutral {{ background: #FFF9C4; color: #F57F17; }}
-            .sentiment-negative {{ background: #FFCDD2; color: #C62828; }}
-            .sentiment-very_negative {{ background: #EF5350; color: #B71C1C; }}
-            .news-summary {{
-                color: #555;
-                line-height: 1.5;
-                margin-bottom: 8px;
-            }}
-            .news-link {{
-                color: #2962FF;
-                text-decoration: none;
-                font-weight: 500;
-            }}
-            .news-link:hover {{
-                text-decoration: underline;
-            }}
-        </style>
-
-        <div style='margin-bottom: 30px;'>
-            <h2 style='margin-bottom: 10px;'>Market Sentiment Gauge</h2>
-            <div style='text-align: center; font-size: 24px; font-weight: bold; color: {gauge_color};'>
-                {gauge_label} ({sentiment_gauge}/100)
-            </div>
-            <div class='sentiment-gauge'>
-                <div class='sentiment-indicator'></div>
-            </div>
-        </div>
-
-        <h2>Latest News ({len(news_list)} articles)</h2>
-        """
-
-        # Add news cards
-        for news in news_list:
-            title = news.get('title', 'No Title')
-            summary = news.get('summary', '')
-            url = news.get('url', '#')
-            source = news.get('source', 'Unknown')
-            published = news.get('published_date', news.get('timestamp', ''))
-
-            # Format date
-            try:
-                if published:
-                    dt = datetime.fromisoformat(published.replace('Z', '+00:00'))
-                    date_str = dt.strftime('%b %d, %Y %H:%M')
-                else:
-                    date_str = 'Unknown date'
-            except:
-                date_str = 'Unknown date'
-
-            # Get sentiment
-            sentiment_label = news.get('sentiment_label', 'neutral')
-            sentiment_class = f"sentiment-{sentiment_label}"
-            sentiment_display = sentiment_label.replace('_', ' ').title()
-
-            # Related coins
-            related_coins = news.get('related_coins', [])
-            if isinstance(related_coins, str):
-                try:
-                    related_coins = json.loads(related_coins)
-                except:
-                    related_coins = []
-
-            coins_str = ', '.join(related_coins[:5]) if related_coins else 'General'
-
-            html += f"""
-            <div class='news-card'>
-                <div class='news-title'>
-                    <a href='{url}' target='_blank' class='news-link'>{title}</a>
-                </div>
-                <div class='news-meta'>
-                    <strong>{source}</strong> | {date_str} | Coins: {coins_str}
-                    <span class='sentiment-badge {sentiment_class}'>{sentiment_display}</span>
-                </div>
-                <div class='news-summary'>{summary}</div>
-            </div>
-            """
-
-        return html
-
+See `PROVIDER_AUTO_DISCOVERY_REPORT.md` for full details.
+"""
+        
+        return output
+    
     except Exception as e:
-        logger.error(f"Error in get_news_feed: {e}\n{traceback.format_exc()}")
-        return f"""
-        <div style='color: red; padding: 20px;'>
-            <h3>Error Loading News</h3>
-            <p>{str(e)}</p>
-        </div>
-        """
+        logger.error(f"Error running APL: {e}\n{traceback.format_exc()}")
+        return f"❌ APL scan failed: {str(e)}\n\nCheck logs for details."
 
 
-# ==================== TAB 4: AI ANALYSIS ====================
-
-def generate_ai_analysis(symbol_display: str) -> str:
-    """
-    Generate AI-powered market analysis for a cryptocurrency
-
-    Args:
-        symbol_display: Display name like "Bitcoin (BTC)"
-
-    Returns:
-        HTML with analysis results
-    """
+def get_apl_report() -> str:
+    """Get last APL report"""
     try:
-        logger.info(f"Generating AI analysis for {symbol_display}")
-
-        # Extract symbol
-        if '(' in symbol_display and ')' in symbol_display:
-            symbol = symbol_display.split('(')[1].split(')')[0].strip().upper()
+        report_path = config.BASE_DIR / "PROVIDER_AUTO_DISCOVERY_REPORT.md"
+        if report_path.exists():
+            with open(report_path, 'r') as f:
+                return f.read()
         else:
-            symbol = symbol_display.strip().upper()
+            return "No APL report found. Run a scan first."
+    except Exception as e:
+        logger.error(f"Error reading APL report: {e}")
+        return f"Error reading report: {str(e)}"
 
-        # Get price history (last 30 days)
-        history = db.get_price_history(symbol, hours=24*30)
 
-        if not history or len(history) < 2:
-            return f"""
-            <div style='padding: 20px; text-align: center; color: #666;'>
-                <h3>Insufficient Data</h3>
-                <p>Not enough historical data available for {symbol} to perform analysis.</p>
-                <p>Please try a different cryptocurrency or wait for more data to be collected.</p>
-            </div>
-            """
+# ==================== TAB 5: HF MODELS ====================
 
-        # Prepare price history for AI analysis
-        price_history = [
-            {
-                'price': h.get('price_usd', 0),
-                'timestamp': h.get('timestamp', ''),
-                'volume': h.get('volume_24h', 0)
-            }
-            for h in history
-        ]
-
-        # Call AI analysis
-        analysis = ai_models.analyze_market_trend(price_history)
-
-        # Get trend info
-        trend = analysis.get('trend', 'Neutral')
-        current_price = analysis.get('current_price', 0)
-        support = analysis.get('support_level', 0)
-        resistance = analysis.get('resistance_level', 0)
-        prediction = analysis.get('prediction', 'No prediction available')
-        confidence = analysis.get('confidence', 0)
-        rsi = analysis.get('rsi', 50)
-        ma7 = analysis.get('ma7', 0)
-        ma30 = analysis.get('ma30', 0)
-
-        # Determine trend color and icon
-        if trend == "Bullish":
-            trend_color = "#4CAF50"
-            trend_icon = "📈"
-        elif trend == "Bearish":
-            trend_color = "#F44336"
-            trend_icon = "📉"
+def get_hf_models_status() -> Any:
+    """Get HuggingFace models status"""
+    try:
+        import ai_models
+        
+        model_info = ai_models.get_model_info()
+        
+        # Build table
+        table_data = []
+        
+        # Check if models are initialized
+        if model_info.get('models_initialized'):
+            for model_name, loaded in model_info.get('loaded_models', {}).items():
+                status = "✅ VALID" if loaded else "❌ INVALID"
+                table_data.append({
+                    "Model": model_name,
+                    "Status": status,
+                    "Loaded": loaded
+                })
         else:
-            trend_color = "#FF9800"
-            trend_icon = "➡️"
-
-        # Format confidence as percentage
-        confidence_pct = int(confidence * 100)
-
-        # Build HTML
-        html = f"""
-        <style>
-            .analysis-container {{
-                padding: 20px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border-radius: 12px;
-                color: white;
-                margin-bottom: 20px;
-            }}
-            .analysis-header {{
-                text-align: center;
-                margin-bottom: 30px;
-            }}
-            .trend-indicator {{
-                font-size: 48px;
-                margin: 20px 0;
-            }}
-            .metric-grid {{
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 15px;
-                margin: 20px 0;
-            }}
-            .metric-card {{
-                background: rgba(255, 255, 255, 0.1);
-                padding: 15px;
-                border-radius: 8px;
-                backdrop-filter: blur(10px);
-            }}
-            .metric-label {{
-                font-size: 12px;
-                opacity: 0.8;
-                margin-bottom: 5px;
-            }}
-            .metric-value {{
-                font-size: 24px;
-                font-weight: bold;
-            }}
-            .prediction-box {{
-                background: rgba(255, 255, 255, 0.15);
-                padding: 20px;
-                border-radius: 8px;
-                margin: 20px 0;
-                border-left: 4px solid {trend_color};
-            }}
-            .confidence-bar {{
-                background: rgba(255, 255, 255, 0.2);
-                height: 30px;
-                border-radius: 15px;
-                overflow: hidden;
-                margin-top: 10px;
-            }}
-            .confidence-fill {{
-                background: {trend_color};
-                height: 100%;
-                width: {confidence_pct}%;
-                transition: width 0.5s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: bold;
-            }}
-            .history-section {{
-                background: white;
-                padding: 20px;
-                border-radius: 8px;
-                margin-top: 20px;
-                color: #333;
-            }}
-        </style>
-
-        <div class='analysis-container'>
-            <div class='analysis-header'>
-                <h1>{symbol} Market Analysis</h1>
-                <div class='trend-indicator'>{trend_icon}</div>
-                <h2 style='color: {trend_color};'>{trend} Trend</h2>
-            </div>
-
-            <div class='metric-grid'>
-                <div class='metric-card'>
-                    <div class='metric-label'>Current Price</div>
-                    <div class='metric-value'>${current_price:,.2f}</div>
-                </div>
-                <div class='metric-card'>
-                    <div class='metric-label'>Support Level</div>
-                    <div class='metric-value'>${support:,.2f}</div>
-                </div>
-                <div class='metric-card'>
-                    <div class='metric-label'>Resistance Level</div>
-                    <div class='metric-value'>${resistance:,.2f}</div>
-                </div>
-                <div class='metric-card'>
-                    <div class='metric-label'>RSI (14)</div>
-                    <div class='metric-value'>{rsi:.1f}</div>
-                </div>
-                <div class='metric-card'>
-                    <div class='metric-label'>MA (7)</div>
-                    <div class='metric-value'>${ma7:,.2f}</div>
-                </div>
-                <div class='metric-card'>
-                    <div class='metric-label'>MA (30)</div>
-                    <div class='metric-value'>${ma30:,.2f}</div>
-                </div>
-            </div>
-
-            <div class='prediction-box'>
-                <h3>📊 Market Prediction</h3>
-                <p style='font-size: 16px; line-height: 1.6;'>{prediction}</p>
-            </div>
-
-            <div>
-                <h3>Confidence Score</h3>
-                <div class='confidence-bar'>
-                    <div class='confidence-fill'>{confidence_pct}%</div>
-                </div>
-            </div>
-        </div>
-
-        <div class='history-section'>
-            <h3>📜 Recent Analysis History</h3>
-            <p>Latest analysis generated on {datetime.now().strftime('%B %d, %Y at %H:%M:%S')}</p>
-            <p><strong>Data Points Analyzed:</strong> {len(price_history)}</p>
-            <p><strong>Time Range:</strong> {len(price_history)} hours of historical data</p>
-        </div>
-        """
-
-        # Save analysis to database
-        db.save_analysis({
-            'symbol': symbol,
-            'timeframe': '30d',
-            'trend': trend,
-            'support_level': support,
-            'resistance_level': resistance,
-            'prediction': prediction,
-            'confidence': confidence
-        })
-
-        logger.info(f"AI analysis completed for {symbol}")
-        return html
-
-    except Exception as e:
-        logger.error(f"Error in generate_ai_analysis: {e}\n{traceback.format_exc()}")
-        return f"""
-        <div style='padding: 20px; color: red;'>
-            <h3>Analysis Error</h3>
-            <p>Failed to generate analysis: {str(e)}</p>
-            <p>Please try again or select a different cryptocurrency.</p>
-        </div>
-        """
-
-
-# ==================== TAB 5: DATABASE EXPLORER ====================
-
-def execute_database_query(query_type: str, custom_query: str = "") -> Tuple[pd.DataFrame, str]:
-    """
-    Execute database query and return results
-
-    Args:
-        query_type: Type of pre-built query or "Custom"
-        custom_query: Custom SQL query (if query_type is "Custom")
-
-    Returns:
-        Tuple of (DataFrame with results, status message)
-    """
-    try:
-        logger.info(f"Executing database query: {query_type}")
-
-        if query_type == "Top 10 gainers in last 24h":
-            results = db.get_top_gainers(10)
-            message = f"✅ Found {len(results)} gainers"
-
-        elif query_type == "All news with positive sentiment":
-            results = db.get_latest_news(limit=100, sentiment="positive")
-            message = f"✅ Found {len(results)} positive news articles"
-
-        elif query_type == "Price history for BTC":
-            results = db.get_price_history("BTC", 168)
-            message = f"✅ Found {len(results)} BTC price records"
-
-        elif query_type == "Database statistics":
-            stats = db.get_database_stats()
-            # Convert stats to DataFrame
-            results = [{"Metric": k, "Value": str(v)} for k, v in stats.items()]
-            message = "✅ Database statistics retrieved"
-
-        elif query_type == "Latest 100 prices":
-            results = db.get_latest_prices(100)
-            message = f"✅ Retrieved {len(results)} latest prices"
-
-        elif query_type == "Recent news (50)":
-            results = db.get_latest_news(50)
-            message = f"✅ Retrieved {len(results)} recent news articles"
-
-        elif query_type == "All market analyses":
-            results = db.get_all_analyses(100)
-            message = f"✅ Retrieved {len(results)} market analyses"
-
-        elif query_type == "Custom Query":
-            if not custom_query.strip():
-                return pd.DataFrame(), "⚠️ Please enter a custom query"
-
-            # Security check
-            if not custom_query.strip().upper().startswith('SELECT'):
-                return pd.DataFrame(), "❌ Only SELECT queries are allowed for security reasons"
-
-            results = db.execute_safe_query(custom_query)
-            message = f"✅ Custom query returned {len(results)} rows"
-
+            table_data.append({
+                "Model": "No models initialized",
+                "Status": "⚠️ NOT INITIALIZED",
+                "Loaded": False
+            })
+        
+        # Add configured models from config
+        for model_type, model_id in config.HUGGINGFACE_MODELS.items():
+            if not any(m['Model'] == model_type for m in table_data):
+                table_data.append({
+                    "Model": model_type,
+                    "Status": "⚠️ CONFIGURED",
+                    "Model ID": model_id
+                })
+        
+        if PANDAS_AVAILABLE:
+            return pd.DataFrame(table_data) if table_data else pd.DataFrame({"Message": ["No models configured"]})
         else:
-            return pd.DataFrame(), "❌ Unknown query type"
+            return {"models": table_data}
+    
+    except Exception as e:
+        logger.error(f"Error getting HF models status: {e}")
+        if PANDAS_AVAILABLE:
+            return pd.DataFrame({"Error": [str(e)]})
+        return {"error": str(e)}
 
-        # Convert to DataFrame
-        if results:
-            df = pd.DataFrame(results)
 
-            # Truncate long text fields for display
-            for col in df.columns:
-                if df[col].dtype == 'object':
-                    df[col] = df[col].apply(lambda x: str(x)[:100] + '...' if isinstance(x, str) and len(str(x)) > 100 else x)
+def test_hf_model(model_name: str, test_text: str) -> str:
+    """Test a HuggingFace model with text"""
+    try:
+        if not test_text or not test_text.strip():
+            return "⚠️ Please enter test text"
+        
+        import ai_models
+        
+        if model_name in ["sentiment_twitter", "sentiment_financial", "sentiment"]:
+            # Test sentiment analysis
+            result = ai_models.analyze_sentiment(test_text)
+            
+            output = f"""
+## Sentiment Analysis Result
 
-            return df, message
+**Input**: {test_text}
+
+**Label**: {result.get('label', 'N/A')}
+**Score**: {result.get('score', 0):.4f}
+**Confidence**: {result.get('confidence', 0):.4f}
+
+**Details**:
+```json
+{json.dumps(result.get('details', {}), indent=2)}
+```
+"""
+            return output
+        
+        elif model_name == "summarization":
+            # Test summarization
+            summary = ai_models.summarize_text(test_text)
+            
+            output = f"""
+## Summarization Result
+
+**Original** ({len(test_text)} chars):
+{test_text}
+
+**Summary** ({len(summary)} chars):
+{summary}
+"""
+            return output
+        
         else:
-            return pd.DataFrame(), f"⚠️ Query returned no results"
-
+            return f"⚠️ Model '{model_name}' not recognized or not testable"
+    
     except Exception as e:
-        logger.error(f"Error executing query: {e}\n{traceback.format_exc()}")
-        return pd.DataFrame(), f"❌ Query failed: {str(e)}"
+        logger.error(f"Error testing HF model: {e}")
+        return f"❌ Model test failed: {str(e)}"
 
 
-def export_query_results(df: pd.DataFrame) -> Tuple[str, str]:
-    """
-    Export query results to CSV file
-
-    Args:
-        df: DataFrame to export
-
-    Returns:
-        Tuple of (file_path, status_message)
-    """
+def initialize_hf_models() -> Tuple[Any, str]:
+    """Initialize HuggingFace models"""
     try:
-        if df.empty:
-            return None, "⚠️ No data to export"
-
-        # Create export filename with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"query_export_{timestamp}.csv"
-        filepath = config.DATA_DIR / filename
-
-        # Export using utils
-        success = utils.export_to_csv(df.to_dict('records'), str(filepath))
-
-        if success:
-            return str(filepath), f"✅ Exported {len(df)} rows to {filename}"
+        import ai_models
+        
+        result = ai_models.initialize_models()
+        
+        if result.get('success'):
+            message = f"✅ Models initialized successfully at {datetime.now().strftime('%H:%M:%S')}"
         else:
-            return None, "❌ Export failed"
-
+            message = f"⚠️ Model initialization completed with warnings: {result.get('status')}"
+        
+        # Return updated table
+        table = get_hf_models_status()
+        return table, message
+    
     except Exception as e:
-        logger.error(f"Error exporting results: {e}")
-        return None, f"❌ Export error: {str(e)}"
+        logger.error(f"Error initializing HF models: {e}")
+        return get_hf_models_status(), f"❌ Initialization failed: {str(e)}"
 
 
-# ==================== TAB 6: DATA SOURCES STATUS ====================
+# ==================== TAB 6: DIAGNOSTICS ====================
 
-def get_data_sources_status() -> Tuple[pd.DataFrame, str]:
-    """
-    Get status of all data sources
-
-    Returns:
-        Tuple of (DataFrame with status, HTML with error log)
-    """
+def run_full_diagnostics(auto_fix: bool) -> str:
+    """Run full system diagnostics"""
     try:
-        logger.info("Checking data sources status...")
+        from backend.services.diagnostics_service import DiagnosticsService
+        
+        logger.info(f"Running diagnostics (auto_fix={auto_fix})...")
+        
+        diagnostics = DiagnosticsService()
+        
+        # Run async in sync context
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        report = loop.run_until_complete(diagnostics.run_full_diagnostics(auto_fix=auto_fix))
+        loop.close()
+        
+        # Format detailed output
+        output = f"""
+# 🔧 System Diagnostics Report
 
-        status_data = []
+**Generated**: {report.timestamp}
+**Duration**: {report.duration_ms:.2f}ms
 
-        # Check CoinGecko
-        try:
-            import requests
-            response = requests.get(f"{config.COINGECKO_BASE_URL}/ping", timeout=5)
-            if response.status_code == 200:
-                coingecko_status = "🟢 Online"
-                coingecko_error = 0
-            else:
-                coingecko_status = f"🟡 Status {response.status_code}"
-                coingecko_error = 1
-        except:
-            coingecko_status = "🔴 Offline"
-            coingecko_error = 1
+---
 
-        status_data.append({
-            "Data Source": "CoinGecko API",
-            "Status": coingecko_status,
-            "Last Update": datetime.now().strftime("%H:%M:%S"),
-            "Errors": coingecko_error
-        })
+## 📊 Summary
 
-        # Check CoinCap
-        try:
-            import requests
-            response = requests.get(f"{config.COINCAP_BASE_URL}/assets", timeout=5)
-            if response.status_code == 200:
-                coincap_status = "🟢 Online"
-                coincap_error = 0
-            else:
-                coincap_status = f"🟡 Status {response.status_code}"
-                coincap_error = 1
-        except:
-            coincap_status = "🔴 Offline"
-            coincap_error = 1
+| Metric | Count |
+|--------|-------|
+| **Total Issues** | {report.total_issues} |
+| **Critical** 🔴 | {report.critical_issues} |
+| **Warnings** 🟡 | {report.warnings} |
+| **Info** 🔵 | {report.info_issues} |
+| **Auto-Fixed** ✅ | {len(report.fixed_issues)} |
 
-        status_data.append({
-            "Data Source": "CoinCap API",
-            "Status": coincap_status,
-            "Last Update": datetime.now().strftime("%H:%M:%S"),
-            "Errors": coincap_error
-        })
+---
 
-        # Check Binance
-        try:
-            import requests
-            response = requests.get(f"{config.BINANCE_BASE_URL}/ping", timeout=5)
-            if response.status_code == 200:
-                binance_status = "🟢 Online"
-                binance_error = 0
-            else:
-                binance_status = f"🟡 Status {response.status_code}"
-                binance_error = 1
-        except:
-            binance_status = "🔴 Offline"
-            binance_error = 1
+## 🔍 Issues Detected
 
-        status_data.append({
-            "Data Source": "Binance API",
-            "Status": binance_status,
-            "Last Update": datetime.now().strftime("%H:%M:%S"),
-            "Errors": binance_error
-        })
-
-        # Check RSS Feeds
-        rss_ok = 0
-        rss_failed = 0
-        for feed_name in config.RSS_FEEDS.keys():
-            if feed_name in ["coindesk", "cointelegraph"]:
-                rss_ok += 1
-            else:
-                rss_ok += 1  # Assume OK for now
-
-        status_data.append({
-            "Data Source": f"RSS Feeds ({len(config.RSS_FEEDS)} sources)",
-            "Status": f"🟢 {rss_ok} active",
-            "Last Update": datetime.now().strftime("%H:%M:%S"),
-            "Errors": rss_failed
-        })
-
-        # Check Reddit
-        reddit_ok = 0
-        for subreddit in config.REDDIT_ENDPOINTS.keys():
-            reddit_ok += 1  # Assume OK
-
-        status_data.append({
-            "Data Source": f"Reddit ({len(config.REDDIT_ENDPOINTS)} subreddits)",
-            "Status": f"🟢 {reddit_ok} active",
-            "Last Update": datetime.now().strftime("%H:%M:%S"),
-            "Errors": 0
-        })
-
-        # Check Database
-        try:
-            stats = db.get_database_stats()
-            db_status = "🟢 Connected"
-            db_error = 0
-            last_update = stats.get('latest_price_update', 'Unknown')
-        except:
-            db_status = "🔴 Error"
-            db_error = 1
-            last_update = "Unknown"
-
-        status_data.append({
-            "Data Source": "SQLite Database",
-            "Status": db_status,
-            "Last Update": last_update if last_update != 'Unknown' else datetime.now().strftime("%H:%M:%S"),
-            "Errors": db_error
-        })
-
-        df = pd.DataFrame(status_data)
-
-        # Get error log
-        error_html = get_error_log_html()
-
-        return df, error_html
-
+"""
+        
+        if not report.issues:
+            output += "✅ **No issues detected!** System is healthy.\n"
+        else:
+            # Group by category
+            by_category = {}
+            for issue in report.issues:
+                cat = issue.category
+                if cat not in by_category:
+                    by_category[cat] = []
+                by_category[cat].append(issue)
+            
+            for category, issues in sorted(by_category.items()):
+                output += f"\n### {category.upper()}\n\n"
+                
+                for issue in issues:
+                    emoji = {"critical": "🔴", "warning": "🟡", "info": "🔵"}.get(issue.severity, "⚪")
+                    fixed_mark = " ✅ **AUTO-FIXED**" if issue.auto_fixed else ""
+                    
+                    output += f"**{emoji} {issue.title}**{fixed_mark}\n\n"
+                    output += f"{issue.description}\n\n"
+                    
+                    if issue.fixable and issue.fix_action and not issue.auto_fixed:
+                        output += f"💡 **Fix**: `{issue.fix_action}`\n\n"
+                    
+                    output += "---\n\n"
+        
+        # System info
+        output += "\n## 💻 System Information\n\n"
+        output += "```json\n"
+        output += json.dumps(report.system_info, indent=2)
+        output += "\n```\n"
+        
+        return output
+    
     except Exception as e:
-        logger.error(f"Error getting data sources status: {e}")
-        return pd.DataFrame(), f"<p style='color: red;'>Error: {str(e)}</p>"
+        logger.error(f"Error running diagnostics: {e}\n{traceback.format_exc()}")
+        return f"❌ Diagnostics failed: {str(e)}\n\nCheck logs for details."
 
 
-def get_error_log_html() -> str:
-    """Get last 10 errors from log file as HTML"""
+# ==================== TAB 7: LOGS ====================
+
+def get_logs(log_type: str = "recent", lines: int = 100) -> str:
+    """Get system logs"""
     try:
-        if not config.LOG_FILE.exists():
-            return "<p>No error log file found</p>"
-
-        # Read last 100 lines of log file
-        with open(config.LOG_FILE, 'r') as f:
-            lines = f.readlines()
-
-        # Get lines with ERROR or WARNING
-        error_lines = [line for line in lines[-100:] if 'ERROR' in line or 'WARNING' in line]
-
-        if not error_lines:
-            return "<p style='color: green;'>✅ No recent errors or warnings</p>"
-
-        # Take last 10
-        error_lines = error_lines[-10:]
-
-        html = "<h3>Recent Errors & Warnings</h3><div style='background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;'>"
-
-        for line in error_lines:
-            # Color code by severity
-            if 'ERROR' in line:
-                color = 'red'
-            elif 'WARNING' in line:
-                color = 'orange'
-            else:
-                color = 'black'
-
-            html += f"<div style='color: {color}; margin: 5px 0;'>{line.strip()}</div>"
-
-        html += "</div>"
-
-        return html
-
+        log_file = config.LOG_FILE
+        
+        if not log_file.exists():
+            return "⚠️ Log file not found"
+        
+        # Read log file
+        with open(log_file, 'r') as f:
+            all_lines = f.readlines()
+        
+        # Filter based on log_type
+        if log_type == "errors":
+            filtered_lines = [line for line in all_lines if 'ERROR' in line or 'CRITICAL' in line]
+        elif log_type == "warnings":
+            filtered_lines = [line for line in all_lines if 'WARNING' in line]
+        else:  # recent
+            filtered_lines = all_lines
+        
+        # Get last N lines
+        recent_lines = filtered_lines[-lines:] if len(filtered_lines) > lines else filtered_lines
+        
+        if not recent_lines:
+            return f"ℹ️ No {log_type} logs found"
+        
+        # Format output
+        output = f"# {log_type.upper()} Logs (Last {len(recent_lines)} lines)\n\n"
+        output += "```\n"
+        output += "".join(recent_lines)
+        output += "\n```\n"
+        
+        return output
+    
     except Exception as e:
-        logger.error(f"Error reading log file: {e}")
-        return f"<p style='color: red;'>Error reading log: {str(e)}</p>"
+        logger.error(f"Error reading logs: {e}")
+        return f"❌ Error reading logs: {str(e)}"
 
 
-def manual_data_collection() -> Tuple[pd.DataFrame, str, str]:
-    """
-    Manually trigger data collection for all sources
-
-    Returns:
-        Tuple of (status DataFrame, status HTML, message)
-    """
+def clear_logs() -> str:
+    """Clear log file"""
     try:
-        logger.info("Manual data collection triggered...")
-
-        message = "🔄 Collecting data from all sources...\n\n"
-
-        # Collect price data
-        try:
-            success, count = collectors.collect_price_data()
-            if success:
-                message += f"✅ Prices: {count} records collected\n"
-            else:
-                message += f"⚠️ Prices: Collection had issues\n"
-        except Exception as e:
-            message += f"❌ Prices: {str(e)}\n"
-
-        # Collect news data
-        try:
-            count = collectors.collect_news_data()
-            message += f"✅ News: {count} articles collected\n"
-        except Exception as e:
-            message += f"❌ News: {str(e)}\n"
-
-        # Collect sentiment data
-        try:
-            sentiment = collectors.collect_sentiment_data()
-            if sentiment:
-                message += f"✅ Sentiment: {sentiment.get('classification', 'N/A')}\n"
-            else:
-                message += "⚠️ Sentiment: No data collected\n"
-        except Exception as e:
-            message += f"❌ Sentiment: {str(e)}\n"
-
-        message += "\n✅ Data collection complete!"
-
-        # Get updated status
-        df, html = get_data_sources_status()
-
-        return df, html, message
-
+        log_file = config.LOG_FILE
+        
+        if log_file.exists():
+            # Backup first
+            backup_path = log_file.parent / f"{log_file.name}.backup.{int(datetime.now().timestamp())}"
+            import shutil
+            shutil.copy2(log_file, backup_path)
+            
+            # Clear
+            with open(log_file, 'w') as f:
+                f.write("")
+            
+            logger.info("Log file cleared")
+            return f"✅ Logs cleared (backup saved to {backup_path.name})"
+        else:
+            return "⚠️ No log file to clear"
+    
     except Exception as e:
-        logger.error(f"Error in manual data collection: {e}")
-        df, html = get_data_sources_status()
-        return df, html, f"❌ Collection failed: {str(e)}"
+        logger.error(f"Error clearing logs: {e}")
+        return f"❌ Error clearing logs: {str(e)}"
 
 
 # ==================== GRADIO INTERFACE ====================
 
-def create_gradio_interface():
-    """Create the complete Gradio interface with all 6 tabs"""
-
-    # Custom CSS for better styling
-    custom_css = """
-    .gradio-container {
-        max-width: 1400px !important;
-    }
-    .tab-nav button {
-        font-size: 16px !important;
-        font-weight: 600 !important;
-    }
-    """
-
-    with gr.Blocks(
-        title="Crypto Data Aggregator - Complete Dashboard",
-        theme=gr.themes.Soft(),
-        css=custom_css
-    ) as interface:
-
-        # Header
+def build_interface():
+    """Build the complete Gradio Blocks interface"""
+    
+    with gr.Blocks(title="Crypto Admin Dashboard", theme=gr.themes.Soft()) as demo:
+        
         gr.Markdown("""
-        # 🚀 Crypto Data Aggregator - Complete Dashboard
+# 🚀 Crypto Data Aggregator - Admin Dashboard
 
-        **Comprehensive cryptocurrency analytics platform** with real-time data, AI-powered insights, and advanced technical analysis.
+**Real-time cryptocurrency data aggregation and analysis platform**
 
-        **Key Features:**
-        - 📊 Live price tracking for top 100 cryptocurrencies
-        - 📈 Historical charts with technical indicators (MA, RSI)
-        - 📰 News aggregation with sentiment analysis
-        - 🤖 AI-powered market trend predictions
-        - 🗄️ Powerful database explorer with export functionality
-        - 🔍 Real-time data source monitoring
+Features: Provider Management | Market Data | Auto Provider Loader | HF Models | System Diagnostics
         """)
-
+        
         with gr.Tabs():
-
-            # ==================== TAB 1: LIVE DASHBOARD ====================
-            with gr.Tab("📊 Live Dashboard"):
-                gr.Markdown("### Real-time cryptocurrency prices and market data")
-
-                with gr.Row():
-                    search_box = gr.Textbox(
-                        label="Search/Filter",
-                        placeholder="Enter coin name or symbol (e.g., Bitcoin, BTC)...",
-                        scale=3
-                    )
-                    refresh_btn = gr.Button("🔄 Refresh Data", variant="primary", scale=1)
-
-                dashboard_table = gr.Dataframe(
-                    label="Top 100 Cryptocurrencies",
-                    interactive=False,
-                    wrap=True,
-                    height=600
-                )
-
-                refresh_status = gr.Textbox(label="Status", interactive=False)
-
-                # Auto-refresh timer
-                timer = gr.Timer(value=config.AUTO_REFRESH_INTERVAL)
-
-                # Load initial data
-                interface.load(
-                    fn=get_live_dashboard,
-                    outputs=dashboard_table
-                )
-
-                # Search/filter functionality
-                search_box.change(
-                    fn=get_live_dashboard,
-                    inputs=search_box,
-                    outputs=dashboard_table
-                )
-
-                # Refresh button
-                refresh_btn.click(
-                    fn=refresh_price_data,
-                    outputs=[dashboard_table, refresh_status]
-                )
-
-                # Auto-refresh
-                timer.tick(
-                    fn=get_live_dashboard,
-                    outputs=dashboard_table
-                )
-
-            # ==================== TAB 2: HISTORICAL CHARTS ====================
-            with gr.Tab("📈 Historical Charts"):
-                gr.Markdown("### Interactive price charts with technical analysis")
-
-                with gr.Row():
-                    symbol_dropdown = gr.Dropdown(
-                        label="Select Cryptocurrency",
-                        choices=get_available_symbols(),
-                        value=get_available_symbols()[0] if get_available_symbols() else "BTC",
-                        scale=2
-                    )
-
-                    timeframe_buttons = gr.Radio(
-                        label="Timeframe",
-                        choices=["1d", "7d", "30d", "90d", "1y", "All"],
-                        value="7d",
-                        scale=2
-                    )
-
-                chart_plot = gr.Plot(label="Price Chart with Indicators")
-
-                with gr.Row():
-                    generate_chart_btn = gr.Button("📊 Generate Chart", variant="primary")
-                    export_chart_btn = gr.Button("💾 Export Chart (PNG)")
-
-                # Generate chart
-                generate_chart_btn.click(
-                    fn=generate_chart,
-                    inputs=[symbol_dropdown, timeframe_buttons],
-                    outputs=chart_plot
-                )
-
-                # Also update on dropdown/timeframe change
-                symbol_dropdown.change(
-                    fn=generate_chart,
-                    inputs=[symbol_dropdown, timeframe_buttons],
-                    outputs=chart_plot
-                )
-
-                timeframe_buttons.change(
-                    fn=generate_chart,
-                    inputs=[symbol_dropdown, timeframe_buttons],
-                    outputs=chart_plot
-                )
-
-                # Load initial chart
-                interface.load(
-                    fn=generate_chart,
-                    inputs=[symbol_dropdown, timeframe_buttons],
-                    outputs=chart_plot
-                )
-
-            # ==================== TAB 3: NEWS & SENTIMENT ====================
-            with gr.Tab("📰 News & Sentiment"):
-                gr.Markdown("### Latest cryptocurrency news with AI sentiment analysis")
-
-                with gr.Row():
-                    sentiment_filter = gr.Dropdown(
-                        label="Filter by Sentiment",
-                        choices=["All", "Positive", "Neutral", "Negative", "Very Positive", "Very Negative"],
-                        value="All",
-                        scale=1
-                    )
-
-                    coin_filter = gr.Dropdown(
-                        label="Filter by Coin",
-                        choices=["All", "BTC", "ETH", "BNB", "XRP", "ADA", "SOL", "DOT", "DOGE"],
-                        value="All",
-                        scale=1
-                    )
-
-                    news_refresh_btn = gr.Button("🔄 Refresh News", variant="primary", scale=1)
-
-                news_html = gr.HTML(label="News Feed")
-
-                # Load initial news
-                interface.load(
-                    fn=get_news_feed,
-                    inputs=[sentiment_filter, coin_filter],
-                    outputs=news_html
-                )
-
-                # Update on filter change
-                sentiment_filter.change(
-                    fn=get_news_feed,
-                    inputs=[sentiment_filter, coin_filter],
-                    outputs=news_html
-                )
-
-                coin_filter.change(
-                    fn=get_news_feed,
-                    inputs=[sentiment_filter, coin_filter],
-                    outputs=news_html
-                )
-
-                # Refresh button
-                news_refresh_btn.click(
-                    fn=get_news_feed,
-                    inputs=[sentiment_filter, coin_filter],
-                    outputs=news_html
-                )
-
-            # ==================== TAB 4: AI ANALYSIS ====================
-            with gr.Tab("🤖 AI Analysis"):
-                gr.Markdown("### AI-powered market trend analysis and predictions")
-
-                with gr.Row():
-                    analysis_symbol = gr.Dropdown(
-                        label="Select Cryptocurrency for Analysis",
-                        choices=get_available_symbols(),
-                        value=get_available_symbols()[0] if get_available_symbols() else "BTC",
-                        scale=3
-                    )
-
-                    analyze_btn = gr.Button("🔮 Generate Analysis", variant="primary", scale=1)
-
-                analysis_html = gr.HTML(label="AI Analysis Results")
-
-                # Generate analysis
-                analyze_btn.click(
-                    fn=generate_ai_analysis,
-                    inputs=analysis_symbol,
-                    outputs=analysis_html
-                )
-
-            # ==================== TAB 5: DATABASE EXPLORER ====================
-            with gr.Tab("🗄️ Database Explorer"):
-                gr.Markdown("### Query and explore the cryptocurrency database")
-
-                query_type = gr.Dropdown(
-                    label="Select Query",
-                    choices=[
-                        "Top 10 gainers in last 24h",
-                        "All news with positive sentiment",
-                        "Price history for BTC",
-                        "Database statistics",
-                        "Latest 100 prices",
-                        "Recent news (50)",
-                        "All market analyses",
-                        "Custom Query"
-                    ],
-                    value="Database statistics"
-                )
-
-                custom_query_box = gr.Textbox(
-                    label="Custom SQL Query (SELECT only)",
-                    placeholder="SELECT * FROM prices WHERE symbol = 'BTC' LIMIT 10",
-                    lines=3,
-                    visible=False
-                )
-
-                with gr.Row():
-                    execute_btn = gr.Button("▶️ Execute Query", variant="primary")
-                    export_btn = gr.Button("💾 Export to CSV")
-
-                query_results = gr.Dataframe(label="Query Results", interactive=False, wrap=True)
-                query_status = gr.Textbox(label="Status", interactive=False)
-                export_status = gr.Textbox(label="Export Status", interactive=False)
-
-                # Show/hide custom query box
-                def toggle_custom_query(query_type):
-                    return gr.update(visible=(query_type == "Custom Query"))
-
-                query_type.change(
-                    fn=toggle_custom_query,
-                    inputs=query_type,
-                    outputs=custom_query_box
-                )
-
-                # Execute query
-                execute_btn.click(
-                    fn=execute_database_query,
-                    inputs=[query_type, custom_query_box],
-                    outputs=[query_results, query_status]
-                )
-
-                # Export results
-                export_btn.click(
-                    fn=export_query_results,
-                    inputs=query_results,
-                    outputs=[gr.Textbox(visible=False), export_status]
-                )
-
-                # Load initial query
-                interface.load(
-                    fn=execute_database_query,
-                    inputs=[query_type, custom_query_box],
-                    outputs=[query_results, query_status]
-                )
-
-            # ==================== TAB 6: DATA SOURCES STATUS ====================
-            with gr.Tab("🔍 Data Sources Status"):
-                gr.Markdown("### Monitor the health of all data sources")
-
+            
+            # ==================== TAB 1: STATUS ====================
+            with gr.Tab("📊 Status"):
+                gr.Markdown("### System Status Overview")
+                
                 with gr.Row():
                     status_refresh_btn = gr.Button("🔄 Refresh Status", variant="primary")
-                    collect_btn = gr.Button("📥 Run Manual Collection", variant="secondary")
-
-                status_table = gr.Dataframe(label="Data Sources Status", interactive=False)
-                error_log_html = gr.HTML(label="Error Log")
-                collection_status = gr.Textbox(label="Collection Status", lines=8, interactive=False)
-
+                    status_diag_btn = gr.Button("🔧 Run Quick Diagnostics")
+                
+                status_summary = gr.Markdown()
+                
+                with gr.Row():
+                    with gr.Column():
+                        gr.Markdown("#### Database Statistics")
+                        db_stats_json = gr.JSON()
+                    
+                    with gr.Column():
+                        gr.Markdown("#### System Information")
+                        system_info_json = gr.JSON()
+                
+                diag_output = gr.Markdown()
+                
                 # Load initial status
-                interface.load(
-                    fn=get_data_sources_status,
-                    outputs=[status_table, error_log_html]
+                demo.load(
+                    fn=get_status_tab,
+                    outputs=[status_summary, db_stats_json, system_info_json]
                 )
-
-                # Refresh status
+                
+                # Refresh button
                 status_refresh_btn.click(
-                    fn=get_data_sources_status,
-                    outputs=[status_table, error_log_html]
+                    fn=get_status_tab,
+                    outputs=[status_summary, db_stats_json, system_info_json]
                 )
-
-                # Manual collection
-                collect_btn.click(
-                    fn=manual_data_collection,
-                    outputs=[status_table, error_log_html, collection_status]
+                
+                # Quick diagnostics
+                status_diag_btn.click(
+                    fn=lambda: run_diagnostics_from_status(False),
+                    outputs=diag_output
                 )
-
+            
+            # ==================== TAB 2: PROVIDERS ====================
+            with gr.Tab("🔌 Providers"):
+                gr.Markdown("### API Provider Management")
+                
+                with gr.Row():
+                    provider_category = gr.Dropdown(
+                        label="Filter by Category",
+                        choices=get_provider_categories(),
+                        value="All"
+                    )
+                    provider_reload_btn = gr.Button("🔄 Reload Providers", variant="primary")
+                
+                providers_table = gr.Dataframe(
+                    label="Providers",
+                    interactive=False,
+                    wrap=True
+                ) if PANDAS_AVAILABLE else gr.JSON(label="Providers")
+                
+                provider_status = gr.Textbox(label="Status", interactive=False)
+                
+                # Load initial providers
+                demo.load(
+                    fn=lambda: get_providers_table("All"),
+                    outputs=providers_table
+                )
+                
+                # Category filter
+                provider_category.change(
+                    fn=get_providers_table,
+                    inputs=provider_category,
+                    outputs=providers_table
+                )
+                
+                # Reload button
+                provider_reload_btn.click(
+                    fn=reload_providers_config,
+                    outputs=[providers_table, provider_status]
+                )
+            
+            # ==================== TAB 3: MARKET DATA ====================
+            with gr.Tab("📈 Market Data"):
+                gr.Markdown("### Live Cryptocurrency Market Data")
+                
+                with gr.Row():
+                    market_search = gr.Textbox(
+                        label="Search",
+                        placeholder="Search by name or symbol..."
+                    )
+                    market_refresh_btn = gr.Button("🔄 Refresh Prices", variant="primary")
+                
+                market_table = gr.Dataframe(
+                    label="Market Data",
+                    interactive=False,
+                    wrap=True,
+                    height=400
+                ) if PANDAS_AVAILABLE else gr.JSON(label="Market Data")
+                
+                market_status = gr.Textbox(label="Status", interactive=False)
+                
+                # Price chart section
+                if PLOTLY_AVAILABLE:
+                    gr.Markdown("#### Price History Chart")
+                    
+                    with gr.Row():
+                        chart_symbol = gr.Textbox(
+                            label="Symbol",
+                            placeholder="BTC",
+                            value="BTC"
+                        )
+                        chart_timeframe = gr.Dropdown(
+                            label="Timeframe",
+                            choices=["24h", "7d", "30d", "90d"],
+                            value="7d"
+                        )
+                        chart_plot_btn = gr.Button("📊 Plot")
+                    
+                    price_chart = gr.Plot(label="Price History")
+                    
+                    chart_plot_btn.click(
+                        fn=plot_price_history,
+                        inputs=[chart_symbol, chart_timeframe],
+                        outputs=price_chart
+                    )
+                
+                # Load initial data
+                demo.load(
+                    fn=lambda: get_market_data_table(""),
+                    outputs=market_table
+                )
+                
+                # Search
+                market_search.change(
+                    fn=get_market_data_table,
+                    inputs=market_search,
+                    outputs=market_table
+                )
+                
+                # Refresh
+                market_refresh_btn.click(
+                    fn=refresh_market_data,
+                    outputs=[market_table, market_status]
+                )
+            
+            # ==================== TAB 4: APL SCANNER ====================
+            with gr.Tab("🔍 APL Scanner"):
+                gr.Markdown("### Auto Provider Loader")
+                gr.Markdown("Automatically discover, validate, and integrate API providers and HuggingFace models.")
+                
+                with gr.Row():
+                    apl_scan_btn = gr.Button("▶️ Run APL Scan", variant="primary", size="lg")
+                    apl_report_btn = gr.Button("📄 View Last Report")
+                
+                apl_output = gr.Markdown()
+                
+                apl_scan_btn.click(
+                    fn=run_apl_scan,
+                    outputs=apl_output
+                )
+                
+                apl_report_btn.click(
+                    fn=get_apl_report,
+                    outputs=apl_output
+                )
+                
+                # Load last report on startup
+                demo.load(
+                    fn=get_apl_report,
+                    outputs=apl_output
+                )
+            
+            # ==================== TAB 5: HF MODELS ====================
+            with gr.Tab("🤖 HF Models"):
+                gr.Markdown("### HuggingFace Models Status & Testing")
+                
+                with gr.Row():
+                    hf_init_btn = gr.Button("🔄 Initialize Models", variant="primary")
+                    hf_refresh_btn = gr.Button("🔄 Refresh Status")
+                
+                hf_models_table = gr.Dataframe(
+                    label="Models",
+                    interactive=False
+                ) if PANDAS_AVAILABLE else gr.JSON(label="Models")
+                
+                hf_status = gr.Textbox(label="Status", interactive=False)
+                
+                gr.Markdown("#### Test Model")
+                
+                with gr.Row():
+                    test_model_dropdown = gr.Dropdown(
+                        label="Model",
+                        choices=["sentiment", "sentiment_twitter", "sentiment_financial", "summarization"],
+                        value="sentiment"
+                    )
+                
+                test_input = gr.Textbox(
+                    label="Test Input",
+                    placeholder="Enter text to test the model...",
+                    lines=3
+                )
+                
+                test_btn = gr.Button("▶️ Run Test", variant="secondary")
+                
+                test_output = gr.Markdown(label="Test Output")
+                
+                # Load initial status
+                demo.load(
+                    fn=get_hf_models_status,
+                    outputs=hf_models_table
+                )
+                
+                # Initialize models
+                hf_init_btn.click(
+                    fn=initialize_hf_models,
+                    outputs=[hf_models_table, hf_status]
+                )
+                
+                # Refresh status
+                hf_refresh_btn.click(
+                    fn=get_hf_models_status,
+                    outputs=hf_models_table
+                )
+                
+                # Test model
+                test_btn.click(
+                    fn=test_hf_model,
+                    inputs=[test_model_dropdown, test_input],
+                    outputs=test_output
+                )
+            
+            # ==================== TAB 6: DIAGNOSTICS ====================
+            with gr.Tab("🔧 Diagnostics"):
+                gr.Markdown("### System Diagnostics & Auto-Repair")
+                
+                with gr.Row():
+                    diag_run_btn = gr.Button("▶️ Run Diagnostics", variant="primary")
+                    diag_autofix_btn = gr.Button("🔧 Run with Auto-Fix", variant="secondary")
+                
+                diagnostics_output = gr.Markdown()
+                
+                diag_run_btn.click(
+                    fn=lambda: run_full_diagnostics(False),
+                    outputs=diagnostics_output
+                )
+                
+                diag_autofix_btn.click(
+                    fn=lambda: run_full_diagnostics(True),
+                    outputs=diagnostics_output
+                )
+            
+            # ==================== TAB 7: LOGS ====================
+            with gr.Tab("📋 Logs"):
+                gr.Markdown("### System Logs Viewer")
+                
+                with gr.Row():
+                    log_type = gr.Dropdown(
+                        label="Log Type",
+                        choices=["recent", "errors", "warnings"],
+                        value="recent"
+                    )
+                    log_lines = gr.Slider(
+                        label="Lines to Show",
+                        minimum=10,
+                        maximum=500,
+                        value=100,
+                        step=10
+                    )
+                
+                with gr.Row():
+                    log_refresh_btn = gr.Button("🔄 Refresh Logs", variant="primary")
+                    log_clear_btn = gr.Button("🗑️ Clear Logs", variant="secondary")
+                
+                logs_output = gr.Markdown()
+                log_clear_status = gr.Textbox(label="Status", interactive=False, visible=False)
+                
+                # Load initial logs
+                demo.load(
+                    fn=lambda: get_logs("recent", 100),
+                    outputs=logs_output
+                )
+                
+                # Refresh logs
+                log_refresh_btn.click(
+                    fn=get_logs,
+                    inputs=[log_type, log_lines],
+                    outputs=logs_output
+                )
+                
+                # Update when dropdown changes
+                log_type.change(
+                    fn=get_logs,
+                    inputs=[log_type, log_lines],
+                    outputs=logs_output
+                )
+                
+                # Clear logs
+                log_clear_btn.click(
+                    fn=clear_logs,
+                    outputs=log_clear_status
+                ).then(
+                    fn=lambda: get_logs("recent", 100),
+                    outputs=logs_output
+                )
+        
         # Footer
         gr.Markdown("""
-        ---
-        **Crypto Data Aggregator** | Powered by CoinGecko, CoinCap, Binance APIs | AI Models by HuggingFace
+---
+**Crypto Data Aggregator Admin Dashboard** | Real Data Only | No Mock/Fake Data
         """)
-
-    return interface
+    
+    return demo
 
 
 # ==================== MAIN ENTRY POINT ====================
 
-def main():
-    """Main function to initialize and launch the Gradio app"""
-
-    logger.info("=" * 60)
-    logger.info("Starting Crypto Data Aggregator Dashboard")
-    logger.info("=" * 60)
-
-    # Initialize database
-    logger.info("Initializing database...")
-    db = database.get_database()
-    logger.info("Database initialized successfully")
-
-    # Start background data collection
-    global _collection_started
-    with _collection_lock:
-        if not _collection_started:
-            logger.info("Starting background data collection...")
-            collectors.schedule_data_collection()
-            _collection_started = True
-            logger.info("Background collection started")
-
-    # Create Gradio interface
-    logger.info("Creating Gradio interface...")
-    interface = create_gradio_interface()
-
-    # Launch Gradio
-    logger.info("Launching Gradio dashboard...")
-    logger.info(f"Server: {config.GRADIO_SERVER_NAME}:{config.GRADIO_SERVER_PORT}")
-    logger.info(f"Share: {config.GRADIO_SHARE}")
-
-    try:
-        interface.launch(
-            share=config.GRADIO_SHARE,
-            server_name=config.GRADIO_SERVER_NAME,
-            server_port=config.GRADIO_SERVER_PORT,
-            show_error=True,
-            quiet=False
-        )
-    except KeyboardInterrupt:
-        logger.info("\nShutting down...")
-        collectors.stop_scheduled_collection()
-        logger.info("Shutdown complete")
-    except Exception as e:
-        logger.error(f"Error launching Gradio: {e}\n{traceback.format_exc()}")
-        raise
-
+demo = build_interface()
 
 if __name__ == "__main__":
-    main()
+    logger.info("Launching Gradio dashboard...")
+    
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        share=False
+    )
