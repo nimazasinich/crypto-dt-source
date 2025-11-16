@@ -21,13 +21,15 @@ aiohttp>=3.8.0
 # Data Processing
 pandas>=2.1.0
 
-# Gradio Dashboard (Required for app.py)
-gradio>=4.12.0
-plotly>=5.18.0
+# Gradio Dashboard & UI (Required for app.py)
+gradio==4.12.0
+plotly==5.18.0        # Enables chart features in the dashboard
+psutil==5.9.6         # Optional, used for system monitoring widgets
 
-# AI Features (Optional but recommended)
-transformers>=4.36.0
-torch>=2.0.0
+# AI/ML Libraries (optional but recommended for AI features)
+transformers>=4.36.0  # Used by ai_models and HF integration
+torch>=2.0.0          # Backend for transformers (CPU build on HF Spaces)
+sentencepiece>=0.1.99 # Required by some Transformer text models
 
 # RSS Feed Parsing (Optional)
 feedparser>=6.0.10
@@ -37,12 +39,3 @@ beautifulsoup4>=4.12.0
 
 # HuggingFace Hub (For model validation)
 huggingface-hub>=0.19.0
-# Gradio Dashboard & UI
-gradio==4.12.0
-plotly==5.18.0        # Enables chart features in the dashboard
-psutil==5.9.6         # Optional, used for system monitoring widgets
-
-# AI/ML Libraries (optional but recommended for AI features)
-transformers>=4.36.0  # Used by ai_models and HF integration
-torch>=2.0.0          # Backend for transformers (CPU build on HF Spaces)
-sentencepiece>=0.1.99 # Required by some Transformer text models
