@@ -3,16 +3,18 @@
 API Server Extended - سرور FastAPI با پشتیبانی کامل از Provider Management
 """
 
+import os
+import asyncio
+import uvicorn
+from pathlib import Path
+from typing import Optional, List, Dict, Any
+from datetime import datetime, timedelta
+
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
-from pathlib import Path
-import asyncio
-import uvicorn
 
 from provider_manager import ProviderManager, RotationStrategy, Provider, ProviderPool
 from log_manager import LogManager, LogLevel, LogCategory, get_log_manager
@@ -20,6 +22,12 @@ from resource_manager import ResourceManager
 from backend.services.connection_manager import get_connection_manager, ConnectionManager
 from backend.services.auto_discovery_service import AutoDiscoveryService
 from backend.services.diagnostics_service import DiagnosticsService
+from database import get_database
+from collectors.sentiment import get_fear_greed_index
+from collectors.market_data import get_coingecko_simple_price
+
+# USE_MOCK_DATA flag for testing/demo mode
+USE_MOCK_DATA = os.getenv("USE_MOCK_DATA", "false").lower() == "true"
 
 # ایجاد اپلیکیشن FastAPI
 app = FastAPI(
@@ -60,6 +68,9 @@ auto_discovery_service = AutoDiscoveryService(resource_manager, manager)
 
 # سرویس اشکال‌یابی و تعمیر خودکار
 diagnostics_service = DiagnosticsService(resource_manager, manager, auto_discovery_service)
+
+# Database instance
+db = get_database()
 
 
 class StartupValidationError(RuntimeError):
@@ -596,85 +607,371 @@ async def export_stats():
     }
 
 
-# ===== Mock Data Endpoints (برای داشبورد) =====
+# ===== Real Data Endpoints =====
 
 @app.get("/api/market")
 async def get_market_data():
-    """داده‌های بازار (Mock)"""
-    return {
-        "cryptocurrencies": [
-            {
-                "rank": 1,
-                "name": "Bitcoin",
-                "symbol": "BTC",
-                "price": 43250.50,
-                "change_24h": 2.35,
-                "market_cap": 845000000000,
-                "volume_24h": 28500000000,
-                "image": "https://assets.coingecko.com/coins/images/1/small/bitcoin.png"
+    """Market data from real providers (CoinGecko)"""
+    
+    # Mock mode fallback
+    if USE_MOCK_DATA:
+        log_manager.add_log(
+            LogLevel.WARNING,
+            LogCategory.API,
+            "Mock data mode enabled for /api/market"
+        )
+        return {
+            "cryptocurrencies": [
+                {
+                    "rank": 1,
+                    "name": "Bitcoin",
+                    "symbol": "BTC",
+                    "price": 43250.50,
+                    "change_24h": 2.35,
+                    "market_cap": 845000000000,
+                    "volume_24h": 28500000000,
+                    "image": "https://assets.coingecko.com/coins/images/1/small/bitcoin.png"
+                },
+                {
+                    "rank": 2,
+                    "name": "Ethereum",
+                    "symbol": "ETH",
+                    "price": 2280.75,
+                    "change_24h": -1.20,
+                    "market_cap": 274000000000,
+                    "volume_24h": 15200000000,
+                    "image": "https://assets.coingecko.com/coins/images/279/small/ethereum.png"
+                }
+            ],
+            "global": {
+                "btc_dominance": 52.3,
+                "eth_dominance": 17.8
             },
-            {
-                "rank": 2,
-                "name": "Ethereum",
-                "symbol": "ETH",
-                "price": 2280.75,
-                "change_24h": -1.20,
-                "market_cap": 274000000000,
-                "volume_24h": 15200000000,
-                "image": "https://assets.coingecko.com/coins/images/279/small/ethereum.png"
+            "_mock": True
+        }
+    
+    # Real data mode
+    try:
+        result = await get_coingecko_simple_price()
+        
+        if not result.get("success"):
+            log_manager.add_log(
+                LogLevel.ERROR,
+                LogCategory.API,
+                f"Failed to fetch market data: {result.get('error')}"
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error": "Market data service unavailable",
+                    "provider": result.get("provider", "CoinGecko"),
+                    "message": result.get("error", "Unknown error")
+                }
+            )
+        
+        data = result.get("data", {})
+        
+        # Transform CoinGecko data to expected format
+        cryptocurrencies = []
+        coin_mapping = {
+            "bitcoin": {"name": "Bitcoin", "symbol": "BTC", "rank": 1, "image": "https://assets.coingecko.com/coins/images/1/small/bitcoin.png"},
+            "ethereum": {"name": "Ethereum", "symbol": "ETH", "rank": 2, "image": "https://assets.coingecko.com/coins/images/279/small/ethereum.png"},
+            "binancecoin": {"name": "BNB", "symbol": "BNB", "rank": 3, "image": "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png"}
+        }
+        
+        for coin_id, coin_info in coin_mapping.items():
+            if coin_id in data:
+                coin_data = data[coin_id]
+                crypto_entry = {
+                    "rank": coin_info["rank"],
+                    "name": coin_info["name"],
+                    "symbol": coin_info["symbol"],
+                    "price": coin_data.get("usd", 0),
+                    "change_24h": coin_data.get("usd_24h_change", 0),
+                    "market_cap": coin_data.get("usd_market_cap", 0),
+                    "volume_24h": coin_data.get("usd_24h_vol", 0),
+                    "image": coin_info["image"]
+                }
+                cryptocurrencies.append(crypto_entry)
+                
+                # Save to database
+                db.save_price({
+                    "symbol": coin_info["symbol"],
+                    "name": coin_info["name"],
+                    "price_usd": crypto_entry["price"],
+                    "volume_24h": crypto_entry["volume_24h"],
+                    "market_cap": crypto_entry["market_cap"],
+                    "percent_change_24h": crypto_entry["change_24h"],
+                    "rank": coin_info["rank"]
+                })
+        
+        # Calculate dominance (simplified)
+        total_market_cap = sum(c["market_cap"] for c in cryptocurrencies)
+        btc_dominance = 0
+        eth_dominance = 0
+        if total_market_cap > 0:
+            btc_data = next((c for c in cryptocurrencies if c["symbol"] == "BTC"), None)
+            eth_data = next((c for c in cryptocurrencies if c["symbol"] == "ETH"), None)
+            if btc_data:
+                btc_dominance = (btc_data["market_cap"] / total_market_cap) * 100
+            if eth_data:
+                eth_dominance = (eth_data["market_cap"] / total_market_cap) * 100
+        
+        log_manager.add_log(
+            LogLevel.INFO,
+            LogCategory.API,
+            f"Successfully fetched market data for {len(cryptocurrencies)} coins"
+        )
+        
+        return {
+            "cryptocurrencies": cryptocurrencies,
+            "global": {
+                "btc_dominance": round(btc_dominance, 2),
+                "eth_dominance": round(eth_dominance, 2)
+            },
+            "timestamp": datetime.now().isoformat(),
+            "provider": result.get("provider", "CoinGecko")
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_manager.add_log(
+            LogLevel.ERROR,
+            LogCategory.API,
+            f"Unexpected error in /api/market: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "Internal server error", "message": str(e)}
+        )
+
+
+@app.get("/api/market/history")
+async def get_market_history(symbol: str = "BTC", limit: int = 10):
+    """Get price history for a symbol from database"""
+    try:
+        history = db.get_price_history(symbol, hours=24)
+        
+        if not history:
+            # Return empty result, not 404
+            return {
+                "symbol": symbol,
+                "history": [],
+                "message": f"No historical data found for {symbol}"
             }
-        ],
-        "global": {
-            "btc_dominance": 52.3,
-            "eth_dominance": 17.8
+        
+        # Limit results
+        history = history[-limit:] if len(history) > limit else history
+        
+        return {
+            "symbol": symbol,
+            "history": history,
+            "count": len(history)
         }
-    }
-
-
-@app.get("/api/stats")
-async def get_market_stats():
-    """آمار بازار (Mock)"""
-    return {
-        "market": {
-            "total_market_cap": 1650000000000,
-            "total_volume": 85000000000,
-            "btc_dominance": 52.3
-        }
-    }
+    
+    except Exception as e:
+        log_manager.add_log(
+            LogLevel.ERROR,
+            LogCategory.API,
+            f"Error fetching history for {symbol}: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "Failed to fetch price history", "message": str(e)}
+        )
 
 
 @app.get("/api/sentiment")
 async def get_sentiment():
-    """احساسات بازار (Mock)"""
-    return {
-        "fear_greed_index": {
-            "value": 62,
-            "classification": "Greed"
+    """Market sentiment from Alternative.me Fear & Greed Index"""
+    
+    # Mock mode fallback
+    if USE_MOCK_DATA:
+        log_manager.add_log(
+            LogLevel.WARNING,
+            LogCategory.API,
+            "Mock data mode enabled for /api/sentiment"
+        )
+        return {
+            "fear_greed_index": {
+                "value": 62,
+                "classification": "Greed"
+            },
+            "_mock": True
         }
-    }
+    
+    # Real data mode
+    try:
+        result = await get_fear_greed_index()
+        
+        if not result.get("success"):
+            log_manager.add_log(
+                LogLevel.ERROR,
+                LogCategory.API,
+                f"Failed to fetch sentiment data: {result.get('error')}"
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error": "Sentiment data service unavailable",
+                    "provider": result.get("provider", "Alternative.me"),
+                    "message": result.get("error", "Unknown error")
+                }
+            )
+        
+        data = result.get("data", {})
+        
+        # Extract index value and classification
+        index_value = result.get("index_value", 50)
+        index_classification = result.get("index_classification", "neutral")
+        
+        log_manager.add_log(
+            LogLevel.INFO,
+            LogCategory.API,
+            f"Successfully fetched sentiment: {index_value} ({index_classification})"
+        )
+        
+        return {
+            "fear_greed_index": {
+                "value": index_value,
+                "classification": index_classification
+            },
+            "timestamp": result.get("timestamp"),
+            "provider": result.get("provider", "Alternative.me"),
+            "staleness_minutes": result.get("staleness_minutes")
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_manager.add_log(
+            LogLevel.ERROR,
+            LogCategory.API,
+            f"Unexpected error in /api/sentiment: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "Internal server error", "message": str(e)}
+        )
 
 
 @app.get("/api/trending")
 async def get_trending():
-    """ترندینگ (Mock)"""
-    return {
-        "trending": [
-            {"name": "Solana", "symbol": "SOL", "thumb": ""},
-            {"name": "Cardano", "symbol": "ADA", "thumb": ""}
-        ]
-    }
+    """Trending cryptocurrencies from CoinGecko"""
+    
+    # Mock mode fallback
+    if USE_MOCK_DATA:
+        log_manager.add_log(
+            LogLevel.WARNING,
+            LogCategory.API,
+            "Mock data mode enabled for /api/trending"
+        )
+        return {
+            "trending": [
+                {"name": "Solana", "symbol": "SOL", "thumb": ""},
+                {"name": "Cardano", "symbol": "ADA", "thumb": ""}
+            ],
+            "_mock": True
+        }
+    
+    # Real data mode - call CoinGecko trending endpoint
+    try:
+        if not manager.session:
+            await manager.init_session()
+        
+        url = "https://api.coingecko.com/api/v3/search/trending"
+        
+        async with manager.session.get(url, timeout=10) as response:
+            if response.status != 200:
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "error": "Trending data service unavailable",
+                        "provider": "CoinGecko",
+                        "message": f"HTTP {response.status}"
+                    }
+                )
+            
+            data = await response.json()
+            
+            # Extract trending coins
+            trending_list = []
+            if "coins" in data:
+                for item in data["coins"][:10]:  # Top 10
+                    coin = item.get("item", {})
+                    trending_list.append({
+                        "name": coin.get("name", ""),
+                        "symbol": coin.get("symbol", ""),
+                        "thumb": coin.get("thumb", ""),
+                        "market_cap_rank": coin.get("market_cap_rank"),
+                        "price_btc": coin.get("price_btc")
+                    })
+            
+            log_manager.add_log(
+                LogLevel.INFO,
+                LogCategory.API,
+                f"Successfully fetched {len(trending_list)} trending coins"
+            )
+            
+            return {
+                "trending": trending_list,
+                "timestamp": datetime.now().isoformat(),
+                "provider": "CoinGecko"
+            }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_manager.add_log(
+            LogLevel.ERROR,
+            LogCategory.API,
+            f"Error fetching trending data: {str(e)}"
+        )
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "Trending data service unavailable",
+                "message": str(e)
+            }
+        )
 
 
 @app.get("/api/defi")
 async def get_defi():
-    """داده‌های DeFi (Mock)"""
-    return {
-        "total_tvl": 48500000000,
-        "protocols": [
-            {"name": "Lido", "chain": "Ethereum", "tvl": 18500000000, "change_24h": 1.5},
-            {"name": "Aave", "chain": "Multi-chain", "tvl": 12300000000, "change_24h": -0.8}
-        ]
-    }
+    """DeFi data - Not implemented with real providers yet"""
+    
+    # Mock mode fallback
+    if USE_MOCK_DATA:
+        log_manager.add_log(
+            LogLevel.WARNING,
+            LogCategory.API,
+            "Mock data mode enabled for /api/defi"
+        )
+        return {
+            "total_tvl": 48500000000,
+            "protocols": [
+                {"name": "Lido", "chain": "Ethereum", "tvl": 18500000000, "change_24h": 1.5},
+                {"name": "Aave", "chain": "Multi-chain", "tvl": 12300000000, "change_24h": -0.8}
+            ],
+            "_mock": True
+        }
+    
+    # Real mode - endpoint not implemented yet
+    log_manager.add_log(
+        LogLevel.WARNING,
+        LogCategory.API,
+        "DeFi endpoint accessed but real providers not configured"
+    )
+    
+    raise HTTPException(
+        status_code=503,
+        detail={
+            "error": "DeFi endpoint not implemented with real providers yet",
+            "message": "This endpoint requires DefiLlama or similar DeFi data provider integration",
+            "recommendation": "Set USE_MOCK_DATA=true for demo/testing purposes"
+        }
+    )
 
 
 # ===== HuggingFace Endpoints =====
@@ -691,23 +988,48 @@ async def hf_health():
 
 @app.post("/api/hf/run-sentiment")
 async def run_sentiment(data: Dict[str, Any]):
-    """تحلیل احساسات (Mock)"""
+    """Sentiment analysis - Real ML not implemented yet"""
     texts = data.get("texts", [])
     
-    # شبیه‌سازی نتیجه
-    results = []
-    for text in texts:
-        sentiment = "positive" if "bullish" in text.lower() or "strong" in text.lower() else "negative" if "weak" in text.lower() else "neutral"
-        score = 0.8 if sentiment == "positive" else -0.6 if sentiment == "negative" else 0.1
-        results.append({"text": text, "sentiment": sentiment, "score": score})
+    # Mock mode fallback
+    if USE_MOCK_DATA:
+        log_manager.add_log(
+            LogLevel.WARNING,
+            LogCategory.API,
+            "Mock data mode enabled for /api/hf/run-sentiment"
+        )
+        # Simple keyword-based sentiment for demo
+        results = []
+        for text in texts:
+            sentiment = "positive" if "bullish" in text.lower() or "strong" in text.lower() else "negative" if "weak" in text.lower() else "neutral"
+            score = 0.8 if sentiment == "positive" else -0.6 if sentiment == "negative" else 0.1
+            results.append({"text": text, "sentiment": sentiment, "score": score})
+        
+        vote = sum(r["score"] for r in results) / len(results) if results else 0
+        
+        return {
+            "vote": vote,
+            "results": results,
+            "count": len(results),
+            "_mock": True,
+            "_warning": "Using keyword-based sentiment, not real ML"
+        }
     
-    vote = sum(r["score"] for r in results) / len(results) if results else 0
+    # Real mode - ML sentiment not implemented
+    log_manager.add_log(
+        LogLevel.WARNING,
+        LogCategory.API,
+        "Sentiment analysis endpoint accessed but real ML model not loaded"
+    )
     
-    return {
-        "vote": vote,
-        "results": results,
-        "count": len(results)
-    }
+    raise HTTPException(
+        status_code=501,
+        detail={
+            "error": "Real ML-based sentiment analysis is not implemented yet",
+            "message": "This endpoint requires loading HuggingFace sentiment models which are resource-intensive",
+            "recommendation": "Set USE_MOCK_DATA=true for keyword-based demo sentiment analysis"
+        }
+    )
 
 
 # ===== Log Management Endpoints =====
