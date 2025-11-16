@@ -12,8 +12,18 @@ import database
 import collectors
 import utils
 
-# Setup logging
-logger = utils.setup_logging()
+# Setup logging with error handling
+try:
+    logger = utils.setup_logging()
+except (AttributeError, ImportError) as e:
+    # Fallback logging setup if utils.setup_logging() is not available
+    print(f"Warning: Could not import utils.setup_logging(): {e}")
+    import logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger('dashboard_live')
 
 # Initialize database
 db = database.get_database()

@@ -47,10 +47,94 @@ import config
 import database
 import collectors
 import ai_models
-import utils
 
-# Setup logging
-logger = utils.setup_logging()
+# Setup logging with error handling
+utils_imported = False
+try:
+    import utils
+    utils_imported = True
+    logger = utils.setup_logging()
+except (AttributeError, ImportError) as e:
+    # Fallback logging setup if utils.setup_logging() is not available
+    print(f"Warning: Could not import utils.setup_logging(): {e}")
+    print("Using fallback logging configuration...")
+    import logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger('crypto_aggregator')
+    
+    # Try to import utils module itself even if setup_logging failed
+    if not utils_imported:
+        try:
+            import utils
+            utils_imported = True
+        except ImportError:
+            pass
+    
+    # If utils module wasn't imported, create a mock module with fallback functions
+    if not utils_imported:
+        print("ERROR: Could not import utils module. Using fallback implementations.")
+        # Create a mock utils module
+        class MockUtils:
+            @staticmethod
+            def format_number(num, decimals=2):
+                try:
+                    if num is None:
+                        return "N/A"
+                    num = float(num)
+                    if num >= 1_000_000_000:
+                        return f"${num / 1_000_000_000:.{decimals}f}B"
+                    elif num >= 1_000_000:
+                        return f"${num / 1_000_000:.{decimals}f}M"
+                    elif num >= 1_000:
+                        return f"${num / 1_000:.{decimals}f}K"
+                    else:
+                        return f"${num:.{decimals}f}"
+                except:
+                    return "N/A"
+            
+            @staticmethod
+            def calculate_moving_average(prices, period):
+                try:
+                    if len(prices) >= period:
+                        return sum(prices[-period:]) / period
+                    return None
+                except:
+                    return None
+            
+            @staticmethod
+            def calculate_rsi(prices, period=14):
+                try:
+                    if len(prices) < period + 1:
+                        return None
+                    deltas = [prices[i] - prices[i - 1] for i in range(1, len(prices))]
+                    gains = [d if d > 0 else 0 for d in deltas]
+                    losses = [-d if d < 0 else 0 for d in deltas]
+                    avg_gain = sum(gains[-period:]) / period
+                    avg_loss = sum(losses[-period:]) / period
+                    if avg_loss == 0:
+                        return 100.0 if avg_gain > 0 else 50.0
+                    rs = avg_gain / avg_loss
+                    return 100 - (100 / (1 + rs))
+                except:
+                    return 50.0  # Neutral RSI as fallback
+            
+            @staticmethod
+            def export_to_csv(data, filename):
+                try:
+                    import csv
+                    with open(filename, 'w', newline='', encoding='utf-8') as f:
+                        if data:
+                            writer = csv.DictWriter(f, fieldnames=data[0].keys())
+                            writer.writeheader()
+                            writer.writerows(data)
+                    return True
+                except:
+                    return False
+        
+        utils = MockUtils()
 
 # Log dependency status
 logger.info("Dependency Status:")
