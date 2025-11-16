@@ -5,7 +5,10 @@ All configuration in one place - no hardcoded values
 """
 
 import os
+import json
 from pathlib import Path
+from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
 
 # ==================== DIRECTORIES ====================
 BASE_DIR = Path(__file__).parent
@@ -16,6 +19,193 @@ DB_DIR = DATA_DIR / "database"
 # Create directories if they don't exist
 for directory in [DATA_DIR, LOG_DIR, DB_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
+
+# ==================== PROVIDER CONFIGURATION ====================
+
+@dataclass
+class ProviderConfig:
+    """Configuration for an API provider"""
+    name: str
+    endpoint_url: str
+    category: str = "market_data"
+    requires_key: bool = False
+    api_key: Optional[str] = None
+    timeout_ms: int = 10000
+    rate_limit_type: Optional[str] = None
+    rate_limit_value: Optional[int] = None
+    health_check_endpoint: Optional[str] = None
+    
+    def __post_init__(self):
+        if self.health_check_endpoint is None:
+            self.health_check_endpoint = self.endpoint_url
+
+
+class ConfigManager:
+    """Configuration manager for API providers"""
+    
+    def __init__(self):
+        self.providers: Dict[str, ProviderConfig] = {}
+        self._load_default_providers()
+        self._load_env_keys()
+    
+    def _load_default_providers(self):
+        """Load default provider configurations"""
+        # CoinGecko (Free, no key)
+        self.providers["CoinGecko"] = ProviderConfig(
+            name="CoinGecko",
+            endpoint_url="https://api.coingecko.com/api/v3",
+            category="market_data",
+            requires_key=False,
+            timeout_ms=10000
+        )
+        
+        # CoinMarketCap (Requires API key)
+        self.providers["CoinMarketCap"] = ProviderConfig(
+            name="CoinMarketCap",
+            endpoint_url="https://pro-api.coinmarketcap.com/v1",
+            category="market_data",
+            requires_key=True,
+            timeout_ms=10000
+        )
+        
+        # Binance (Free, no key)
+        self.providers["Binance"] = ProviderConfig(
+            name="Binance",
+            endpoint_url="https://api.binance.com/api/v3",
+            category="market_data",
+            requires_key=False,
+            timeout_ms=10000
+        )
+        
+        # Etherscan (Requires API key)
+        self.providers["Etherscan"] = ProviderConfig(
+            name="Etherscan",
+            endpoint_url="https://api.etherscan.io/api",
+            category="blockchain_explorers",
+            requires_key=True,
+            timeout_ms=10000
+        )
+        
+        # BscScan (Requires API key)
+        self.providers["BscScan"] = ProviderConfig(
+            name="BscScan",
+            endpoint_url="https://api.bscscan.com/api",
+            category="blockchain_explorers",
+            requires_key=True,
+            timeout_ms=10000
+        )
+        
+        # TronScan (Requires API key)
+        self.providers["TronScan"] = ProviderConfig(
+            name="TronScan",
+            endpoint_url="https://apilist.tronscan.org/api",
+            category="blockchain_explorers",
+            requires_key=True,
+            timeout_ms=10000
+        )
+        
+        # CryptoPanic (Requires API key)
+        self.providers["CryptoPanic"] = ProviderConfig(
+            name="CryptoPanic",
+            endpoint_url="https://cryptopanic.com/api/v1",
+            category="news",
+            requires_key=True,
+            timeout_ms=10000
+        )
+        
+        # NewsAPI (Requires API key)
+        self.providers["NewsAPI"] = ProviderConfig(
+            name="NewsAPI",
+            endpoint_url="https://newsapi.org/v2",
+            category="news",
+            requires_key=True,
+            timeout_ms=10000
+        )
+        
+        # Alternative.me Fear & Greed Index (Free, no key)
+        self.providers["Alternative.me"] = ProviderConfig(
+            name="Alternative.me",
+            endpoint_url="https://api.alternative.me",
+            category="sentiment",
+            requires_key=False,
+            timeout_ms=10000
+        )
+    
+    def _load_env_keys(self):
+        """Load API keys from environment variables"""
+        key_mapping = {
+            "CoinMarketCap": "CMC_API_KEY",
+            "Etherscan": "ETHERSCAN_KEY",
+            "BscScan": "BSCSCAN_KEY",
+            "TronScan": "TRONSCAN_KEY",
+            "CryptoPanic": "CRYPTOPANIC_KEY",
+            "NewsAPI": "NEWSAPI_KEY",
+        }
+        
+        for provider_name, env_var in key_mapping.items():
+            if provider_name in self.providers:
+                api_key = os.environ.get(env_var)
+                if api_key:
+                    self.providers[provider_name].api_key = api_key
+    
+    def get_provider(self, provider_name: str) -> Optional[ProviderConfig]:
+        """Get provider configuration by name"""
+        return self.providers.get(provider_name)
+    
+    def get_all_providers(self) -> List[ProviderConfig]:
+        """Get all provider configurations"""
+        return list(self.providers.values())
+    
+    def get_providers_by_category(self, category: str) -> List[ProviderConfig]:
+        """Get providers filtered by category"""
+        return [p for p in self.providers.values() if p.category == category]
+    
+    def get_categories(self) -> List[str]:
+        """Get all unique categories"""
+        return list(set(p.category for p in self.providers.values()))
+    
+    def add_provider(self, provider: ProviderConfig):
+        """Add a new provider configuration"""
+        self.providers[provider.name] = provider
+    
+    def stats(self) -> Dict[str, Any]:
+        """Get configuration statistics"""
+        providers_list = list(self.providers.values())
+        return {
+            'total_resources': len(providers_list),
+            'total_categories': len(self.get_categories()),
+            'free_resources': sum(1 for p in providers_list if not p.requires_key),
+            'tier1_count': 0,  # Placeholder for tier support
+            'tier2_count': 0,
+            'tier3_count': len(providers_list),
+            'api_keys_count': sum(1 for p in providers_list if p.api_key),
+            'cors_proxies_count': 0,
+            'categories': self.get_categories()
+        }
+    
+    def get_by_tier(self, tier: int) -> List[Dict[str, Any]]:
+        """Get resources by tier (placeholder for compatibility)"""
+        # Return all providers for now
+        return [{'name': p.name} for p in self.providers.values()]
+    
+    def get_all_resources(self) -> List[Dict[str, Any]]:
+        """Get all resources in dictionary format (for compatibility)"""
+        return [
+            {
+                'name': p.name,
+                'endpoint': p.endpoint_url,
+                'url': p.endpoint_url,
+                'category': p.category,
+                'requires_key': p.requires_key,
+                'api_key': p.api_key,
+                'timeout': p.timeout_ms,
+            }
+            for p in self.providers.values()
+        ]
+
+
+# Create global config instance
+config = ConfigManager()
 
 # ==================== DATABASE ====================
 DATABASE_PATH = DB_DIR / "crypto_aggregator.db"
