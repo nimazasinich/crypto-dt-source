@@ -3,7 +3,34 @@ Utils package - Consolidated utility functions
 Provides logging setup and other utility functions for the application
 """
 
-from .logger import setup_logger
+# Import logger functions first (most critical)
+try:
+    from .logger import setup_logger
+except ImportError as e:
+    print(f"ERROR: Failed to import setup_logger from .logger: {e}")
+    import logging
+    def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
+        """Fallback setup_logger if import fails"""
+        logger = logging.getLogger(name)
+        if not logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+            logger.addHandler(handler)
+            logger.setLevel(getattr(logging, level.upper()))
+        return logger
+
+# Create setup_logging as an alias for setup_logger for backward compatibility
+# This MUST be defined before any other imports that might use it
+def setup_logging():
+    """
+    Setup logging for the application
+    This is a compatibility wrapper around setup_logger
+    
+    Returns:
+        logging.Logger: Configured logger instance
+    """
+    return setup_logger("crypto_aggregator", level="INFO")
+
 
 # Import utility functions from the standalone utils.py module
 # We need to access it via a different path since we're inside the utils package
@@ -67,18 +94,6 @@ except Exception as e:
         return text
     def percentage_change(old_value, new_value):
         return None
-
-
-# Create setup_logging as an alias for setup_logger for backward compatibility
-def setup_logging():
-    """
-    Setup logging for the application
-    This is a compatibility wrapper around setup_logger
-    
-    Returns:
-        logging.Logger: Configured logger instance
-    """
-    return setup_logger("crypto_aggregator", level="INFO")
 
 
 __all__ = [
