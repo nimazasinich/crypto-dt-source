@@ -3,521 +3,1015 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Crypto API Monitor</title>
+    <title>Admin Dashboard - Crypto Monitor</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --success: #48bb78;
+            --warning: #ed8936;
+            --danger: #f56565;
+            --bg-dark: #1a202c;
+            --bg-card: #2d3748;
+            --text-light: #e2e8f0;
+            --text-muted: #a0aec0;
+            --border: #4a5568;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-            padding: 20px;
-            color: #1a1a1a;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
         }
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
+        
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 20px;
         }
-        h1 {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 36px;
-            margin-bottom: 10px;
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
-        .nav-tabs {
+        
+        header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        header .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+        
+        .tabs {
             display: flex;
             gap: 10px;
-            margin: 30px 0;
-            border-bottom: 3px solid #e9ecef;
-            padding-bottom: 0;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
         }
-        .tab {
+        
+        .tab-btn {
             padding: 12px 24px;
-            background: #f8f9fa;
-            border: none;
-            border-radius: 12px 12px 0 0;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
+            color: var(--text-light);
             transition: all 0.3s;
         }
-        .tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        
+        .tab-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
         }
+        
+        .tab-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
         .tab-content {
             display: none;
             animation: fadeIn 0.3s;
         }
+        
         .tab-content.active {
             display: block;
         }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .section {
-            background: #f8f9fa;
-            padding: 24px;
-            border-radius: 16px;
-            margin: 20px 0;
-            border: 2px solid #dee2e6;
-        }
-        .section h3 {
-            color: #667eea;
-            margin-bottom: 16px;
-            font-size: 20px;
-        }
-        .form-group {
-            margin: 16px 0;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #495057;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-        }
-        .btn {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            margin: 5px;
-            transition: all 0.3s;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        .btn-secondary {
-            background: #6c757d;
-        }
-        .btn-danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-        .btn-success {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-        .api-list {
-            list-style: none;
-        }
-        .api-item {
-            background: white;
-            padding: 16px;
-            margin: 12px 0;
-            border-radius: 12px;
-            border: 2px solid #dee2e6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s;
-        }
-        .api-item:hover {
-            border-color: #667eea;
-            transform: translateX(5px);
-        }
-        .api-info {
-            flex: 1;
-        }
-        .api-name {
-            font-weight: 700;
-            font-size: 16px;
-            color: #667eea;
-        }
-        .api-url {
-            font-size: 12px;
-            color: #6c757d;
-            font-family: monospace;
-            margin: 4px 0;
-        }
-        .api-category {
-            display: inline-block;
-            padding: 4px 10px;
-            background: #e9ecef;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
-            margin-top: 4px;
-        }
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        .status-online { background: #10b981; box-shadow: 0 0 10px #10b981; }
-        .status-offline { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .stat-box {
-            background: white;
+        
+        .card {
+            background: var(--bg-card);
+            border-radius: 10px;
             padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #dee2e6;
-            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
         }
-        .stat-value {
+        
+        .card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-card .label {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card .value {
             font-size: 32px;
             font-weight: 700;
-            color: #667eea;
-            margin: 10px 0;
+            color: var(--primary);
+            margin: 5px 0;
         }
-        .stat-label {
-            font-size: 14px;
-            color: #6c757d;
+        
+        .stat-card .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
             font-weight: 600;
         }
-        .alert {
-            padding: 16px;
-            border-radius: 12px;
-            margin: 16px 0;
-            border-left: 4px solid;
+        
+        .badge-success {
+            background: var(--success);
+            color: white;
         }
-        .alert-success {
-            background: #d1fae5;
-            border-color: #10b981;
-            color: #065f46;
+        
+        .badge-warning {
+            background: var(--warning);
+            color: white;
         }
-        .alert-error {
-            background: #fee2e2;
-            border-color: #ef4444;
-            color: #991b1b;
+        
+        .badge-danger {
+            background: var(--danger);
+            color: white;
         }
-        .alert-info {
-            background: #dbeafe;
-            border-color: #3b82f6;
-            color: #1e40af;
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
         }
-        pre {
-            background: #1e293b;
-            color: #e2e8f0;
-            padding: 16px;
-            border-radius: 8px;
-            overflow-x: auto;
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #38a169;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-light);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        table thead {
+            background: var(--bg-dark);
+        }
+        
+        table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
             font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        
+        table td {
+            padding: 12px;
+            border-top: 1px solid var(--border);
+        }
+        
+        table tbody tr:hover {
+            background: var(--bg-dark);
+        }
+        
+        .status-online {
+            color: var(--success);
+        }
+        
+        .status-offline {
+            color: var(--danger);
+        }
+        
+        .status-degraded {
+            color: var(--warning);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        
+        .error-message {
+            background: var(--danger);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .success-message {
+            background: var(--success);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        select, input {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            color: var(--text-light);
+        }
+        
+        .log-entry {
+            padding: 10px;
+            border-left: 3px solid var(--primary);
+            margin-bottom: 10px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+        }
+        
+        .log-entry.error {
+            border-left-color: var(--danger);
+        }
+        
+        .log-timestamp {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        
+        pre {
+            background: var(--bg-dark);
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .model-card {
+            background: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .model-card.valid {
+            border-left-color: var(--success);
+        }
+        
+        .model-card.conditional {
+            border-left-color: var(--warning);
+        }
+        
+        .model-card.invalid {
+            border-left-color: var(--danger);
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            table th, table td {
+                padding: 8px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>⚙️ Admin Panel</h1>
-        <p style="color: #6c757d; margin-bottom: 20px;">Configure and manage your crypto API monitoring system</p>
-        
-        <div style="margin: 20px 0;">
-            <button class="btn" onclick="window.location.href='/'">🏠 Dashboard</button>
-            <button class="btn" onclick="window.location.href='/hf_console.html'">🤗 HF Console</button>
+        <header>
+            <h1>🚀 Crypto Monitor Admin Dashboard</h1>
+            <p class="subtitle">Real-time provider management & system monitoring | NO MOCK DATA</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('status')">📊 Status</button>
+            <button class="tab-btn" onclick="switchTab('providers')">🔌 Providers</button>
+            <button class="tab-btn" onclick="switchTab('market')">💰 Market Data</button>
+            <button class="tab-btn" onclick="switchTab('apl')">🤖 APL Scanner</button>
+            <button class="tab-btn" onclick="switchTab('hf-models')">🧠 HF Models</button>
+            <button class="tab-btn" onclick="switchTab('diagnostics')">🔧 Diagnostics</button>
+            <button class="tab-btn" onclick="switchTab('logs')">📝 Logs</button>
         </div>
 
-        <div class="nav-tabs">
-            <button class="tab active" onclick="switchTab('apis')">📡 API Sources</button>
-            <button class="tab" onclick="switchTab('settings')">⚙️ Settings</button>
-            <button class="tab" onclick="switchTab('stats')">📊 Statistics</button>
+        <!-- Status Tab -->
+        <div id="tab-status" class="tab-content active">
+            <div class="stats-grid" id="global-stats">
+                <div class="stat-card">
+                    <div class="label">System Health</div>
+                    <div class="value" id="system-health">-</div>
+                    <span class="badge badge-success" id="health-badge">Healthy</span>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Providers</div>
+                    <div class="value" id="total-providers">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Validated</div>
+                    <div class="value" id="validated-providers">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Database</div>
+                    <div class="value">✓</div>
+                    <span class="badge badge-success">Connected</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <button class="btn btn-primary" onclick="refreshAllData()">🔄 Refresh All</button>
+                <button class="btn btn-success" onclick="runAPL()">🤖 Run APL Scan</button>
+                <button class="btn btn-secondary" onclick="runDiagnostics()">🔧 Run Diagnostics</button>
+            </div>
+            
+            <div class="card">
+                <h3>Recent Market Data</h3>
+                <div id="quick-market-view"></div>
+            </div>
         </div>
 
-        <!-- Tab 1: API Sources -->
-        <div class="tab-content active" id="tab-apis">
-            <div class="section">
-                <h3>➕ Add New API Source</h3>
-                <div class="form-group">
-                    <label>API Name</label>
-                    <input type="text" id="newApiName" placeholder="e.g., CoinGecko">
-                </div>
-                <div class="form-group">
-                    <label>API URL</label>
-                    <input type="text" id="newApiUrl" placeholder="https://api.example.com/endpoint">
-                </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <select id="newApiCategory">
+        <!-- Providers Tab -->
+        <div id="tab-providers" class="tab-content">
+            <div class="card">
+                <h3>Providers Management</h3>
+                <div class="filter-bar">
+                    <select id="category-filter" onchange="filterProviders()">
+                        <option value="">All Categories</option>
                         <option value="market_data">Market Data</option>
-                        <option value="blockchain_explorers">Blockchain Explorers</option>
-                        <option value="news">News & Social</option>
                         <option value="sentiment">Sentiment</option>
                         <option value="defi">DeFi</option>
-                        <option value="nft">NFT</option>
+                        <option value="exchange">Exchange</option>
+                        <option value="explorer">Explorer</option>
+                        <option value="rpc">RPC</option>
+                        <option value="news">News</option>
                     </select>
+                    <button class="btn btn-secondary" onclick="loadProviders()">🔄 Refresh</button>
                 </div>
-                <div class="form-group">
-                    <label>Test Field (optional - JSON field to verify)</label>
-                    <input type="text" id="newApiTestField" placeholder="e.g., data or status">
-                </div>
-                <button class="btn btn-success" onclick="addNewAPI()">➕ Add API Source</button>
-            </div>
-
-            <div class="section">
-                <h3>📋 Current API Sources</h3>
-                <div id="apisList">Loading...</div>
+                <div id="providers-table"></div>
             </div>
         </div>
 
-        <!-- Tab 2: Settings -->
-        <div class="tab-content" id="tab-settings">
-            <div class="section">
-                <h3>🔄 Refresh Settings</h3>
-                <div class="form-group">
-                    <label>API Check Interval (seconds)</label>
-                    <input type="number" id="checkInterval" value="30" min="10" max="300">
-                    <small style="color: #6c757d;">How often to check API status (10-300 seconds)</small>
-                </div>
-                <div class="form-group">
-                    <label>Dashboard Auto-Refresh (seconds)</label>
-                    <input type="number" id="dashboardRefresh" value="30" min="5" max="300">
-                    <small style="color: #6c757d;">How often dashboard updates (5-300 seconds)</small>
-                </div>
-                <button class="btn btn-success" onclick="saveSettings()">💾 Save Settings</button>
+        <!-- Market Data Tab -->
+        <div id="tab-market" class="tab-content">
+            <div class="card">
+                <h3>Live Market Data</h3>
+                <button class="btn btn-primary" onclick="loadMarketData()">🔄 Refresh Prices</button>
+                <div id="market-data-container"></div>
             </div>
-
-            <div class="section">
-                <h3>🤗 HuggingFace Settings</h3>
-                <div class="form-group">
-                    <label>HuggingFace Token (optional)</label>
-                    <input type="password" id="hfToken" placeholder="hf_...">
-                    <small style="color: #6c757d;">For higher rate limits</small>
-                </div>
-                <div class="form-group">
-                    <label>Enable Sentiment Analysis</label>
-                    <select id="enableSentiment">
-                        <option value="true">Enabled</option>
-                        <option value="false">Disabled</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Sentiment Model</label>
-                    <select id="sentimentModel">
-                        <option value="ElKulako/cryptobert">ElKulako/cryptobert</option>
-                        <option value="kk08/CryptoBERT">kk08/CryptoBERT</option>
-                    </select>
-                </div>
-                <button class="btn btn-success" onclick="saveHFSettings()">💾 Save HF Settings</button>
+            
+            <div class="card">
+                <h3>Sentiment Analysis</h3>
+                <div id="sentiment-data"></div>
             </div>
-
-            <div class="section">
-                <h3>🔧 System Configuration</h3>
-                <div class="form-group">
-                    <label>Request Timeout (seconds)</label>
-                    <input type="number" id="requestTimeout" value="5" min="1" max="30">
-                </div>
-                <div class="form-group">
-                    <label>Max Concurrent Requests</label>
-                    <input type="number" id="maxConcurrent" value="10" min="1" max="50">
-                </div>
-                <button class="btn btn-success" onclick="saveSystemSettings()">💾 Save System Settings</button>
+            
+            <div class="card">
+                <h3>Trending Coins</h3>
+                <div id="trending-coins"></div>
             </div>
         </div>
 
-        <!-- Tab 3: Statistics -->
-        <div class="tab-content" id="tab-stats">
-            <div class="grid">
-                <div class="stat-box">
-                    <div class="stat-label">Total API Sources</div>
-                    <div class="stat-value" id="statTotal">0</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Currently Online</div>
-                    <div class="stat-value" style="color: #10b981;" id="statOnline">0</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Currently Offline</div>
-                    <div class="stat-value" style="color: #ef4444;" id="statOffline">0</div>
-                </div>
+        <!-- APL Tab -->
+        <div id="tab-apl" class="tab-content">
+            <div class="card">
+                <h3>Auto Provider Loader (APL)</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    APL automatically discovers, validates, and integrates cryptocurrency data providers.
+                    All validations use REAL API calls - NO MOCK DATA.
+                </p>
+                
+                <button class="btn btn-success" onclick="runAPL()" id="apl-run-btn">
+                    🤖 Run APL Scan
+                </button>
+                <button class="btn btn-secondary" onclick="loadAPLReport()">📊 View Last Report</button>
+                
+                <div id="apl-status" style="margin-top: 20px;"></div>
             </div>
-
-            <div class="section">
-                <h3>📊 System Information</h3>
-                <pre id="systemInfo">Loading...</pre>
+            
+            <div class="card">
+                <h3>APL Summary Statistics</h3>
+                <div id="apl-summary"></div>
             </div>
+            
+            <div class="card">
+                <h3>APL Output</h3>
+                <pre id="apl-output" style="max-height: 400px; overflow-y: auto;">No output yet. Click "Run APL Scan" to start.</pre>
+            </div>
+        </div>
 
-            <div class="section">
-                <h3>🔍 Current Configuration</h3>
-                <pre id="currentConfig">Loading...</pre>
+        <!-- HF Models Tab -->
+        <div id="tab-hf-models" class="tab-content">
+            <div class="card">
+                <h3>Hugging Face Models</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    HuggingFace models validated by APL for crypto sentiment analysis and NLP tasks.
+                </p>
+                <button class="btn btn-primary" onclick="loadHFModels()">🔄 Refresh Models</button>
+                <div id="hf-models-container"></div>
+            </div>
+            
+            <div class="card">
+                <h3>HF Services Health</h3>
+                <div id="hf-health"></div>
+            </div>
+        </div>
+
+        <!-- Diagnostics Tab -->
+        <div id="tab-diagnostics" class="tab-content">
+            <div class="card">
+                <h3>System Diagnostics</h3>
+                <button class="btn btn-primary" onclick="runDiagnostics(true)">🔧 Run with Auto-Fix</button>
+                <button class="btn btn-secondary" onclick="runDiagnostics(false)">🔍 Run Scan Only</button>
+                <button class="btn btn-secondary" onclick="loadLastDiagnostics()">📋 View Last Results</button>
+                
+                <div id="diagnostics-results" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+
+        <!-- Logs Tab -->
+        <div id="tab-logs" class="tab-content">
+            <div class="card">
+                <h3>System Logs</h3>
+                <button class="btn btn-primary" onclick="loadRecentLogs()">🔄 Refresh</button>
+                <button class="btn btn-danger" onclick="loadErrorLogs()">❌ Errors Only</button>
+                
+                <div id="logs-container" style="margin-top: 20px;"></div>
             </div>
         </div>
     </div>
 
+    <script src="/static/js/api-client.js"></script>
     <script>
-        let currentAPIs = [];
-        let settings = {
-            checkInterval: 30,
-            dashboardRefresh: 30,
-            requestTimeout: 5,
-            maxConcurrent: 10,
-            hfToken: '',
-            enableSentiment: true,
-            sentimentModel: 'ElKulako/cryptobert'
-        };
-
+        // Tab switching
         function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('tab-' + tabName).classList.add('active');
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
             
-            if (tabName === 'stats') {
-                loadStats();
+            // Show selected tab
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load data for tab
+            switch(tabName) {
+                case 'status':
+                    loadGlobalStatus();
+                    break;
+                case 'providers':
+                    loadProviders();
+                    break;
+                case 'market':
+                    loadMarketData();
+                    loadSentiment();
+                    loadTrending();
+                    break;
+                case 'apl':
+                    loadAPLSummary();
+                    break;
+                case 'hf-models':
+                    loadHFModels();
+                    loadHFHealth();
+                    break;
+                case 'diagnostics':
+                    loadLastDiagnostics();
+                    break;
+                case 'logs':
+                    loadRecentLogs();
+                    break;
             }
         }
 
-        async function loadAPIs() {
+        // Global Status
+        async function loadGlobalStatus() {
             try {
-                const res = await fetch('/api/providers');
-                const providers = await res.json();
-                currentAPIs = providers;
+                const [status, stats] = await Promise.all([
+                    apiClient.get('/api/status'),
+                    apiClient.get('/api/stats')
+                ]);
                 
-                const list = document.getElementById('apisList');
-                list.innerHTML = '<ul class="api-list">' + providers.map(api => `
-                    <li class="api-item">
-                        <div class="api-info">
-                            <div class="api-name">
-                                <span class="status-indicator status-${api.status}"></span>
-                                ${api.name}
+                document.getElementById('system-health').textContent = status.system_health.toUpperCase();
+                document.getElementById('total-providers').textContent = status.total_providers;
+                document.getElementById('validated-providers').textContent = status.validated_providers;
+                
+                // Quick market view
+                const market = await apiClient.get('/api/market');
+                let marketHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">';
+                market.cryptocurrencies.forEach(coin => {
+                    const changeClass = coin.change_24h >= 0 ? 'status-online' : 'status-offline';
+                    marketHTML += `
+                        <div style="background: var(--bg-dark); padding: 15px; border-radius: 8px;">
+                            <div style="font-weight: 600;">${coin.name} (${coin.symbol})</div>
+                            <div style="font-size: 24px; margin: 10px 0;">$${coin.price.toLocaleString()}</div>
+                            <div class="${changeClass}">${coin.change_24h >= 0 ? '↑' : '↓'} ${Math.abs(coin.change_24h).toFixed(2)}%</div>
+                        </div>
+                    `;
+                });
+                marketHTML += '</div>';
+                document.getElementById('quick-market-view').innerHTML = marketHTML;
+                
+            } catch (error) {
+                console.error('Error loading global status:', error);
+                showError('Failed to load global status');
+            }
+        }
+
+        // Providers
+        async function loadProviders() {
+            try {
+                const response = await apiClient.get('/api/providers');
+                const providers = response.providers;
+                
+                if (providers.length === 0) {
+                    document.getElementById('providers-table').innerHTML = '<div class="empty-state">No providers found. Run APL scan to discover providers.</div>';
+                    return;
+                }
+                
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Provider ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Response Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                providers.forEach(p => {
+                    const statusClass = p.status === 'validated' ? 'status-online' : 'status-degraded';
+                    html += `
+                        <tr>
+                            <td><code>${p.provider_id}</code></td>
+                            <td>${p.name}</td>
+                            <td>${p.category}</td>
+                            <td>${p.type}</td>
+                            <td class="${statusClass}">${p.status}</td>
+                            <td>${p.response_time_ms ? p.response_time_ms.toFixed(0) + 'ms' : 'N/A'}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                document.getElementById('providers-table').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading providers:', error);
+                showError('Failed to load providers');
+            }
+        }
+
+        function filterProviders() {
+            // Would filter the providers table
+            loadProviders();
+        }
+
+        // Market Data
+        async function loadMarketData() {
+            try {
+                const data = await apiClient.get('/api/market');
+                
+                let html = '<table><thead><tr><th>Rank</th><th>Coin</th><th>Price</th><th>24h Change</th><th>Market Cap</th><th>Volume 24h</th></tr></thead><tbody>';
+                
+                data.cryptocurrencies.forEach(coin => {
+                    const changeClass = coin.change_24h >= 0 ? 'status-online' : 'status-offline';
+                    html += `
+                        <tr>
+                            <td>${coin.rank}</td>
+                            <td><strong>${coin.name}</strong> (${coin.symbol})</td>
+                            <td>$${coin.price.toLocaleString()}</td>
+                            <td class="${changeClass}">${coin.change_24h >= 0 ? '+' : ''}${coin.change_24h.toFixed(2)}%</td>
+                            <td>$${(coin.market_cap / 1e9).toFixed(2)}B</td>
+                            <td>$${(coin.volume_24h / 1e9).toFixed(2)}B</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                html += `<p style="margin-top: 15px; color: var(--text-muted);">Source: ${data.source}</p>`;
+                
+                document.getElementById('market-data-container').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading market data:', error);
+                document.getElementById('market-data-container').innerHTML = '<div class="error-message">Failed to load market data: ' + error.message + '</div>';
+            }
+        }
+
+        async function loadSentiment() {
+            try {
+                const data = await apiClient.get('/api/sentiment');
+                
+                const fngValue = data.fear_greed_index;
+                let color = '--success';
+                if (fngValue < 30) color = '--danger';
+                else if (fngValue < 50) color = '--warning';
+                
+                document.getElementById('sentiment-data').innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 64px; color: var(${color}); font-weight: 700;">${fngValue}</div>
+                        <div style="font-size: 24px; margin: 10px 0;">${data.fear_greed_label}</div>
+                        <p style="color: var(--text-muted);">Source: ${data.source}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading sentiment:', error);
+                document.getElementById('sentiment-data').innerHTML = '<div class="error-message">Failed to load sentiment: ' + error.message + '</div>';
+            }
+        }
+
+        async function loadTrending() {
+            try {
+                const data = await apiClient.get('/api/trending');
+                
+                if (data.trending.length === 0) {
+                    document.getElementById('trending-coins').innerHTML = '<div class="empty-state">No trending coins available</div>';
+                    return;
+                }
+                
+                let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">';
+                data.trending.forEach(coin => {
+                    html += `
+                        <div style="background: var(--bg-dark); padding: 15px; border-radius: 8px;">
+                            <div style="font-weight: 600;">${coin.name}</div>
+                            <div style="color: var(--text-muted);">${coin.symbol}</div>
+                            ${coin.market_cap_rank ? `<div style="margin-top: 10px;">Rank: #${coin.market_cap_rank}</div>` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                html += `<p style="margin-top: 15px; color: var(--text-muted);">Source: ${data.source}</p>`;
+                
+                document.getElementById('trending-coins').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading trending:', error);
+                document.getElementById('trending-coins').innerHTML = '<div class="error-message">Failed to load trending: ' + error.message + '</div>';
+            }
+        }
+
+        // APL Functions
+        async function runAPL() {
+            const btn = document.getElementById('apl-run-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Running APL Scan...';
+            
+            document.getElementById('apl-status').innerHTML = '<div class="loading">Running APL scan... This may take 1-2 minutes...</div>';
+            document.getElementById('apl-output').textContent = 'Executing APL scan...';
+            
+            try {
+                const result = await apiClient.post('/api/apl/run');
+                
+                if (result.status === 'completed') {
+                    document.getElementById('apl-status').innerHTML = `
+                        <div class="success-message">
+                            ✓ APL scan completed successfully!<br>
+                            Providers count: ${result.providers_count}<br>
+                            Time: ${result.timestamp}
+                        </div>
+                    `;
+                    document.getElementById('apl-output').textContent = result.stdout || 'Scan completed.';
+                    
+                    // Reload summary
+                    await loadAPLSummary();
+                    
+                } else {
+                    document.getElementById('apl-status').innerHTML = `<div class="error-message">APL scan ${result.status}: ${result.message || 'Unknown error'}</div>`;
+                    document.getElementById('apl-output').textContent = result.stdout || 'No output';
+                }
+            } catch (error) {
+                console.error('Error running APL:', error);
+                document.getElementById('apl-status').innerHTML = '<div class="error-message">Failed to run APL: ' + error.message + '</div>';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🤖 Run APL Scan';
+            }
+        }
+
+        async function loadAPLSummary() {
+            try {
+                const summary = await apiClient.get('/api/apl/summary');
+                
+                if (summary.status === 'not_available') {
+                    document.getElementById('apl-summary').innerHTML = '<div class="empty-state">No APL report available. Run APL scan first.</div>';
+                    return;
+                }
+                
+                document.getElementById('apl-summary').innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="label">HTTP Candidates</div>
+                            <div class="value">${summary.http_candidates}</div>
+                            <span class="badge badge-success">Valid: ${summary.http_valid}</span>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">HTTP Invalid</div>
+                            <div class="value">${summary.http_invalid}</div>
+                            <span class="badge badge-warning">Conditional: ${summary.http_conditional}</span>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">HF Models</div>
+                            <div class="value">${summary.hf_candidates}</div>
+                            <span class="badge badge-success">Valid: ${summary.hf_valid}</span>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">Total Active</div>
+                            <div class="value">${summary.total_active}</div>
+                            <span class="badge badge-success">Providers</span>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px; color: var(--text-muted);">Last updated: ${summary.timestamp}</p>
+                `;
+            } catch (error) {
+                console.error('Error loading APL summary:', error);
+                document.getElementById('apl-summary').innerHTML = '<div class="error-message">Failed to load APL summary</div>';
+            }
+        }
+
+        async function loadAPLReport() {
+            try {
+                const report = await apiClient.get('/api/apl/report');
+                
+                if (report.status === 'not_available') {
+                    showError('APL report not available. Run APL scan first.');
+                    return;
+                }
+                
+                document.getElementById('apl-output').textContent = JSON.stringify(report, null, 2);
+            } catch (error) {
+                console.error('Error loading APL report:', error);
+                showError('Failed to load APL report');
+            }
+        }
+
+        // HF Models
+        async function loadHFModels() {
+            try {
+                const response = await apiClient.get('/api/hf/models');
+                
+                if (response.count === 0) {
+                    document.getElementById('hf-models-container').innerHTML = '<div class="empty-state">No HF models found. Run APL scan to discover models.</div>';
+                    return;
+                }
+                
+                let html = '';
+                response.models.forEach(model => {
+                    const statusClass = model.status === 'VALID' ? 'valid' : model.status === 'CONDITIONALLY_AVAILABLE' ? 'conditional' : 'invalid';
+                    html += `
+                        <div class="model-card ${statusClass}">
+                            <div style="font-weight: 600; margin-bottom: 5px;">${model.provider_name}</div>
+                            <div style="color: var(--text-muted); font-size: 13px;">${model.provider_id}</div>
+                            <div style="margin-top: 10px;">
+                                <span class="badge badge-${statusClass === 'valid' ? 'success' : statusClass === 'conditional' ? 'warning' : 'danger'}">${model.status}</span>
                             </div>
-                            <div class="api-url">${api.category}</div>
-                            <span class="api-category">${api.status.toUpperCase()}</span>
-                            <span class="api-category">${api.response_time_ms}ms</span>
+                            ${model.error_reason ? `<div style="margin-top: 10px; color: var(--warning);">${model.error_reason}</div>` : ''}
                         </div>
-                        <div>
-                            <button class="btn btn-secondary" onclick="testAPI('${api.name}')">🧪 Test</button>
-                        </div>
-                    </li>
-                `).join('') + '</ul>';
+                    `;
+                });
+                
+                document.getElementById('hf-models-container').innerHTML = html;
             } catch (error) {
-                document.getElementById('apisList').innerHTML = 
-                    '<div class="alert alert-error">Error loading APIs: ' + error.message + '</div>';
+                console.error('Error loading HF models:', error);
+                document.getElementById('hf-models-container').innerHTML = '<div class="error-message">Failed to load HF models</div>';
             }
         }
 
-        async function addNewAPI() {
-            const name = document.getElementById('newApiName').value;
-            const url = document.getElementById('newApiUrl').value;
-            const category = document.getElementById('newApiCategory').value;
-            const testField = document.getElementById('newApiTestField').value;
-
-            if (!name || !url) {
-                alert('Please fill in API name and URL');
-                return;
-            }
-
-            const newAPI = {
-                name: name,
-                url: url,
-                category: category,
-                test_field: testField || null
-            };
-
-            // Save to localStorage for now
-            let customAPIs = JSON.parse(localStorage.getItem('customAPIs') || '[]');
-            customAPIs.push(newAPI);
-            localStorage.setItem('customAPIs', JSON.stringify(customAPIs));
-
-            document.getElementById('newApiName').value = '';
-            document.getElementById('newApiUrl').value = '';
-            document.getElementById('newApiTestField').value = '';
-
-            alert('✅ API added! Note: Restart server to activate. Custom APIs are saved in browser storage.');
-            loadAPIs();
-        }
-
-        async function testAPI(name) {
-            alert('Testing ' + name + '...\n\nThis will check if the API is responding.');
-            await loadAPIs();
-        }
-
-        function saveSettings() {
-            settings.checkInterval = parseInt(document.getElementById('checkInterval').value);
-            settings.dashboardRefresh = parseInt(document.getElementById('dashboardRefresh').value);
-            localStorage.setItem('monitorSettings', JSON.stringify(settings));
-            alert('✅ Settings saved!\n\nNote: Some settings require server restart to take effect.');
-        }
-
-        function saveHFSettings() {
-            settings.hfToken = document.getElementById('hfToken').value;
-            settings.enableSentiment = document.getElementById('enableSentiment').value === 'true';
-            settings.sentimentModel = document.getElementById('sentimentModel').value;
-            localStorage.setItem('monitorSettings', JSON.stringify(settings));
-            alert('✅ HuggingFace settings saved!\n\nRestart server to apply changes.');
-        }
-
-        function saveSystemSettings() {
-            settings.requestTimeout = parseInt(document.getElementById('requestTimeout').value);
-            settings.maxConcurrent = parseInt(document.getElementById('maxConcurrent').value);
-            localStorage.setItem('monitorSettings', JSON.stringify(settings));
-            alert('✅ System settings saved!\n\nRestart server to apply changes.');
-        }
-
-        async function loadStats() {
+        async function loadHFHealth() {
             try {
-                const res = await fetch('/api/status');
-                const data = await res.json();
+                const health = await apiClient.get('/api/hf/health');
                 
-                document.getElementById('statTotal').textContent = data.total_providers;
-                document.getElementById('statOnline').textContent = data.online;
-                document.getElementById('statOffline').textContent = data.offline;
-                
-                document.getElementById('systemInfo').textContent = JSON.stringify({
-                    total_providers: data.total_providers,
-                    online: data.online,
-                    offline: data.offline,
-                    degraded: data.degraded,
-                    avg_response_time_ms: data.avg_response_time_ms,
-                    system_health: data.system_health,
-                    last_check: data.timestamp
-                }, null, 2);
-                
-                document.getElementById('currentConfig').textContent = JSON.stringify(settings, null, 2);
+                const statusClass = health.ok ? 'status-online' : 'status-offline';
+                document.getElementById('hf-health').innerHTML = `
+                    <div style="padding: 20px; background: var(--bg-dark); border-radius: 8px;">
+                        <div class="${statusClass}" style="font-size: 24px; font-weight: 700;">${health.ok ? '✓ Healthy' : '✗ Unhealthy'}</div>
+                        ${health.ok ? `
+                            <div style="margin-top: 15px;">
+                                <div>Models: ${health.counts.models}</div>
+                                <div>Datasets: ${health.counts.datasets}</div>
+                                <div>Last refresh: ${new Date(health.last_refresh_epoch * 1000).toLocaleString()}</div>
+                            </div>
+                        ` : `
+                            <div style="margin-top: 15px; color: var(--danger);">Error: ${health.error || health.fail_reason}</div>
+                        `}
+                    </div>
+                `;
             } catch (error) {
-                document.getElementById('systemInfo').textContent = 'Error: ' + error.message;
+                console.error('Error loading HF health:', error);
+                document.getElementById('hf-health').innerHTML = '<div class="error-message">Failed to load HF health</div>';
             }
         }
 
-        // Load settings from localStorage
-        function loadSettings() {
-            const saved = localStorage.getItem('monitorSettings');
-            if (saved) {
-                settings = JSON.parse(saved);
-                document.getElementById('checkInterval').value = settings.checkInterval;
-                document.getElementById('dashboardRefresh').value = settings.dashboardRefresh;
-                document.getElementById('requestTimeout').value = settings.requestTimeout;
-                document.getElementById('maxConcurrent').value = settings.maxConcurrent;
-                document.getElementById('hfToken').value = settings.hfToken;
-                document.getElementById('enableSentiment').value = settings.enableSentiment.toString();
-                document.getElementById('sentimentModel').value = settings.sentimentModel;
+        // Diagnostics
+        async function runDiagnostics(autoFix = false) {
+            try {
+                const result = await apiClient.post('/api/diagnostics/run?auto_fix=' + autoFix);
+                
+                let html = `
+                    <div class="success-message">
+                        ✓ Diagnostics completed<br>
+                        Issues found: ${result.issues_found}<br>
+                        Time: ${result.timestamp}
+                    </div>
+                `;
+                
+                if (result.issues.length > 0) {
+                    html += '<div style="margin-top: 20px;"><h4>Issues Found:</h4>';
+                    result.issues.forEach(issue => {
+                        html += `<div class="log-entry error">${issue.type}: ${issue.message}</div>`;
+                    });
+                    html += '</div>';
+                }
+                
+                if (result.fixes_applied.length > 0) {
+                    html += '<div style="margin-top: 20px;"><h4>Fixes Applied:</h4>';
+                    result.fixes_applied.forEach(fix => {
+                        html += `<div class="log-entry">${fix}</div>`;
+                    });
+                    html += '</div>';
+                }
+                
+                document.getElementById('diagnostics-results').innerHTML = html;
+            } catch (error) {
+                console.error('Error running diagnostics:', error);
+                showError('Failed to run diagnostics');
             }
         }
 
-        // Initialize
-        loadAPIs();
-        loadSettings();
+        async function loadLastDiagnostics() {
+            try {
+                const result = await apiClient.get('/api/diagnostics/last');
+                
+                if (result.status === 'no_previous_run') {
+                    document.getElementById('diagnostics-results').innerHTML = '<div class="empty-state">No previous diagnostics run found</div>';
+                    return;
+                }
+                
+                // Display last diagnostics
+                document.getElementById('diagnostics-results').innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                console.error('Error loading diagnostics:', error);
+                showError('Failed to load diagnostics');
+            }
+        }
+
+        // Logs
+        async function loadRecentLogs() {
+            try {
+                const response = await apiClient.get('/api/logs/recent');
+                
+                if (response.count === 0) {
+                    document.getElementById('logs-container').innerHTML = '<div class="empty-state">No logs available</div>';
+                    return;
+                }
+                
+                let html = '';
+                response.logs.forEach(log => {
+                    const className = log.level === 'ERROR' ? 'error' : '';
+                    html += `
+                        <div class="log-entry ${className}">
+                            <div class="log-timestamp">${log.timestamp || new Date().toISOString()}</div>
+                            <div>${log.message || JSON.stringify(log)}</div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('logs-container').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                document.getElementById('logs-container').innerHTML = '<div class="error-message">Failed to load logs</div>';
+            }
+        }
+
+        async function loadErrorLogs() {
+            try {
+                const response = await apiClient.get('/api/logs/errors');
+                
+                if (response.count === 0) {
+                    document.getElementById('logs-container').innerHTML = '<div class="empty-state">No error logs found</div>';
+                    return;
+                }
+                
+                let html = '';
+                response.errors.forEach(log => {
+                    html += `
+                        <div class="log-entry error">
+                            <div class="log-timestamp">${log.timestamp || new Date().toISOString()}</div>
+                            <div>${log.message || JSON.stringify(log)}</div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('logs-container').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading error logs:', error);
+                showError('Failed to load error logs');
+            }
+        }
+
+        // Utility functions
+        function showError(message) {
+            alert('Error: ' + message);
+        }
+
+        function refreshAllData() {
+            loadGlobalStatus();
+            loadProviders();
+            loadAPLSummary();
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            const activeTab = document.querySelector('.tab-content.active').id;
+            if (activeTab === 'tab-status') {
+                loadGlobalStatus();
+            }
+        }, 30000);
+
+        // Load initial data
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('✓ Admin Dashboard Loaded - Real Data Only');
+            loadGlobalStatus();
+        });
     </script>
 </body>
 </html>
