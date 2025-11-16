@@ -9,5 +9,10 @@ pandas==2.1.4
 fastapi==0.109.0
 
 # Additional for enhanced functionality
-plotly==5.18.0  # For advanced charts (optional)
+plotly==5.18.0  # For advanced charts (REQUIRED for chart features)
 psutil==5.9.6   # For system monitoring (optional)
+
+# AI/ML Libraries
+transformers>=4.36.0  # For AI sentiment analysis (optional but recommended)
+torch>=2.0.0  # Required by transformers for local inference (optional)
+sentencepiece>=0.1.99  # Required by some transformers models (optional)

@@ -4,10 +4,7 @@ Crypto Data Aggregator - Complete Gradio Dashboard
 6-tab comprehensive interface for cryptocurrency data analysis
 """
 
-import gradio as gr
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import json
 import threading
@@ -15,6 +12,35 @@ import time
 import logging
 from typing import List, Dict, Optional, Tuple, Any
 import traceback
+import sys
+
+# Check for required dependencies
+GRADIO_AVAILABLE = True
+PLOTLY_AVAILABLE = True
+
+try:
+    import gradio as gr
+except ImportError:
+    GRADIO_AVAILABLE = False
+    print("ERROR: gradio library not installed. Please run: pip install gradio")
+    sys.exit(1)
+
+try:
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+except ImportError:
+    PLOTLY_AVAILABLE = False
+    print("WARNING: plotly library not installed. Chart features will be disabled.")
+    print("To enable charts, run: pip install plotly")
+    # Create dummy objects to prevent errors
+    class DummyPlotly:
+        def Figure(self, *args, **kwargs):
+            fig = type('Figure', (), {})()
+            fig.add_annotation = lambda *a, **k: None
+            fig.update_layout = lambda *a, **k: None
+            return fig
+    go = DummyPlotly()
+    make_subplots = lambda *args, **kwargs: go.Figure()
 
 # Import local modules
 import config
@@ -25,6 +51,12 @@ import utils
 
 # Setup logging
 logger = utils.setup_logging()
+
+# Log dependency status
+logger.info("Dependency Status:")
+logger.info(f"  - Gradio: {'✓ Available' if GRADIO_AVAILABLE else '✗ Missing'}")
+logger.info(f"  - Plotly: {'✓ Available' if PLOTLY_AVAILABLE else '✗ Missing (charts disabled)'}")
+logger.info(f"  - Transformers: {'✓ Available' if ai_models.TRANSFORMERS_AVAILABLE else '✗ Missing (AI features disabled)'}")
 
 # Initialize database
 db = database.get_database()
@@ -172,6 +204,19 @@ def generate_chart(symbol_display: str, timeframe: str) -> go.Figure:
     Returns:
         Plotly figure with price chart, volume, MA, and RSI
     """
+    # Check if Plotly is available
+    if not PLOTLY_AVAILABLE:
+        logger.warning("Plotly not available - cannot generate chart")
+        fig = go.Figure()
+        fig.add_annotation(
+            text="Charts unavailable - Plotly library not installed<br>Run: pip install plotly",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False,
+            font=dict(size=16, color="red")
+        )
+        fig.update_layout(title="Plotly Not Installed", height=600)
+        return fig
+    
     try:
         logger.info(f"Generating chart for {symbol_display} - {timeframe}")
 
