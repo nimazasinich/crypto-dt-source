@@ -1,32 +1,14 @@
-# Python
+# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-pip-log.txt
-pip-delete-this-directory.txt
 
 # Virtual environments
 venv/
-ENV/
 env/
+ENV/
 .venv
 
 # IDE
@@ -42,80 +24,45 @@ env/
 .gitignore
 .gitattributes
 
-# Documentation
+# Documentation (not needed in container)
 *.md
+!README.md
 docs/
-README*.md
-CHANGELOG.md
-LICENSE
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.hypothesis/
+# Test files
 tests/
 test_*.py
-
-# Logs and databases (will be created in container)
-*.log
-logs/
-data/*.db
-data/*.sqlite
-data/*.db-journal
-
-# Environment files (should be set via docker-compose or HF Secrets)
-.env
-.env.*
-!.env.example
-
-# Docker
-docker-compose*.yml
-!docker-compose.yml
-Dockerfile
-.dockerignore
+*_test.py
+pytest.ini
+.pytest_cache/
 
 # CI/CD
 .github/
 .gitlab-ci.yml
 .travis.yml
-azure-pipelines.yml
+
+# Docker files (don't copy into image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Logs and data (mounted as volumes)
+logs/
+data/
+*.log
 
 # Temporary files
 *.tmp
 *.bak
 *.swp
-temp/
-tmp/
+.cache/
 
-# Node modules (if any)
-node_modules/
-package-lock.json
-yarn.lock
+# Development tools
+.coverage
+.tox/
+htmlcov/
+*.egg-info/
 
 # OS files
 Thumbs.db
-.DS_Store
-desktop.ini
-
-# Jupyter notebooks
-.ipynb_checkpoints/
-*.ipynb
-
-# Model cache (models will be downloaded in container)
-models/
-.cache/
-.huggingface/
-
-# Large files that shouldn't be in image
-*.tar
-*.tar.gz
-*.zip
-*.rar
-*.7z
-
-# Screenshots and assets not needed
-screenshots/
-assets/*.png
-assets/*.jpg
+.directory

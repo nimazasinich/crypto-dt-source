@@ -1,10 +1,14 @@
 version: '3.8'
 
 services:
-  # سرور اصلی Crypto Monitor
-  crypto-monitor:
-    build: .
-    container_name: crypto-monitor-app
+  # API Server - Core Crypto Monitor
+  crypto-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_GRADIO: "false"
+    container_name: crypto-monitor-api
     ports:
       - "8000:8000"
     environment:
@@ -18,12 +22,42 @@ services:
     restart: unless-stopped
     networks:
       - crypto-network
+    command: ["uvicorn", "api_server_extended:app", "--host", "0.0.0.0", "--port", "8000"]
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+
+  # Gradio Dashboard - Web UI with Charts and AI
+  crypto-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.gradio
+    container_name: crypto-monitor-dashboard
+    ports:
+      - "7860:7860"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+      - GRADIO_SERVER_NAME=0.0.0.0
+      - GRADIO_SERVER_PORT=7860
+      - GRADIO_SHARE=false
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - crypto-network
+    depends_on:
+      - crypto-api
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7860').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Redis برای Cache (اختیاری)
   redis:
