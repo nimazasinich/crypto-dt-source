@@ -1,9 +1,18 @@
+"""Unified dependencies for API server + Gradio dashboards (Hugging Face Spaces).
+
+This single file is what Hugging Face Spaces will install. It includes:
+- Core API server stack
+- Database/SQLAlchemy layer
+- Gradio dashboard + Plotly charts
+- Optional Transformers-based AI features
+"""
+
 # Core API Server Requirements
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 pydantic==2.5.3
 sqlalchemy==2.0.25
-httpx>=0.26.0
+httpx==0.26.0
 websockets>=12.0
 python-dotenv
 python-multipart
@@ -29,3 +38,12 @@ beautifulsoup4>=4.12.0
 
 # HuggingFace Hub (For model validation)
 huggingface-hub>=0.19.0
+# Gradio Dashboard & UI
+gradio==4.12.0
+plotly==5.18.0        # Enables chart features in the dashboard
+psutil==5.9.6         # Optional, used for system monitoring widgets
+
+# AI/ML Libraries (optional but recommended for AI features)
+transformers>=4.36.0  # Used by ai_models and HF integration
+torch>=2.0.0          # Backend for transformers (CPU build on HF Spaces)
+sentencepiece>=0.1.99 # Required by some Transformer text models
