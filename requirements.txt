@@ -13,8 +13,19 @@ aiohttp>=3.8.0
 # Data Processing
 pandas>=2.1.0
 
-# For Gradio Dashboard (see requirements_gradio.txt for full list)
-# gradio>=4.12.0
-# plotly>=5.18.0
-# transformers>=4.36.0  # Optional: for AI features
-# torch>=2.0.0  # Optional: for AI features
+# Gradio Dashboard (Required for app.py)
+gradio>=4.12.0
+plotly>=5.18.0
+
+# AI Features (Optional but recommended)
+transformers>=4.36.0
+torch>=2.0.0
+
+# RSS Feed Parsing (Optional)
+feedparser>=6.0.10
+
+# HTML Parsing (Optional)
+beautifulsoup4>=4.12.0
+
+# HuggingFace Hub (For model validation)
+huggingface-hub>=0.19.0
