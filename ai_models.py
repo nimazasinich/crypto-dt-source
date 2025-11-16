@@ -45,6 +45,7 @@ _models_initialized = False
 _sentiment_twitter_pipeline = None
 _sentiment_financial_pipeline = None
 _summarization_pipeline = None
+_crypto_sentiment_pipeline = None  # CryptoBERT model
 
 # Model loading lock to prevent concurrent initialization
 _models_loading = False
@@ -60,7 +61,8 @@ def initialize_models() -> Dict[str, Any]:
         Dict with status, success flag, and loaded models info
     """
     global _models_initialized, _sentiment_twitter_pipeline
-    global _sentiment_financial_pipeline, _summarization_pipeline, _models_loading
+    global _sentiment_financial_pipeline, _summarization_pipeline
+    global _crypto_sentiment_pipeline, _models_loading
 
     if _models_initialized:
         logger.info("Models already initialized")
@@ -71,6 +73,7 @@ def initialize_models() -> Dict[str, Any]:
                 "sentiment_twitter": _sentiment_twitter_pipeline is not None,
                 "sentiment_financial": _sentiment_financial_pipeline is not None,
                 "summarization": _summarization_pipeline is not None,
+                "crypto_sentiment": _crypto_sentiment_pipeline is not None,
             }
         }
 
@@ -143,6 +146,31 @@ def initialize_models() -> Dict[str, Any]:
             logger.error(f"Failed to load Summarization model: {str(e)}")
             loaded_models["summarization"] = False
             errors.append(f"summarization: {str(e)}")
+
+        # Load CryptoBERT model (requires authentication)
+        try:
+            logger.info(f"Loading crypto_sentiment model: {config.HUGGINGFACE_MODELS['crypto_sentiment']}")
+            # Load with authentication token
+            use_auth_token = config.HF_TOKEN if config.HF_USE_AUTH_TOKEN else None
+            if use_auth_token:
+                logger.info("Using HF_TOKEN for authenticated model access")
+            
+            _crypto_sentiment_pipeline = pipeline(
+                "fill-mask",  # CryptoBERT is a masked language model
+                model=config.HUGGINGFACE_MODELS["crypto_sentiment"],
+                tokenizer=config.HUGGINGFACE_MODELS["crypto_sentiment"],
+                use_auth_token=use_auth_token,
+                truncation=True,
+                max_length=512
+            )
+            loaded_models["crypto_sentiment"] = True
+            logger.info("CryptoBERT sentiment model loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load CryptoBERT model: {str(e)}")
+            loaded_models["crypto_sentiment"] = False
+            errors.append(f"crypto_sentiment: {str(e)}")
+            if "401" in str(e) or "403" in str(e) or "authentication" in str(e).lower():
+                logger.error("Authentication failed. Please set HF_TOKEN environment variable.")
 
         # Check if at least one model loaded successfully
         success = any(loaded_models.values())
@@ -344,6 +372,113 @@ def analyze_sentiment(text: str) -> Dict[str, Any]:
             "label": "neutral",
             "score": 0.0,
             "confidence": 0.0,
+            "error": f"Analysis failed: {str(e)}"
+        }
+
+
+# ==================== CRYPTO SENTIMENT ANALYSIS (CryptoBERT) ====================
+
+def analyze_crypto_sentiment(text: str, mask_token: str = "[MASK]") -> Dict[str, Any]:
+    """
+    Analyze cryptocurrency-specific sentiment using CryptoBERT model.
+    Uses fill-mask to predict sentiment-related tokens in crypto context.
+    
+    Args:
+        text: Input text to analyze (crypto-related content)
+        mask_token: Token to use for masking (default: [MASK])
+    
+    Returns:
+        Dict with:
+            - label: str (positive/negative/neutral)
+            - score: float (confidence score 0-1)
+            - predictions: List of top predictions from the model
+            - error: str (if any error occurs)
+    """
+    try:
+        # Input validation
+        if not text or not isinstance(text, str):
+            logger.warning("Invalid text input for crypto sentiment analysis")
+            return {
+                "label": "neutral",
+                "score": 0.0,
+                "error": "Invalid input text"
+            }
+        
+        # Ensure models are loaded
+        if not _ensure_models_loaded():
+            logger.error("Models not available for crypto sentiment analysis")
+            return {
+                "label": "neutral",
+                "score": 0.0,
+                "error": "CryptoBERT model not initialized"
+            }
+        
+        # Check if CryptoBERT model is available
+        if _crypto_sentiment_pipeline is None:
+            logger.warning("CryptoBERT model not loaded, falling back to standard sentiment")
+            return analyze_sentiment(text)
+        
+        try:
+            # Create masked version for sentiment prediction
+            # Add sentiment-related mask context
+            masked_text = f"{text[:400]} The market sentiment is {mask_token}."
+            
+            # Get predictions from CryptoBERT
+            predictions = _crypto_sentiment_pipeline(masked_text, top_k=5)
+            
+            # Analyze predictions to determine sentiment
+            sentiment_keywords = {
+                "positive": ["bullish", "positive", "optimistic", "good", "great", "rising", "high", "strong"],
+                "negative": ["bearish", "negative", "pessimistic", "bad", "poor", "falling", "low", "weak"],
+                "neutral": ["neutral", "stable", "flat", "unchanged", "moderate"]
+            }
+            
+            # Score each prediction
+            sentiment_scores = {"positive": 0.0, "negative": 0.0, "neutral": 0.0}
+            
+            for pred in predictions:
+                token = pred["token_str"].lower().strip()
+                score = pred["score"]
+                
+                for sentiment, keywords in sentiment_keywords.items():
+                    if any(keyword in token for keyword in keywords):
+                        sentiment_scores[sentiment] += score
+                        break
+            
+            # Determine dominant sentiment
+            if sum(sentiment_scores.values()) == 0:
+                # No sentiment keywords found, use standard sentiment analysis
+                return analyze_sentiment(text)
+            
+            dominant_sentiment = max(sentiment_scores, key=sentiment_scores.get)
+            confidence = sentiment_scores[dominant_sentiment]
+            
+            result = {
+                "label": dominant_sentiment,
+                "score": round(confidence, 4),
+                "predictions": [
+                    {
+                        "token": p["token_str"],
+                        "score": round(p["score"], 4)
+                    } for p in predictions[:3]
+                ],
+                "model": "CryptoBERT"
+            }
+            
+            logger.info(f"CryptoBERT sentiment: {dominant_sentiment} (score: {confidence:.3f})")
+            return result
+            
+        except Exception as e:
+            logger.error(f"CryptoBERT analysis failed: {str(e)}")
+            # Fallback to standard sentiment analysis
+            logger.info("Falling back to standard sentiment analysis")
+            return analyze_sentiment(text)
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in crypto sentiment analysis: {str(e)}")
+        return {
+            "label": "neutral",
+            "score": 0.0,
             "error": f"Analysis failed: {str(e)}"
         }
 
@@ -817,8 +952,10 @@ def get_model_info() -> Dict[str, Any]:
             "sentiment_twitter": _sentiment_twitter_pipeline is not None,
             "sentiment_financial": _sentiment_financial_pipeline is not None,
             "summarization": _summarization_pipeline is not None,
+            "crypto_sentiment": _crypto_sentiment_pipeline is not None,
         },
         "model_names": config.HUGGINGFACE_MODELS,
+        "hf_auth_configured": config.HF_USE_AUTH_TOKEN,
         "device": "cuda" if TRANSFORMERS_AVAILABLE and torch.cuda.is_available() else "cpu"
     }
 

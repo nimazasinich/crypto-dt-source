@@ -271,7 +271,12 @@ HUGGINGFACE_MODELS = {
     "sentiment_twitter": "cardiffnlp/twitter-roberta-base-sentiment-latest",
     "sentiment_financial": "ProsusAI/finbert",
     "summarization": "facebook/bart-large-cnn",
+    "crypto_sentiment": "ElKulako/CryptoBERT",  # Requires authentication
 }
+
+# Hugging Face Authentication
+HF_TOKEN = os.environ.get("HF_TOKEN", "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")
+HF_USE_AUTH_TOKEN = bool(HF_TOKEN)  # Enable auth if token is present
 
 # ==================== DATA COLLECTION SETTINGS ====================
 COLLECTION_INTERVALS = {

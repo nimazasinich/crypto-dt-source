@@ -1164,12 +1164,21 @@
     },
     "hf_model_elkulako_cryptobert": {
       "name": "HF Model: ElKulako/CryptoBERT",
+      "model_id": "ElKulako/CryptoBERT",
       "category": "hf-model",
       "type": "http_json",
+      "task": "fill-mask",
       "validated": true,
       "validated_at": 1763303839.1660795,
       "response_time_ms": 126.39689445495605,
-      "added_by": "APL"
+      "requires_auth": true,
+      "auth_type": "HF_TOKEN",
+      "auth_env_var": "HF_TOKEN",
+      "status": "CONDITIONALLY_AVAILABLE",
+      "description": "Cryptocurrency-specific BERT model for sentiment analysis and token prediction",
+      "use_case": "crypto_sentiment_analysis",
+      "added_by": "APL",
+      "integration_status": "active"
     },
     "hf_model_kk08_cryptobert": {
       "name": "HF Model: kk08/CryptoBERT",
@@ -1351,10 +1360,13 @@
         "priority": 9
       },
       {
-        "model_id": "ElKulako/cryptobert",
+        "model_id": "ElKulako/CryptoBERT",
         "task": "fill-mask",
-        "description": "Cryptocurrency-specific BERT model",
-        "priority": 8
+        "description": "Cryptocurrency-specific BERT model for sentiment analysis",
+        "priority": 10,
+        "requires_auth": true,
+        "auth_token": "HF_TOKEN",
+        "status": "active"
       },
       {
         "model_id": "mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis",
