@@ -1,11 +1,10 @@
-"""Unified dependencies for API server + Gradio dashboards (Hugging Face Spaces).
-
-This single file is what Hugging Face Spaces will install. It includes:
-- Core API server stack
-- Database/SQLAlchemy layer
-- Gradio dashboard + Plotly charts
-- Optional Transformers-based AI features
-"""
+# Unified dependencies for API server + Gradio dashboards (Hugging Face Spaces).
+#
+# This single file is what Hugging Face Spaces will install. It includes:
+# - Core API server stack
+# - Database/SQLAlchemy layer
+# - Gradio dashboard + Plotly charts
+# - Optional Transformers-based AI features
 
 # Core API Server Requirements
 fastapi==0.109.0
