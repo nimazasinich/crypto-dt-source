@@ -3,7 +3,31 @@ Utils package - Consolidated utility functions
 Provides logging setup and other utility functions for the application
 """
 
-from .logger import setup_logger
+# Try to import setup_logger, but handle import errors gracefully
+try:
+    from .logger import setup_logger
+except (ImportError, AttributeError) as e:
+    # If import fails, we'll define a fallback setup_logger
+    import logging
+    import sys
+    
+    def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
+        """Fallback logger setup if utils.logger is not available"""
+        logger = logging.getLogger(name)
+        logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+        
+        # Clear existing handlers
+        logger.handlers = []
+        
+        # Add console handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(getattr(logging, level.upper(), logging.INFO))
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+        logger.propagate = False
+        
+        return logger
 
 # Import utility functions from the standalone utils.py module
 # We need to access it via a different path since we're inside the utils package
@@ -78,7 +102,29 @@ def setup_logging():
     Returns:
         logging.Logger: Configured logger instance
     """
-    return setup_logger("crypto_aggregator", level="INFO")
+    try:
+        return setup_logger("crypto_aggregator", level="INFO")
+    except Exception as e:
+        # Fallback: try to use standalone utils.py if available
+        try:
+            if 'utils_standalone' in globals() and hasattr(utils_standalone, 'setup_logging'):
+                return utils_standalone.setup_logging()
+        except:
+            pass
+        
+        # Final fallback: create a basic logger
+        import logging
+        import sys
+        logger = logging.getLogger('crypto_aggregator')
+        logger.setLevel(logging.INFO)
+        logger.handlers = []
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+        logger.propagate = False
+        return logger
 
 
 __all__ = [
