@@ -972,6 +972,103 @@
       "requires_auth": false,
       "priority": 6,
       "weight": 65
+    },
+    "etherscan_secondary": {
+      "name": "Etherscan (secondary key)",
+      "category": "blockchain_explorers",
+      "base_url": "https://api.etherscan.io/api",
+      "endpoints": {
+        "balance": "?module=account&action=balance&address={address}&tag=latest&apikey={key}",
+        "transactions": "?module=account&action=txlist&address={address}&startblock=0&endblock=99999999&sort=asc&apikey={key}",
+        "token_balance": "?module=account&action=tokenbalance&contractaddress={contract}&address={address}&tag=latest&apikey={key}",
+        "gas_price": "?module=gastracker&action=gasoracle&apikey={key}"
+      },
+      "rate_limit": {},
+      "requires_auth": false,
+      "priority": 5,
+      "weight": 50,
+      "api_keys": [
+        "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45"
+      ],
+      "auth_type": "query",
+      "auth_param": "apikey",
+      "auth_header": "Authorization"
+    },
+    "bscscan_primary": {
+      "name": "BscScan",
+      "category": "blockchain_explorers",
+      "base_url": "https://api.bscscan.com/api",
+      "endpoints": {
+        "bnb_balance": "?module=account&action=balance&address={address}&apikey={key}",
+        "bep20_balance": "?module=account&action=tokenbalance&contractaddress={token}&address={address}&apikey={key}",
+        "transactions": "?module=account&action=txlist&address={address}&apikey={key}"
+      },
+      "rate_limit": {},
+      "requires_auth": false,
+      "priority": 5,
+      "weight": 50,
+      "api_keys": [
+        "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT"
+      ],
+      "auth_type": "query",
+      "auth_param": "apikey",
+      "auth_header": "Authorization"
+    },
+    "blockscout": {
+      "name": "Blockscout Ethereum",
+      "category": "blockchain_explorers",
+      "base_url": "https://eth.blockscout.com/api",
+      "endpoints": {
+        "balance": "?module=account&action=balance&address={address}",
+        "address_info": "/v2/addresses/{address}"
+      },
+      "rate_limit": {
+        "requests_per_second": 10
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75,
+      "api_keys": [],
+      "auth_type": "query",
+      "auth_param": "apikey",
+      "auth_header": "Authorization"
+    },
+    "blockscout_ethereum": {
+      "name": "Blockscout Ethereum",
+      "category": "blockchain_explorers",
+      "base_url": "https://eth.blockscout.com/api",
+      "endpoints": {
+        "balance": "?module=account&action=balance&address={address}"
+      },
+      "rate_limit": {},
+      "requires_auth": false,
+      "priority": 5,
+      "weight": 50,
+      "api_keys": [],
+      "auth_type": "query",
+      "auth_param": "apikey",
+      "auth_header": "Authorization"
+    },
+    "etherscan_primary": {
+      "name": "Etherscan",
+      "category": "blockchain_explorers",
+      "base_url": "https://api.etherscan.io/api",
+      "endpoints": {
+        "balance": "?module=account&action=balance&address={address}&tag=latest&apikey={key}",
+        "transactions": "?module=account&action=txlist&address={address}&startblock=0&endblock=99999999&sort=asc&apikey={key}",
+        "token_balance": "?module=account&action=tokenbalance&contractaddress={contract}&address={address}&tag=latest&apikey={key}",
+        "gas_price": "?module=gastracker&action=gasoracle&apikey={key}"
+      },
+      "rate_limit": {},
+      "requires_auth": false,
+      "priority": 5,
+      "weight": 50,
+      "api_keys": [
+        "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2"
+      ],
+      "auth_type": "query",
+      "auth_param": "apikey",
+      "auth_header": "Authorization"
     }
   },
   "pool_configurations": [
@@ -979,49 +1076,96 @@
       "pool_name": "Primary Market Data Pool",
       "category": "market_data",
       "rotation_strategy": "priority",
-      "providers": ["coingecko", "coincap", "cryptocompare", "binance", "coinbase"]
+      "providers": [
+        "coingecko",
+        "coincap",
+        "cryptocompare",
+        "binance",
+        "coinbase"
+      ]
     },
     {
       "pool_name": "Blockchain Explorer Pool",
       "category": "blockchain_explorers",
       "rotation_strategy": "round_robin",
-      "providers": ["etherscan", "bscscan", "polygonscan", "blockchair", "ethplorer"]
+      "providers": [
+        "etherscan",
+        "bscscan",
+        "polygonscan",
+        "blockchair",
+        "ethplorer",
+        "etherscan_secondary",
+        "bscscan_primary",
+        "blockscout",
+        "blockscout_ethereum",
+        "etherscan_primary"
+      ]
     },
     {
       "pool_name": "DeFi Protocol Pool",
       "category": "defi",
       "rotation_strategy": "weighted",
-      "providers": ["defillama", "uniswap_v3", "aave", "compound", "curve", "pancakeswap"]
+      "providers": [
+        "defillama",
+        "uniswap_v3",
+        "aave",
+        "compound",
+        "curve",
+        "pancakeswap"
+      ]
     },
     {
       "pool_name": "NFT Market Pool",
       "category": "nft",
       "rotation_strategy": "priority",
-      "providers": ["opensea", "reservoir", "rarible"]
+      "providers": [
+        "opensea",
+        "reservoir",
+        "rarible"
+      ]
     },
     {
       "pool_name": "News Aggregation Pool",
       "category": "news",
       "rotation_strategy": "round_robin",
-      "providers": ["coindesk_rss", "cointelegraph_rss", "bitcoinist_rss", "cryptopanic"]
+      "providers": [
+        "coindesk_rss",
+        "cointelegraph_rss",
+        "bitcoinist_rss",
+        "cryptopanic"
+      ]
     },
     {
       "pool_name": "Sentiment Analysis Pool",
       "category": "sentiment",
       "rotation_strategy": "priority",
-      "providers": ["alternative_me", "lunarcrush", "reddit_crypto"]
+      "providers": [
+        "alternative_me",
+        "lunarcrush",
+        "reddit_crypto"
+      ]
     },
     {
       "pool_name": "Exchange Data Pool",
       "category": "exchange",
       "rotation_strategy": "weighted",
-      "providers": ["binance", "kraken", "coinbase", "bitfinex", "okx"]
+      "providers": [
+        "binance",
+        "kraken",
+        "coinbase",
+        "bitfinex",
+        "okx"
+      ]
     },
     {
       "pool_name": "Analytics Pool",
       "category": "analytics",
       "rotation_strategy": "priority",
-      "providers": ["coinmetrics", "messari", "glassnode"]
+      "providers": [
+        "coinmetrics",
+        "messari",
+        "glassnode"
+      ]
     }
   ],
   "huggingface_models": {
@@ -1076,4 +1220,3 @@
     "health_check_interval_seconds": 30
   }
 }
-

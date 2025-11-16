@@ -1,0 +1,1210 @@
+{
+  "summary": {
+    "total_providers": 68,
+    "online": 35,
+    "offline": 0,
+    "degraded": 33,
+    "total_requests": 68,
+    "successful_requests": 35,
+    "overall_success_rate": 51.470588235294116
+  },
+  "providers": {
+    "coingecko": {
+      "name": "CoinGecko",
+      "category": "market_data",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 53.15113067626953,
+      "is_available": true,
+      "priority": 10,
+      "weight": 100
+    },
+    "coinpaprika": {
+      "name": "CoinPaprika",
+      "category": "market_data",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 57.08932876586914,
+      "is_available": true,
+      "priority": 9,
+      "weight": 90
+    },
+    "coincap": {
+      "name": "CoinCap",
+      "category": "market_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 9,
+      "weight": 95
+    },
+    "cryptocompare": {
+      "name": "CryptoCompare",
+      "category": "market_data",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 428.65943908691406,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "nomics": {
+      "name": "Nomics",
+      "category": "market_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 70
+    },
+    "messari": {
+      "name": "Messari",
+      "category": "market_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 85
+    },
+    "livecoinwatch": {
+      "name": "LiveCoinWatch",
+      "category": "market_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "bitquery": {
+      "name": "Bitquery",
+      "category": "blockchain_data",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 634.9215507507324,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "etherscan": {
+      "name": "Etherscan",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 196.61402702331543,
+      "is_available": true,
+      "priority": 10,
+      "weight": 100
+    },
+    "bscscan": {
+      "name": "BscScan",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 202.622652053833,
+      "is_available": true,
+      "priority": 9,
+      "weight": 90
+    },
+    "polygonscan": {
+      "name": "PolygonScan",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 212.61239051818848,
+      "is_available": true,
+      "priority": 9,
+      "weight": 90
+    },
+    "arbiscan": {
+      "name": "Arbiscan",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 123.55637550354004,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "optimistic_etherscan": {
+      "name": "Optimistic Etherscan",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 130.07092475891113,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "blockchair": {
+      "name": "Blockchair",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 601.4506816864014,
+      "is_available": true,
+      "priority": 8,
+      "weight": 85
+    },
+    "blockchain_info": {
+      "name": "Blockchain.info",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 904.8407077789307,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "blockscout_eth": {
+      "name": "Blockscout Ethereum",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 508.66079330444336,
+      "is_available": true,
+      "priority": 6,
+      "weight": 60
+    },
+    "ethplorer": {
+      "name": "Ethplorer",
+      "category": "blockchain_explorers",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "covalent": {
+      "name": "Covalent",
+      "category": "blockchain_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 70
+    },
+    "moralis": {
+      "name": "Moralis",
+      "category": "blockchain_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "alchemy": {
+      "name": "Alchemy",
+      "category": "blockchain_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 9,
+      "weight": 90
+    },
+    "infura": {
+      "name": "Infura",
+      "category": "blockchain_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 9,
+      "weight": 90
+    },
+    "quicknode": {
+      "name": "QuickNode",
+      "category": "blockchain_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "defillama": {
+      "name": "DefiLlama",
+      "category": "defi",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 96.07768058776855,
+      "is_available": true,
+      "priority": 10,
+      "weight": 100
+    },
+    "debank": {
+      "name": "DeBank",
+      "category": "defi",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "zerion": {
+      "name": "Zerion",
+      "category": "defi",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 70
+    },
+    "yearn": {
+      "name": "Yearn Finance",
+      "category": "defi",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "aave": {
+      "name": "Aave",
+      "category": "defi",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 200.95276832580566,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "compound": {
+      "name": "Compound",
+      "category": "defi",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "uniswap_v3": {
+      "name": "Uniswap V3",
+      "category": "defi",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 220.0610637664795,
+      "is_available": true,
+      "priority": 9,
+      "weight": 90
+    },
+    "pancakeswap": {
+      "name": "PancakeSwap",
+      "category": "defi",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 85
+    },
+    "sushiswap": {
+      "name": "SushiSwap",
+      "category": "defi",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "curve": {
+      "name": "Curve Finance",
+      "category": "defi",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 225.41522979736328,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "1inch": {
+      "name": "1inch",
+      "category": "defi",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 274.22451972961426,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "opensea": {
+      "name": "OpenSea",
+      "category": "nft",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 9,
+      "weight": 90
+    },
+    "rarible": {
+      "name": "Rarible",
+      "category": "nft",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "nftport": {
+      "name": "NFTPort",
+      "category": "nft",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 70
+    },
+    "reservoir": {
+      "name": "Reservoir",
+      "category": "nft",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 85
+    },
+    "cryptopanic": {
+      "name": "CryptoPanic",
+      "category": "news",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "newsapi": {
+      "name": "NewsAPI",
+      "category": "news",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 70
+    },
+    "coindesk_rss": {
+      "name": "CoinDesk RSS",
+      "category": "news",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 215.8339023590088,
+      "is_available": true,
+      "priority": 8,
+      "weight": 85
+    },
+    "cointelegraph_rss": {
+      "name": "Cointelegraph RSS",
+      "category": "news",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 151.52335166931152,
+      "is_available": true,
+      "priority": 8,
+      "weight": 85
+    },
+    "bitcoinist_rss": {
+      "name": "Bitcoinist RSS",
+      "category": "news",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 149.2161750793457,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "reddit_crypto": {
+      "name": "Reddit Crypto",
+      "category": "social",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "twitter_trends": {
+      "name": "Twitter Crypto Trends",
+      "category": "social",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 6,
+      "weight": 60
+    },
+    "lunarcrush": {
+      "name": "LunarCrush",
+      "category": "social",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "santiment": {
+      "name": "Santiment",
+      "category": "sentiment",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "alternative_me": {
+      "name": "Alternative.me",
+      "category": "sentiment",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 246.71125411987305,
+      "is_available": true,
+      "priority": 10,
+      "weight": 100
+    },
+    "glassnode": {
+      "name": "Glassnode",
+      "category": "analytics",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 9,
+      "weight": 90
+    },
+    "intotheblock": {
+      "name": "IntoTheBlock",
+      "category": "analytics",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "coinmetrics": {
+      "name": "Coin Metrics",
+      "category": "analytics",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 977.8962135314941,
+      "is_available": true,
+      "priority": 8,
+      "weight": 85
+    },
+    "kaiko": {
+      "name": "Kaiko",
+      "category": "analytics",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 70
+    },
+    "kraken": {
+      "name": "Kraken",
+      "category": "exchange",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 193.30787658691406,
+      "is_available": true,
+      "priority": 9,
+      "weight": 90
+    },
+    "binance": {
+      "name": "Binance",
+      "category": "exchange",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 10,
+      "weight": 100
+    },
+    "coinbase": {
+      "name": "Coinbase",
+      "category": "exchange",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 193.5904026031494,
+      "is_available": true,
+      "priority": 9,
+      "weight": 95
+    },
+    "bitfinex": {
+      "name": "Bitfinex",
+      "category": "exchange",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 228.39808464050293,
+      "is_available": true,
+      "priority": 8,
+      "weight": 85
+    },
+    "huobi": {
+      "name": "Huobi",
+      "category": "exchange",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 448.7576484680176,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "kucoin": {
+      "name": "KuCoin",
+      "category": "exchange",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 401.83258056640625,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "okx": {
+      "name": "OKX",
+      "category": "exchange",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 430.23204803466797,
+      "is_available": true,
+      "priority": 8,
+      "weight": 85
+    },
+    "gate_io": {
+      "name": "Gate.io",
+      "category": "exchange",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 950.0448703765869,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "bybit": {
+      "name": "Bybit",
+      "category": "exchange",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 8,
+      "weight": 80
+    },
+    "cryptorank": {
+      "name": "Cryptorank",
+      "category": "market_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "coinlore": {
+      "name": "CoinLore",
+      "category": "market_data",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 457.0901393890381,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "coincodex": {
+      "name": "CoinCodex",
+      "category": "market_data",
+      "status": "degraded",
+      "success_rate": 0.0,
+      "total_requests": 1,
+      "avg_response_time": 0.0,
+      "is_available": true,
+      "priority": 6,
+      "weight": 65
+    },
+    "etherscan_secondary": {
+      "name": "Etherscan (secondary key)",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 193.29357147216797,
+      "is_available": true,
+      "priority": 5,
+      "weight": 50
+    },
+    "bscscan_primary": {
+      "name": "BscScan",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 207.7012062072754,
+      "is_available": true,
+      "priority": 5,
+      "weight": 50
+    },
+    "blockscout": {
+      "name": "Blockscout Ethereum",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 450.52266120910645,
+      "is_available": true,
+      "priority": 7,
+      "weight": 75
+    },
+    "blockscout_ethereum": {
+      "name": "Blockscout Ethereum",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 494.1563606262207,
+      "is_available": true,
+      "priority": 5,
+      "weight": 50
+    },
+    "etherscan_primary": {
+      "name": "Etherscan",
+      "category": "blockchain_explorers",
+      "status": "online",
+      "success_rate": 100.0,
+      "total_requests": 1,
+      "avg_response_time": 192.82865524291992,
+      "is_available": true,
+      "priority": 5,
+      "weight": 50
+    }
+  },
+  "pools": {
+    "primary_market_data_pool": {
+      "pool_id": "primary_market_data_pool",
+      "pool_name": "Primary Market Data Pool",
+      "category": "market_data",
+      "rotation_strategy": "priority",
+      "total_providers": 5,
+      "available_providers": 5,
+      "total_rotations": 5,
+      "enabled": true,
+      "providers": [
+        {
+          "provider_id": "coingecko",
+          "name": "CoinGecko",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 53.15113067626953,
+          "is_available": true
+        },
+        {
+          "provider_id": "binance",
+          "name": "Binance",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        },
+        {
+          "provider_id": "coincap",
+          "name": "CoinCap",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        },
+        {
+          "provider_id": "coinbase",
+          "name": "Coinbase",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 193.5904026031494,
+          "is_available": true
+        },
+        {
+          "provider_id": "cryptocompare",
+          "name": "CryptoCompare",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 428.65943908691406,
+          "is_available": true
+        }
+      ]
+    },
+    "blockchain_explorer_pool": {
+      "pool_id": "blockchain_explorer_pool",
+      "pool_name": "Blockchain Explorer Pool",
+      "category": "blockchain_explorers",
+      "rotation_strategy": "round_robin",
+      "total_providers": 10,
+      "available_providers": 10,
+      "total_rotations": 0,
+      "enabled": true,
+      "providers": [
+        {
+          "provider_id": "etherscan",
+          "name": "Etherscan",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 196.61402702331543,
+          "is_available": true
+        },
+        {
+          "provider_id": "bscscan",
+          "name": "BscScan",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 202.622652053833,
+          "is_available": true
+        },
+        {
+          "provider_id": "polygonscan",
+          "name": "PolygonScan",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 212.61239051818848,
+          "is_available": true
+        },
+        {
+          "provider_id": "blockchair",
+          "name": "Blockchair",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 601.4506816864014,
+          "is_available": true
+        },
+        {
+          "provider_id": "ethplorer",
+          "name": "Ethplorer",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        },
+        {
+          "provider_id": "etherscan_secondary",
+          "name": "Etherscan (secondary key)",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 193.29357147216797,
+          "is_available": true
+        },
+        {
+          "provider_id": "bscscan_primary",
+          "name": "BscScan",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 207.7012062072754,
+          "is_available": true
+        },
+        {
+          "provider_id": "blockscout",
+          "name": "Blockscout Ethereum",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 450.52266120910645,
+          "is_available": true
+        },
+        {
+          "provider_id": "blockscout_ethereum",
+          "name": "Blockscout Ethereum",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 494.1563606262207,
+          "is_available": true
+        },
+        {
+          "provider_id": "etherscan_primary",
+          "name": "Etherscan",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 192.82865524291992,
+          "is_available": true
+        }
+      ]
+    },
+    "defi_protocol_pool": {
+      "pool_id": "defi_protocol_pool",
+      "pool_name": "DeFi Protocol Pool",
+      "category": "defi",
+      "rotation_strategy": "weighted",
+      "total_providers": 6,
+      "available_providers": 6,
+      "total_rotations": 0,
+      "enabled": true,
+      "providers": [
+        {
+          "provider_id": "defillama",
+          "name": "DefiLlama",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 96.07768058776855,
+          "is_available": true
+        },
+        {
+          "provider_id": "uniswap_v3",
+          "name": "Uniswap V3",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 220.0610637664795,
+          "is_available": true
+        },
+        {
+          "provider_id": "aave",
+          "name": "Aave",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 200.95276832580566,
+          "is_available": true
+        },
+        {
+          "provider_id": "compound",
+          "name": "Compound",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        },
+        {
+          "provider_id": "curve",
+          "name": "Curve Finance",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 225.41522979736328,
+          "is_available": true
+        },
+        {
+          "provider_id": "pancakeswap",
+          "name": "PancakeSwap",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        }
+      ]
+    },
+    "nft_market_pool": {
+      "pool_id": "nft_market_pool",
+      "pool_name": "NFT Market Pool",
+      "category": "nft",
+      "rotation_strategy": "priority",
+      "total_providers": 3,
+      "available_providers": 3,
+      "total_rotations": 0,
+      "enabled": true,
+      "providers": [
+        {
+          "provider_id": "opensea",
+          "name": "OpenSea",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        },
+        {
+          "provider_id": "reservoir",
+          "name": "Reservoir",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        },
+        {
+          "provider_id": "rarible",
+          "name": "Rarible",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        }
+      ]
+    },
+    "news_aggregation_pool": {
+      "pool_id": "news_aggregation_pool",
+      "pool_name": "News Aggregation Pool",
+      "category": "news",
+      "rotation_strategy": "round_robin",
+      "total_providers": 4,
+      "available_providers": 4,
+      "total_rotations": 0,
+      "enabled": true,
+      "providers": [
+        {
+          "provider_id": "coindesk_rss",
+          "name": "CoinDesk RSS",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 215.8339023590088,
+          "is_available": true
+        },
+        {
+          "provider_id": "cointelegraph_rss",
+          "name": "Cointelegraph RSS",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 151.52335166931152,
+          "is_available": true
+        },
+        {
+          "provider_id": "bitcoinist_rss",
+          "name": "Bitcoinist RSS",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 149.2161750793457,
+          "is_available": true
+        },
+        {
+          "provider_id": "cryptopanic",
+          "name": "CryptoPanic",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        }
+      ]
+    },
+    "sentiment_analysis_pool": {
+      "pool_id": "sentiment_analysis_pool",
+      "pool_name": "Sentiment Analysis Pool",
+      "category": "sentiment",
+      "rotation_strategy": "priority",
+      "total_providers": 3,
+      "available_providers": 3,
+      "total_rotations": 0,
+      "enabled": true,
+      "providers": [
+        {
+          "provider_id": "alternative_me",
+          "name": "Alternative.me",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 246.71125411987305,
+          "is_available": true
+        },
+        {
+          "provider_id": "lunarcrush",
+          "name": "LunarCrush",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        },
+        {
+          "provider_id": "reddit_crypto",
+          "name": "Reddit Crypto",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        }
+      ]
+    },
+    "exchange_data_pool": {
+      "pool_id": "exchange_data_pool",
+      "pool_name": "Exchange Data Pool",
+      "category": "exchange",
+      "rotation_strategy": "weighted",
+      "total_providers": 5,
+      "available_providers": 5,
+      "total_rotations": 0,
+      "enabled": true,
+      "providers": [
+        {
+          "provider_id": "binance",
+          "name": "Binance",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        },
+        {
+          "provider_id": "kraken",
+          "name": "Kraken",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 193.30787658691406,
+          "is_available": true
+        },
+        {
+          "provider_id": "coinbase",
+          "name": "Coinbase",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 193.5904026031494,
+          "is_available": true
+        },
+        {
+          "provider_id": "bitfinex",
+          "name": "Bitfinex",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 228.39808464050293,
+          "is_available": true
+        },
+        {
+          "provider_id": "okx",
+          "name": "OKX",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 430.23204803466797,
+          "is_available": true
+        }
+      ]
+    },
+    "analytics_pool": {
+      "pool_id": "analytics_pool",
+      "pool_name": "Analytics Pool",
+      "category": "analytics",
+      "rotation_strategy": "priority",
+      "total_providers": 3,
+      "available_providers": 3,
+      "total_rotations": 0,
+      "enabled": true,
+      "providers": [
+        {
+          "provider_id": "glassnode",
+          "name": "Glassnode",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        },
+        {
+          "provider_id": "coinmetrics",
+          "name": "Coin Metrics",
+          "status": "online",
+          "success_rate": 100.0,
+          "total_requests": 1,
+          "avg_response_time": 977.8962135314941,
+          "is_available": true
+        },
+        {
+          "provider_id": "messari",
+          "name": "Messari",
+          "status": "degraded",
+          "success_rate": 0.0,
+          "total_requests": 1,
+          "avg_response_time": 0.0,
+          "is_available": true
+        }
+      ]
+    }
+  }
+}
