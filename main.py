@@ -1,30 +1,31 @@
-from importlib import util
+"""
+Main entry point for HuggingFace Space
+Loads the unified API server with all endpoints
+"""
 from pathlib import Path
 import sys
 
+# Add current directory to path
+current_dir = Path(__file__).resolve().parent
+sys.path.insert(0, str(current_dir))
 
-def _load_app_module():
-    """
-    تلاش برای وارد کردن آبجکت FastAPI با نام app.
-    ابتدا سعی می‌کنیم مثل قبل از ماژول «app» ایمپورت کنیم.
-    اگر نام «app» به پوشه‌ای اشاره کند و attribute نداشته باشد،
-    فایل app.py را به طور مستقیم بارگذاری می‌کنیم.
-    """
-    try:
-        from app import app as fastapi_app  # type: ignore
-        return fastapi_app
-    except (ImportError, AttributeError):
-        current_dir = Path(__file__).resolve().parent
-        app_path = current_dir / "app.py"
-        spec = util.spec_from_file_location("crypto_monitor_app", app_path)
-        if spec is None or spec.loader is None:
-            raise ImportError("Could not load app.py module for FastAPI application.")
-        module = util.module_from_spec(spec)
-        sys.modules["crypto_monitor_app"] = module
-        spec.loader.exec_module(module)
-        if not hasattr(module, "app"):
-            raise ImportError("app.py does not define an 'app' FastAPI instance.")
-        return module.app  # type: ignore[attr-defined]
+# Import the unified server app
+try:
+    from hf_unified_server import app
+except ImportError as e:
+    print(f"Error importing hf_unified_server: {e}")
+    print("Falling back to basic app...")
+    # Fallback to basic FastAPI app
+    from fastapi import FastAPI
+    app = FastAPI(title="Crypto API - Loading...")
+    
+    @app.get("/health")
+    def health():
+        return {"status": "loading", "message": "Server is starting up..."}
+    
+    @app.get("/")
+    def root():
+        return {"message": "Cryptocurrency Data API - Initializing..."}
 
-
-app = _load_app_module()
+# Export app for uvicorn
+__all__ = ["app"]
