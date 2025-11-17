@@ -6,6 +6,9 @@ All configuration in one place - no hardcoded values
 
 import os
 import json
+import base64
+import logging
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
@@ -20,11 +23,16 @@ DB_DIR = DATA_DIR / "database"
 for directory in [DATA_DIR, LOG_DIR, DB_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
 
+logger = logging.getLogger(__name__)
+
+
 # ==================== PROVIDER CONFIGURATION ====================
+
 
 @dataclass
 class ProviderConfig:
     """Configuration for an API provider"""
+
     name: str
     endpoint_url: str
     category: str = "market_data"
@@ -34,10 +42,70 @@ class ProviderConfig:
     rate_limit_type: Optional[str] = None
     rate_limit_value: Optional[int] = None
     health_check_endpoint: Optional[str] = None
-    
+
     def __post_init__(self):
         if self.health_check_endpoint is None:
             self.health_check_endpoint = self.endpoint_url
+
+
+@dataclass
+class Settings:
+    """Runtime configuration loaded from environment variables."""
+
+    hf_token: Optional[str] = None
+    hf_token_encoded: Optional[str] = None
+    cmc_api_key: Optional[str] = None
+    etherscan_key: Optional[str] = None
+    newsapi_key: Optional[str] = None
+    log_level: str = "INFO"
+    database_path: Path = DB_DIR / "crypto_aggregator.db"
+    redis_url: Optional[str] = None
+    cache_ttl: int = 300
+    user_agent: str = "CryptoDashboard/1.0"
+    providers_config_path: Path = BASE_DIR / "providers_config_extended.json"
+
+
+def _decode_token(value: Optional[str]) -> Optional[str]:
+    """Decode a base64 encoded Hugging Face token."""
+
+    if not value:
+        return None
+
+    try:
+        decoded = base64.b64decode(value).decode("utf-8").strip()
+        return decoded or None
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.warning("Failed to decode HF token: %s", exc)
+        return None
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Return cached runtime settings."""
+
+    raw_token = os.environ.get("HF_TOKEN")
+    encoded_token = os.environ.get("HF_TOKEN_ENCODED")
+    decoded_token = raw_token or _decode_token(encoded_token)
+
+    database_path = Path(os.environ.get("DATABASE_PATH", str(DB_DIR / "crypto_aggregator.db")))
+
+    settings = Settings(
+        hf_token=decoded_token,
+        hf_token_encoded=encoded_token,
+        cmc_api_key=os.environ.get("CMC_API_KEY"),
+        etherscan_key=os.environ.get("ETHERSCAN_KEY"),
+        newsapi_key=os.environ.get("NEWSAPI_KEY"),
+        log_level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+        database_path=database_path,
+        redis_url=os.environ.get("REDIS_URL"),
+        cache_ttl=int(os.environ.get("CACHE_TTL", "300")),
+        user_agent=os.environ.get("USER_AGENT", "CryptoDashboard/1.0"),
+        providers_config_path=Path(
+            os.environ.get("PROVIDERS_CONFIG_PATH", str(BASE_DIR / "providers_config_extended.json"))
+        ),
+    )
+
+    return settings
 
 
 class ConfigManager:
@@ -207,8 +275,11 @@ class ConfigManager:
 # Create global config instance
 config = ConfigManager()
 
+# Runtime settings loaded from environment
+settings = get_settings()
+
 # ==================== DATABASE ====================
-DATABASE_PATH = DB_DIR / "crypto_aggregator.db"
+DATABASE_PATH = Path(settings.database_path)
 DATABASE_BACKUP_DIR = DATA_DIR / "backups"
 DATABASE_BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -275,8 +346,8 @@ HUGGINGFACE_MODELS = {
 }
 
 # Hugging Face Authentication
-HF_TOKEN = os.environ.get("HF_TOKEN", "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")
-HF_USE_AUTH_TOKEN = bool(HF_TOKEN)  # Enable auth if token is present
+HF_TOKEN = settings.hf_token or ""
+HF_USE_AUTH_TOKEN = bool(HF_TOKEN)
 
 # ==================== DATA COLLECTION SETTINGS ====================
 COLLECTION_INTERVALS = {
@@ -295,12 +366,12 @@ REQUEST_TIMEOUT = 10
 MAX_RETRIES = 3
 
 # ==================== CACHE SETTINGS ====================
-CACHE_TTL = 300  # 5 minutes in seconds
+CACHE_TTL = settings.cache_ttl or 300  # 5 minutes in seconds
 CACHE_MAX_SIZE = 1000  # Maximum number of cached items
 
 # ==================== LOGGING SETTINGS ====================
 LOG_FILE = LOG_DIR / "crypto_aggregator.log"
-LOG_LEVEL = "INFO"
+LOG_LEVEL = settings.log_level
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 LOG_BACKUP_COUNT = 5
