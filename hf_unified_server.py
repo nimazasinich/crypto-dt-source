@@ -10,7 +10,8 @@ import time
 from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from typing import Dict, List, Any, Optional
 import os
 import logging
@@ -73,6 +74,17 @@ def load_providers_config():
 
 # Load providers at startup
 PROVIDERS_CONFIG = load_providers_config()
+
+# Mount static files (CSS, JS)
+try:
+    static_path = WORKSPACE_ROOT / "static"
+    if static_path.exists():
+        app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+        logger.info(f"✅ Static files mounted from {static_path}")
+    else:
+        logger.warning(f"⚠️ Static directory not found: {static_path}")
+except Exception as e:
+    logger.error(f"❌ Error mounting static files: {e}")
 
 # ============================================================================
 # Data Fetching Functions
@@ -788,6 +800,78 @@ async def hf_sentiment(texts: List[str], model: Optional[str] = None):
 
 
 # ============================================================================
+# HTML Routes - Serve UI files
+# ============================================================================
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    """Serve main dashboard (index.html)"""
+    index_path = WORKSPACE_ROOT / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return HTMLResponse("<h1>Cryptocurrency Data & Analysis API</h1><p>See <a href='/docs'>/docs</a> for API documentation</p>")
+
+@app.get("/index.html", response_class=HTMLResponse)
+async def index():
+    """Serve index.html"""
+    return FileResponse(WORKSPACE_ROOT / "index.html")
+
+@app.get("/dashboard.html", response_class=HTMLResponse)
+async def dashboard():
+    """Serve dashboard.html"""
+    return FileResponse(WORKSPACE_ROOT / "dashboard.html")
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_alt():
+    """Alternative route for dashboard"""
+    return FileResponse(WORKSPACE_ROOT / "dashboard.html")
+
+@app.get("/admin.html", response_class=HTMLResponse)
+async def admin():
+    """Serve admin panel"""
+    return FileResponse(WORKSPACE_ROOT / "admin.html")
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_alt():
+    """Alternative route for admin"""
+    return FileResponse(WORKSPACE_ROOT / "admin.html")
+
+@app.get("/hf_console.html", response_class=HTMLResponse)
+async def hf_console():
+    """Serve HuggingFace console"""
+    return FileResponse(WORKSPACE_ROOT / "hf_console.html")
+
+@app.get("/console", response_class=HTMLResponse)
+async def console_alt():
+    """Alternative route for HF console"""
+    return FileResponse(WORKSPACE_ROOT / "hf_console.html")
+
+@app.get("/pool_management.html", response_class=HTMLResponse)
+async def pool_management():
+    """Serve pool management UI"""
+    return FileResponse(WORKSPACE_ROOT / "pool_management.html")
+
+@app.get("/unified_dashboard.html", response_class=HTMLResponse)
+async def unified_dashboard():
+    """Serve unified dashboard"""
+    return FileResponse(WORKSPACE_ROOT / "unified_dashboard.html")
+
+@app.get("/simple_overview.html", response_class=HTMLResponse)
+async def simple_overview():
+    """Serve simple overview"""
+    return FileResponse(WORKSPACE_ROOT / "simple_overview.html")
+
+# Generic HTML file handler
+@app.get("/{filename}.html", response_class=HTMLResponse)
+async def serve_html(filename: str):
+    """Serve any HTML file from workspace root"""
+    file_path = WORKSPACE_ROOT / f"{filename}.html"
+    if file_path.exists():
+        return FileResponse(file_path)
+    return HTMLResponse(f"<h1>File {filename}.html not found</h1>", status_code=404)
+
+
+# ============================================================================
 # Startup Event
 # ============================================================================
 
@@ -808,9 +892,16 @@ async def startup_event():
         logger.info(f"✓ HuggingFace Space providers: {', '.join(hf_providers)}")
     
     logger.info("✓ Data sources: Binance, CoinGecko, providers_config_extended.json")
+    
+    # Check HTML files
+    html_files = ["index.html", "dashboard.html", "admin.html", "hf_console.html"]
+    available_html = [f for f in html_files if (WORKSPACE_ROOT / f).exists()]
+    logger.info(f"✓ UI files: {len(available_html)}/{len(html_files)} available")
+    
     logger.info("=" * 70)
     logger.info("📡 API ready at http://0.0.0.0:7860")
     logger.info("📖 Docs at http://0.0.0.0:7860/docs")
+    logger.info("🎨 UI at http://0.0.0.0:7860/ (index.html)")
     logger.info("=" * 70)
 
 
