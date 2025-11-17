@@ -26,6 +26,7 @@ except ImportError:
 
 # Import routers
 from backend.routers.integrated_api import router as integrated_router, set_services
+from backend.routers.advanced_api import router as advanced_router
 
 # Setup logging
 logging.basicConfig(
@@ -184,6 +185,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(integrated_router)
+app.include_router(advanced_router)
 
 # Mount static files
 try:
@@ -275,6 +277,14 @@ async def admin():
     if os.path.exists("admin.html"):
         return FileResponse("admin.html")
     return HTMLResponse("<h1>Admin panel not found</h1>")
+
+
+@app.get("/admin_advanced.html", response_class=HTMLResponse)
+async def admin_advanced():
+    """Serve advanced admin panel"""
+    if os.path.exists("admin_advanced.html"):
+        return FileResponse("admin_advanced.html")
+    return HTMLResponse("<h1>Advanced admin panel not found</h1>")
 
 
 if __name__ == "__main__":
