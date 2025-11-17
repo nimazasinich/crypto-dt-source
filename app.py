@@ -125,6 +125,16 @@ def get_status_tab() -> Tuple[str, str, str]:
         else:
             market_snapshot = "No market data available yet."
         
+        # Get API request count from health log
+        api_requests_count = 0
+        try:
+            health_log_path = Path("data/logs/provider_health.jsonl")
+            if health_log_path.exists():
+                with open(health_log_path, 'r', encoding='utf-8') as f:
+                    api_requests_count = sum(1 for _ in f)
+        except Exception as e:
+            logger.warning(f"Could not get API request stats: {e}")
+        
         # Build summary with copy-friendly format
         summary = f"""
 ## 🎯 System Status
@@ -135,6 +145,7 @@ def get_status_tab() -> Tuple[str, str, str]:
 ```
 Total Providers:  {provider_count}
 Active Pools:     {pool_count}
+API Requests:     {api_requests_count:,}
 Price Records:    {db_stats.get('prices_count', 0):,}
 News Articles:    {db_stats.get('news_count', 0):,}
 Unique Symbols:   {db_stats.get('unique_symbols', 0)}
