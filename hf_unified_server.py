@@ -16,6 +16,8 @@ import os
 import logging
 from collections import defaultdict
 import random
+import json
+from pathlib import Path
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +50,29 @@ cache = {
 
 # Provider state
 providers_state = {}
+
+# Load providers config
+WORKSPACE_ROOT = Path(__file__).parent
+PROVIDERS_CONFIG_PATH = WORKSPACE_ROOT / "providers_config_extended.json"
+
+def load_providers_config():
+    """Load providers from providers_config_extended.json"""
+    try:
+        if PROVIDERS_CONFIG_PATH.exists():
+            with open(PROVIDERS_CONFIG_PATH, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                providers = config.get('providers', {})
+                logger.info(f"✅ Loaded {len(providers)} providers from providers_config_extended.json")
+                return providers
+        else:
+            logger.warning(f"⚠️ providers_config_extended.json not found at {PROVIDERS_CONFIG_PATH}")
+            return {}
+    except Exception as e:
+        logger.error(f"❌ Error loading providers config: {e}")
+        return {}
+
+# Load providers at startup
+PROVIDERS_CONFIG = load_providers_config()
 
 # ============================================================================
 # Data Fetching Functions
@@ -165,6 +190,9 @@ async def health():
 @app.get("/info")
 async def info():
     """System information"""
+    # Count HuggingFace Space providers
+    hf_providers = [p for p in PROVIDERS_CONFIG.keys() if 'huggingface_space' in p]
+    
     return {
         "service": "Cryptocurrency Data & Analysis API",
         "version": "3.0.0",
@@ -177,28 +205,47 @@ async def info():
             "huggingface": ["/api/hf/health", "/api/hf/refresh", "/api/hf/registry", "/api/hf/run-sentiment"]
         },
         "data_sources": ["Binance", "CoinGecko", "CoinPaprika", "CoinCap"],
+        "providers_loaded": len(PROVIDERS_CONFIG),
+        "huggingface_space_providers": len(hf_providers),
         "features": [
             "Real-time price data",
             "OHLCV historical data",
             "Trading signals",
             "Market analysis",
             "Sentiment analysis",
-            "HuggingFace model integration"
+            "HuggingFace model integration",
+            f"{len(PROVIDERS_CONFIG)} providers from providers_config_extended.json"
         ]
     }
 
 
 @app.get("/api/providers")
 async def get_providers():
-    """Get list of API providers"""
-    providers = [
-        {"id": "binance", "name": "Binance", "category": "exchange", "status": "online", "priority": 1},
-        {"id": "coingecko", "name": "CoinGecko", "category": "market_data", "status": "online", "priority": 2},
-        {"id": "coinpaprika", "name": "CoinPaprika", "category": "market_data", "status": "online", "priority": 3},
-        {"id": "coincap", "name": "CoinCap", "category": "market_data", "status": "online", "priority": 3},
-        {"id": "cryptocompare", "name": "CryptoCompare", "category": "market_data", "status": "online", "priority": 3},
-    ]
-    return {"providers": providers, "total": len(providers)}
+    """Get list of API providers from providers_config_extended.json"""
+    try:
+        providers_list = []
+        
+        for provider_id, provider_info in PROVIDERS_CONFIG.items():
+            providers_list.append({
+                "id": provider_id,
+                "name": provider_info.get("name", provider_id),
+                "category": provider_info.get("category", "unknown"),
+                "status": "online" if provider_info.get("validated", False) else "pending",
+                "priority": provider_info.get("priority", 5),
+                "base_url": provider_info.get("base_url", ""),
+                "requires_auth": provider_info.get("requires_auth", False),
+                "endpoints_count": len(provider_info.get("endpoints", {}))
+            })
+        
+        return {
+            "providers": providers_list,
+            "total": len(providers_list),
+            "source": "providers_config_extended.json",
+            "last_updated": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting providers: {e}")
+        return {"providers": [], "total": 0, "error": str(e)}
 
 
 # ============================================================================
@@ -753,7 +800,14 @@ async def startup_event():
     logger.info("✓ FastAPI initialized")
     logger.info("✓ CORS configured")
     logger.info("✓ Cache initialized")
-    logger.info("✓ Data sources: Binance, CoinGecko")
+    logger.info(f"✓ Providers loaded: {len(PROVIDERS_CONFIG)}")
+    
+    # Show loaded HuggingFace Space providers
+    hf_providers = [p for p in PROVIDERS_CONFIG.keys() if 'huggingface_space' in p]
+    if hf_providers:
+        logger.info(f"✓ HuggingFace Space providers: {', '.join(hf_providers)}")
+    
+    logger.info("✓ Data sources: Binance, CoinGecko, providers_config_extended.json")
     logger.info("=" * 70)
     logger.info("📡 API ready at http://0.0.0.0:7860")
     logger.info("📖 Docs at http://0.0.0.0:7860/docs")
