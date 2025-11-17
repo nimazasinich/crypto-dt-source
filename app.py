@@ -22,6 +22,7 @@ from datetime import datetime
 import json
 import traceback
 import asyncio
+import time
 
 # Check for Gradio
 try:
@@ -124,23 +125,34 @@ def get_status_tab() -> Tuple[str, str, str]:
         else:
             market_snapshot = "No market data available yet."
         
-        # Build summary
+        # Build summary with copy-friendly format
         summary = f"""
 ## 🎯 System Status
 
 **Overall Health**: {"🟢 Operational" if db_stats.get('prices_count', 0) > 0 else "🟡 Initializing"}
 
 ### Quick Stats
-- **Total Providers**: {provider_count}
-- **Active Pools**: {pool_count}
-- **Price Records**: {db_stats.get('prices_count', 0):,}
-- **News Articles**: {db_stats.get('news_count', 0):,}
-- **Unique Symbols**: {db_stats.get('unique_symbols', 0)}
+```
+Total Providers:  {provider_count}
+Active Pools:     {pool_count}
+Price Records:    {db_stats.get('prices_count', 0):,}
+News Articles:    {db_stats.get('news_count', 0):,}
+Unique Symbols:   {db_stats.get('unique_symbols', 0)}
+```
 
 ### Market Snapshot (Top 3)
+```
 {market_snapshot}
+```
 
-**Last Update**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**Last Update**: `{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}`
+
+---
+### 📋 Provider Details (Copy-Friendly)
+```
+Total: {provider_count} providers
+Config File: providers_config_extended.json
+```
 """
         
         # System info
@@ -209,7 +221,7 @@ def run_diagnostics_from_status(auto_fix: bool) -> str:
 
 def get_providers_table(category_filter: str = "All") -> Any:
     """
-    Get providers from providers_config_extended.json
+    Get providers from providers_config_extended.json with enhanced formatting
     Returns: DataFrame or dict
     """
     try:
@@ -225,22 +237,26 @@ def get_providers_table(category_filter: str = "All") -> Any:
         
         providers = data.get('providers', {})
         
-        # Build table data
+        # Build table data with copy-friendly IDs
         table_data = []
         for provider_id, provider_info in providers.items():
             if category_filter != "All":
                 if provider_info.get('category', '').lower() != category_filter.lower():
                     continue
             
+            # Format auth status with emoji
+            auth_status = "✅ Yes" if provider_info.get('requires_auth', False) else "❌ No"
+            validation = "✅ Valid" if provider_info.get('validated', False) else "⏳ Pending"
+            
             table_data.append({
-                "ID": provider_id,
+                "Provider ID": provider_id,
                 "Name": provider_info.get('name', provider_id),
                 "Category": provider_info.get('category', 'unknown'),
                 "Type": provider_info.get('type', 'http_json'),
                 "Base URL": provider_info.get('base_url', 'N/A'),
-                "Requires Auth": provider_info.get('requires_auth', False),
+                "Auth Required": auth_status,
                 "Priority": provider_info.get('priority', 'N/A'),
-                "Validated": provider_info.get('validated', False)
+                "Status": validation
             })
         
         if PANDAS_AVAILABLE:
@@ -256,11 +272,35 @@ def get_providers_table(category_filter: str = "All") -> Any:
 
 
 def reload_providers_config() -> Tuple[Any, str]:
-    """Reload providers config and return updated table + message"""
+    """Reload providers config and return updated table + message with stats"""
     try:
+        # Count providers
+        providers_path = config.BASE_DIR / "providers_config_extended.json"
+        with open(providers_path, 'r') as f:
+            data = json.load(f)
+        
+        total_providers = len(data.get('providers', {}))
+        
+        # Count by category
+        categories = {}
+        for provider_info in data.get('providers', {}).values():
+            cat = provider_info.get('category', 'unknown')
+            categories[cat] = categories.get(cat, 0) + 1
+        
         # Force reload by re-reading file
         table = get_providers_table("All")
-        message = f"✅ Providers reloaded at {datetime.now().strftime('%H:%M:%S')}"
+        
+        # Build detailed message
+        message = f"""✅ **Providers Reloaded Successfully!**
+
+**Total Providers**: `{total_providers}`
+**Reload Time**: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`
+
+**By Category**:
+"""
+        for cat, count in sorted(categories.items(), key=lambda x: x[1], reverse=True)[:10]:
+            message += f"- {cat}: `{count}`\n"
+        
         return table, message
     except Exception as e:
         logger.error(f"Error reloading providers: {e}")
@@ -291,7 +331,7 @@ def get_provider_categories() -> List[str]:
 # ==================== TAB 3: MARKET DATA ====================
 
 def get_market_data_table(search_filter: str = "") -> Any:
-    """Get latest market data from database"""
+    """Get latest market data from database with enhanced formatting"""
     try:
         prices = db.get_latest_prices(100)
         
@@ -311,19 +351,23 @@ def get_market_data_table(search_filter: str = "") -> Any:
         
         table_data = []
         for p in filtered_prices:
+            # Format change with emoji
+            change = p.get('percent_change_24h', 0)
+            change_emoji = "🟢" if change > 0 else ("🔴" if change < 0 else "⚪")
+            
             table_data.append({
-                "Rank": p.get('rank', 999),
+                "#": p.get('rank', 999),
                 "Symbol": p.get('symbol', 'N/A'),
                 "Name": p.get('name', 'Unknown'),
-                "Price (USD)": f"${p.get('price_usd', 0):,.2f}" if p.get('price_usd') else "N/A",
-                "24h Change (%)": f"{p.get('percent_change_24h', 0):+.2f}%" if p.get('percent_change_24h') is not None else "N/A",
+                "Price": f"${p.get('price_usd', 0):,.2f}" if p.get('price_usd') else "N/A",
+                "24h Change": f"{change_emoji} {change:+.2f}%" if change is not None else "N/A",
                 "Volume 24h": f"${p.get('volume_24h', 0):,.0f}" if p.get('volume_24h') else "N/A",
                 "Market Cap": f"${p.get('market_cap', 0):,.0f}" if p.get('market_cap') else "N/A"
             })
         
         if PANDAS_AVAILABLE:
             df = pd.DataFrame(table_data)
-            return df.sort_values('Rank') if not df.empty else pd.DataFrame({"Message": ["No matching data"]})
+            return df.sort_values('#') if not df.empty else pd.DataFrame({"Message": ["No matching data"]})
         else:
             return {"prices": table_data}
     
@@ -335,15 +379,36 @@ def get_market_data_table(search_filter: str = "") -> Any:
 
 
 def refresh_market_data() -> Tuple[Any, str]:
-    """Refresh market data by collecting from APIs"""
+    """Refresh market data by collecting from APIs with detailed stats"""
     try:
         logger.info("Refreshing market data...")
+        start_time = time.time()
         success, count = collectors.collect_price_data()
+        duration = time.time() - start_time
+        
+        # Get database stats
+        db_stats = db.get_database_stats()
         
         if success:
-            message = f"✅ Collected {count} price records at {datetime.now().strftime('%H:%M:%S')}"
+            message = f"""✅ **Market Data Refreshed Successfully!**
+
+**Collection Stats**:
+- New Records: `{count}`
+- Duration: `{duration:.2f}s`
+- Time: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`
+
+**Database Stats**:
+- Total Price Records: `{db_stats.get('prices_count', 0):,}`
+- Unique Symbols: `{db_stats.get('unique_symbols', 0)}`
+- Last Update: `{db_stats.get('latest_price_update', 'N/A')}`
+"""
         else:
-            message = f"⚠️ Collection completed with issues. {count} records collected."
+            message = f"""⚠️ **Collection completed with issues**
+
+- Records Collected: `{count}`
+- Duration: `{duration:.2f}s`
+- Check logs for details
+"""
         
         # Return updated table
         table = get_market_data_table("")
@@ -480,42 +545,72 @@ def get_apl_report() -> str:
 # ==================== TAB 5: HF MODELS ====================
 
 def get_hf_models_status() -> Any:
-    """Get HuggingFace models status"""
+    """Get HuggingFace models status with unified display"""
     try:
         import ai_models
         
         model_info = ai_models.get_model_info()
         
-        # Build table
+        # Build unified table - avoid duplicates
         table_data = []
+        seen_models = set()
         
-        # Check if models are initialized
+        # First, add loaded models
         if model_info.get('models_initialized'):
             for model_name, loaded in model_info.get('loaded_models', {}).items():
-                status = "✅ VALID" if loaded else "❌ INVALID"
+                if model_name not in seen_models:
+                    status = "✅ Loaded" if loaded else "❌ Failed"
+                    model_id = config.HUGGINGFACE_MODELS.get(model_name, 'N/A')
+                    table_data.append({
+                        "Model Type": model_name,
+                        "Model ID": model_id,
+                        "Status": status,
+                        "Source": "config.py"
+                    })
+                    seen_models.add(model_name)
+        
+        # Then add configured but not loaded models
+        for model_type, model_id in config.HUGGINGFACE_MODELS.items():
+            if model_type not in seen_models:
                 table_data.append({
-                    "Model": model_name,
-                    "Status": status,
-                    "Loaded": loaded
+                    "Model Type": model_type,
+                    "Model ID": model_id,
+                    "Status": "⏳ Not Loaded",
+                    "Source": "config.py"
                 })
-        else:
+                seen_models.add(model_type)
+        
+        # Add models from providers_config if any
+        try:
+            providers_path = config.BASE_DIR / "providers_config_extended.json"
+            if providers_path.exists():
+                with open(providers_path, 'r') as f:
+                    providers_data = json.load(f)
+                
+                for provider_id, provider_info in providers_data.get('providers', {}).items():
+                    if provider_info.get('category') == 'hf-model':
+                        model_name = provider_info.get('name', provider_id)
+                        if model_name not in seen_models:
+                            table_data.append({
+                                "Model Type": model_name,
+                                "Model ID": provider_id,
+                                "Status": "📚 Registry",
+                                "Source": "providers_config"
+                            })
+                            seen_models.add(model_name)
+        except Exception as e:
+            logger.warning(f"Could not load models from providers_config: {e}")
+        
+        if not table_data:
             table_data.append({
-                "Model": "No models initialized",
-                "Status": "⚠️ NOT INITIALIZED",
-                "Loaded": False
+                "Model Type": "No models",
+                "Model ID": "N/A",
+                "Status": "⚠️ None configured",
+                "Source": "N/A"
             })
         
-        # Add configured models from config
-        for model_type, model_id in config.HUGGINGFACE_MODELS.items():
-            if not any(m['Model'] == model_type for m in table_data):
-                table_data.append({
-                    "Model": model_type,
-                    "Status": "⚠️ CONFIGURED",
-                    "Model ID": model_id
-                })
-        
         if PANDAS_AVAILABLE:
-            return pd.DataFrame(table_data) if table_data else pd.DataFrame({"Message": ["No models configured"]})
+            return pd.DataFrame(table_data)
         else:
             return {"models": table_data}
     
@@ -682,7 +777,7 @@ def run_full_diagnostics(auto_fix: bool) -> str:
 # ==================== TAB 7: LOGS ====================
 
 def get_logs(log_type: str = "recent", lines: int = 100) -> str:
-    """Get system logs"""
+    """Get system logs with copy-friendly format"""
     try:
         log_file = config.LOG_FILE
         
@@ -707,11 +802,19 @@ def get_logs(log_type: str = "recent", lines: int = 100) -> str:
         if not recent_lines:
             return f"ℹ️ No {log_type} logs found"
         
-        # Format output
-        output = f"# {log_type.upper()} Logs (Last {len(recent_lines)} lines)\n\n"
-        output += "```\n"
-        output += "".join(recent_lines)
+        # Format output with line numbers for easy reference
+        output = f"# 📋 {log_type.upper()} Logs (Last {len(recent_lines)} lines)\n\n"
+        output += "**Quick Stats:**\n"
+        output += f"- Total lines shown: `{len(recent_lines)}`\n"
+        output += f"- Log file: `{log_file}`\n"
+        output += f"- Type: `{log_type}`\n\n"
+        output += "---\n\n"
+        output += "```log\n"
+        for i, line in enumerate(recent_lines, 1):
+            output += f"{i:4d} | {line}"
         output += "\n```\n"
+        output += "\n---\n"
+        output += "💡 **Tip**: You can now copy individual lines or the entire log block\n"
         
         return output
     
