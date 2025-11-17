@@ -805,10 +805,10 @@ async def hf_sentiment(texts: List[str], model: Optional[str] = None):
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """Serve main dashboard (index.html)"""
-    index_path = WORKSPACE_ROOT / "index.html"
-    if index_path.exists():
-        return FileResponse(index_path)
+    """Serve main admin dashboard (admin.html)"""
+    admin_path = WORKSPACE_ROOT / "admin.html"
+    if admin_path.exists():
+        return FileResponse(admin_path)
     return HTMLResponse("<h1>Cryptocurrency Data & Analysis API</h1><p>See <a href='/docs'>/docs</a> for API documentation</p>")
 
 @app.get("/index.html", response_class=HTMLResponse)
@@ -901,7 +901,7 @@ async def startup_event():
     logger.info("=" * 70)
     logger.info("📡 API ready at http://0.0.0.0:7860")
     logger.info("📖 Docs at http://0.0.0.0:7860/docs")
-    logger.info("🎨 UI at http://0.0.0.0:7860/ (index.html)")
+    logger.info("🎨 UI at http://0.0.0.0:7860/ (admin.html)")
     logger.info("=" * 70)
 
 
