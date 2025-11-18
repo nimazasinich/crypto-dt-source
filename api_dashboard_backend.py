@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from ai_models import (
+    analyze_chart_points,
     analyze_crypto_sentiment,
     analyze_financial_sentiment,
     analyze_market_text,
@@ -113,6 +114,23 @@ class ChartDataPoint(BaseModel):
     price: float
 
 
+class ChartAnalysisRequest(BaseModel):
+    symbol: str = Field(..., min_length=2, max_length=10)
+    timeframe: str = Field("7d", pattern=r"^[0-9]+[hdw]$")
+    indicators: Optional[List[str]] = None
+
+
+class SentimentRequest(BaseModel):
+    text: str = Field(..., min_length=5)
+    mode: str = Field("auto", pattern=r"^(auto|crypto|financial|social)$")
+
+
+class NewsSummaryRequest(BaseModel):
+    title: str = Field(..., min_length=5)
+    body: Optional[str] = None
+    source: Optional[str] = None
+
+
 class QueryRequest(BaseModel):
     query: str = Field(..., min_length=3)
     symbol: Optional[str] = None
@@ -140,7 +158,7 @@ def _handle_collector_error(exc: CollectorError) -> None:
 
 @app.get("/")
 async def serve_dashboard() -> FileResponse:
-    return FileResponse("crypto_dashboard_pro.html")
+    return FileResponse("unified_dashboard.html")
 
 
 @app.get("/api/health", response_model=HealthResponse)
@@ -217,6 +235,12 @@ async def get_latest_news(limit: int = 10, enrich: bool = False) -> Dict[str, An
         _handle_collector_error(exc)
 
 
+@app.post("/api/news/summarize", response_model=Dict[str, Any])
+async def summarize_news(request: NewsSummaryRequest) -> Dict[str, Any]:
+    analysis = analyze_news_item(request.dict())
+    return {"success": True, "analysis": analysis}
+
+
 @app.get("/api/providers", response_model=Dict[str, Any])
 async def get_providers() -> Dict[str, Any]:
     providers = await provider_collector.get_providers_status()
@@ -230,6 +254,42 @@ async def get_price_history(symbol: str, timeframe: str = "7d") -> Dict[str, Any
         return {"success": True, "symbol": symbol.upper(), "timeframe": timeframe, "data": history}
     except CollectorError as exc:
         _handle_collector_error(exc)
+
+
+@app.post("/api/charts/analyze", response_model=Dict[str, Any])
+async def analyze_chart(request: ChartAnalysisRequest) -> Dict[str, Any]:
+    try:
+        history = await market_collector.get_price_history(request.symbol, request.timeframe)
+    except CollectorError as exc:
+        _handle_collector_error(exc)
+
+    insights = analyze_chart_points(request.symbol, request.timeframe, history)
+    if request.indicators:
+        insights["indicators"] = request.indicators
+
+    return {"success": True, "symbol": request.symbol.upper(), "timeframe": request.timeframe, "insights": insights}
+
+
+@app.post("/api/sentiment/analyze", response_model=Dict[str, Any])
+async def run_sentiment_analysis(request: SentimentRequest) -> Dict[str, Any]:
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required for sentiment analysis")
+
+    mode = request.mode or "auto"
+    if mode == "crypto":
+        payload = analyze_crypto_sentiment(text)
+    elif mode == "financial":
+        payload = analyze_financial_sentiment(text)
+    elif mode == "social":
+        payload = analyze_social_sentiment(text)
+    else:
+        payload = analyze_market_text(text)
+
+    response: Dict[str, Any] = {"success": True, "mode": mode, "result": payload}
+    if mode == "auto" and isinstance(payload, dict) and payload.get("signals"):
+        response["signals"] = payload["signals"]
+    return response
 
 
 def _detect_task(query: str, explicit: Optional[str] = None) -> str:

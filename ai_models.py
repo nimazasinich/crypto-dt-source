@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 import threading
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from config import HUGGINGFACE_MODELS, get_settings
 
@@ -336,6 +336,73 @@ def analyze_market_text(query: str) -> Dict[str, Any]:
     }
 
 
+def analyze_chart_points(symbol: str, timeframe: str, history: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
+    """Generate decision support metadata for chart requests."""
+
+    cleaned = [point for point in history if isinstance(point, Mapping)]
+    if not cleaned:
+        return {
+            "symbol": symbol.upper(),
+            "timeframe": timeframe,
+            "error": "No price history available",
+        }
+
+    prices: List[float] = []
+    timestamps: List[Any] = []
+    for point in cleaned:
+        value = (
+            point.get("price")
+            or point.get("close")
+            or point.get("value")
+            or point.get("y")
+        )
+        if value is None:
+            continue
+        try:
+            prices.append(float(value))
+            timestamps.append(point.get("timestamp") or point.get("time") or point.get("date"))
+        except (TypeError, ValueError):
+            continue
+
+    if not prices:
+        return {
+            "symbol": symbol.upper(),
+            "timeframe": timeframe,
+            "error": "Price points missing numeric values",
+        }
+
+    start_price = prices[0]
+    end_price = prices[-1]
+    high_price = max(prices)
+    low_price = min(prices)
+    change = end_price - start_price
+    change_pct = (change / start_price) * 100 if start_price else 0.0
+    direction = "bullish" if change_pct > 0.5 else "bearish" if change_pct < -0.5 else "range-bound"
+
+    description = (
+        f"{symbol.upper()} moved {change_pct:.2f}% over the last {timeframe}. "
+        f"High {high_price:.2f} / Low {low_price:.2f}. "
+        f"Close {end_price:.2f} with {direction} momentum."
+    )
+    narrative = analyze_market_text(description)
+
+    return {
+        "symbol": symbol.upper(),
+        "timeframe": timeframe,
+        "change_percent": round(change_pct, 2),
+        "change_direction": direction,
+        "latest_price": round(end_price, 4),
+        "high": round(high_price, 4),
+        "low": round(low_price, 4),
+        "narrative": narrative,
+        "points": len(prices),
+        "timestamps": {
+            "start": timestamps[0] if timestamps else None,
+            "end": timestamps[-1] if timestamps else None,
+        },
+    }
+
+
 def registry_status() -> Dict[str, Any]:
     """Expose registry information for health checks."""
 
@@ -355,4 +422,5 @@ __all__ = [
     "summarize_text",
     "analyze_news_item",
     "analyze_market_text",
+    "analyze_chart_points",
 ]

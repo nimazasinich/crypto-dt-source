@@ -156,8 +156,20 @@ class ApiClient {
         return this.get(`/api/charts/price/${symbol}?timeframe=${timeframe}`);
     }
 
+    analyzeChart(symbol, timeframe = '7d', indicators = []) {
+        return this.post('/api/charts/analyze', { symbol, timeframe, indicators });
+    }
+
     runQuery(payload) {
         return this.post('/api/query', payload);
+    }
+
+    analyzeSentiment(payload) {
+        return this.post('/api/sentiment/analyze', payload);
+    }
+
+    summarizeNews(item) {
+        return this.post('/api/news/summarize', item);
     }
 
     getDatasetsList() {

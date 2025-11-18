@@ -8,6 +8,8 @@ import AIAdvisorView from './aiAdvisorView.js';
 import DatasetsModelsView from './datasetsModelsView.js';
 import DebugConsoleView from './debugConsoleView.js';
 import SettingsView from './settingsView.js';
+import ProvidersView from './providersView.js';
+import ApiExplorerView from './apiExplorerView.js';
 
 const App = {
     init() {
@@ -59,6 +61,12 @@ const App = {
 
         const settings = new SettingsView(document.getElementById('page-settings'));
         settings.init();
+
+        const providersView = new ProvidersView(document.getElementById('page-providers'));
+        providersView.init();
+
+        const apiExplorer = new ApiExplorerView(document.getElementById('page-api'));
+        apiExplorer.init();
     },
 
     initStatusBadges() {
