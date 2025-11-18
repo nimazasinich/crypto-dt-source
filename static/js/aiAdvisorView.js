@@ -1,11 +1,15 @@
 import apiClient from './apiClient.js';
+import { formatCurrency, formatPercent } from './uiUtils.js';
 
 class AIAdvisorView {
     constructor(section) {
         this.section = section;
-        this.form = section.querySelector('[data-ai-form]');
-        this.resultContainer = section.querySelector('[data-ai-result]');
-        this.disclaimer = section.querySelector('[data-ai-disclaimer]');
+        this.form = section?.querySelector('[data-ai-form]');
+        this.decisionContainer = section?.querySelector('[data-ai-result]');
+        this.sentimentContainer = section?.querySelector('[data-sentiment-result]');
+        this.disclaimer = section?.querySelector('[data-ai-disclaimer]');
+        this.contextInput = section?.querySelector('textarea[name="context"]');
+        this.modelSelect = section?.querySelector('select[name="model"]');
     }
 
     init() {
@@ -13,39 +17,112 @@ class AIAdvisorView {
         this.form.addEventListener('submit', async (event) => {
             event.preventDefault();
             const formData = new FormData(this.form);
-            const payload = {
-                query: 'trade_advice',
-                symbol: formData.get('symbol'),
-                horizon: formData.get('horizon'),
-                risk: formData.get('risk'),
-                context: formData.get('context') || '',
-            };
-            this.resultContainer.innerHTML = '<p>Generating AI guidance...</p>';
-            const result = await apiClient.runQuery(payload);
-            if (!result.ok) {
-                this.resultContainer.innerHTML = `<div class="inline-message inline-error">${result.error}</div>`;
-                return;
-            }
-            const data = result.data || {};
-            this.renderResult(data);
+            await this.handleSubmit(formData);
         });
     }
 
-    renderResult(data) {
-        const action = (data.action || 'HOLD').toUpperCase();
-        this.resultContainer.innerHTML = `
+    async handleSubmit(formData) {
+        const symbol = formData.get('symbol') || 'BTC';
+        const horizon = formData.get('horizon') || 'swing';
+        const risk = formData.get('risk') || 'moderate';
+        const context = (formData.get('context') || '').trim();
+        const mode = formData.get('model') || 'auto';
+
+        if (this.decisionContainer) {
+            this.decisionContainer.innerHTML = '<p>Generating AI strategy...</p>';
+        }
+        if (this.sentimentContainer && context) {
+            this.sentimentContainer.innerHTML = '<p>Running sentiment model...</p>';
+        }
+
+        const decisionPayload = {
+            query: `Provide ${horizon} outlook for ${symbol} with ${risk} risk. ${context}`,
+            symbol,
+            task: 'decision',
+            options: { horizon, risk },
+        };
+
+        const jobs = [apiClient.runQuery(decisionPayload)];
+        if (context) {
+            jobs.push(apiClient.analyzeSentiment({ text: context, mode }));
+        }
+
+        const [decisionResult, sentimentResult] = await Promise.all(jobs);
+
+        if (!decisionResult.ok) {
+            this.decisionContainer.innerHTML = `<div class="inline-message inline-error">${decisionResult.error}</div>`;
+        } else {
+            this.renderDecisionResult(decisionResult.data || {});
+        }
+
+        if (context && this.sentimentContainer) {
+            if (!sentimentResult?.ok) {
+                this.sentimentContainer.innerHTML = `<div class="inline-message inline-error">${sentimentResult?.error || 'AI sentiment endpoint unavailable'}</div>`;
+            } else {
+                this.renderSentimentResult(sentimentResult.data || sentimentResult);
+            }
+        }
+    }
+
+    renderDecisionResult(response) {
+        if (!this.decisionContainer) return;
+        const payload = response.data || {};
+        const analysis = payload.analysis || payload;
+        const summary = analysis.summary?.summary || analysis.summary || 'No summary provided.';
+        const signals = analysis.signals || {};
+        const topCoins = (payload.top_coins || []).slice(0, 3);
+
+        this.decisionContainer.innerHTML = `
             <div class="ai-result">
-                <div class="action-badge action-${action.toLowerCase()}">${action}</div>
-                <p><strong>Confidence:</strong> ${data.confidence ? `${(data.confidence * 100).toFixed(1)}%` : 'N/A'}</p>
-                <p><strong>Suggested Horizon:</strong> ${data.horizon || 'N/A'}</p>
-                <p><strong>Risk Profile:</strong> ${data.risk || 'N/A'}</p>
-                <ul>${(data.reasons || []).map((reason) => `<li>${reason}</li>`).join('') || '<li>No reasoning provided.</li>'}</ul>
-                <p>${data.summary || data.analysis || ''}</p>
+                <p class="text-muted">${response.message || 'Decision support summary'}</p>
+                <p>${summary}</p>
+                <div class="grid-two">
+                    <div>
+                        <h4>Market Signals</h4>
+                        <ul>
+                            ${Object.entries(signals)
+                                .map(([, value]) => `<li>${value?.label || 'neutral'} (${value?.score ?? '—'})</li>`)
+                                .join('') || '<li>No model signals.</li>'}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Watchlist</h4>
+                        <ul>
+                            ${topCoins
+                                .map(
+                                    (coin) =>
+                                        `<li>${coin.symbol || coin.ticker}: ${formatCurrency(coin.price)} (${formatPercent(coin.change_24h)})</li>`,
+                                )
+                                .join('') || '<li>No coin highlights.</li>'}
+                        </ul>
+                    </div>
+                </div>
             </div>
         `;
         if (this.disclaimer) {
-            this.disclaimer.textContent = data.disclaimer || 'This is experimental AI research, not financial advice.';
+            this.disclaimer.textContent =
+                response.data?.disclaimer || 'This AI output is experimental research and not financial advice.';
         }
+    }
+
+    renderSentimentResult(result) {
+        const container = this.sentimentContainer;
+        if (!container) return;
+        const payload = result.result || result;
+        const signals = result.signals || payload.signals || {};
+        container.innerHTML = `
+            <div class="glass-card">
+                <h4>Sentiment (${result.mode || 'auto'})</h4>
+                <p><strong>Label:</strong> ${payload.label || payload.classification || 'neutral'}</p>
+                <p><strong>Score:</strong> ${payload.score ?? payload.sentiment?.score ?? '—'}</p>
+                <div class="chip-row">
+                    ${Object.entries(signals)
+                        .map(([key, value]) => `<span class="chip">${key}: ${value?.label || 'n/a'}</span>`)
+                        .join('') || ''}
+                </div>
+                <p>${payload.summary?.summary || payload.summary?.summary_text || payload.summary || ''}</p>
+            </div>
+        `;
     }
 }
 

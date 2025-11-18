@@ -11,6 +11,7 @@ class NewsView {
         this.modalContent = section.querySelector('[data-news-modal-content]');
         this.closeModalBtn = section.querySelector('[data-close-news-modal]');
         this.dataset = [];
+        this.datasetMap = new Map();
     }
 
     async init() {
@@ -48,6 +49,11 @@ class NewsView {
             return;
         }
         this.dataset = result.data || [];
+        this.datasetMap.clear();
+        this.dataset.forEach((item, index) => {
+            const rowId = item.id || `${item.title}-${index}`;
+            this.datasetMap.set(rowId, item);
+        });
         this.renderRows();
     }
 
@@ -71,26 +77,37 @@ class NewsView {
             return;
         }
         this.tableBody.innerHTML = filtered
-            .map(
-                (news) => `
-                <tr data-news-id="${news.id || news.title}">
+            .map((news, index) => {
+                const rowId = news.id || `${news.title}-${index}`;
+                this.datasetMap.set(rowId, news);
+                return `
+                <tr data-news-id="${rowId}">
                     <td>${new Date(news.published_at || news.date).toLocaleString()}</td>
                     <td>${news.source || 'N/A'}</td>
                     <td>${news.title}</td>
                     <td>${(news.symbols || []).map((s) => `<span class="chip">${s}</span>`).join(' ')}</td>
                     <td><span class="badge ${this.getSentimentClass(news.sentiment)}">${news.sentiment || 'Unknown'}</span></td>
-                    <td>${news.impact || '—'}</td>
+                    <td>
+                        <button class="ghost" data-news-summarize="${rowId}">Summarize</button>
+                    </td>
                 </tr>
-            `,
-            )
+            `;
+            })
             .join('');
         this.section.querySelectorAll('tr[data-news-id]').forEach((row) => {
             row.addEventListener('click', () => {
                 const id = row.dataset.newsId;
-                const item = filtered.find((news) => (news.id || news.title) === id);
+                const item = this.datasetMap.get(id);
                 if (item) {
                     this.showModal(item);
                 }
+            });
+        });
+        this.section.querySelectorAll('[data-news-summarize]').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const { newsSummarize } = button.dataset;
+                this.summarizeArticle(newsSummarize, button);
             });
         });
     }
@@ -106,7 +123,28 @@ class NewsView {
         }
     }
 
-    async showModal(item) {
+    async summarizeArticle(rowId, button) {
+        const item = this.datasetMap.get(rowId);
+        if (!item || !button) return;
+        button.disabled = true;
+        const original = button.textContent;
+        button.textContent = 'Summarizing…';
+        const payload = {
+            title: item.title,
+            body: item.body || item.summary || item.description || '',
+            source: item.source || '',
+        };
+        const result = await apiClient.summarizeNews(payload);
+        button.disabled = false;
+        button.textContent = original;
+        if (!result.ok) {
+            this.showModal(item, null, result.error);
+            return;
+        }
+        this.showModal(item, result.data?.analysis || result.data);
+    }
+
+    async showModal(item, analysis = null, errorMessage = null) {
         if (!this.modalContent) return;
         this.modalBackdrop.classList.add('active');
         this.modalContent.innerHTML = `
@@ -114,21 +152,24 @@ class NewsView {
             <p class="text-muted">${new Date(item.published_at || item.date).toLocaleString()} • ${item.source || ''}</p>
             <p>${item.summary || item.description || ''}</p>
             <div class="chip-row">${(item.symbols || []).map((s) => `<span class="chip">${s}</span>`).join('')}</div>
-            <div class="ai-block">Analyzing…</div>
+            <div class="ai-block">${analysis ? '' : errorMessage ? '' : 'Click Summarize to run AI insights.'}</div>
         `;
-        const result = await apiClient.runQuery({ query: `Summarize sentiment for: ${item.title}` });
         const aiBlock = this.modalContent.querySelector('.ai-block');
         if (!aiBlock) return;
-        if (!result.ok) {
-            aiBlock.innerHTML = `<div class="inline-message inline-warn">${result.error}</div>`;
-        } else {
-            const data = result.data || {};
-            aiBlock.innerHTML = `
-                <h4>AI Summary</h4>
-                <p>${data.summary || data.result || 'Model returned no summary.'}</p>
-                <p><strong>Sentiment:</strong> ${data.sentiment || 'Unknown'}</p>
-            `;
+        if (errorMessage) {
+            aiBlock.innerHTML = `<div class="inline-message inline-error">${errorMessage}</div>`;
+            return;
         }
+        if (!analysis) {
+            aiBlock.innerHTML = '<div class="inline-message inline-info">Use the Summarize button to request AI analysis.</div>';
+            return;
+        }
+        const sentiment = analysis.sentiment || analysis.analysis?.sentiment;
+        aiBlock.innerHTML = `
+            <h4>AI Summary</h4>
+            <p>${analysis.summary || analysis.analysis?.summary || 'Model returned no summary.'}</p>
+            <p><strong>Sentiment:</strong> ${sentiment?.label || sentiment || 'Unknown'} (${sentiment?.score ?? ''})</p>
+        `;
     }
 
     hideModal() {

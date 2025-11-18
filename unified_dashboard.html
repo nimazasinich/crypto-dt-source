@@ -1,395 +1,496 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Crypto Monitor HF - Enterprise cryptocurrency monitoring dashboard">
-    <meta name="theme-color" content="#667eea">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Crypto Monitor HF - Unified Dashboard</title>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-    <!-- External CSS -->
-    <link rel="stylesheet" href="/static/css/design-system.css">
-    <link rel="stylesheet" href="/static/css/base.css">
-    <link rel="stylesheet" href="/static/css/components.css">
-    <link rel="stylesheet" href="/static/css/dashboard.css">
-    <link rel="stylesheet" href="/static/css/navigation.css">
-    <link rel="stylesheet" href="/static/css/mobile.css">
-    <link rel="stylesheet" href="/static/css/toast.css">
-
-    <!-- Chart.js -->
+    <link rel="stylesheet" href="static/css/design-tokens.css" />
+    <link rel="stylesheet" href="static/css/design-system.css" />
+    <link rel="stylesheet" href="static/css/dashboard.css" />
+    <link rel="stylesheet" href="static/css/pro-dashboard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-
-    <!-- External JS Modules -->
-    <script src="/static/js/icons.js"></script>
-    <script src="/static/js/api-client.js" defer></script>
-    <script src="/static/js/feature-flags.js" defer></script>
-    <script src="/static/js/ws-client.js" defer></script>
-    <script src="/static/js/theme-manager.js" defer></script>
-    <script src="/static/js/tabs.js" defer></script>
-    <script src="/static/js/dashboard.js" defer></script>
-
-    <!-- Icon Injection Script -->
-    <script>
-        // Inject SVG icons after DOM loads
-        document.addEventListener('DOMContentLoaded', function() {
-            const iconElements = document.querySelectorAll('[data-icon]');
-            iconElements.forEach(el => {
-                const iconName = el.getAttribute('data-icon');
-                if (iconName && window.getIcon) {
-                    el.innerHTML = window.getIcon(iconName, 20);
-                }
-            });
-        });
-    </script>
 </head>
-
-<body>
-    <!-- Skip Link for Accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-
-    <!-- Screen Reader Live Region -->
-    <div id="sr-live-region" class="sr-live-region" aria-live="polite" aria-atomic="true"></div>
-
-    <!-- Dashboard Layout -->
-    <div class="dashboard-layout">
-
-        <!-- Header -->
-        <header class="dashboard-header" role="banner">
-            <div class="header-left">
-                <div class="header-logo">
-                    <span class="header-logo-icon icon" data-icon="bitcoin" aria-hidden="true"></span>
-                    <span class="header-logo-text">Crypto Monitor HF</span>
-                </div>
+<body data-theme="dark">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <strong>Crypto Monitor HF</strong>
+                <span class="env-pill">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    HF Space
+                </span>
             </div>
-
-            <div class="header-center">
-                <div class="header-search">
-                    <span class="header-search-icon icon" data-icon="search" aria-hidden="true"></span>
-                    <input type="search" placeholder="Search..." aria-label="Search dashboard">
-                </div>
+            <nav class="nav">
+                <button class="nav-button active" data-nav="page-overview">Overview</button>
+                <button class="nav-button" data-nav="page-market">Market</button>
+                <button class="nav-button" data-nav="page-chart">Chart Lab</button>
+                <button class="nav-button" data-nav="page-ai">Sentiment & AI</button>
+                <button class="nav-button" data-nav="page-news">News</button>
+                <button class="nav-button" data-nav="page-providers">Providers</button>
+                <button class="nav-button" data-nav="page-api">API Explorer</button>
+                <button class="nav-button" data-nav="page-debug">Diagnostics</button>
+                <button class="nav-button" data-nav="page-datasets">Datasets & Models</button>
+                <button class="nav-button" data-nav="page-settings">Settings</button>
+            </nav>
+            <div class="sidebar-footer">
+                Unified crypto intelligence console<br />Realtime data • HF optimized
             </div>
+        </aside>
+        <main class="main-area">
+            <header class="topbar">
+                <div>
+                    <h1>Unified Intelligence Dashboard</h1>
+                    <p class="text-muted">Live market telemetry, AI signals, diagnostics, and provider health.</p>
+                </div>
+                <div class="status-group">
+                    <div class="status-pill" data-api-health data-state="warn">
+                        <span class="status-dot"></span>
+                        <span>checking</span>
+                    </div>
+                    <div class="status-pill" data-ws-status data-state="warn">
+                        <span class="status-dot"></span>
+                        <span>connecting</span>
+                    </div>
+                </div>
+            </header>
+            <div class="page-container">
+                <section id="page-overview" class="page active">
+                    <div class="section-header">
+                        <h2 class="section-title">Global Overview</h2>
+                        <span class="chip">Powered by /api/market/stats</span>
+                    </div>
+                    <div class="stats-grid" data-overview-stats></div>
+                    <div class="grid-two">
+                        <div class="glass-card">
+                            <div class="section-header">
+                                <h3>Top Coins</h3>
+                                <span class="text-muted">Market movers</span>
+                            </div>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Symbol</th>
+                                            <th>Name</th>
+                                            <th>Price</th>
+                                            <th>24h %</th>
+                                            <th>Volume</th>
+                                            <th>Market Cap</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-top-coins-body></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="glass-card">
+                            <div class="section-header">
+                                <h3>Global Sentiment</h3>
+                                <span class="text-muted">CryptoBERT stack</span>
+                            </div>
+                            <canvas id="sentiment-chart" height="220"></canvas>
+                        </div>
+                    </div>
+                </section>
 
-            <div class="header-right">
-                <!-- Theme Toggle -->
-                <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle Theme">
-                    <span id="theme-toggle-icon" class="theme-toggle-icon icon" data-icon="moon"></span>
-                </button>
+                <section id="page-market" class="page">
+                    <div class="section-header">
+                        <h2 class="section-title">Market Intelligence</h2>
+                        <div class="controls-bar">
+                            <div class="input-chip">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M21 20l-5.6-5.6A6.5 6.5 0 1 0 15.4 16L21 21zM5 10.5a5.5 5.5 0 1 1 11 0a5.5 5.5 0 0 1-11 0z" fill="currentColor"/></svg>
+                                <input type="text" placeholder="Search symbol" data-market-search />
+                            </div>
+                            <div class="input-chip">
+                                Timeframe:
+                                <button class="ghost" data-timeframe="1d">1D</button>
+                                <button class="ghost active" data-timeframe="7d">7D</button>
+                                <button class="ghost" data-timeframe="30d">30D</button>
+                            </div>
+                            <label class="input-chip"> Live updates
+                                <div class="toggle">
+                                    <input type="checkbox" data-live-toggle />
+                                    <span></span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Symbol</th>
+                                        <th>Name</th>
+                                        <th>Price</th>
+                                        <th>24h %</th>
+                                        <th>Volume</th>
+                                        <th>Market Cap</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-market-body></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="drawer" data-market-drawer>
+                        <button class="ghost" data-close-drawer>Close</button>
+                        <h3 data-drawer-symbol>—</h3>
+                        <div data-drawer-stats></div>
+                        <div class="glass-card" data-chart-wrapper>
+                            <canvas id="market-detail-chart" height="180"></canvas>
+                        </div>
+                        <div class="glass-card">
+                            <h4>Related Headlines</h4>
+                            <div data-drawer-news></div>
+                        </div>
+                    </div>
+                </section>
 
-                <!-- User Menu (placeholder) -->
-                <button class="btn btn-secondary btn-sm" aria-label="User menu">
-                    <span class="icon" data-icon="user" aria-hidden="true"></span>
-                </button>
+                <section id="page-chart" class="page">
+                    <div class="section-header">
+                        <h2 class="section-title">Chart Lab</h2>
+                        <div class="controls-bar">
+                            <select data-chart-symbol>
+                                <option value="BTC">BTC</option>
+                                <option value="ETH">ETH</option>
+                                <option value="SOL">SOL</option>
+                                <option value="BNB">BNB</option>
+                            </select>
+                            <div class="input-chip">
+                                <button class="ghost active" data-chart-timeframe="7d">7D</button>
+                                <button class="ghost" data-chart-timeframe="30d">30D</button>
+                                <button class="ghost" data-chart-timeframe="90d">90D</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <canvas id="chart-lab-canvas" height="260"></canvas>
+                    </div>
+                    <div class="glass-card">
+                        <div class="controls-bar">
+                            <label><input type="checkbox" data-indicator value="MA20" checked /> MA 20</label>
+                            <label><input type="checkbox" data-indicator value="MA50" /> MA 50</label>
+                            <label><input type="checkbox" data-indicator value="RSI" /> RSI</label>
+                            <label><input type="checkbox" data-indicator value="Volume" /> Volume</label>
+                        </div>
+                        <button class="primary" data-run-analysis>Analyze Chart with AI</button>
+                        <div data-ai-insights class="ai-insights"></div>
+                    </div>
+                </section>
+
+                <section id="page-ai" class="page">
+                    <div class="section-header">
+                        <h2 class="section-title">Sentiment & AI Advisor</h2>
+                    </div>
+                    <div class="glass-card">
+                        <form data-ai-form class="ai-form">
+                            <div class="grid-two">
+                                <label>Symbol
+                                    <select name="symbol">
+                                        <option value="BTC">BTC</option>
+                                        <option value="ETH">ETH</option>
+                                        <option value="SOL">SOL</option>
+                                    </select>
+                                </label>
+                                <label>Time Horizon
+                                    <select name="horizon">
+                                        <option value="intraday">Intraday</option>
+                                        <option value="swing" selected>Swing</option>
+                                        <option value="long">Long Term</option>
+                                    </select>
+                                </label>
+                                <label>Risk Profile
+                                    <select name="risk">
+                                        <option value="conservative">Conservative</option>
+                                        <option value="moderate" selected>Moderate</option>
+                                        <option value="aggressive">Aggressive</option>
+                                    </select>
+                                </label>
+                                <label>Sentiment Model
+                                    <select name="model">
+                                        <option value="auto">Auto</option>
+                                        <option value="crypto">CryptoBERT</option>
+                                        <option value="financial">FinBERT</option>
+                                        <option value="social">Twitter Sentiment</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <label>Context or Headline
+                                <textarea name="context" placeholder="Paste a headline or trade thesis for AI analysis"></textarea>
+                            </label>
+                            <button class="primary" type="submit">Generate Guidance</button>
+                        </form>
+                        <div class="grid-two">
+                            <div data-ai-result class="ai-result"></div>
+                            <div data-sentiment-result></div>
+                        </div>
+                        <div class="inline-message inline-info" data-ai-disclaimer>
+                            Experimental AI output. Not financial advice.
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-news" class="page">
+                    <div class="section-header">
+                        <h2 class="section-title">News & Summaries</h2>
+                    </div>
+                    <div class="controls-bar">
+                        <select data-news-range>
+                            <option value="24h">Last 24h</option>
+                            <option value="7d">7 Days</option>
+                            <option value="30d">30 Days</option>
+                        </select>
+                        <input type="text" placeholder="Search headline" data-news-search />
+                        <input type="text" placeholder="Filter symbol (e.g. BTC)" data-news-symbol />
+                    </div>
+                    <div class="glass-card">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Source</th>
+                                        <th>Title</th>
+                                        <th>Symbols</th>
+                                        <th>Sentiment</th>
+                                        <th>AI</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-news-body></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-backdrop" data-news-modal>
+                        <div class="modal">
+                            <button class="ghost" data-close-news-modal>Close</button>
+                            <div data-news-modal-content></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-providers" class="page">
+                    <div class="section-header">
+                        <h2 class="section-title">Provider Health</h2>
+                        <button class="ghost" data-provider-refresh>Refresh</button>
+                    </div>
+                    <div class="stats-grid" data-provider-summary></div>
+                    <div class="controls-bar">
+                        <input type="search" placeholder="Search provider" data-provider-search />
+                        <select data-provider-category>
+                            <option value="all">All Categories</option>
+                            <option value="market">Market Data</option>
+                            <option value="news">News</option>
+                            <option value="ai">AI</option>
+                        </select>
+                    </div>
+                    <div class="glass-card">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Category</th>
+                                        <th>Status</th>
+                                        <th>Latency</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-providers-table></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-api" class="page">
+                    <div class="section-header">
+                        <h2 class="section-title">API Explorer</h2>
+                        <span class="chip">Test live endpoints</span>
+                    </div>
+                    <div class="glass-card">
+                        <div class="grid-two">
+                            <label>Endpoint
+                                <select data-api-endpoint></select>
+                            </label>
+                            <label>Method
+                                <select data-api-method>
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                </select>
+                            </label>
+                            <label>Query Params
+                                <input type="text" placeholder="limit=10&symbol=BTC" data-api-params />
+                            </label>
+                            <label>Body (JSON)
+                                <textarea data-api-body placeholder='{ "text": "Bitcoin" }'></textarea>
+                            </label>
+                        </div>
+                        <p class="text-muted">Path: <span data-api-path></span> — <span data-api-description></span></p>
+                        <button class="primary" data-api-send>Send Request</button>
+                        <div class="inline-message" data-api-meta>Ready</div>
+                        <pre data-api-response class="api-response"></pre>
+                    </div>
+                </section>
+
+                <section id="page-debug" class="page">
+                    <div class="section-header">
+                        <h2 class="section-title">Diagnostics</h2>
+                        <button class="ghost" data-refresh-health>Refresh</button>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="glass-card">
+                            <h3>API Health</h3>
+                            <div class="stat-value" data-health-status>—</div>
+                        </div>
+                        <div class="glass-card">
+                            <h3>Providers</h3>
+                            <div data-providers class="grid-two"></div>
+                        </div>
+                    </div>
+                    <div class="grid-two">
+                        <div class="glass-card">
+                            <h4>Request Log</h4>
+                            <div class="table-wrapper log-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Method</th>
+                                            <th>Endpoint</th>
+                                            <th>Status</th>
+                                            <th>Latency</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-request-log></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="glass-card">
+                            <h4>Error Log</h4>
+                            <div class="table-wrapper log-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Endpoint</th>
+                                            <th>Message</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-error-log></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <h4>WebSocket Events</h4>
+                        <div class="table-wrapper log-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Type</th>
+                                        <th>Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-ws-log></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-datasets" class="page">
+                    <div class="section-header">
+                        <h2 class="section-title">Datasets & Models</h2>
+                    </div>
+                    <div class="grid-two">
+                        <div class="glass-card">
+                            <h3>Datasets</h3>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Records</th>
+                                            <th>Updated</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-datasets-body></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="glass-card">
+                            <h3>Models</h3>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Task</th>
+                                            <th>Status</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-models-body></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <h4>Test a Model</h4>
+                        <form data-model-test-form class="grid-two">
+                            <label>Model
+                                <select data-model-select name="model"></select>
+                            </label>
+                            <label>Input
+                                <textarea name="input" placeholder="Type a prompt"></textarea>
+                            </label>
+                            <button class="primary" type="submit">Run Test</button>
+                        </form>
+                        <div data-model-test-output></div>
+                    </div>
+                    <div class="modal-backdrop" data-dataset-modal>
+                        <div class="modal">
+                            <button class="ghost" data-close-dataset-modal>Close</button>
+                            <div data-dataset-modal-content></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="page-settings" class="page">
+                    <div class="section-header">
+                        <h2 class="section-title">Settings</h2>
+                    </div>
+                    <div class="glass-card">
+                        <div class="grid-two">
+                            <label class="input-chip">Light Theme
+                                <div class="toggle">
+                                    <input type="checkbox" data-theme-toggle />
+                                    <span></span>
+                                </div>
+                            </label>
+                            <label>Market Refresh (sec)
+                                <input type="number" min="15" step="5" data-market-interval />
+                            </label>
+                            <label>News Refresh (sec)
+                                <input type="number" min="30" step="10" data-news-interval />
+                            </label>
+                            <label class="input-chip">Compact Layout
+                                <div class="toggle">
+                                    <input type="checkbox" data-layout-toggle />
+                                    <span></span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </section>
             </div>
-        </header>
-
-        <!-- Connection Status Bar -->
-        <div class="connection-status-bar" role="status" aria-live="polite">
-            <div class="connection-info">
-                <span class="status-dot status-offline" id="ws-status-dot" aria-hidden="true"></span>
-                <span id="ws-status-text">Connecting...</span>
-            </div>
-
-            <div class="online-users">
-                <span class="icon" data-icon="users" aria-hidden="true"></span>
-                <span id="active-users-count" aria-label="Active users">0</span>
-                <span class="sr-only">active users</span>
-            </div>
-        </div>
-
-        <!-- Desktop Navigation -->
-        <nav class="desktop-nav" role="navigation" aria-label="Main navigation">
-            <ul class="nav-tabs" role="tablist">
-                <li class="nav-tab" role="presentation">
-                    <button class="nav-tab-btn active" data-tab="market" role="tab" aria-selected="true" aria-controls="market-tab">
-                        <span class="nav-tab-icon icon" data-icon="pieChart" aria-hidden="true"></span>
-                        <span class="nav-tab-label">Market</span>
-                    </button>
-                </li>
-                <li class="nav-tab" role="presentation">
-                    <button class="nav-tab-btn" data-tab="api-monitor" role="tab" aria-selected="false" aria-controls="api-monitor-tab">
-                        <span class="nav-tab-icon icon" data-icon="activity" aria-hidden="true"></span>
-                        <span class="nav-tab-label">API Monitor</span>
-                    </button>
-                </li>
-                <li class="nav-tab" role="presentation">
-                    <button class="nav-tab-btn" data-tab="advanced" role="tab" aria-selected="false" aria-controls="advanced-tab">
-                        <span class="nav-tab-icon icon" data-icon="zap" aria-hidden="true"></span>
-                        <span class="nav-tab-label">Advanced</span>
-                    </button>
-                </li>
-                <li class="nav-tab" role="presentation">
-                    <button class="nav-tab-btn" data-tab="admin" role="tab" aria-selected="false" aria-controls="admin-tab">
-                        <span class="nav-tab-icon icon" data-icon="settings" aria-hidden="true"></span>
-                        <span class="nav-tab-label">Admin</span>
-                    </button>
-                </li>
-                <li class="nav-tab" role="presentation">
-                    <button class="nav-tab-btn" data-tab="huggingface" role="tab" aria-selected="false" aria-controls="huggingface-tab">
-                        <span class="nav-tab-icon icon" data-icon="brain" aria-hidden="true"></span>
-                        <span class="nav-tab-label">HuggingFace</span>
-                    </button>
-                </li>
-                <li class="nav-tab" role="presentation">
-                    <button class="nav-tab-btn" data-tab="pools" role="tab" aria-selected="false" aria-controls="pools-tab">
-                        <span class="nav-tab-icon icon" data-icon="layers" aria-hidden="true"></span>
-                        <span class="nav-tab-label">Pools</span>
-                    </button>
-                </li>
-                <li class="nav-tab" role="presentation">
-                    <button class="nav-tab-btn" data-tab="providers" role="tab" aria-selected="false" aria-controls="providers-tab">
-                        <span class="nav-tab-icon icon" data-icon="box" aria-hidden="true"></span>
-                        <span class="nav-tab-label">Providers</span>
-                    </button>
-                </li>
-                <li class="nav-tab" role="presentation">
-                    <button class="nav-tab-btn" data-tab="logs" role="tab" aria-selected="false" aria-controls="logs-tab">
-                        <span class="nav-tab-icon icon" data-icon="fileText" aria-hidden="true"></span>
-                        <span class="nav-tab-label">Logs</span>
-                    </button>
-                </li>
-                <li class="nav-tab" role="presentation">
-                    <button class="nav-tab-btn" data-tab="reports" role="tab" aria-selected="false" aria-controls="reports-tab">
-                        <span class="nav-tab-icon icon" data-icon="barChart" aria-hidden="true"></span>
-                        <span class="nav-tab-label">Reports</span>
-                    </button>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Mobile Navigation -->
-        <nav class="mobile-nav" role="navigation" aria-label="Mobile navigation">
-            <ul class="mobile-nav-tabs" role="tablist">
-                <li class="mobile-nav-tab" role="presentation">
-                    <button class="mobile-nav-tab-btn active" data-tab="market" role="tab" aria-selected="true" aria-controls="market-tab">
-                        <span class="mobile-nav-tab-icon icon" data-icon="pieChart" aria-hidden="true"></span>
-                        <span class="mobile-nav-tab-label">Market</span>
-                    </button>
-                </li>
-                <li class="mobile-nav-tab" role="presentation">
-                    <button class="mobile-nav-tab-btn" data-tab="api-monitor" role="tab" aria-selected="false" aria-controls="api-monitor-tab">
-                        <span class="mobile-nav-tab-icon icon" data-icon="activity" aria-hidden="true"></span>
-                        <span class="mobile-nav-tab-label">Monitor</span>
-                    </button>
-                </li>
-                <li class="mobile-nav-tab" role="presentation">
-                    <button class="mobile-nav-tab-btn" data-tab="providers" role="tab" aria-selected="false" aria-controls="providers-tab">
-                        <span class="mobile-nav-tab-icon icon" data-icon="box" aria-hidden="true"></span>
-                        <span class="mobile-nav-tab-label">Providers</span>
-                    </button>
-                </li>
-                <li class="mobile-nav-tab" role="presentation">
-                    <button class="mobile-nav-tab-btn" data-tab="logs" role="tab" aria-selected="false" aria-controls="logs-tab">
-                        <span class="mobile-nav-tab-icon icon" data-icon="fileText" aria-hidden="true"></span>
-                        <span class="mobile-nav-tab-label">Logs</span>
-                    </button>
-                </li>
-                <li class="mobile-nav-tab" role="presentation">
-                    <button class="mobile-nav-tab-btn" data-tab="admin" role="tab" aria-selected="false" aria-controls="admin-tab">
-                        <span class="mobile-nav-tab-icon icon" data-icon="settings" aria-hidden="true"></span>
-                        <span class="mobile-nav-tab-label">Admin</span>
-                    </button>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Main Content Area -->
-        <main id="main-content" class="dashboard-main" role="main">
-
-            <!-- Market Tab -->
-            <section id="market-tab" class="tab-content active" role="tabpanel" aria-labelledby="market-tab-button" aria-hidden="false">
-                <header class="tab-header">
-                    <h1 class="tab-title">
-                        <span class="icon" data-icon="pieChart" aria-hidden="true"></span>
-                        Market Overview
-                    </h1>
-                    <div class="tab-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="window.tabManager.loadMarketTab()">
-                            <span class="icon" data-icon="refresh" aria-hidden="true"></span> Refresh
-                        </button>
-                    </div>
-                </header>
-
-                <div class="tab-body">
-                    <div class="loading">
-                        <div class="spinner" role="status" aria-label="Loading market data"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- API Monitor Tab -->
-            <section id="api-monitor-tab" class="tab-content" role="tabpanel" aria-labelledby="api-monitor-tab-button" aria-hidden="true">
-                <header class="tab-header">
-                    <h1 class="tab-title">
-                        <span class="icon" data-icon="activity" aria-hidden="true"></span>
-                        API Monitor
-                    </h1>
-                    <div class="tab-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="window.tabManager.loadAPIMonitorTab()">
-                            <span class="icon" data-icon="refresh" aria-hidden="true"></span> Refresh
-                        </button>
-                    </div>
-                </header>
-
-                <div class="tab-body">
-                    <div class="loading">
-                        <div class="spinner" role="status" aria-label="Loading API monitor"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Advanced Tab -->
-            <section id="advanced-tab" class="tab-content" role="tabpanel" aria-labelledby="advanced-tab-button" aria-hidden="true">
-                <header class="tab-header">
-                    <h1 class="tab-title">
-                        <span class="icon" data-icon="zap" aria-hidden="true"></span>
-                        Advanced
-                    </h1>
-                    <div class="tab-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="window.tabManager.loadAdvancedTab()">
-                            <span class="icon" data-icon="refresh" aria-hidden="true"></span> Refresh
-                        </button>
-                    </div>
-                </header>
-
-                <div class="tab-body">
-                    <div class="loading">
-                        <div class="spinner" role="status" aria-label="Loading advanced data"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Admin Tab -->
-            <section id="admin-tab" class="tab-content" role="tabpanel" aria-labelledby="admin-tab-button" aria-hidden="true">
-                <header class="tab-header">
-                    <h1 class="tab-title">
-                        <span class="icon" data-icon="settings" aria-hidden="true"></span>
-                        Admin & Settings
-                    </h1>
-                </header>
-
-                <div class="tab-body">
-                    <div class="loading">
-                        <div class="spinner" role="status" aria-label="Loading admin panel"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- HuggingFace Tab -->
-            <section id="huggingface-tab" class="tab-content" role="tabpanel" aria-labelledby="huggingface-tab-button" aria-hidden="true">
-                <header class="tab-header">
-                    <h1 class="tab-title">
-                        <span class="icon" data-icon="brain" aria-hidden="true"></span>
-                        HuggingFace Integration
-                    </h1>
-                    <div class="tab-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="window.tabManager.loadHuggingFaceTab()">
-                            <span class="icon" data-icon="refresh" aria-hidden="true"></span> Refresh
-                        </button>
-                    </div>
-                </header>
-
-                <div class="tab-body">
-                    <div class="loading">
-                        <div class="spinner" role="status" aria-label="Loading HuggingFace data"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Pools Tab -->
-            <section id="pools-tab" class="tab-content" role="tabpanel" aria-labelledby="pools-tab-button" aria-hidden="true">
-                <header class="tab-header">
-                    <h1 class="tab-title">
-                        <span class="icon" data-icon="layers" aria-hidden="true"></span>
-                        Provider Pools
-                    </h1>
-                    <div class="tab-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="window.tabManager.loadPoolsTab()">
-                            <span class="icon" data-icon="refresh" aria-hidden="true"></span> Refresh
-                        </button>
-                    </div>
-                </header>
-
-                <div class="tab-body">
-                    <div class="loading">
-                        <div class="spinner" role="status" aria-label="Loading pools"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Providers Tab -->
-            <section id="providers-tab" class="tab-content" role="tabpanel" aria-labelledby="providers-tab-button" aria-hidden="true">
-                <header class="tab-header">
-                    <h1 class="tab-title">
-                        <span class="icon" data-icon="box" aria-hidden="true"></span>
-                        API Providers
-                    </h1>
-                    <div class="tab-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="window.tabManager.loadProvidersTab()">
-                            <span class="icon" data-icon="refresh" aria-hidden="true"></span> Refresh
-                        </button>
-                    </div>
-                </header>
-
-                <div class="tab-body">
-                    <div class="loading">
-                        <div class="spinner" role="status" aria-label="Loading providers"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Logs Tab -->
-            <section id="logs-tab" class="tab-content" role="tabpanel" aria-labelledby="logs-tab-button" aria-hidden="true">
-                <header class="tab-header">
-                    <h1 class="tab-title">
-                        <span class="icon" data-icon="fileText" aria-hidden="true"></span>
-                        System Logs
-                    </h1>
-                    <div class="tab-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="window.tabManager.loadLogsTab()">
-                            <span class="icon" data-icon="refresh" aria-hidden="true"></span> Refresh
-                        </button>
-                    </div>
-                </header>
-
-                <div class="tab-body">
-                    <div class="loading">
-                        <div class="spinner" role="status" aria-label="Loading logs"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Reports Tab -->
-            <section id="reports-tab" class="tab-content" role="tabpanel" aria-labelledby="reports-tab-button" aria-hidden="true">
-                <header class="tab-header">
-                    <h1 class="tab-title">
-                        <span class="icon" data-icon="barChart" aria-hidden="true"></span>
-                        Reports & Diagnostics
-                    </h1>
-                    <div class="tab-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="window.tabManager.loadReportsTab()">
-                            <span class="icon" data-icon="refresh" aria-hidden="true"></span> Refresh
-                        </button>
-                    </div>
-                </header>
-
-                <div class="tab-body">
-                    <div class="loading">
-                        <div class="spinner" role="status" aria-label="Loading reports"></div>
-                    </div>
-                </div>
-            </section>
-
         </main>
-
     </div>
-
-    <!-- Alerts Container -->
-    <div id="alerts-container" aria-live="polite" aria-atomic="true" style="position: fixed; top: 120px; right: 20px; z-index: 9500; max-width: 400px;"></div>
-
+    <script type="module" src="static/js/app.js"></script>
 </body>
 </html>

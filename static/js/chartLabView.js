@@ -98,21 +98,29 @@ class ChartLabView {
             .filter((input) => input.checked)
             .map((input) => input.value);
         this.insightsContainer.innerHTML = '<p>Running AI analysis...</p>';
-        const payload = {
-            query: `Analyze ${this.symbol} on ${this.timeframe} timeframe with indicators: ${enabledIndicators.join(', ')}`,
-        };
-        const result = await apiClient.runQuery(payload);
+        const result = await apiClient.analyzeChart(this.symbol, this.timeframe, enabledIndicators);
         if (!result.ok) {
             this.insightsContainer.innerHTML = `<div class="inline-message inline-error">${result.error}</div>`;
             return;
         }
-        const data = result.data || {};
-        const bullets = (data.insights || data.points || []).map((point) => `<li>${point}</li>`).join('');
+        const payload = result.data || {};
+        const insights = payload.insights || result.insights || payload;
+        if (!insights) {
+            this.insightsContainer.innerHTML = '<p>No AI insights returned.</p>';
+            return;
+        }
+        const summary =
+            insights.narrative?.summary?.summary || insights.narrative?.summary || insights.narrative?.summary_text;
+        const signals = insights.narrative?.signals || {};
+        const bullets = Object.entries(signals)
+            .map(([key, value]) => `<li><strong>${key}:</strong> ${(value?.label || 'n/a')} (${value?.score ?? '—'})</li>`)
+            .join('');
         this.insightsContainer.innerHTML = `
             <h4>AI Insights</h4>
-            <p><strong>Trend:</strong> ${data.trend || data.summary || 'N/A'}</p>
-            <p><strong>Support:</strong> ${data.support || 'N/A'} • <strong>Resistance:</strong> ${data.resistance || 'N/A'}</p>
-            <ul>${bullets || '<li>No specific insights returned.</li>'}</ul>
+            <p><strong>Direction:</strong> ${insights.change_direction || 'N/A'} (${insights.change_percent ?? '—'}%)</p>
+            <p><strong>Range:</strong> High ${insights.high ?? '—'} / Low ${insights.low ?? '—'}</p>
+            <p>${summary || insights.narrative?.summary?.summary || insights.narrative?.summary || ''}</p>
+            <ul>${bullets || '<li>No sentiment signals provided.</li>'}</ul>
         `;
     }
 }
