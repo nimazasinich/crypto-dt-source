@@ -208,6 +208,8 @@ class MarketDataCollector:
             "market_cap": market_data.get("market_cap", {}).get("usd"),
             "volume_24h": market_data.get("total_volume", {}).get("usd"),
             "change_24h": market_data.get("price_change_percentage_24h"),
+            "high_24h": market_data.get("high_24h", {}).get("usd"),
+            "low_24h": market_data.get("low_24h", {}).get("usd"),
             "circulating_supply": market_data.get("circulating_supply"),
             "total_supply": market_data.get("total_supply"),
             "ath": market_data.get("ath", {}).get("usd"),
@@ -261,6 +263,39 @@ class MarketDataCollector:
         ]
         await self.cache.set(cache_key, prices)
         return prices
+
+    async def get_ohlcv(self, symbol: str, interval: str = "1h", limit: int = 100) -> List[Dict[str, Any]]:
+        """Return OHLCV data from Binance with caching and validation."""
+
+        cache_key = f"ohlcv:{symbol.upper()}:{interval}:{limit}"
+        cached = await self.cache.get(cache_key)
+        if cached:
+            return cached
+
+        params = {"symbol": symbol.upper(), "interval": interval, "limit": min(max(limit, 1), 1000)}
+        data = await self._request("binance", "/klines", params)
+
+        candles: List[Dict[str, Any]] = []
+        for item in data:
+            try:
+                candles.append(
+                    {
+                        "timestamp": datetime.fromtimestamp(item[0] / 1000, tz=timezone.utc).isoformat(),
+                        "open": float(item[1]),
+                        "high": float(item[2]),
+                        "low": float(item[3]),
+                        "close": float(item[4]),
+                        "volume": float(item[5]),
+                    }
+                )
+            except (TypeError, ValueError):  # pragma: no cover - defensive
+                continue
+
+        if not candles:
+            raise CollectorError(f"No OHLCV data returned for {symbol}", provider="binance")
+
+        await self.cache.set(cache_key, candles)
+        return candles
 
 
 class NewsCollector:

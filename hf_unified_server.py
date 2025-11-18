@@ -1,24 +1,33 @@
-"""
-🚀 Unified HuggingFace Space API Server
-Complete cryptocurrency data and analysis API
-Provides all endpoints required for the HF Space
-"""
+"""Unified HuggingFace Space API Server leveraging shared collectors and AI helpers."""
 
 import asyncio
-import httpx
 import time
 from datetime import datetime, timedelta
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from typing import Dict, List, Any, Optional
-import os
+from typing import Any, Dict, List, Optional, Union
 import logging
-from collections import defaultdict
 import random
 import json
 from pathlib import Path
+
+from ai_models import (
+    analyze_chart_points,
+    analyze_crypto_sentiment,
+    analyze_market_text,
+    get_model_info,
+    initialize_models,
+    registry_status,
+)
+from collectors.aggregator import (
+    CollectorError,
+    MarketDataCollector,
+    NewsCollector,
+    ProviderStatusCollector,
+)
+from config import COIN_SYMBOL_MAPPING, get_settings
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -40,21 +49,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory cache
-cache = {
-    "ohlcv": {},
-    "prices": {},
-    "market_data": {},
-    "providers": [],
-    "last_update": None
-}
-
-# Provider state
-providers_state = {}
+# Runtime state
+START_TIME = time.time()
+cache = {"ohlcv": {}, "prices": {}, "market_data": {}, "providers": [], "last_update": None}
+settings = get_settings()
+market_collector = MarketDataCollector()
+news_collector = NewsCollector()
+provider_collector = ProviderStatusCollector()
 
 # Load providers config
 WORKSPACE_ROOT = Path(__file__).parent
-PROVIDERS_CONFIG_PATH = WORKSPACE_ROOT / "providers_config_extended.json"
+PROVIDERS_CONFIG_PATH = settings.providers_config_path
 
 def load_providers_config():
     """Load providers from providers_config_extended.json"""
@@ -87,100 +92,106 @@ except Exception as e:
     logger.error(f"❌ Error mounting static files: {e}")
 
 # ============================================================================
-# Data Fetching Functions
+# Helper utilities & Data Fetching Functions
 # ============================================================================
 
+def _normalize_asset_symbol(symbol: str) -> str:
+    symbol = (symbol or "").upper()
+    suffixes = ("USDT", "USD", "BTC", "ETH", "BNB")
+    for suffix in suffixes:
+        if symbol.endswith(suffix) and len(symbol) > len(suffix):
+            return symbol[: -len(suffix)]
+    return symbol
+
+
+def _format_price_record(record: Dict[str, Any]) -> Dict[str, Any]:
+    price = record.get("price") or record.get("current_price")
+    change_pct = record.get("change_24h") or record.get("price_change_percentage_24h")
+    change_abs = None
+    if price is not None and change_pct is not None:
+        try:
+            change_abs = float(price) * float(change_pct) / 100.0
+        except (TypeError, ValueError):
+            change_abs = None
+
+    return {
+        "id": record.get("id") or record.get("symbol", "").lower(),
+        "symbol": record.get("symbol", "").upper(),
+        "name": record.get("name"),
+        "current_price": price,
+        "market_cap": record.get("market_cap"),
+        "market_cap_rank": record.get("rank"),
+        "total_volume": record.get("volume_24h") or record.get("total_volume"),
+        "price_change_24h": change_abs,
+        "price_change_percentage_24h": change_pct,
+        "high_24h": record.get("high_24h"),
+        "low_24h": record.get("low_24h"),
+        "last_updated": record.get("last_updated"),
+    }
+
+
 async def fetch_binance_ohlcv(symbol: str = "BTCUSDT", interval: str = "1h", limit: int = 100):
-    """Fetch OHLCV data from Binance"""
+    """Fetch OHLCV data from Binance via the shared collector."""
+
     try:
-        url = f"https://api.binance.com/api/v3/klines"
-        params = {
-            "symbol": symbol.upper(),
-            "interval": interval,
-            "limit": min(limit, 1000)
-        }
-        
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params=params)
-            if response.status_code == 200:
-                data = response.json()
-                
-                # Format OHLCV data
-                ohlcv = []
-                for candle in data:
-                    ohlcv.append({
-                        "timestamp": candle[0],
-                        "datetime": datetime.fromtimestamp(candle[0] / 1000).isoformat(),
-                        "open": float(candle[1]),
-                        "high": float(candle[2]),
-                        "low": float(candle[3]),
-                        "close": float(candle[4]),
-                        "volume": float(candle[5])
-                    })
-                
-                return ohlcv
-    except Exception as e:
-        logger.error(f"Error fetching Binance OHLCV: {e}")
-    return []
+        candles = await market_collector.get_ohlcv(symbol, interval, limit)
+        return [
+            {
+                **candle,
+                "timestamp": int(datetime.fromisoformat(candle["timestamp"]).timestamp() * 1000),
+                "datetime": candle["timestamp"],
+            }
+            for candle in candles
+        ]
+    except CollectorError as exc:
+        logger.error("Error fetching OHLCV: %s", exc)
+        return []
 
 
-async def fetch_coingecko_prices(symbols: List[str] = None, limit: int = 10):
-    """Fetch prices from CoinGecko"""
+async def fetch_coingecko_prices(symbols: Optional[List[str]] = None, limit: int = 10):
+    """Fetch price snapshots using the shared market collector."""
+
     try:
         if symbols:
-            ids = ",".join([s.lower() for s in symbols])
-            url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids={ids}"
-        else:
-            url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page={limit}&page=1"
-        
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url)
-            if response.status_code == 200:
-                data = response.json()
-                
-                prices = []
-                for coin in data:
-                    prices.append({
-                        "id": coin.get("id"),
-                        "symbol": coin.get("symbol", "").upper(),
-                        "name": coin.get("name"),
-                        "current_price": coin.get("current_price"),
-                        "market_cap": coin.get("market_cap"),
-                        "market_cap_rank": coin.get("market_cap_rank"),
-                        "total_volume": coin.get("total_volume"),
-                        "price_change_24h": coin.get("price_change_24h"),
-                        "price_change_percentage_24h": coin.get("price_change_percentage_24h"),
-                        "last_updated": coin.get("last_updated")
-                    })
-                
-                return prices
-    except Exception as e:
-        logger.error(f"Error fetching CoinGecko prices: {e}")
-    return []
+            tasks = [market_collector.get_coin_details(_normalize_asset_symbol(sym)) for sym in symbols]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            coins: List[Dict[str, Any]] = []
+            for result in results:
+                if isinstance(result, Exception):
+                    continue
+                coins.append(_format_price_record(result))
+            return coins
+
+        top = await market_collector.get_top_coins(limit=limit)
+        return [_format_price_record(entry) for entry in top]
+    except CollectorError as exc:
+        logger.error("Error fetching aggregated prices: %s", exc)
+        return []
 
 
 async def fetch_binance_ticker(symbol: str):
-    """Fetch ticker from Binance"""
+    """Provide ticker-like information sourced from CoinGecko market data."""
+
     try:
-        url = f"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol.upper()}"
-        
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url)
-            if response.status_code == 200:
-                data = response.json()
-                return {
-                    "symbol": data["symbol"],
-                    "price": float(data["lastPrice"]),
-                    "price_change_24h": float(data["priceChange"]),
-                    "price_change_percent_24h": float(data["priceChangePercent"]),
-                    "high_24h": float(data["highPrice"]),
-                    "low_24h": float(data["lowPrice"]),
-                    "volume_24h": float(data["volume"]),
-                    "quote_volume_24h": float(data["quoteVolume"])
-                }
-    except Exception as e:
-        logger.error(f"Error fetching Binance ticker: {e}")
-    return None
+        coin = await market_collector.get_coin_details(_normalize_asset_symbol(symbol))
+    except CollectorError as exc:
+        logger.error("Unable to load ticker for %s: %s", symbol, exc)
+        return None
+
+    price = coin.get("price")
+    change_pct = coin.get("change_24h") or 0.0
+    change_abs = price * change_pct / 100 if price is not None and change_pct is not None else None
+
+    return {
+        "symbol": symbol.upper(),
+        "price": price,
+        "price_change_24h": change_abs,
+        "price_change_percent_24h": change_pct,
+        "high_24h": coin.get("high_24h"),
+        "low_24h": coin.get("low_24h"),
+        "volume_24h": coin.get("volume_24h"),
+        "quote_volume_24h": coin.get("volume_24h"),
+    }
 
 
 # ============================================================================
@@ -189,32 +200,59 @@ async def fetch_binance_ticker(symbol: str):
 
 @app.get("/health")
 async def health():
-    """System health check"""
+    """System health check using shared collectors."""
+
+    async def _safe_call(coro):
+        try:
+            data = await coro
+            return {"status": "ok", "count": len(data) if hasattr(data, "__len__") else 1}
+        except Exception as exc:  # pragma: no cover - network heavy
+            return {"status": "error", "detail": str(exc)}
+
+    market_task = asyncio.create_task(_safe_call(market_collector.get_top_coins(limit=3)))
+    news_task = asyncio.create_task(_safe_call(news_collector.get_latest_news(limit=3)))
+    providers_task = asyncio.create_task(_safe_call(provider_collector.get_providers_status()))
+
+    market_status, news_status, providers_status = await asyncio.gather(
+        market_task, news_task, providers_task
+    )
+
+    ai_status = registry_status()
+    service_states = {
+        "market_data": market_status,
+        "news": news_status,
+        "providers": providers_status,
+        "ai_models": ai_status,
+    }
+
+    degraded = any(state.get("status") != "ok" for state in (market_status, news_status, providers_status))
+    overall = "healthy" if not degraded else "degraded"
+
     return {
-        "status": "healthy",
+        "status": overall,
         "service": "cryptocurrency-data-api",
-        "timestamp": datetime.now().isoformat(),
-        "version": "3.0.0",
-        "providers_loaded": len(providers_state)
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": app.version,
+        "providers_loaded": market_status.get("count", 0),
+        "services": service_states,
     }
 
 
 @app.get("/info")
 async def info():
     """System information"""
-    # Count HuggingFace Space providers
-    hf_providers = [p for p in PROVIDERS_CONFIG.keys() if 'huggingface_space' in p]
-    
+    hf_providers = [p for p in PROVIDERS_CONFIG.keys() if "huggingface_space" in p]
+
     return {
         "service": "Cryptocurrency Data & Analysis API",
-        "version": "3.0.0",
+        "version": app.version,
         "endpoints": {
             "core": ["/health", "/info", "/api/providers"],
             "data": ["/api/ohlcv", "/api/crypto/prices/top", "/api/crypto/price/{symbol}", "/api/crypto/market-overview"],
             "analysis": ["/api/analysis/signals", "/api/analysis/smc", "/api/scoring/snapshot"],
             "market": ["/api/market/prices", "/api/market-data/prices"],
             "system": ["/api/system/status", "/api/system/config"],
-            "huggingface": ["/api/hf/health", "/api/hf/refresh", "/api/hf/registry", "/api/hf/run-sentiment"]
+            "huggingface": ["/api/hf/health", "/api/hf/refresh", "/api/hf/registry", "/api/hf/run-sentiment"],
         },
         "data_sources": ["Binance", "CoinGecko", "CoinPaprika", "CoinCap"],
         "providers_loaded": len(PROVIDERS_CONFIG),
@@ -226,38 +264,40 @@ async def info():
             "Market analysis",
             "Sentiment analysis",
             "HuggingFace model integration",
-            f"{len(PROVIDERS_CONFIG)} providers from providers_config_extended.json"
-        ]
+            f"{len(PROVIDERS_CONFIG)} providers from providers_config_extended.json",
+        ],
+        "ai_registry": registry_status(),
     }
 
 
 @app.get("/api/providers")
 async def get_providers():
-    """Get list of API providers from providers_config_extended.json"""
+    """Get list of API providers and their health."""
+
     try:
-        providers_list = []
-        
-        for provider_id, provider_info in PROVIDERS_CONFIG.items():
-            providers_list.append({
-                "id": provider_id,
-                "name": provider_info.get("name", provider_id),
-                "category": provider_info.get("category", "unknown"),
-                "status": "online" if provider_info.get("validated", False) else "pending",
-                "priority": provider_info.get("priority", 5),
-                "base_url": provider_info.get("base_url", ""),
-                "requires_auth": provider_info.get("requires_auth", False),
-                "endpoints_count": len(provider_info.get("endpoints", {}))
-            })
-        
-        return {
-            "providers": providers_list,
-            "total": len(providers_list),
-            "source": "providers_config_extended.json",
-            "last_updated": datetime.now().isoformat()
-        }
-    except Exception as e:
-        logger.error(f"Error getting providers: {e}")
-        return {"providers": [], "total": 0, "error": str(e)}
+        statuses = await provider_collector.get_providers_status()
+    except Exception as exc:  # pragma: no cover - network heavy
+        logger.error("Error getting providers: %s", exc)
+        raise HTTPException(status_code=503, detail=str(exc))
+
+    providers_list = []
+    for status in statuses:
+        meta = PROVIDERS_CONFIG.get(status["provider_id"], {})
+        providers_list.append(
+            {
+                **status,
+                "base_url": meta.get("base_url"),
+                "requires_auth": meta.get("requires_auth"),
+                "priority": meta.get("priority"),
+            }
+        )
+
+    return {
+        "providers": providers_list,
+        "total": len(providers_list),
+        "source": str(PROVIDERS_CONFIG_PATH),
+        "last_updated": datetime.utcnow().isoformat(),
+    }
 
 
 # ============================================================================
@@ -494,7 +534,9 @@ async def get_trading_signals(
         signal = "buy" if trend == "bullish" and momentum == "strong" else (
             "sell" if trend == "bearish" and momentum == "strong" else "hold"
         )
-        
+
+        ai_summary = analyze_chart_points(symbol, timeframe, ohlcv)
+
         return {
             "symbol": symbol,
             "timeframe": timeframe,
@@ -507,6 +549,7 @@ async def get_trading_signals(
                 "price_change": latest["close"] - prev["close"],
                 "price_change_percent": ((latest["close"] - prev["close"]) / prev["close"]) * 100
             },
+            "analysis": ai_summary,
             "timestamp": datetime.now().isoformat()
         }
     
@@ -632,22 +675,34 @@ async def get_all_signals():
 @app.get("/api/sentiment")
 async def get_sentiment():
     """Get market sentiment data"""
-    # Mock sentiment data (can be enhanced with real sentiment analysis)
-    sentiment_value = random.randint(30, 70)
-    
-    classification = "extreme_fear" if sentiment_value < 25 else (
-        "fear" if sentiment_value < 45 else (
-            "neutral" if sentiment_value < 55 else (
-                "greed" if sentiment_value < 75 else "extreme_greed"
-            )
-        )
-    )
-    
+    try:
+        news = await news_collector.get_latest_news(limit=5)
+    except CollectorError as exc:
+        logger.warning("Sentiment fallback due to news error: %s", exc)
+        news = []
+
+    text = " ".join(item.get("title", "") for item in news).strip() or "Crypto market update"
+    analysis = analyze_market_text(text)
+    score = analysis.get("signals", {}).get("crypto", {}).get("score", 0.0)
+    normalized_value = int((score + 1) * 50)
+
+    if normalized_value < 20:
+        classification = "extreme_fear"
+    elif normalized_value < 40:
+        classification = "fear"
+    elif normalized_value < 60:
+        classification = "neutral"
+    elif normalized_value < 80:
+        classification = "greed"
+    else:
+        classification = "extreme_greed"
+
     return {
-        "value": sentiment_value,
+        "value": normalized_value,
         "classification": classification,
         "description": f"Market sentiment is {classification.replace('_', ' ')}",
-        "timestamp": datetime.now().isoformat()
+        "analysis": analysis,
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -658,13 +713,22 @@ async def get_sentiment():
 @app.get("/api/system/status")
 async def get_system_status():
     """Get system status"""
+    providers = await provider_collector.get_providers_status()
+    online = sum(1 for provider in providers if provider.get("status") == "online")
+
+    cache_items = (
+        len(getattr(market_collector.cache, "_store", {}))
+        + len(getattr(news_collector.cache, "_store", {}))
+        + len(getattr(provider_collector.cache, "_store", {}))
+    )
+
     return {
-        "status": "operational",
-        "uptime_seconds": time.time(),
-        "cache_size": len(cache["ohlcv"]) + len(cache["prices"]),
-        "providers_online": 5,
+        "status": "operational" if online else "maintenance",
+        "uptime_seconds": round(time.time() - START_TIME, 2),
+        "cache_size": cache_items,
+        "providers_online": online,
         "requests_per_minute": 0,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -672,13 +736,13 @@ async def get_system_status():
 async def get_system_config():
     """Get system configuration"""
     return {
-        "version": "3.0.0",
+        "version": app.version,
         "api_version": "v1",
-        "cache_ttl_seconds": 60,
-        "supported_symbols": ["BTC", "ETH", "SOL", "BNB", "ADA", "DOT", "MATIC", "AVAX"],
+        "cache_ttl_seconds": settings.cache_ttl,
+        "supported_symbols": sorted(set(COIN_SYMBOL_MAPPING.values())),
         "supported_intervals": ["1m", "5m", "15m", "30m", "1h", "4h", "1d"],
         "max_ohlcv_limit": 1000,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -744,59 +808,64 @@ async def get_alerts():
 @app.get("/api/hf/health")
 async def hf_health():
     """HuggingFace integration health"""
-    try:
-        from backend.services.hf_registry import REGISTRY
-        return REGISTRY.health()
-    except:
-        return {
-            "status": "unavailable",
-            "message": "HF registry not initialized",
-            "timestamp": datetime.now().isoformat()
-        }
+    status = registry_status()
+    status["timestamp"] = datetime.utcnow().isoformat()
+    return status
 
 
 @app.post("/api/hf/refresh")
 async def hf_refresh():
     """Refresh HuggingFace data"""
-    try:
-        from backend.services.hf_registry import REGISTRY
-        return await REGISTRY.refresh()
-    except:
-        return {
-            "status": "error",
-            "message": "HF registry not available",
-            "timestamp": datetime.now().isoformat()
-        }
+    result = initialize_models()
+    return {"status": "ok" if result.get("success") else "degraded", **result, "timestamp": datetime.utcnow().isoformat()}
 
 
 @app.get("/api/hf/registry")
 async def hf_registry(kind: str = "models"):
     """Get HuggingFace registry"""
-    try:
-        from backend.services.hf_registry import REGISTRY
-        return {"kind": kind, "items": REGISTRY.list(kind)}
-    except:
-        return {"kind": kind, "items": [], "error": "Registry not available"}
+    info = get_model_info()
+    return {"kind": kind, "items": info.get("model_names", info)}
+
+
+def _resolve_sentiment_payload(payload: Union[List[str], Dict[str, Any]]) -> Dict[str, Any]:
+    if isinstance(payload, list):
+        return {"texts": payload, "mode": "auto"}
+    if isinstance(payload, dict):
+        texts = payload.get("texts") or payload.get("text")
+        if isinstance(texts, str):
+            texts = [texts]
+        if not isinstance(texts, list):
+            raise ValueError("texts must be provided")
+        mode = payload.get("mode") or payload.get("model") or "auto"
+        return {"texts": texts, "mode": mode}
+    raise ValueError("Invalid payload")
 
 
 @app.post("/api/hf/run-sentiment")
 @app.post("/api/hf/sentiment")
-async def hf_sentiment(texts: List[str], model: Optional[str] = None):
-    """Run sentiment analysis using HuggingFace models"""
+async def hf_sentiment(payload: Union[List[str], Dict[str, Any]] = Body(...)):
+    """Run sentiment analysis using shared AI helpers."""
+
     try:
-        from backend.services.hf_client import run_sentiment
-        return run_sentiment(texts, model=model)
-    except:
-        # Return mock sentiment if HF not available
-        results = []
-        for text in texts:
-            results.append({
-                "text": text,
-                "sentiment": "neutral",
-                "score": 0.5,
-                "confidence": 0.5
-            })
-        return {"results": results, "model": "mock"}
+        resolved = _resolve_sentiment_payload(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    mode = (resolved.get("mode") or "auto").lower()
+    texts = resolved["texts"]
+    results: List[Dict[str, Any]] = []
+    for text in texts:
+        if mode == "crypto":
+            analysis = analyze_crypto_sentiment(text)
+        elif mode == "financial":
+            analysis = analyze_market_text(text).get("signals", {}).get("financial", {})
+        elif mode == "social":
+            analysis = analyze_market_text(text).get("signals", {}).get("social", {})
+        else:
+            analysis = analyze_market_text(text)
+        results.append({"text": text, "result": analysis})
+
+    return {"mode": mode, "results": results, "timestamp": datetime.utcnow().isoformat()}
 
 
 # ============================================================================
