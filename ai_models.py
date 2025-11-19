@@ -85,6 +85,9 @@ GENERATION_MODELS = [
 TRADING_SIGNAL_MODELS = [
     "agarkovv/CryptoTrader-LM",  # BTC/ETH trading signals (buy/sell/hold)
 ]
+SUMMARIZATION_MODELS = [
+    "FurkanGozukara/Crypto-Financial-News-Summarizer",  # Crypto/Financial news summarization
+]
 
 @dataclass(frozen=True)
 class PipelineSpec:
@@ -141,6 +144,12 @@ for i, mid in enumerate(GENERATION_MODELS):
 for i, mid in enumerate(TRADING_SIGNAL_MODELS):
     MODEL_SPECS[f"crypto_trade_{i}"] = PipelineSpec(
         key=f"crypto_trade_{i}", task="text-generation", model_id=mid, category="trading_signal"
+    )
+
+# Summarization models
+for i, mid in enumerate(SUMMARIZATION_MODELS):
+    MODEL_SPECS[f"summarization_{i}"] = PipelineSpec(
+        key=f"summarization_{i}", task="summarization", model_id=mid, category="summarization"
     )
 
 class ModelNotAvailable(RuntimeError): pass
@@ -517,7 +526,8 @@ def get_model_info():
             "financial_sentiment": FINANCIAL_SENTIMENT_MODELS,
             "news_sentiment": NEWS_SENTIMENT_MODELS,
             "generation": GENERATION_MODELS,
-            "trading_signals": TRADING_SIGNAL_MODELS
+            "trading_signals": TRADING_SIGNAL_MODELS,
+            "summarization": SUMMARIZATION_MODELS
         },
         "total_models": len(MODEL_SPECS)
     }

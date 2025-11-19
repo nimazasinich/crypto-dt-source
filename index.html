@@ -270,6 +270,24 @@
                     <div id="news-sentiment-result" style="margin-top: 20px;"></div>
                 </div>
                 
+                <!-- News Summarization -->
+                <div class="card">
+                    <h3>📝 News Summarization</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Summarize crypto/financial news using AI-powered Hugging Face model
+                    </p>
+                    <div class="form-group">
+                        <label>News Title:</label>
+                        <input type="text" id="summary-news-title" placeholder="Example: Bitcoin Reaches New All-Time High">
+                    </div>
+                    <div class="form-group">
+                        <label>News Content:</label>
+                        <textarea id="summary-news-content" rows="6" placeholder="Enter the full article text here. The AI will generate a concise summary highlighting the key points..."></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="summarizeNews()">✨ Summarize News</button>
+                    <div id="news-summary-result" style="margin-top: 20px;"></div>
+                </div>
+                
                 <div class="card">
                     <h3>Analysis History</h3>
                     <div id="sentiment-history"></div>

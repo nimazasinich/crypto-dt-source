@@ -807,6 +807,143 @@ async function analyzeNewsSentiment() {
     }
 }
 
+// Summarize News
+async function summarizeNews() {
+    const title = document.getElementById('summary-news-title').value.trim();
+    const content = document.getElementById('summary-news-content').value.trim();
+    
+    if (!title && !content) {
+        showError('Please enter news title or content');
+        return;
+    }
+    
+    const resultDiv = document.getElementById('news-summary-result');
+    resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Generating summary...</div>';
+    
+    try {
+        const response = await fetch('/api/news/summarize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: title, content: content })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-error">
+                    <strong>❌ Summarization Failed:</strong> ${data.error || 'Failed to generate summary'}
+                </div>
+            `;
+            return;
+        }
+        
+        const summary = data.summary || '';
+        const model = data.model || 'Unknown';
+        const isHFModel = data.available !== false && model !== 'fallback_extractive';
+        const modelDisplay = isHFModel ? model : `${model} (Fallback)`;
+        
+        // Create collapsible card with summary
+        resultDiv.innerHTML = `
+            <div class="alert alert-success" style="border-left: 4px solid var(--primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4 style="margin: 0;">📝 News Summary</h4>
+                    <button class="btn-secondary" onclick="toggleSummaryDetails()" style="padding: 5px 10px; font-size: 12px;">
+                        <span id="toggle-summary-icon">▼</span> Details
+                    </button>
+                </div>
+                
+                ${title ? `<div style="margin-bottom: 10px;">
+                    <strong>Title:</strong> 
+                    <span style="color: var(--text-primary);">${title}</span>
+                </div>` : ''}
+                
+                <div style="background: var(--bg-card); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <strong style="color: var(--primary);">Summary:</strong>
+                    <p style="margin-top: 10px; line-height: 1.6; color: var(--text-primary);">
+                        ${summary}
+                    </p>
+                </div>
+                
+                <div id="summary-details" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                    <div style="display: grid; gap: 10px;">
+                        <div>
+                            <strong>Model:</strong> 
+                            <span style="color: var(--text-secondary);">${modelDisplay}</span>
+                            ${!isHFModel ? '<span style="color: var(--warning); font-size: 12px; margin-left: 5px;">⚠️ HF model unavailable</span>' : ''}
+                        </div>
+                        ${data.input_length ? `<div>
+                            <strong>Input Length:</strong> 
+                            <span style="color: var(--text-secondary);">${data.input_length} characters</span>
+                        </div>` : ''}
+                        <div>
+                            <strong>Timestamp:</strong> 
+                            <span style="color: var(--text-secondary);">${new Date(data.timestamp).toLocaleString()}</span>
+                        </div>
+                        ${data.note ? `<div style="color: var(--warning); font-size: 13px;">
+                            <strong>Note:</strong> ${data.note}
+                        </div>` : ''}
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                    <button class="btn-primary" onclick="copySummaryToClipboard()" style="margin-right: 10px;">
+                        📋 Copy Summary
+                    </button>
+                    <button class="btn-secondary" onclick="clearSummaryForm()">
+                        🔄 Clear
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Store summary for clipboard
+        window.lastSummary = summary;
+        
+    } catch (error) {
+        console.error('News summarization error:', error);
+        resultDiv.innerHTML = `<div class="alert alert-error">Summarization Error: ${error.message}</div>`;
+        showError('Error summarizing news');
+    }
+}
+
+// Toggle summary details
+function toggleSummaryDetails() {
+    const details = document.getElementById('summary-details');
+    const icon = document.getElementById('toggle-summary-icon');
+    if (details.style.display === 'none') {
+        details.style.display = 'block';
+        icon.textContent = '▲';
+    } else {
+        details.style.display = 'none';
+        icon.textContent = '▼';
+    }
+}
+
+// Copy summary to clipboard
+async function copySummaryToClipboard() {
+    if (!window.lastSummary) {
+        showError('No summary to copy');
+        return;
+    }
+    
+    try {
+        await navigator.clipboard.writeText(window.lastSummary);
+        showSuccess('Summary copied to clipboard!');
+    } catch (error) {
+        console.error('Failed to copy:', error);
+        showError('Failed to copy summary');
+    }
+}
+
+// Clear summary form
+function clearSummaryForm() {
+    document.getElementById('summary-news-title').value = '';
+    document.getElementById('summary-news-content').value = '';
+    document.getElementById('news-summary-result').innerHTML = '';
+    window.lastSummary = null;
+}
+
 // Analyze Sentiment (updated with model_key support)
 async function analyzeSentiment() {
     const text = document.getElementById('sentiment-text').value;
