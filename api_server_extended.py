@@ -364,6 +364,212 @@ async def fetch_coingecko_trending() -> Dict[str, Any]:
         return response.json()
 
 
+# ===== Self-Healing Health Registry =====
+from dataclasses import dataclass, field
+from typing import Callable
+import time as time_module
+
+@dataclass
+class ProviderHealthEntry:
+    """Health tracking entry for a provider/resource"""
+    id: str
+    name: str
+    status: str = "unknown"  # "healthy", "degraded", "unavailable", "unknown"
+    last_success: Optional[float] = None
+    last_error: Optional[float] = None
+    error_count: int = 0
+    success_count: int = 0
+    cooldown_until: Optional[float] = None
+    last_error_message: Optional[str] = None
+
+class HealthRegistry:
+    """
+    Self-healing health registry for providers and external API endpoints.
+    Tracks failures, implements cooldowns, and provides graceful degradation.
+    """
+    def __init__(self):
+        self._providers: Dict[str, ProviderHealthEntry] = {}
+        self._lock = threading.Lock()
+        # Load config
+        try:
+            from config import get_settings
+            self.settings = get_settings()
+        except:
+            # Fallback defaults if config not available
+            class FallbackSettings:
+                health_error_threshold = 3
+                health_cooldown_seconds = 300
+                health_success_recovery_count = 2
+            self.settings = FallbackSettings()
+    
+    def _get_or_create_entry(self, provider_id: str, provider_name: str = None) -> ProviderHealthEntry:
+        """Get or create health entry for a provider"""
+        if provider_id not in self._providers:
+            self._providers[provider_id] = ProviderHealthEntry(
+                id=provider_id,
+                name=provider_name or provider_id,
+                status="unknown"
+            )
+        return self._providers[provider_id]
+    
+    def update_on_success(self, provider_id: str, provider_name: str = None):
+        """Update health registry after successful provider call"""
+        with self._lock:
+            entry = self._get_or_create_entry(provider_id, provider_name)
+            entry.last_success = time_module.time()
+            entry.success_count += 1
+            
+            # Reset error count gradually
+            if entry.error_count > 0:
+                entry.error_count = max(0, entry.error_count - 1)
+            
+            # Recovery logic
+            if entry.success_count >= self.settings.health_success_recovery_count:
+                entry.status = "healthy"
+                entry.cooldown_until = None
+    
+    def update_on_failure(self, provider_id: str, error_msg: str, provider_name: str = None):
+        """Update health registry after failed provider call"""
+        with self._lock:
+            entry = self._get_or_create_entry(provider_id, provider_name)
+            entry.last_error = time_module.time()
+            entry.error_count += 1
+            entry.last_error_message = error_msg[:500]  # Limit error message length
+            entry.success_count = 0
+            
+            # Determine status based on error count
+            if entry.error_count >= self.settings.health_error_threshold:
+                entry.status = "unavailable"
+                entry.cooldown_until = time_module.time() + self.settings.health_cooldown_seconds
+            elif entry.error_count >= (self.settings.health_error_threshold // 2):
+                entry.status = "degraded"
+            else:
+                entry.status = "healthy"
+    
+    def is_in_cooldown(self, provider_id: str) -> bool:
+        """Check if provider is in cooldown period"""
+        if provider_id not in self._providers:
+            return False
+        entry = self._providers[provider_id]
+        if entry.cooldown_until is None:
+            return False
+        return time_module.time() < entry.cooldown_until
+    
+    def get_status(self, provider_id: str) -> Optional[str]:
+        """Get current status of a provider"""
+        if provider_id not in self._providers:
+            return "unknown"
+        return self._providers[provider_id].status
+    
+    def get_all_entries(self) -> List[Dict[str, Any]]:
+        """Get all health entries as list of dicts"""
+        with self._lock:
+            return [
+                {
+                    "id": entry.id,
+                    "name": entry.name,
+                    "status": entry.status,
+                    "last_success": entry.last_success,
+                    "last_error": entry.last_error,
+                    "error_count": entry.error_count,
+                    "success_count": entry.success_count,
+                    "cooldown_until": entry.cooldown_until,
+                    "in_cooldown": self.is_in_cooldown(entry.id),
+                    "last_error_message": entry.last_error_message
+                }
+                for entry in self._providers.values()
+            ]
+    
+    def get_summary(self) -> Dict[str, Any]:
+        """Get summary statistics of health registry"""
+        with self._lock:
+            total = len(self._providers)
+            healthy = sum(1 for e in self._providers.values() if e.status == "healthy")
+            degraded = sum(1 for e in self._providers.values() if e.status == "degraded")
+            unavailable = sum(1 for e in self._providers.values() if e.status == "unavailable")
+            unknown = sum(1 for e in self._providers.values() if e.status == "unknown")
+            in_cooldown = sum(1 for e in self._providers.values() if self.is_in_cooldown(e.id))
+            
+            return {
+                "total": total,
+                "healthy": healthy,
+                "degraded": degraded,
+                "unavailable": unavailable,
+                "unknown": unknown,
+                "in_cooldown": in_cooldown
+            }
+
+# Global health registry instance
+_health_registry = HealthRegistry()
+
+
+async def call_provider_safe(
+    provider_id: str,
+    provider_name: str,
+    call_func: Callable,
+    *args,
+    **kwargs
+) -> Dict[str, Any]:
+    """
+    Safely call a provider with health tracking.
+    
+    Args:
+        provider_id: Unique identifier for the provider
+        provider_name: Human-readable name
+        call_func: Async function to call
+        *args, **kwargs: Arguments to pass to call_func
+    
+    Returns:
+        Dict with status and data or error
+    """
+    # Check if provider is in cooldown
+    if _health_registry.is_in_cooldown(provider_id):
+        entry = _health_registry._providers[provider_id]
+        cooldown_remaining = int(entry.cooldown_until - time_module.time())
+        return {
+            "status": "cooldown",
+            "error": f"Provider in cooldown for {cooldown_remaining}s",
+            "provider_id": provider_id,
+            "cooldown_remaining": cooldown_remaining
+        }
+    
+    try:
+        # Call the provider function
+        result = await call_func(*args, **kwargs)
+        # Update health on success
+        _health_registry.update_on_success(provider_id, provider_name)
+        return {
+            "status": "success",
+            "data": result,
+            "provider_id": provider_id
+        }
+    except httpx.TimeoutException as e:
+        error_msg = f"Timeout: {str(e)[:200]}"
+        _health_registry.update_on_failure(provider_id, error_msg, provider_name)
+        return {
+            "status": "timeout",
+            "error": error_msg,
+            "provider_id": provider_id
+        }
+    except httpx.HTTPStatusError as e:
+        error_msg = f"HTTP {e.response.status_code}: {str(e)[:200]}"
+        _health_registry.update_on_failure(provider_id, error_msg, provider_name)
+        return {
+            "status": "http_error",
+            "error": error_msg,
+            "provider_id": provider_id,
+            "status_code": e.response.status_code
+        }
+    except Exception as e:
+        error_msg = f"{type(e).__name__}: {str(e)[:200]}"
+        _health_registry.update_on_failure(provider_id, error_msg, provider_name)
+        return {
+            "status": "error",
+            "error": error_msg,
+            "provider_id": provider_id
+        }
+
+
 # ===== Lifespan Management =====
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -1461,6 +1667,124 @@ async def get_last_diagnostics():
         "status": "no_previous_run",
         "message": "No previous diagnostics run found"
     }
+
+
+@app.get("/api/diagnostics/health")
+async def get_diagnostics_health():
+    """
+    Get comprehensive health status of all providers and models.
+    Returns health registry data for diagnostics and observability.
+    """
+    try:
+        # Get provider health
+        provider_health = _health_registry.get_all_entries()
+        provider_summary = _health_registry.get_summary()
+        
+        # Get model health
+        model_health = []
+        model_summary = {
+            "total": 0,
+            "healthy": 0,
+            "degraded": 0,
+            "unavailable": 0,
+            "unknown": 0,
+            "in_cooldown": 0
+        }
+        
+        try:
+            from ai_models import get_model_health_registry
+            model_health = get_model_health_registry()
+            # Calculate model summary
+            model_summary["total"] = len(model_health)
+            for model in model_health:
+                status = model.get("status", "unknown")
+                model_summary[status] = model_summary.get(status, 0) + 1
+                if model.get("in_cooldown", False):
+                    model_summary["in_cooldown"] += 1
+        except Exception as e:
+            logger.warning(f"Could not load model health: {e}")
+        
+        return {
+            "status": "success",
+            "timestamp": datetime.now().isoformat(),
+            "providers": {
+                "summary": provider_summary,
+                "entries": provider_health
+            },
+            "models": {
+                "summary": model_summary,
+                "entries": model_health
+            },
+            "overall_health": {
+                "providers_ok": provider_summary["healthy"] >= (provider_summary["total"] // 2) if provider_summary["total"] > 0 else True,
+                "models_ok": model_summary["healthy"] >= (model_summary["total"] // 4) if model_summary["total"] > 0 else True
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting health diagnostics: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
+
+@app.post("/api/diagnostics/self-heal")
+async def trigger_self_heal(model_key: Optional[str] = None):
+    """
+    Trigger self-healing actions for models.
+    Safe, idempotent, and non-blocking.
+    
+    Query params:
+        model_key: Specific model to reinitialize (optional)
+    """
+    try:
+        from ai_models import attempt_model_reinit, get_model_health_registry
+        
+        results = []
+        
+        if model_key:
+            # Reinit specific model
+            result = attempt_model_reinit(model_key)
+            results.append({
+                "model_key": model_key,
+                **result
+            })
+        else:
+            # Reinit all failed models that are out of cooldown
+            model_health = get_model_health_registry()
+            failed_models = [
+                m for m in model_health
+                if m.get("status") in ["unavailable", "degraded"]
+                and not m.get("in_cooldown", False)
+            ]
+            
+            for model in failed_models[:5]:  # Limit to 5 at a time to avoid blocking
+                result = attempt_model_reinit(model["key"])
+                results.append({
+                    "model_key": model["key"],
+                    **result
+                })
+        
+        success_count = sum(1 for r in results if r.get("status") == "success")
+        
+        return {
+            "status": "completed",
+            "timestamp": datetime.now().isoformat(),
+            "results": results,
+            "summary": {
+                "total_attempts": len(results),
+                "successful": success_count,
+                "failed": len(results) - success_count
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error in self-heal: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 
 # ===== APL (Auto Provider Loader) Endpoints =====

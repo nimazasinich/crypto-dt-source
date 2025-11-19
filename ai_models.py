@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 from config import HUGGINGFACE_MODELS, get_settings
@@ -191,12 +192,173 @@ for i, mid in enumerate(SUMMARIZATION_MODELS):
 
 class ModelNotAvailable(RuntimeError): pass
 
+@dataclass
+class ModelHealthEntry:
+    """Health tracking entry for a model"""
+    key: str
+    name: str
+    status: str = "unknown"  # "healthy", "degraded", "unavailable", "unknown"
+    last_success: Optional[float] = None
+    last_error: Optional[float] = None
+    error_count: int = 0
+    success_count: int = 0
+    cooldown_until: Optional[float] = None
+    last_error_message: Optional[str] = None
+
 class ModelRegistry:
     def __init__(self):
         self._pipelines = {}
         self._lock = threading.Lock()
         self._initialized = False
         self._failed_models = {}  # Track failed models with reasons
+        # Health tracking for self-healing
+        self._health_registry = {}  # key -> health entry
+
+    def _get_or_create_health_entry(self, key: str) -> ModelHealthEntry:
+        """Get or create health entry for a model"""
+        if key not in self._health_registry:
+            spec = MODEL_SPECS.get(key)
+            self._health_registry[key] = ModelHealthEntry(
+                key=key,
+                name=spec.model_id if spec else key,
+                status="unknown"
+            )
+        return self._health_registry[key]
+    
+    def _update_health_on_success(self, key: str):
+        """Update health registry after successful model call"""
+        entry = self._get_or_create_health_entry(key)
+        entry.last_success = time.time()
+        entry.success_count += 1
+        
+        # Reset error count gradually or fully on success
+        if entry.error_count > 0:
+            entry.error_count = max(0, entry.error_count - 1)
+        
+        # Recovery logic: if we have enough successes, mark as healthy
+        if entry.success_count >= settings.health_success_recovery_count:
+            entry.status = "healthy"
+            entry.cooldown_until = None
+            # Clear from failed models if present
+            if key in self._failed_models:
+                del self._failed_models[key]
+    
+    def _update_health_on_failure(self, key: str, error_msg: str):
+        """Update health registry after failed model call"""
+        entry = self._get_or_create_health_entry(key)
+        entry.last_error = time.time()
+        entry.error_count += 1
+        entry.last_error_message = error_msg
+        entry.success_count = 0  # Reset success count on failure
+        
+        # Determine status based on error count
+        if entry.error_count >= settings.health_error_threshold:
+            entry.status = "unavailable"
+            # Set cooldown period
+            entry.cooldown_until = time.time() + settings.health_cooldown_seconds
+        elif entry.error_count >= (settings.health_error_threshold // 2):
+            entry.status = "degraded"
+        else:
+            entry.status = "healthy"
+    
+    def _is_in_cooldown(self, key: str) -> bool:
+        """Check if model is in cooldown period"""
+        if key not in self._health_registry:
+            return False
+        entry = self._health_registry[key]
+        if entry.cooldown_until is None:
+            return False
+        return time.time() < entry.cooldown_until
+    
+    def attempt_model_reinit(self, key: str) -> Dict[str, Any]:
+        """
+        Attempt to re-initialize a failed model after cooldown.
+        Returns result dict with status and message.
+        """
+        if key not in MODEL_SPECS:
+            return {"status": "error", "message": f"Unknown model key: {key}"}
+        
+        entry = self._get_or_create_health_entry(key)
+        
+        # Check if enough time has passed since last error
+        if entry.last_error:
+            time_since_error = time.time() - entry.last_error
+            if time_since_error < settings.health_reinit_cooldown_seconds:
+                return {
+                    "status": "cooldown",
+                    "message": f"Model in cooldown, wait {int(settings.health_reinit_cooldown_seconds - time_since_error)}s",
+                    "cooldown_remaining": int(settings.health_reinit_cooldown_seconds - time_since_error)
+                }
+        
+        # Try to reinitialize
+        with self._lock:
+            # Remove from failed models and pipelines to force reload
+            if key in self._failed_models:
+                del self._failed_models[key]
+            if key in self._pipelines:
+                del self._pipelines[key]
+            
+            # Reset health entry
+            entry.error_count = 0
+            entry.status = "unknown"
+            entry.cooldown_until = None
+            
+            try:
+                # Attempt to load
+                pipe = self.get_pipeline(key)
+                return {
+                    "status": "success",
+                    "message": f"Model {key} successfully reinitialized",
+                    "model": MODEL_SPECS[key].model_id
+                }
+            except Exception as e:
+                return {
+                    "status": "failed",
+                    "message": f"Reinitialization failed: {str(e)[:200]}",
+                    "error": str(e)[:200]
+                }
+    
+    def get_model_health_registry(self) -> List[Dict[str, Any]]:
+        """Get health registry for all models"""
+        result = []
+        for key, entry in self._health_registry.items():
+            spec = MODEL_SPECS.get(key)
+            result.append({
+                "key": entry.key,
+                "name": entry.name,
+                "model_id": spec.model_id if spec else entry.name,
+                "category": spec.category if spec else "unknown",
+                "status": entry.status,
+                "last_success": entry.last_success,
+                "last_error": entry.last_error,
+                "error_count": entry.error_count,
+                "success_count": entry.success_count,
+                "cooldown_until": entry.cooldown_until,
+                "in_cooldown": self._is_in_cooldown(key),
+                "last_error_message": entry.last_error_message,
+                "loaded": key in self._pipelines
+            })
+        
+        # Add models that exist in specs but not in health registry
+        for key, spec in MODEL_SPECS.items():
+            if key not in self._health_registry:
+                result.append({
+                    "key": key,
+                    "name": spec.model_id,
+                    "model_id": spec.model_id,
+                    "category": spec.category,
+                    "status": "unknown",
+                    "last_success": None,
+                    "last_error": None,
+                    "error_count": 0,
+                    "success_count": 0,
+                    "cooldown_until": None,
+                    "in_cooldown": False,
+                    "last_error_message": None,
+                    "loaded": key in self._pipelines
+                })
+        
+        return result
 
     def _should_use_token(self, spec: PipelineSpec) -> Optional[str]:
         """Determine if and which token to use for model loading"""
@@ -219,7 +381,7 @@ class ModelRegistry:
         return None
 
     def get_pipeline(self, key: str):
-        """Get pipeline for a model key, with robust error handling"""
+        """Get pipeline for a model key, with robust error handling and health tracking"""
         if HF_MODE == "off":
             raise ModelNotAvailable("HF_MODE=off")
         if not TRANSFORMERS_AVAILABLE:
@@ -228,6 +390,12 @@ class ModelRegistry:
             raise ModelNotAvailable(f"Unknown key: {key}")
         
         spec = MODEL_SPECS[key]
+        
+        # Check if model is in cooldown
+        if self._is_in_cooldown(key):
+            entry = self._health_registry[key]
+            cooldown_remaining = int(entry.cooldown_until - time.time())
+            raise ModelNotAvailable(f"Model in cooldown for {cooldown_remaining}s: {entry.last_error_message or 'previous failures'}")
         
         # Return cached pipeline if available
         if key in self._pipelines:
@@ -265,6 +433,8 @@ class ModelRegistry:
                 
                 self._pipelines[key] = pipeline(**pipeline_kwargs)
                 logger.info(f"Successfully loaded model: {spec.model_id}")
+                # Update health on successful load
+                self._update_health_on_success(key)
                 return self._pipelines[key]
                 
             except RepositoryNotFoundError as e:
@@ -304,9 +474,45 @@ class ModelRegistry:
                 
                 logger.warning(f"Failed to load {spec.model_id}: {error_msg}")
                 self._failed_models[key] = error_msg
+                # Update health on failure
+                self._update_health_on_failure(key, error_msg)
                 raise ModelNotAvailable(error_msg) from e
         
         return self._pipelines[key]
+    
+    def call_model_safe(self, key: str, text: str, **kwargs) -> Dict[str, Any]:
+        """
+        Safely call a model with health tracking.
+        Returns result dict with status and data or error.
+        """
+        try:
+            pipe = self.get_pipeline(key)
+            result = pipe(text[:512], **kwargs)
+            # Update health on successful call
+            self._update_health_on_success(key)
+            return {
+                "status": "success",
+                "data": result,
+                "model_key": key,
+                "model_id": MODEL_SPECS[key].model_id if key in MODEL_SPECS else key
+            }
+        except ModelNotAvailable as e:
+            # Don't update health here, already updated in get_pipeline
+            return {
+                "status": "unavailable",
+                "error": str(e),
+                "model_key": key
+            }
+        except Exception as e:
+            error_msg = f"{type(e).__name__}: {str(e)[:200]}"
+            logger.warning(f"Model call failed for {key}: {error_msg}")
+            # Update health on call failure
+            self._update_health_on_failure(key, error_msg)
+            return {
+                "status": "error",
+                "error": error_msg,
+                "model_key": key
+            }
 
     def get_registry_status(self) -> Dict[str, Any]:
         """Get detailed registry status with all models"""
@@ -414,6 +620,18 @@ class ModelRegistry:
 _registry = ModelRegistry()
 
 def initialize_models(): return _registry.initialize_models()
+
+def get_model_health_registry() -> List[Dict[str, Any]]:
+    """Get health registry for all models"""
+    return _registry.get_model_health_registry()
+
+def attempt_model_reinit(model_key: str) -> Dict[str, Any]:
+    """Attempt to re-initialize a failed model"""
+    return _registry.attempt_model_reinit(model_key)
+
+def call_model_safe(model_key: str, text: str, **kwargs) -> Dict[str, Any]:
+    """Safely call a model with health tracking"""
+    return _registry.call_model_safe(model_key, text, **kwargs)
 
 def ensemble_crypto_sentiment(text: str) -> Dict[str, Any]:
     """Ensemble crypto sentiment with fallback model selection"""
