@@ -52,6 +52,8 @@ LINKED_MODEL_IDS = {
     "ElKulako/cryptobert",
     "kk08/CryptoBERT",
     "agarkovv/CryptoTrader-LM",
+    "StephanAkkerman/FinTwitBERT-sentiment",
+    "OpenC/crypto-gpt-o3-mini",
     "burakutf/finetuned-finbert-crypto",
     "mathugo/crypto_news_bert",
     "mayurjadhav/crypto-sentiment-model",
@@ -60,18 +62,29 @@ LINKED_MODEL_IDS = {
 # Extended Model Catalog - Using VERIFIED public models only
 # These models are tested and confirmed working on HuggingFace Hub
 CRYPTO_SENTIMENT_MODELS = [
-    "cardiffnlp/twitter-roberta-base-sentiment-latest",  # Verified working
+    "kk08/CryptoBERT",  # Crypto-specific sentiment binary classification
+    "ElKulako/cryptobert",  # Crypto social sentiment (Bullish/Neutral/Bearish)
+    "cardiffnlp/twitter-roberta-base-sentiment-latest",  # Fallback
 ]
 SOCIAL_SENTIMENT_MODELS = [
-    "cardiffnlp/twitter-roberta-base-sentiment-latest",  # Verified working
+    "ElKulako/cryptobert",  # Crypto social sentiment
+    "cardiffnlp/twitter-roberta-base-sentiment-latest",  # Twitter sentiment
 ]
 FINANCIAL_SENTIMENT_MODELS = [
-    "cardiffnlp/twitter-roberta-base-sentiment-latest",  # Verified working
+    "StephanAkkerman/FinTwitBERT-sentiment",  # Financial tweet sentiment
+    "ProsusAI/finbert",  # Financial sentiment
+    "cardiffnlp/twitter-roberta-base-sentiment-latest",  # Fallback
 ]
 NEWS_SENTIMENT_MODELS = [
-    "cardiffnlp/twitter-roberta-base-sentiment-latest",  # Verified working
+    "StephanAkkerman/FinTwitBERT-sentiment",  # News sentiment
+    "cardiffnlp/twitter-roberta-base-sentiment-latest",  # Fallback
 ]
-DECISION_MODELS = []  # Disable for now
+GENERATION_MODELS = [
+    "OpenC/crypto-gpt-o3-mini",  # Crypto/DeFi text generation
+]
+TRADING_SIGNAL_MODELS = [
+    "agarkovv/CryptoTrader-LM",  # BTC/ETH trading signals (buy/sell/hold)
+]
 
 @dataclass(frozen=True)
 class PipelineSpec:
@@ -116,6 +129,18 @@ for i, mid in enumerate(FINANCIAL_SENTIMENT_MODELS):
 for i, mid in enumerate(NEWS_SENTIMENT_MODELS):
     MODEL_SPECS[f"news_sent_{i}"] = PipelineSpec(
         key=f"news_sent_{i}", task="text-classification", model_id=mid, category="news_sentiment"
+    )
+
+# Generation models (for crypto/DeFi text generation)
+for i, mid in enumerate(GENERATION_MODELS):
+    MODEL_SPECS[f"crypto_gen_{i}"] = PipelineSpec(
+        key=f"crypto_gen_{i}", task="text-generation", model_id=mid, category="generation_crypto"
+    )
+
+# Trading signal models
+for i, mid in enumerate(TRADING_SIGNAL_MODELS):
+    MODEL_SPECS[f"crypto_trade_{i}"] = PipelineSpec(
+        key=f"crypto_trade_{i}", task="text-generation", model_id=mid, category="trading_signal"
     )
 
 class ModelNotAvailable(RuntimeError): pass
@@ -491,7 +516,8 @@ def get_model_info():
             "social_sentiment": SOCIAL_SENTIMENT_MODELS,
             "financial_sentiment": FINANCIAL_SENTIMENT_MODELS,
             "news_sentiment": NEWS_SENTIMENT_MODELS,
-            "decision": DECISION_MODELS
+            "generation": GENERATION_MODELS,
+            "trading_signals": TRADING_SIGNAL_MODELS
         },
         "total_models": len(MODEL_SPECS)
     }

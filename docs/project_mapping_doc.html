@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Intelligence Hub - API Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(31, 41, 55, 0.9);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            color: #60a5fa;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        h2 {
+            color: #10b981;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #10b981;
+        }
+        h3 {
+            color: #f59e0b;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #9ca3af;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        .endpoint {
+            background: rgba(17, 24, 39, 0.8);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 4px solid #60a5fa;
+        }
+        .method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        .method.get { background: #10b981; color: white; }
+        .method.post { background: #f59e0b; color: white; }
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            color: #60a5fa;
+            font-size: 1.1em;
+        }
+        .description {
+            margin: 15px 0;
+            color: #d1d5db;
+        }
+        code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #fbbf24;
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            border-left: 3px solid #60a5fa;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: #e0e0e0;
+        }
+        .model-card {
+            background: rgba(17, 24, 39, 0.8);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 4px solid #a78bfa;
+        }
+        .model-name {
+            color: #a78bfa;
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+        .model-meta {
+            color: #9ca3af;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+        }
+        th {
+            background: rgba(96, 165, 250, 0.1);
+            color: #60a5fa;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .badge-info { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+        .toc {
+            background: rgba(17, 24, 39, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .toc h3 {
+            margin-top: 0;
+            color: #60a5fa;
+        }
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .toc li {
+            padding: 8px 0;
+        }
+        .toc a {
+            color: #e0e0e0;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .toc a:hover {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Crypto Intelligence Hub</h1>
+        <p class="subtitle">Complete API Documentation & Developer Guide</p>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>📑 Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">1. System Overview</a></li>
+                <li><a href="#models">2. AI Models</a></li>
+                <li><a href="#api-endpoints">3. API Endpoints</a></li>
+                <li><a href="#frontend">4. Frontend Integration</a></li>
+                <li><a href="#deployment">5. Deployment Guide</a></li>
+            </ul>
+        </div>
+
+        <!-- Overview -->
+        <h2 id="overview">1. System Overview</h2>
+        <p class="description">
+            The Crypto Intelligence Hub is a comprehensive platform integrating real Hugging Face crypto models 
+            with external data providers. The system provides sentiment analysis, market data, news aggregation, 
+            and trading signals through a unified API and web interface.
+        </p>
+
+        <h3>Architecture Components</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>AI Models</strong></td>
+                    <td><code>ai_models.py</code></td>
+                    <td>Model registry and Hugging Face integration</td>
+                </tr>
+                <tr>
+                    <td><strong>API Server</strong></td>
+                    <td><code>api_server_extended.py</code></td>
+                    <td>FastAPI backend with all endpoints</td>
+                </tr>
+                <tr>
+                    <td><strong>Main Entry</strong></td>
+                    <td><code>hf_unified_server.py</code></td>
+                    <td>ASGI app entry point for HF Spaces</td>
+                </tr>
+                <tr>
+                    <td><strong>Frontend</strong></td>
+                    <td><code>index.html</code>, <code>static/js/app.js</code></td>
+                    <td>Web UI with tabs for all features</td>
+                </tr>
+                <tr>
+                    <td><strong>Config</strong></td>
+                    <td><code>config.py</code></td>
+                    <td>Model configurations and settings</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- AI Models -->
+        <h2 id="models">2. AI Models</h2>
+        <p class="description">
+            The system integrates 5 primary Hugging Face models for crypto analysis, plus fallback models.
+        </p>
+
+        <div class="model-card">
+            <div class="model-name">🔹 kk08/CryptoBERT</div>
+            <div class="model-meta">
+                <span class="badge badge-info">crypto_sent_0</span>
+                <span class="badge badge-success">sentiment-analysis</span>
+            </div>
+            <p class="description">
+                Crypto sentiment binary classification model trained on cryptocurrency-related text.
+                Provides sentiment analysis specifically tuned for crypto market language.
+            </p>
+        </div>
+
+        <div class="model-card">
+            <div class="model-name">🔹 ElKulako/cryptobert</div>
+            <div class="model-meta">
+                <span class="badge badge-info">crypto_sent_1 / crypto_social_0</span>
+                <span class="badge badge-success">text-classification</span>
+            </div>
+            <p class="description">
+                Crypto social sentiment classifier returning Bullish/Neutral/Bearish labels.
+                Optimized for social media and news content related to cryptocurrencies.
+            </p>
+        </div>
+
+        <div class="model-card">
+            <div class="model-name">🔹 StephanAkkerman/FinTwitBERT-sentiment</div>
+            <div class="model-meta">
+                <span class="badge badge-info">financial_sent_0 / news_sent_0</span>
+                <span class="badge badge-success">sentiment-analysis</span>
+            </div>
+            <p class="description">
+                Financial tweet sentiment analysis model for market-related social media content.
+                Specialized in analyzing financial tweets and news headlines.
+            </p>
+        </div>
+
+        <div class="model-card">
+            <div class="model-name">🔹 OpenC/crypto-gpt-o3-mini</div>
+            <div class="model-meta">
+                <span class="badge badge-info">crypto_gen_0</span>
+                <span class="badge badge-warning">text-generation</span>
+            </div>
+            <p class="description">
+                Crypto and DeFi text generation model for analysis and content creation.
+                Can generate insights, summaries, and analysis of crypto market conditions.
+            </p>
+        </div>
+
+        <div class="model-card">
+            <div class="model-name">🔹 agarkovv/CryptoTrader-LM</div>
+            <div class="model-meta">
+                <span class="badge badge-info">crypto_trade_0</span>
+                <span class="badge badge-warning">text-generation</span>
+            </div>
+            <p class="description">
+                BTC/ETH trading signal generator providing daily buy/sell/hold recommendations.
+                Returns structured trading decisions with rationale.
+            </p>
+        </div>
+
+        <!-- API Endpoints -->
+        <h2 id="api-endpoints">3. API Endpoints</h2>
+
+        <h3>Health & Status</h3>
+
+        <div class="endpoint">
+            <div>
+                <span class="method get">GET</span>
+                <span class="endpoint-path">/api/health</span>
+            </div>
+            <p class="description">Simple health check endpoint.</p>
+            <strong>Response:</strong>
+            <pre><code>{
+  "status": "ok",
+  "version": "5.0.0",
+  "timestamp": "2025-11-19T..."
+}</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method get">GET</span>
+                <span class="endpoint-path">/api/status</span>
+            </div>
+            <p class="description">Comprehensive system status including models and providers.</p>
+            <strong>Response:</strong>
+            <pre><code>{
+  "system_health": "healthy",
+  "total_resources": 150,
+  "free_resources": 120,
+  "models_available": 10,
+  "total_providers": 45,
+  "timestamp": "..."
+}</code></pre>
+        </div>
+
+        <h3>AI Models Management</h3>
+
+        <div class="endpoint">
+            <div>
+                <span class="method get">GET</span>
+                <span class="endpoint-path">/api/models/list</span>
+            </div>
+            <p class="description">List all available Hugging Face models with metadata.</p>
+            <strong>Response:</strong>
+            <pre><code>{
+  "success": true,
+  "total_models": 10,
+  "models": [
+    {
+      "key": "crypto_sent_0",
+      "name": "kk08/CryptoBERT",
+      "model_id": "kk08/CryptoBERT",
+      "task": "text-classification",
+      "category": "crypto_sentiment",
+      "requires_auth": false,
+      "loaded": true,
+      "description": "Crypto sentiment binary classification...",
+      "endpoint": "/api/models/crypto_sent_0/predict"
+    }
+  ],
+  "categories": {
+    "crypto_sentiment": [...],
+    "financial_sentiment": [...],
+    "generation": [...],
+    "trading_signals": [...]
+  }
+}</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method post">POST</span>
+                <span class="endpoint-path">/api/models/initialize</span>
+            </div>
+            <p class="description">Initialize/reload all AI models.</p>
+            <strong>Response:</strong>
+            <pre><code>{
+  "success": true,
+  "initialization": {
+    "status": "ok",
+    "mode": "public",
+    "models_loaded": 5,
+    "models_failed": 0
+  }
+}</code></pre>
+        </div>
+
+        <h3>Sentiment Analysis</h3>
+
+        <div class="endpoint">
+            <div>
+                <span class="method post">POST</span>
+                <span class="endpoint-path">/api/sentiment/analyze</span>
+            </div>
+            <p class="description">Analyze sentiment of provided text using AI models.</p>
+            <strong>Request Body:</strong>
+            <pre><code>{
+  "text": "Bitcoin price is rising rapidly!",
+  "mode": "crypto",           // auto, crypto, financial, social, news, trading
+  "model_key": "crypto_sent_0" // Optional: specific model to use
+}</code></pre>
+            <strong>Response (Sentiment):</strong>
+            <pre><code>{
+  "ok": true,
+  "available": true,
+  "sentiment": "bullish",
+  "label": "bullish",
+  "score": 0.87,
+  "confidence": 0.87,
+  "raw_label": "POSITIVE",
+  "model": "crypto_sent_0",
+  "engine": "huggingface",
+  "mode": "crypto",
+  "extra": {
+    "vote": 0.87,
+    "raw": {...}
+  }
+}</code></pre>
+            <strong>Response (Trading Signal):</strong>
+            <pre><code>{
+  "ok": true,
+  "available": true,
+  "sentiment": "buy",
+  "confidence": 0.7,
+  "model": "crypto_trade_0",
+  "mode": "trading",
+  "extra": {
+    "decision": "BUY",
+    "rationale": "Strong bullish momentum...",
+    "raw": {...}
+  }
+}</code></pre>
+        </div>
+
+        <h3>Providers & Resources</h3>
+
+        <div class="endpoint">
+            <div>
+                <span class="method get">GET</span>
+                <span class="endpoint-path">/api/providers</span>
+            </div>
+            <p class="description">List all configured data providers (HTTP APIs + HF Models).</p>
+            <strong>Response:</strong>
+            <pre><code>{
+  "providers": [
+    {
+      "id": "coingecko",
+      "provider_id": "coingecko",
+      "name": "CoinGecko",
+      "category": "market_data",
+      "base_url": "https://api.coingecko.com/api/v3",
+      "type": "http",
+      "status": "VALID",
+      "requires_auth": false,
+      "free": true
+    }
+  ],
+  "total": 45
+}</code></pre>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method get">GET</span>
+                <span class="endpoint-path">/api/resources</span>
+            </div>
+            <p class="description">Get resource summary including total/free resources and models.</p>
+            <strong>Query Parameters:</strong>
+            <ul>
+                <li><code>q</code> (optional): Search query string</li>
+            </ul>
+            <strong>Response:</strong>
+            <pre><code>{
+  "success": true,
+  "summary": {
+    "total_resources": 150,
+    "free_resources": 120,
+    "models_available": 10,
+    "local_routes_count": 25,
+    "categories": {
+      "market_data": 30,
+      "news": 25,
+      "sentiment": 15,
+      "local_backend_routes": 25
+    }
+  }
+}</code></pre>
+        </div>
+
+        <h3>Market Data</h3>
+
+        <div class="endpoint">
+            <div>
+                <span class="method get">GET</span>
+                <span class="endpoint-path">/api/market</span>
+            </div>
+            <p class="description">Real-time market data from CoinGecko API.</p>
+            <strong>Response:</strong>
+            <pre><code>{
+  "cryptocurrencies": [
+    {
+      "rank": 1,
+      "name": "Bitcoin",
+      "symbol": "BTC",
+      "price": 45000.0,
+      "change_24h": 2.5,
+      "market_cap": 850000000000,
+      "volume_24h": 25000000000
+    }
+  ],
+  "total_market_cap": 1500000000000,
+  "btc_dominance": 56.67
+}</code></pre>
+        </div>
+
+        <!-- Frontend Integration -->
+        <h2 id="frontend">4. Frontend Integration</h2>
+
+        <h3>Tab Structure</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tab</th>
+                    <th>HTML ID</th>
+                    <th>Main Functions</th>
+                    <th>Backend Endpoints</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Dashboard</strong></td>
+                    <td><code>#tab-dashboard</code></td>
+                    <td><code>loadDashboard()</code></td>
+                    <td>/api/status, /api/resources</td>
+                </tr>
+                <tr>
+                    <td><strong>Market</strong></td>
+                    <td><code>#tab-market</code></td>
+                    <td><code>loadMarketData()</code></td>
+                    <td>/api/market, /api/trending, /api/sentiment</td>
+                </tr>
+                <tr>
+                    <td><strong>AI Models</strong></td>
+                    <td><code>#tab-models</code></td>
+                    <td><code>loadModels()</code>, <code>initializeModels()</code></td>
+                    <td>/api/models/list, /api/models/initialize, /api/models/status</td>
+                </tr>
+                <tr>
+                    <td><strong>Sentiment</strong></td>
+                    <td><code>#tab-sentiment</code></td>
+                    <td><code>analyzeSentiment()</code>, <code>analyzeGlobalSentiment()</code>, <code>analyzeNewsSentiment()</code></td>
+                    <td>/api/sentiment/analyze, /api/models/list</td>
+                </tr>
+                <tr>
+                    <td><strong>News</strong></td>
+                    <td><code>#tab-news</code></td>
+                    <td><code>loadNews()</code></td>
+                    <td>/api/news/latest</td>
+                </tr>
+                <tr>
+                    <td><strong>Providers</strong></td>
+                    <td><code>#tab-providers</code></td>
+                    <td><code>loadProviders()</code>, <code>searchResources()</code></td>
+                    <td>/api/providers, /api/resources/search</td>
+                </tr>
+                <tr>
+                    <td><strong>Diagnostics</strong></td>
+                    <td><code>#tab-diagnostics</code></td>
+                    <td><code>runDiagnostics()</code>, <code>loadDiagnostics()</code></td>
+                    <td>/api/diagnostics/run, /api/status, /api/logs/errors</td>
+                </tr>
+                <tr>
+                    <td><strong>API Explorer</strong></td>
+                    <td><code>#tab-api-explorer</code></td>
+                    <td><code>testAPI()</code></td>
+                    <td>Any endpoint (user-selected)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Key JavaScript Functions</h3>
+        <div class="endpoint">
+            <h4>populateSentimentModelDropdown()</h4>
+            <p class="description">
+                Called via <code>loadSentimentModels()</code> on page load.
+                Fetches models from <code>/api/models/list</code> and populates the sentiment model dropdown.
+            </p>
+        </div>
+
+        <div class="endpoint">
+            <h4>analyzeSentiment()</h4>
+            <p class="description">
+                Reads user input from <code>#sentiment-text</code>, <code>#sentiment-mode</code>, and <code>#sentiment-model</code>.
+                Sends POST to <code>/api/sentiment/analyze</code> with optional <code>model_key</code>.
+                Displays result in <code>#sentiment-result</code> with emoji, label, confidence.
+            </p>
+        </div>
+
+        <div class="endpoint">
+            <h4>loadProviders()</h4>
+            <p class="description">
+                Fetches providers from <code>/api/providers</code>.
+                Renders provider table in <code>#providers-list</code> with status badges and response times.
+            </p>
+        </div>
+
+        <div class="endpoint">
+            <h4>loadDashboard()</h4>
+            <p class="description">
+                Loads system overview from <code>/api/status</code> and <code>/api/resources</code>.
+                Updates stat cards and creates Chart.js category chart.
+            </p>
+        </div>
+
+        <!-- Deployment -->
+        <h2 id="deployment">5. Deployment Guide</h2>
+
+        <h3>Environment Variables</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Values</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>HF_MODE</code></td>
+                    <td>off, public, auth</td>
+                    <td>Hugging Face model loading mode</td>
+                </tr>
+                <tr>
+                    <td><code>HF_TOKEN</code></td>
+                    <td>string</td>
+                    <td>Hugging Face API token (for auth mode)</td>
+                </tr>
+                <tr>
+                    <td><code>PORT</code></td>
+                    <td>integer</td>
+                    <td>Server port (default: 7860)</td>
+                </tr>
+                <tr>
+                    <td><code>USE_FASTAPI_HTML</code></td>
+                    <td>true/false</td>
+                    <td>Use FastAPI+HTML mode instead of Gradio</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Starting the Server</h3>
+        <pre><code># Local development
+uvicorn hf_unified_server:app --reload --port 7860
+
+# Docker
+docker-compose up
+
+# Hugging Face Spaces
+# Automatically uses hf_unified_server.py as entry point</code></pre>
+
+        <h3>Model Loading Modes</h3>
+        <ul>
+            <li><strong>off:</strong> No models loaded, uses fallback lexical analysis</li>
+            <li><strong>public:</strong> Loads public models without authentication (recommended)</li>
+            <li><strong>auth:</strong> Requires HF_TOKEN for private/gated models</li>
+        </ul>
+
+        <h3>Testing Endpoints</h3>
+        <p class="description">
+            Use the API Explorer tab in the web UI, or test directly with curl:
+        </p>
+        <pre><code># Test health
+curl http://localhost:7860/api/health
+
+# List models
+curl http://localhost:7860/api/models/list
+
+# Analyze sentiment
+curl -X POST http://localhost:7860/api/sentiment/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Bitcoin is bullish!", "mode": "crypto"}'</code></pre>
+
+        <hr style="margin: 40px 0; border: none; border-top: 2px solid rgba(96, 165, 250, 0.2);">
+
+        <p style="text-align: center; color: #9ca3af; margin-top: 40px;">
+            <strong>Crypto Intelligence Hub</strong> v5.0.0<br>
+            Powered by FastAPI, Hugging Face Transformers, and modern web technologies<br>
+            <a href="/" style="color: #60a5fa;">Back to Dashboard</a> | 
+            <a href="/docs" style="color: #60a5fa;">OpenAPI Docs</a>
+        </p>
+    </div>
+</body>
+</html>
