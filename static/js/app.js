@@ -144,6 +144,9 @@ function loadAPIEndpoints() {
         { value: '/api/models/list', text: 'GET /api/models/list - List Models' },
         { value: '/api/models/status', text: 'GET /api/models/status - Models Status' },
         { value: '/api/models/data/stats', text: 'GET /api/models/data/stats - Models Statistics' },
+        { value: '/api/analyze/text', text: 'POST /api/analyze/text - AI Text Analysis' },
+        { value: '/api/trading/decision', text: 'POST /api/trading/decision - Trading Signal' },
+        { value: '/api/sentiment/analyze', text: 'POST /api/sentiment/analyze - Analyze Sentiment' },
         { value: '/api/logs/recent', text: 'GET /api/logs/recent - Recent Logs' },
         { value: '/api/logs/errors', text: 'GET /api/logs/errors - Error Logs' },
         { value: '/api/diagnostics/last', text: 'GET /api/diagnostics/last - Last Diagnostics' },
@@ -2005,3 +2008,299 @@ loadDashboard = async function() {
     await originalLoadDashboard();
     updateHeaderStats();
 };
+
+// ===== AI Analyst Functions =====
+async function runAIAnalyst() {
+    const prompt = document.getElementById('ai-analyst-prompt').value.trim();
+    const mode = document.getElementById('ai-analyst-mode').value;
+    const maxLength = parseInt(document.getElementById('ai-analyst-max-length').value);
+    
+    if (!prompt) {
+        showError('Please enter a prompt or question');
+        return;
+    }
+    
+    const resultDiv = document.getElementById('ai-analyst-result');
+    resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Generating analysis...</div>';
+    
+    try {
+        const response = await fetch('/api/analyze/text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                prompt: prompt, 
+                mode: mode,
+                max_length: maxLength
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.available) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>⚠️ Model Not Available:</strong> ${data.error || 'AI generation model is currently unavailable'}
+                    ${data.note ? `<br><small>${data.note}</small>` : ''}
+                </div>
+            `;
+            return;
+        }
+        
+        if (!data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-error">
+                    <strong>❌ Generation Failed:</strong> ${data.error || 'Failed to generate analysis'}
+                </div>
+            `;
+            return;
+        }
+        
+        const generatedText = data.text || '';
+        const model = data.model || 'Unknown';
+        
+        resultDiv.innerHTML = `
+            <div class="alert alert-success" style="border-left: 4px solid var(--primary);">
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 15px;">
+                    <h4 style="margin: 0;">✨ AI Generated Analysis</h4>
+                </div>
+                
+                <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; margin: 15px 0;">
+                    <div style="line-height: 1.8; color: var(--text-primary); white-space: pre-wrap;">
+                        ${generatedText}
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                    <div style="display: grid; gap: 10px; font-size: 13px;">
+                        <div>
+                            <strong>Model:</strong> 
+                            <span style="color: var(--text-secondary);">${model}</span>
+                        </div>
+                        <div>
+                            <strong>Mode:</strong> 
+                            <span style="color: var(--text-secondary);">${mode}</span>
+                        </div>
+                        <div>
+                            <strong>Prompt:</strong> 
+                            <span style="color: var(--text-secondary);">"${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}"</span>
+                        </div>
+                        <div>
+                            <strong>Timestamp:</strong> 
+                            <span style="color: var(--text-secondary);">${new Date(data.timestamp).toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                    <button class="btn-primary" onclick="copyAIAnalystResult()" style="margin-right: 10px;">
+                        📋 Copy Analysis
+                    </button>
+                    <button class="btn-secondary" onclick="clearAIAnalystForm()">
+                        🔄 Clear
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Store for clipboard
+        window.lastAIAnalysis = generatedText;
+        
+    } catch (error) {
+        console.error('AI analyst error:', error);
+        resultDiv.innerHTML = `<div class="alert alert-error">Generation Error: ${error.message}</div>`;
+        showError('Error generating analysis');
+    }
+}
+
+function setAIAnalystPrompt(text) {
+    document.getElementById('ai-analyst-prompt').value = text;
+}
+
+async function copyAIAnalystResult() {
+    if (!window.lastAIAnalysis) {
+        showError('No analysis to copy');
+        return;
+    }
+    
+    try {
+        await navigator.clipboard.writeText(window.lastAIAnalysis);
+        showSuccess('Analysis copied to clipboard!');
+    } catch (error) {
+        console.error('Failed to copy:', error);
+        showError('Failed to copy analysis');
+    }
+}
+
+function clearAIAnalystForm() {
+    document.getElementById('ai-analyst-prompt').value = '';
+    document.getElementById('ai-analyst-result').innerHTML = '';
+    window.lastAIAnalysis = null;
+}
+
+// ===== Trading Assistant Functions =====
+async function runTradingAssistant() {
+    const symbol = document.getElementById('trading-symbol').value.trim().toUpperCase();
+    const context = document.getElementById('trading-context').value.trim();
+    
+    if (!symbol) {
+        showError('Please enter a trading symbol');
+        return;
+    }
+    
+    const resultDiv = document.getElementById('trading-assistant-result');
+    resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Analyzing and generating trading signal...</div>';
+    
+    try {
+        const response = await fetch('/api/trading/decision', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                symbol: symbol,
+                context: context
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.available) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <strong>⚠️ Model Not Available:</strong> ${data.error || 'Trading signal model is currently unavailable'}
+                    ${data.note ? `<br><small>${data.note}</small>` : ''}
+                </div>
+            `;
+            return;
+        }
+        
+        if (!data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-error">
+                    <strong>❌ Analysis Failed:</strong> ${data.error || 'Failed to generate trading signal'}
+                </div>
+            `;
+            return;
+        }
+        
+        const decision = data.decision || 'HOLD';
+        const confidence = data.confidence || 0;
+        const rationale = data.rationale || '';
+        const model = data.model || 'Unknown';
+        
+        // Determine colors and icons based on decision
+        let decisionColor, decisionBg, decisionIcon;
+        if (decision === 'BUY') {
+            decisionColor = 'var(--success)';
+            decisionBg = 'rgba(16, 185, 129, 0.2)';
+            decisionIcon = '📈';
+        } else if (decision === 'SELL') {
+            decisionColor = 'var(--danger)';
+            decisionBg = 'rgba(239, 68, 68, 0.2)';
+            decisionIcon = '📉';
+        } else {
+            decisionColor = 'var(--text-secondary)';
+            decisionBg = 'rgba(156, 163, 175, 0.2)';
+            decisionIcon = '➡️';
+        }
+        
+        resultDiv.innerHTML = `
+            <div class="alert alert-success" style="border-left: 4px solid ${decisionColor};">
+                <h4 style="margin-bottom: 20px;">🎯 Trading Signal for ${symbol}</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div style="text-align: center; padding: 30px; background: ${decisionBg}; border-radius: 10px;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">${decisionIcon}</div>
+                        <div style="font-size: 32px; font-weight: 800; color: ${decisionColor}; margin-bottom: 5px;">
+                            ${decision}
+                        </div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">
+                            Decision
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 30px; background: rgba(102, 126, 234, 0.1); border-radius: 10px;">
+                        <div style="font-size: 48px; font-weight: 800; color: var(--primary); margin-bottom: 10px;">
+                            ${(confidence * 100).toFixed(0)}%
+                        </div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">
+                            Confidence
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <strong style="color: var(--primary);">AI Rationale:</strong>
+                    <p style="margin-top: 10px; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap;">
+                        ${rationale}
+                    </p>
+                </div>
+                
+                ${context ? `
+                    <div style="margin-top: 15px; padding: 15px; background: rgba(31, 41, 55, 0.6); border-radius: 8px;">
+                        <strong>Your Context:</strong>
+                        <div style="margin-top: 5px; font-size: 13px; color: var(--text-secondary);">
+                            "${context.substring(0, 200)}${context.length > 200 ? '...' : ''}"
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <div style="display: grid; gap: 10px; font-size: 13px;">
+                        <div>
+                            <strong>Model:</strong> 
+                            <span style="color: var(--text-secondary);">${model}</span>
+                        </div>
+                        <div>
+                            <strong>Timestamp:</strong> 
+                            <span style="color: var(--text-secondary);">${new Date(data.timestamp).toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; border-left: 3px solid var(--warning);">
+                    <strong style="color: var(--warning);">⚠️ Reminder:</strong>
+                    <p style="margin-top: 5px; font-size: 13px; color: var(--text-secondary);">
+                        This is an AI-generated signal for informational purposes only. Always do your own research and consider multiple factors before trading.
+                    </p>
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Trading assistant error:', error);
+        resultDiv.innerHTML = `<div class="alert alert-error">Analysis Error: ${error.message}</div>`;
+        showError('Error generating trading signal');
+    }
+}
+
+// Initialize trading pair selector for trading assistant tab
+function initTradingSymbolSelector() {
+    const tradingSymbolContainer = document.getElementById('trading-symbol-container');
+    if (tradingSymbolContainer && window.TradingPairsLoader) {
+        const pairs = window.TradingPairsLoader.getTradingPairs();
+        if (pairs && pairs.length > 0) {
+            tradingSymbolContainer.innerHTML = window.TradingPairsLoader.createTradingPairCombobox(
+                'trading-symbol',
+                'Select or type trading pair',
+                'BTCUSDT'
+            );
+        }
+    }
+}
+
+// Update loadTabData to handle new tabs
+const originalLoadTabData = loadTabData;
+loadTabData = function(tabId) {
+    originalLoadTabData(tabId);
+    
+    // Additional handlers for new tabs
+    if (tabId === 'ai-analyst') {
+        // No initialization needed for AI Analyst yet
+    } else if (tabId === 'trading-assistant') {
+        initTradingSymbolSelector();
+    }
+};
+
+// Listen for trading pairs loaded event to initialize trading symbol selector
+document.addEventListener('tradingPairsLoaded', function(e) {
+    initTradingSymbolSelector();
+});

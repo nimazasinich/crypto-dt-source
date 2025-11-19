@@ -425,6 +425,74 @@
 }</code></pre>
         </div>
 
+        <h3>AI Text Analysis & Generation</h3>
+
+        <div class="endpoint">
+            <div>
+                <span class="method post">POST</span>
+                <span class="endpoint-path">/api/analyze/text</span>
+            </div>
+            <p class="description">Generate crypto analysis or content using OpenC/crypto-gpt-o3-mini model.</p>
+            <strong>Request Body:</strong>
+            <pre><code>{
+  "prompt": "Analyze the current DeFi market trends...",
+  "mode": "analysis",      // analysis or generation
+  "max_length": 200        // Optional: max tokens (default 200)
+}</code></pre>
+            <strong>Response:</strong>
+            <pre><code>{
+  "success": true,
+  "available": true,
+  "text": "Generated analysis text...",
+  "model": "OpenC/crypto-gpt-o3-mini",
+  "mode": "analysis",
+  "prompt": "Analyze the current...",
+  "timestamp": "2025-11-19T..."
+}</code></pre>
+            <strong>Frontend Integration:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px;">
+                <li>Tab: "AI Analyst" (<code>#tab-ai-analyst</code>)</li>
+                <li>Function: <code>runAIAnalyst()</code></li>
+                <li>UI: Textarea for prompt, mode selector, max length selector</li>
+                <li>Features: Example prompts, copy to clipboard, clear form</li>
+            </ul>
+        </div>
+
+        <h3>Trading Decision Signals</h3>
+
+        <div class="endpoint">
+            <div>
+                <span class="method post">POST</span>
+                <span class="endpoint-path">/api/trading/decision</span>
+            </div>
+            <p class="description">Get AI-powered trading signal (BUY/SELL/HOLD) using agarkovv/CryptoTrader-LM model.</p>
+            <strong>Request Body:</strong>
+            <pre><code>{
+  "symbol": "BTCUSDT",
+  "context": "Recent breakout above resistance..."  // Optional
+}</code></pre>
+            <strong>Response:</strong>
+            <pre><code>{
+  "success": true,
+  "available": true,
+  "decision": "BUY",          // BUY, SELL, or HOLD
+  "confidence": 0.7,          // 0.0 to 1.0
+  "rationale": "AI analysis and reasoning...",
+  "symbol": "BTCUSDT",
+  "model": "agarkovv/CryptoTrader-LM",
+  "context_provided": true,
+  "raw": {...},
+  "timestamp": "2025-11-19T..."
+}</code></pre>
+            <strong>Frontend Integration:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px;">
+                <li>Tab: "Trading Signals" (<code>#tab-trading-assistant</code>)</li>
+                <li>Function: <code>runTradingAssistant()</code></li>
+                <li>UI: Symbol selector (trading pairs), context textarea</li>
+                <li>Features: Visual decision badge (green BUY, red SELL, gray HOLD), confidence percentage, rationale display, disclaimer</li>
+            </ul>
+        </div>
+
         <h3>Providers & Resources</h3>
 
         <div class="endpoint">
@@ -543,6 +611,18 @@
                     <td><code>#tab-sentiment</code></td>
                     <td><code>analyzeSentiment()</code>, <code>analyzeGlobalSentiment()</code>, <code>analyzeNewsSentiment()</code></td>
                     <td>/api/sentiment/analyze, /api/models/list</td>
+                </tr>
+                <tr>
+                    <td><strong>AI Analyst</strong></td>
+                    <td><code>#tab-ai-analyst</code></td>
+                    <td><code>runAIAnalyst()</code>, <code>setAIAnalystPrompt()</code>, <code>copyAIAnalystResult()</code></td>
+                    <td>/api/analyze/text</td>
+                </tr>
+                <tr>
+                    <td><strong>Trading Signals</strong></td>
+                    <td><code>#tab-trading-assistant</code></td>
+                    <td><code>runTradingAssistant()</code>, <code>initTradingSymbolSelector()</code></td>
+                    <td>/api/trading/decision</td>
                 </tr>
                 <tr>
                     <td><strong>News</strong></td>

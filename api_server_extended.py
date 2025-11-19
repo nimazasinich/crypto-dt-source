@@ -2283,6 +2283,185 @@ async def batch_predict(request: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Batch prediction failed: {str(e)}")
 
 
+@app.post("/api/analyze/text")
+async def analyze_text(request: Dict[str, Any]):
+    """
+    Analyze or generate text using crypto-gpt-o3-mini generation model.
+    
+    Expects: { "prompt": "...", "mode": "analysis" | "generation" }
+    Returns: { "text": "...", "model": "OpenC/crypto-gpt-o3-mini" }
+    """
+    try:
+        from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
+        
+        prompt = request.get("prompt", "").strip()
+        mode = request.get("mode", "analysis").lower()
+        max_length = request.get("max_length", 200)
+        
+        if not prompt:
+            raise HTTPException(status_code=400, detail="Prompt is required")
+        
+        # Find generation model (crypto-gpt-o3-mini)
+        generation_key = None
+        for key, spec in MODEL_SPECS.items():
+            if spec.category == "generation_crypto" or "crypto-gpt" in spec.model_id.lower():
+                generation_key = key
+                break
+        
+        if not generation_key:
+            return {
+                "success": False,
+                "available": False,
+                "error": "Crypto text generation model not configured",
+                "text": ""
+            }
+        
+        try:
+            spec = MODEL_SPECS[generation_key]
+            pipeline = _registry.get_pipeline(generation_key)
+            
+            # Generate text
+            result = pipeline(prompt, max_length=max_length, num_return_sequences=1, truncation=True)
+            
+            if isinstance(result, list) and result:
+                result = result[0]
+            
+            generated_text = result.get("generated_text", str(result))
+            
+            return {
+                "success": True,
+                "available": True,
+                "text": generated_text,
+                "model": spec.model_id,
+                "mode": mode,
+                "prompt": prompt[:100],
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except ModelNotAvailable as e:
+            logger.warning(f"Generation model not available: {e}")
+            return {
+                "success": False,
+                "available": False,
+                "error": f"Model not available: {str(e)}",
+                "text": "",
+                "note": "HF model unavailable - check model configuration"
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Text analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Text analysis failed: {str(e)}")
+
+
+@app.post("/api/trading/decision")
+async def trading_decision(request: Dict[str, Any]):
+    """
+    Get trading decision from CryptoTrader-LM model.
+    
+    Expects: { "symbol": "BTC", "context": "market context..." }
+    Returns: {
+        "decision": "BUY" | "SELL" | "HOLD",
+        "confidence": float,
+        "rationale": "explanation",
+        "raw": {...}
+    }
+    """
+    try:
+        from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
+        
+        symbol = request.get("symbol", "").strip().upper()
+        context = request.get("context", "").strip()
+        
+        if not symbol:
+            raise HTTPException(status_code=400, detail="Symbol is required")
+        
+        # Find trading signal model (CryptoTrader-LM)
+        trading_key = None
+        for key, spec in MODEL_SPECS.items():
+            if spec.category == "trading_signal" or "cryptotrader" in spec.model_id.lower():
+                trading_key = key
+                break
+        
+        if not trading_key:
+            return {
+                "success": False,
+                "available": False,
+                "error": "Trading signal model not configured",
+                "decision": "HOLD",
+                "confidence": 0.0,
+                "rationale": "Model not available"
+            }
+        
+        try:
+            spec = MODEL_SPECS[trading_key]
+            pipeline = _registry.get_pipeline(trading_key)
+            
+            # Build prompt for trading model
+            if context:
+                prompt = f"Trading analysis for {symbol}: {context}"
+            else:
+                prompt = f"Trading signal for {symbol}"
+            
+            # Generate trading signal
+            result = pipeline(prompt, max_length=150, num_return_sequences=1, truncation=True)
+            
+            if isinstance(result, list) and result:
+                result = result[0]
+            
+            generated_text = result.get("generated_text", str(result))
+            
+            # Parse decision from generated text
+            decision = "HOLD"  # Default
+            confidence = 0.5
+            
+            text_lower = generated_text.lower()
+            if "buy" in text_lower and "sell" not in text_lower:
+                decision = "BUY"
+                confidence = 0.7
+            elif "sell" in text_lower and "buy" not in text_lower:
+                decision = "SELL"
+                confidence = 0.7
+            elif "hold" in text_lower:
+                decision = "HOLD"
+                confidence = 0.6
+            
+            # Extract rationale (use generated text as rationale)
+            rationale = generated_text if len(generated_text) < 500 else generated_text[:497] + "..."
+            
+            return {
+                "success": True,
+                "available": True,
+                "decision": decision,
+                "confidence": confidence,
+                "rationale": rationale,
+                "symbol": symbol,
+                "model": spec.model_id,
+                "context_provided": bool(context),
+                "raw": result,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except ModelNotAvailable as e:
+            logger.warning(f"Trading model not available: {e}")
+            return {
+                "success": False,
+                "available": False,
+                "error": f"Model not available: {str(e)}",
+                "decision": "HOLD",
+                "confidence": 0.0,
+                "rationale": "Trading model unavailable - check configuration",
+                "note": "HF model unavailable"
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Trading decision failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Trading decision failed: {str(e)}")
+
+
 @app.get("/api/models/data/generated")
 async def get_generated_data(
     limit: int = 50,

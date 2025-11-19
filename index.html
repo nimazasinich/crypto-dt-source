@@ -79,6 +79,14 @@
                 <i class="fas fa-brain"></i>
                 <span>Sentiment</span>
             </button>
+            <button class="tab-btn" data-tab="ai-analyst">
+                <i class="fas fa-magic"></i>
+                <span>AI Analyst</span>
+            </button>
+            <button class="tab-btn" data-tab="trading-assistant">
+                <i class="fas fa-chart-bar"></i>
+                <span>Trading Signals</span>
+            </button>
             <button class="tab-btn" data-tab="news">
                 <i class="fas fa-newspaper"></i>
                 <span>News</span>
@@ -291,6 +299,107 @@
                 <div class="card">
                     <h3>Analysis History</h3>
                     <div id="sentiment-history"></div>
+                </div>
+            </section>
+
+            <!-- AI Analyst Tab -->
+            <section id="tab-ai-analyst" class="tab-content">
+                <div class="section-header">
+                    <h2>🪄 AI Crypto Analyst</h2>
+                    <p style="color: var(--text-secondary); margin-top: 10px;">Powered by OpenC/crypto-gpt-o3-mini</p>
+                </div>
+                
+                <div class="card">
+                    <h3>Text Generation & Analysis</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Use AI to generate crypto market analysis, insights, or creative content related to crypto and DeFi.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label>Prompt / Question:</label>
+                        <textarea id="ai-analyst-prompt" rows="6" placeholder="Example: Analyze the current state of Bitcoin and explain potential price movements based on market sentiment..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Mode:</label>
+                        <select id="ai-analyst-mode">
+                            <option value="analysis">Analysis</option>
+                            <option value="generation">Generation</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Max Length (tokens):</label>
+                        <select id="ai-analyst-max-length">
+                            <option value="100">100</option>
+                            <option value="200" selected>200</option>
+                            <option value="300">300</option>
+                            <option value="500">500</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn-primary" onclick="runAIAnalyst()">✨ Generate Analysis</button>
+                    
+                    <div id="ai-analyst-result" style="margin-top: 20px;"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>💡 Example Prompts</h3>
+                    <div style="display: grid; gap: 10px;">
+                        <div style="padding: 10px; background: rgba(31, 41, 55, 0.6); border-radius: 8px; cursor: pointer;" onclick="setAIAnalystPrompt('Analyze the current DeFi market trends and identify key opportunities.')">
+                            <strong>DeFi Market Analysis</strong>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">Analyze the current DeFi market trends and identify key opportunities.</p>
+                        </div>
+                        <div style="padding: 10px; background: rgba(31, 41, 55, 0.6); border-radius: 8px; cursor: pointer;" onclick="setAIAnalystPrompt('Explain how Layer 2 solutions are impacting Ethereum scalability.')">
+                            <strong>Layer 2 Solutions</strong>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">Explain how Layer 2 solutions are impacting Ethereum scalability.</p>
+                        </div>
+                        <div style="padding: 10px; background: rgba(31, 41, 55, 0.6); border-radius: 8px; cursor: pointer;" onclick="setAIAnalystPrompt('What are the key factors affecting Bitcoin price movements?')">
+                            <strong>Bitcoin Price Factors</strong>
+                            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">What are the key factors affecting Bitcoin price movements?</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trading Assistant Tab -->
+            <section id="tab-trading-assistant" class="tab-content">
+                <div class="section-header">
+                    <h2>📊 Trading Signal Assistant</h2>
+                    <p style="color: var(--text-secondary); margin-top: 10px;">Powered by agarkovv/CryptoTrader-LM</p>
+                </div>
+                
+                <div class="card">
+                    <h3>Get Trading Decision</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Get AI-powered trading signals (BUY/SELL/HOLD) based on market analysis.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label>Trading Symbol:</label>
+                        <div id="trading-symbol-container">
+                            <input type="text" id="trading-symbol" placeholder="Loading pairs..." readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Market Context (Optional):</label>
+                        <textarea id="trading-context" rows="4" placeholder="Example: Recent breakout above resistance, high volume, positive news flow..."></textarea>
+                    </div>
+                    
+                    <button class="btn-primary" onclick="runTradingAssistant()">🎯 Get Trading Signal</button>
+                    
+                    <div id="trading-assistant-result" style="margin-top: 20px;"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>⚠️ Disclaimer</h3>
+                    <div class="alert alert-warning">
+                        <strong>Important:</strong> This trading assistant provides AI-generated signals for informational purposes only. 
+                        It should NOT be used as the sole basis for trading decisions. Always conduct your own research, 
+                        consider multiple factors, and consult with financial professionals before making investment decisions.
+                        Past performance does not guarantee future results.
+                    </div>
                 </div>
             </section>
 
