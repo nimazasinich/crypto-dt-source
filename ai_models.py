@@ -109,42 +109,79 @@ for lk in ["sentiment_twitter", "sentiment_financial", "summarization", "crypto_
             category="legacy"
         )
 
-# Crypto sentiment
+# Crypto sentiment - Add named keys for required models
 for i, mid in enumerate(CRYPTO_SENTIMENT_MODELS):
-    MODEL_SPECS[f"crypto_sent_{i}"] = PipelineSpec(
-        key=f"crypto_sent_{i}", task="text-classification", model_id=mid,
-        category="crypto_sentiment", requires_auth=("ElKulako" in mid)
+    key = f"crypto_sent_{i}"
+    MODEL_SPECS[key] = PipelineSpec(
+        key=key, task="text-classification", model_id=mid,
+        category="sentiment_crypto", requires_auth=("ElKulako" in mid)
     )
+
+# Add specific named aliases for required models
+MODEL_SPECS["crypto_sent_kk08"] = PipelineSpec(
+    key="crypto_sent_kk08", task="sentiment-analysis", model_id="kk08/CryptoBERT",
+    category="sentiment_crypto", requires_auth=False
+)
 
 # Social
 for i, mid in enumerate(SOCIAL_SENTIMENT_MODELS):
-    MODEL_SPECS[f"social_sent_{i}"] = PipelineSpec(
-        key=f"social_sent_{i}", task="text-classification", model_id=mid, category="social_sentiment"
+    key = f"social_sent_{i}"
+    MODEL_SPECS[key] = PipelineSpec(
+        key=key, task="text-classification", model_id=mid, 
+        category="sentiment_social", requires_auth=("ElKulako" in mid)
     )
+
+# Add specific named alias
+MODEL_SPECS["crypto_sent_social"] = PipelineSpec(
+    key="crypto_sent_social", task="text-classification", model_id="ElKulako/cryptobert",
+    category="sentiment_social", requires_auth=True
+)
 
 # Financial
 for i, mid in enumerate(FINANCIAL_SENTIMENT_MODELS):
-    MODEL_SPECS[f"financial_sent_{i}"] = PipelineSpec(
-        key=f"financial_sent_{i}", task="text-classification", model_id=mid, category="financial_sentiment"
+    key = f"financial_sent_{i}"
+    MODEL_SPECS[key] = PipelineSpec(
+        key=key, task="text-classification", model_id=mid, category="sentiment_financial"
     )
+
+# Add specific named alias
+MODEL_SPECS["crypto_sent_fin"] = PipelineSpec(
+    key="crypto_sent_fin", task="sentiment-analysis", model_id="StephanAkkerman/FinTwitBERT-sentiment",
+    category="sentiment_financial", requires_auth=False
+)
 
 # News
 for i, mid in enumerate(NEWS_SENTIMENT_MODELS):
-    MODEL_SPECS[f"news_sent_{i}"] = PipelineSpec(
-        key=f"news_sent_{i}", task="text-classification", model_id=mid, category="news_sentiment"
+    key = f"news_sent_{i}"
+    MODEL_SPECS[key] = PipelineSpec(
+        key=key, task="text-classification", model_id=mid, category="sentiment_news"
     )
 
 # Generation models (for crypto/DeFi text generation)
 for i, mid in enumerate(GENERATION_MODELS):
-    MODEL_SPECS[f"crypto_gen_{i}"] = PipelineSpec(
-        key=f"crypto_gen_{i}", task="text-generation", model_id=mid, category="generation_crypto"
+    key = f"crypto_gen_{i}"
+    MODEL_SPECS[key] = PipelineSpec(
+        key=key, task="text-generation", model_id=mid, category="analysis_generation"
     )
+
+# Add specific named alias
+MODEL_SPECS["crypto_ai_analyst"] = PipelineSpec(
+    key="crypto_ai_analyst", task="text-generation", model_id="OpenC/crypto-gpt-o3-mini",
+    category="analysis_generation", requires_auth=False
+)
 
 # Trading signal models
 for i, mid in enumerate(TRADING_SIGNAL_MODELS):
-    MODEL_SPECS[f"crypto_trade_{i}"] = PipelineSpec(
-        key=f"crypto_trade_{i}", task="text-generation", model_id=mid, category="trading_signal"
+    key = f"crypto_trade_{i}"
+    MODEL_SPECS[key] = PipelineSpec(
+        key=key, task="text-generation", model_id=mid, category="trading_signal"
     )
+
+# Add specific named alias
+MODEL_SPECS["crypto_trading_lm"] = PipelineSpec(
+    key="crypto_trading_lm", task="text-generation", model_id="agarkovv/CryptoTrader-LM",
+    category="trading_signal", requires_auth=False
+)
 
 # Summarization models
 for i, mid in enumerate(SUMMARIZATION_MODELS):
@@ -271,6 +308,33 @@ class ModelRegistry:
         
         return self._pipelines[key]
 
+    def get_registry_status(self) -> Dict[str, Any]:
+        """Get detailed registry status with all models"""
+        items = []
+        for key, spec in MODEL_SPECS.items():
+            loaded = key in self._pipelines
+            error = self._failed_models.get(key) if key in self._failed_models else None
+            
+            items.append({
+                "key": key,
+                "name": spec.model_id,
+                "task": spec.task,
+                "category": spec.category,
+                "loaded": loaded,
+                "error": error,
+                "requires_auth": spec.requires_auth
+            })
+        
+        return {
+            "models_total": len(MODEL_SPECS),
+            "models_loaded": len(self._pipelines),
+            "models_failed": len(self._failed_models),
+            "items": items,
+            "hf_mode": HF_MODE,
+            "transformers_available": TRANSFORMERS_AVAILABLE,
+            "initialized": self._initialized
+        }
+    
     def initialize_models(self):
         """Initialize models with fallback logic - tries primary models first"""
         if self._initialized:

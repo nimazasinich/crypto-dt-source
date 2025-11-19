@@ -773,6 +773,163 @@ async def get_sentiment():
         raise HTTPException(status_code=503, detail=f"Failed to fetch sentiment: {str(e)}")
 
 
+@app.post("/api/sentiment")
+async def analyze_sentiment_simple(request: Dict[str, Any]):
+    """Analyze sentiment with mode routing - simplified endpoint"""
+    try:
+        from ai_models import (
+            analyze_crypto_sentiment,
+            analyze_financial_sentiment,
+            analyze_social_sentiment,
+            _registry,
+            MODEL_SPECS,
+            ModelNotAvailable
+        )
+        
+        text = request.get("text", "").strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="Text is required")
+        
+        mode = request.get("mode", "auto").lower()
+        model_key = request.get("model_key")
+        
+        # If model_key is provided, use that specific model
+        if model_key:
+            if model_key not in MODEL_SPECS:
+                raise HTTPException(status_code=404, detail=f"Model key '{model_key}' not found")
+            
+            try:
+                pipeline = _registry.get_pipeline(model_key)
+                spec = MODEL_SPECS[model_key]
+                
+                # Handle trading signal models specially
+                if spec.category == "trading_signal":
+                    raw_result = pipeline(text, max_length=200, num_return_sequences=1)
+                    if isinstance(raw_result, list) and raw_result:
+                        raw_result = raw_result[0]
+                    generated_text = raw_result.get("generated_text", str(raw_result))
+                    
+                    decision = "HOLD"
+                    if "buy" in generated_text.lower():
+                        decision = "BUY"
+                    elif "sell" in generated_text.lower():
+                        decision = "SELL"
+                    
+                    return {
+                        "sentiment": decision.lower(),
+                        "confidence": 0.7,
+                        "raw_label": decision,
+                        "mode": "trading",
+                        "model": model_key,
+                        "extra": {
+                            "decision": decision,
+                            "rationale": generated_text,
+                            "raw": raw_result
+                        }
+                    }
+                
+                # Regular sentiment analysis
+                raw_result = pipeline(text[:512])
+                if isinstance(raw_result, list) and raw_result:
+                    raw_result = raw_result[0]
+                
+                label = raw_result.get("label", "neutral").upper()
+                score = raw_result.get("score", 0.5)
+                
+                # Map to standard format
+                mapped = "Bullish" if "POSITIVE" in label or "BULLISH" in label or "LABEL_2" in label else (
+                    "Bearish" if "NEGATIVE" in label or "BEARISH" in label or "LABEL_0" in label else "Neutral"
+                )
+                
+                return {
+                    "sentiment": mapped,
+                    "confidence": score,
+                    "raw_label": label,
+                    "mode": mode,
+                    "model": model_key,
+                    "extra": {"raw": raw_result}
+                }
+                
+            except ModelNotAvailable as e:
+                logger.warning(f"Model {model_key} not available: {e}")
+                raise HTTPException(status_code=503, detail=f"Model not available: {str(e)}")
+        
+        # Mode-based routing (no explicit model key)
+        result = None
+        actual_model = None
+        
+        if mode == "crypto" or mode == "auto":
+            result = analyze_crypto_sentiment(text)
+            actual_model = "crypto_sent_kk08"  # Default crypto model
+        elif mode == "social":
+            result = analyze_social_sentiment(text)
+            actual_model = "crypto_sent_social"  # ElKulako/cryptobert
+        elif mode == "financial":
+            result = analyze_financial_sentiment(text)
+            actual_model = "crypto_sent_fin"  # FinTwitBERT
+        elif mode == "news":
+            result = analyze_financial_sentiment(text)  # Use financial for news
+            actual_model = "crypto_sent_fin"
+        elif mode == "trading":
+            # Try to use trading model
+            try:
+                pipeline = _registry.get_pipeline("crypto_trading_lm")
+                raw_result = pipeline(text, max_length=200, num_return_sequences=1)
+                if isinstance(raw_result, list) and raw_result:
+                    raw_result = raw_result[0]
+                generated_text = raw_result.get("generated_text", str(raw_result))
+                
+                decision = "HOLD"
+                if "buy" in generated_text.lower():
+                    decision = "BUY"
+                elif "sell" in generated_text.lower():
+                    decision = "SELL"
+                
+                return {
+                    "sentiment": decision,
+                    "confidence": 0.7,
+                    "raw_label": decision,
+                    "mode": "trading",
+                    "model": "crypto_trading_lm",
+                    "extra": {
+                        "decision": decision,
+                        "rationale": generated_text
+                    }
+                }
+            except ModelNotAvailable:
+                # Fallback to crypto sentiment
+                result = analyze_crypto_sentiment(text)
+                actual_model = "crypto_sent_kk08"
+        else:
+            result = analyze_crypto_sentiment(text)  # Default fallback
+            actual_model = "crypto_sent_kk08"
+        
+        if not result:
+            raise HTTPException(status_code=500, detail="Sentiment analysis failed")
+        
+        # Standardize result format
+        sentiment = result.get("label", "Neutral")
+        confidence = result.get("confidence", 0.5)
+        
+        # Capitalize first letter
+        sentiment_formatted = sentiment.capitalize() if isinstance(sentiment, str) else "Neutral"
+        
+        return {
+            "sentiment": sentiment_formatted,
+            "confidence": confidence,
+            "raw_label": sentiment,
+            "mode": mode,
+            "model": actual_model,
+            "extra": result
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Sentiment analysis error: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
 @app.get("/api/resources")
 async def get_resources(q: Optional[str] = None):
     """Get all resources with optional search query and deduplication"""
@@ -2357,18 +2514,21 @@ async def get_models_status():
 async def initialize_ai_models():
     """Initialize AI models (force reload)"""
     try:
-        from ai_models import initialize_models, registry_status
+        from ai_models import initialize_models, _registry
         
         result = initialize_models()
-        registry_info = registry_status()
+        registry_status = _registry.get_registry_status()
         
-        return {
-            "success": True,
-            "initialization": result,
-            "registry": registry_info
-        }
+        return registry_status
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to initialize models: {str(e)}")
+        logger.error(f"Failed to initialize models: {e}")
+        return {
+            "models_total": 0,
+            "models_loaded": 0,
+            "models_failed": 0,
+            "items": [],
+            "error": str(e)
+        }
 
 
 # ===== Model-based Data Endpoints (Using HF Models as Data Sources) =====
