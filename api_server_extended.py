@@ -2763,12 +2763,15 @@ async def analyze_text(request: Dict[str, Any]):
         if not prompt:
             raise HTTPException(status_code=400, detail="Prompt is required")
         
-        # Find generation model (crypto-gpt-o3-mini)
-        generation_key = None
-        for key, spec in MODEL_SPECS.items():
-            if spec.category == "generation_crypto" or "crypto-gpt" in spec.model_id.lower():
-                generation_key = key
-                break
+        # Find generation model (crypto-gpt-o3-mini) - use specific key first
+        generation_key = "crypto_ai_analyst" if "crypto_ai_analyst" in MODEL_SPECS else None
+        
+        # Fallback: search by category or model name
+        if not generation_key:
+            for key, spec in MODEL_SPECS.items():
+                if spec.category == "analysis_generation" or "crypto-gpt" in spec.model_id.lower():
+                    generation_key = key
+                    break
         
         if not generation_key:
             return {
@@ -2839,12 +2842,15 @@ async def trading_decision(request: Dict[str, Any]):
         if not symbol:
             raise HTTPException(status_code=400, detail="Symbol is required")
         
-        # Find trading signal model (CryptoTrader-LM)
-        trading_key = None
-        for key, spec in MODEL_SPECS.items():
-            if spec.category == "trading_signal" or "cryptotrader" in spec.model_id.lower():
-                trading_key = key
-                break
+        # Find trading signal model (CryptoTrader-LM) - use specific key first
+        trading_key = "crypto_trading_lm" if "crypto_trading_lm" in MODEL_SPECS else None
+        
+        # Fallback: search by category or model name
+        if not trading_key:
+            for key, spec in MODEL_SPECS.items():
+                if spec.category == "trading_signal" or "cryptotrader" in spec.model_id.lower():
+                    trading_key = key
+                    break
         
         if not trading_key:
             return {
