@@ -975,8 +975,8 @@ async function analyzeSentiment() {
             requestBody.model_key = modelKey;
         }
         
-        // Use the sentiment/analyze endpoint with mode and optional model_key
-        response = await fetch('/api/sentiment/analyze', {
+        // Use the sentiment endpoint with mode and optional model_key
+        response = await fetch('/api/sentiment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)

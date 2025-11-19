@@ -207,6 +207,115 @@ def load_api_registry() -> Dict[str, Any]:
         return {}
 
 
+# ===== Deduplication Helpers =====
+def deduplicate_providers(providers_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Deduplicate providers by id, or by name+base_url if no id.
+    Merge tags/categories when duplicates are found.
+    """
+    seen = {}
+    result = []
+    
+    for provider in providers_list:
+        # Determine unique key
+        provider_id = provider.get("id") or provider.get("provider_id")
+        if provider_id:
+            key = f"id:{provider_id}"
+        else:
+            name = provider.get("name", "unknown")
+            base_url = provider.get("base_url", "")
+            key = f"name_url:{name}:{base_url}"
+        
+        if key in seen:
+            # Merge tags/categories
+            existing = seen[key]
+            existing_tags = set(existing.get("tags", []) if isinstance(existing.get("tags"), list) else [])
+            new_tags = set(provider.get("tags", []) if isinstance(provider.get("tags"), list) else [])
+            existing["tags"] = list(existing_tags | new_tags)
+            
+            # Merge categories if different
+            existing_cat = existing.get("category", "")
+            new_cat = provider.get("category", "")
+            if new_cat and new_cat != existing_cat:
+                if existing_cat:
+                    existing["categories"] = list(set([existing_cat, new_cat]))
+                else:
+                    existing["category"] = new_cat
+        else:
+            # Ensure tags is a list
+            if "tags" not in provider:
+                provider["tags"] = []
+            elif not isinstance(provider["tags"], list):
+                provider["tags"] = [provider["tags"]]
+            
+            seen[key] = provider
+            result.append(provider)
+    
+    return result
+
+
+def deduplicate_resources(resources_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Deduplicate resources by id, or by name+url if no id.
+    """
+    seen = {}
+    result = []
+    
+    for resource in resources_list:
+        # Determine unique key
+        resource_id = resource.get("id")
+        if resource_id:
+            key = f"id:{resource_id}"
+        else:
+            name = resource.get("name", "unknown")
+            url = resource.get("url") or resource.get("base_url", "")
+            path = resource.get("path", "")
+            key = f"name_url:{name}:{url}{path}"
+        
+        if key not in seen:
+            seen[key] = resource
+            result.append(resource)
+    
+    return result
+
+
+def filter_resources_by_query(resources: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
+    """
+    Filter resources by search query (case-insensitive).
+    Searches in name, description, category, and tags.
+    """
+    if not query:
+        return resources
+    
+    query_lower = query.lower()
+    filtered = []
+    
+    for resource in resources:
+        # Search in name
+        if query_lower in resource.get("name", "").lower():
+            filtered.append(resource)
+            continue
+        
+        # Search in description
+        if query_lower in resource.get("description", "").lower():
+            filtered.append(resource)
+            continue
+        
+        # Search in category
+        if query_lower in resource.get("category", "").lower():
+            filtered.append(resource)
+            continue
+        
+        # Search in tags
+        tags = resource.get("tags", [])
+        if isinstance(tags, list):
+            if any(query_lower in str(tag).lower() for tag in tags):
+                filtered.append(resource)
+                continue
+    
+    return filtered
+
+
 # ===== Real Data Providers =====
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -429,7 +538,7 @@ async def ai_tools_page(request: Request):
 # ===== Health & Status Endpoints =====
 @app.get("/health")
 async def health():
-    """Health check endpoint"""
+    """Health check endpoint (legacy)"""
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
@@ -439,24 +548,107 @@ async def health():
     }
 
 
+@app.get("/api/health")
+async def api_health():
+    """API health check endpoint - never crashes"""
+    try:
+        version = "1.0.0"
+        try:
+            # Try to get version from metadata
+            api_registry = load_api_registry()
+            metadata = api_registry.get("metadata", {})
+            if metadata.get("version"):
+                version = metadata.get("version")
+        except Exception:
+            pass
+        
+        return {
+            "status": "ok",
+            "timestamp": datetime.now().isoformat(),
+            "version": version
+        }
+    except Exception as e:
+        # Even if something goes wrong, return a clean response
+        logger.error(f"Health check error: {e}")
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "ok",
+                "timestamp": datetime.now().isoformat(),
+                "version": "unknown"
+            }
+        )
+
+
 @app.get("/api/status")
 async def get_status():
-    """System status"""
-    config = load_providers_config()
-    providers = config.get("providers", {})
-    
-    # Count by validation status
-    validated_count = sum(1 for p in providers.values() if p.get("validated"))
-    
-    return {
-        "system_health": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "total_providers": len(providers),
-        "validated_providers": validated_count,
-        "database_status": "connected",
-        "apl_available": AUTO_DISCOVERY_REPORT_PATH.exists(),
-        "use_mock_data": USE_MOCK_DATA
-    }
+    """System status with real aggregated data"""
+    try:
+        # Load providers
+        config = load_providers_config()
+        providers = config.get("providers", {})
+        
+        # Count free vs paid providers
+        free_count = sum(1 for p in providers.values() 
+                        if not p.get("requires_auth", False) and p.get("rate_limit"))
+        paid_count = sum(1 for p in providers.values() 
+                        if p.get("requires_auth", False))
+        
+        # Load resources from unified file
+        resources_json = WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+        resources_data = {"total": 0, "categories": {}}
+        
+        if resources_json.exists():
+            try:
+                with open(resources_json, 'r', encoding='utf-8') as f:
+                    unified_data = json.load(f)
+                    registry = unified_data.get('registry', {})
+                    
+                    for category, items in registry.items():
+                        if category == 'metadata':
+                            continue
+                        if isinstance(items, list):
+                            count = len(items)
+                            resources_data['total'] += count
+                            
+                            # Group similar categories
+                            cat_key = category.replace('_', '-')
+                            if cat_key not in resources_data['categories']:
+                                resources_data['categories'][cat_key] = 0
+                            resources_data['categories'][cat_key] += count
+            except Exception as e:
+                logger.error(f"Error loading resources: {e}")
+        
+        # Get model count
+        model_count = 0
+        try:
+            from ai_models import MODEL_SPECS
+            model_count = len(MODEL_SPECS) if MODEL_SPECS else 0
+        except Exception:
+            pass
+        
+        return {
+            "status": "ok",
+            "timestamp": datetime.now().isoformat(),
+            "providers": {
+                "total": len(providers),
+                "free": free_count,
+                "paid": paid_count
+            },
+            "resources": resources_data,
+            "models": {
+                "total": model_count
+            }
+        }
+    except Exception as e:
+        logger.error(f"Status endpoint error: {e}")
+        return {
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e),
+            "providers": {"total": 0, "free": 0, "paid": 0},
+            "resources": {"total": 0, "categories": {}}
+        }
 
 
 @app.get("/api/stats")
@@ -581,8 +773,245 @@ async def get_sentiment():
         raise HTTPException(status_code=503, detail=f"Failed to fetch sentiment: {str(e)}")
 
 
+@app.post("/api/sentiment")
+async def analyze_sentiment_simple(request: Dict[str, Any]):
+    """Analyze sentiment with mode routing - simplified endpoint"""
+    try:
+        from ai_models import (
+            analyze_crypto_sentiment,
+            analyze_financial_sentiment,
+            analyze_social_sentiment,
+            _registry,
+            MODEL_SPECS,
+            ModelNotAvailable
+        )
+        
+        text = request.get("text", "").strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="Text is required")
+        
+        mode = request.get("mode", "auto").lower()
+        model_key = request.get("model_key")
+        
+        # If model_key is provided, use that specific model
+        if model_key:
+            if model_key not in MODEL_SPECS:
+                raise HTTPException(status_code=404, detail=f"Model key '{model_key}' not found")
+            
+            try:
+                pipeline = _registry.get_pipeline(model_key)
+                spec = MODEL_SPECS[model_key]
+                
+                # Handle trading signal models specially
+                if spec.category == "trading_signal":
+                    raw_result = pipeline(text, max_length=200, num_return_sequences=1)
+                    if isinstance(raw_result, list) and raw_result:
+                        raw_result = raw_result[0]
+                    generated_text = raw_result.get("generated_text", str(raw_result))
+                    
+                    decision = "HOLD"
+                    if "buy" in generated_text.lower():
+                        decision = "BUY"
+                    elif "sell" in generated_text.lower():
+                        decision = "SELL"
+                    
+                    return {
+                        "sentiment": decision.lower(),
+                        "confidence": 0.7,
+                        "raw_label": decision,
+                        "mode": "trading",
+                        "model": model_key,
+                        "extra": {
+                            "decision": decision,
+                            "rationale": generated_text,
+                            "raw": raw_result
+                        }
+                    }
+                
+                # Regular sentiment analysis
+                raw_result = pipeline(text[:512])
+                if isinstance(raw_result, list) and raw_result:
+                    raw_result = raw_result[0]
+                
+                label = raw_result.get("label", "neutral").upper()
+                score = raw_result.get("score", 0.5)
+                
+                # Map to standard format
+                mapped = "Bullish" if "POSITIVE" in label or "BULLISH" in label or "LABEL_2" in label else (
+                    "Bearish" if "NEGATIVE" in label or "BEARISH" in label or "LABEL_0" in label else "Neutral"
+                )
+                
+                return {
+                    "sentiment": mapped,
+                    "confidence": score,
+                    "raw_label": label,
+                    "mode": mode,
+                    "model": model_key,
+                    "extra": {"raw": raw_result}
+                }
+                
+            except ModelNotAvailable as e:
+                logger.warning(f"Model {model_key} not available: {e}")
+                raise HTTPException(status_code=503, detail=f"Model not available: {str(e)}")
+        
+        # Mode-based routing (no explicit model key)
+        result = None
+        actual_model = None
+        
+        if mode == "crypto" or mode == "auto":
+            result = analyze_crypto_sentiment(text)
+            actual_model = "crypto_sent_kk08"  # Default crypto model
+        elif mode == "social":
+            result = analyze_social_sentiment(text)
+            actual_model = "crypto_sent_social"  # ElKulako/cryptobert
+        elif mode == "financial":
+            result = analyze_financial_sentiment(text)
+            actual_model = "crypto_sent_fin"  # FinTwitBERT
+        elif mode == "news":
+            result = analyze_financial_sentiment(text)  # Use financial for news
+            actual_model = "crypto_sent_fin"
+        elif mode == "trading":
+            # Try to use trading model
+            try:
+                pipeline = _registry.get_pipeline("crypto_trading_lm")
+                raw_result = pipeline(text, max_length=200, num_return_sequences=1)
+                if isinstance(raw_result, list) and raw_result:
+                    raw_result = raw_result[0]
+                generated_text = raw_result.get("generated_text", str(raw_result))
+                
+                decision = "HOLD"
+                if "buy" in generated_text.lower():
+                    decision = "BUY"
+                elif "sell" in generated_text.lower():
+                    decision = "SELL"
+                
+                return {
+                    "sentiment": decision,
+                    "confidence": 0.7,
+                    "raw_label": decision,
+                    "mode": "trading",
+                    "model": "crypto_trading_lm",
+                    "extra": {
+                        "decision": decision,
+                        "rationale": generated_text
+                    }
+                }
+            except ModelNotAvailable:
+                # Fallback to crypto sentiment
+                result = analyze_crypto_sentiment(text)
+                actual_model = "crypto_sent_kk08"
+        else:
+            result = analyze_crypto_sentiment(text)  # Default fallback
+            actual_model = "crypto_sent_kk08"
+        
+        if not result:
+            raise HTTPException(status_code=500, detail="Sentiment analysis failed")
+        
+        # Standardize result format
+        sentiment = result.get("label", "Neutral")
+        confidence = result.get("confidence", 0.5)
+        
+        # Capitalize first letter
+        sentiment_formatted = sentiment.capitalize() if isinstance(sentiment, str) else "Neutral"
+        
+        return {
+            "sentiment": sentiment_formatted,
+            "confidence": confidence,
+            "raw_label": sentiment,
+            "mode": mode,
+            "model": actual_model,
+            "extra": result
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Sentiment analysis error: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
 @app.get("/api/resources")
-async def get_resources():
+async def get_resources(q: Optional[str] = None):
+    """Get all resources with optional search query and deduplication"""
+    try:
+        resources_list = []
+        
+        # Load from unified resources file
+        resources_json = WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+        if resources_json.exists():
+            try:
+                with open(resources_json, 'r', encoding='utf-8') as f:
+                    unified_data = json.load(f)
+                    registry = unified_data.get('registry', {})
+                    
+                    for category, items in registry.items():
+                        if category == 'metadata':
+                            continue
+                        if isinstance(items, list):
+                            for item in items:
+                                # Normalize resource structure
+                                resource = {
+                                    "id": item.get("id"),
+                                    "name": item.get("name", item.get("title", "Unknown")),
+                                    "category": category,
+                                    "url": item.get("url") or item.get("base_url", ""),
+                                    "free": item.get("free", True),
+                                    "auth_required": item.get("auth_required", False) or (item.get("auth", {}).get("type") != "none" if "auth" in item else False),
+                                    "tags": item.get("tags", []) if isinstance(item.get("tags"), list) else [],
+                                    "description": item.get("description", "") or item.get("note", "")
+                                }
+                                
+                                # Additional fields if present
+                                if "method" in item:
+                                    resource["method"] = item["method"]
+                                if "path" in item:
+                                    resource["path"] = item["path"]
+                                if "endpoint" in item:
+                                    resource["endpoint"] = item["endpoint"]
+                                
+                                resources_list.append(resource)
+            except Exception as e:
+                logger.error(f"Error loading unified resources: {e}")
+        
+        # Load from API registry (all_apis_merged_2025.json)
+        api_registry = load_api_registry()
+        if api_registry and "raw_files" in api_registry:
+            # Parse raw files for additional resources (basic extraction)
+            for raw_file in api_registry.get("raw_files", [])[:10]:  # Limit to first 10
+                content = raw_file.get("content", "")
+                filename = raw_file.get("filename", "")
+                
+                # Simple extraction: look for URLs in content
+                import re
+                urls = re.findall(r'https?://[^\s<>"]+', content)
+                for url in urls[:5]:  # Limit URLs per file
+                    resources_list.append({
+                        "id": None,
+                        "name": f"Resource from {filename}",
+                        "category": "discovered",
+                        "url": url,
+                        "free": True,
+                        "auth_required": False,
+                        "tags": ["auto-discovered"],
+                        "description": f"Auto-discovered from {filename}"
+                    })
+        
+        # Apply deduplication
+        deduplicated_resources = deduplicate_resources(resources_list)
+        
+        # Apply search filter if query provided
+        if q:
+            deduplicated_resources = filter_resources_by_query(deduplicated_resources, q)
+        
+        return deduplicated_resources
+        
+    except Exception as e:
+        logger.error(f"Error in get_resources: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch resources: {str(e)}")
+
+
+@app.get("/api/resources/summary")
+async def get_resources_summary():
     """Get resources summary for HTML dashboard (includes API registry metadata and local routes)"""
     try:
         # Load API registry for metadata
@@ -798,70 +1227,100 @@ async def get_trending():
 # ===== Providers Management Endpoints =====
 @app.get("/api/providers")
 async def get_providers():
-    """Get all providers from providers_config_extended.json + HF Models + auto-discovery status"""
-    config = load_providers_config()
-    providers = config.get("providers", {})
-    
-    # Load auto-discovery report to merge status
-    discovery_report = load_auto_discovery_report()
-    discovery_results = {}
-    if discovery_report and "http_providers" in discovery_report:
-        for result in discovery_report["http_providers"].get("results", []):
-            discovery_results[result.get("provider_id")] = result
-    
-    result = []
-    for provider_id, provider_data in providers.items():
-        # Merge with auto-discovery data if available
-        discovery_data = discovery_results.get(provider_id, {})
-        
-        provider_entry = {
-            "id": provider_id,
-            "provider_id": provider_id,  # Keep for backward compatibility
-            "name": provider_data.get("name", provider_id),
-            "category": provider_data.get("category", "unknown"),
-            "base_url": provider_data.get("base_url", ""),
-            "type": provider_data.get("type", "http"),
-            "priority": provider_data.get("priority", 0),
-            "weight": provider_data.get("weight", 0),
-            "requires_auth": provider_data.get("requires_auth", False),
-            "rate_limit": provider_data.get("rate_limit", {}),
-            "endpoints": provider_data.get("endpoints", {}),
-            "status": discovery_data.get("status", "UNKNOWN") if discovery_data else "unvalidated",
-            "validated_at": provider_data.get("validated_at"),
-            "response_time_ms": discovery_data.get("response_time_ms") or provider_data.get("response_time_ms"),
-            "error_reason": discovery_data.get("error_reason"),
-            "test_endpoint": discovery_data.get("test_endpoint"),
-            "added_by": provider_data.get("added_by", "manual")
-        }
-        result.append(provider_entry)
-    
-    # Add HF Models as providers
+    """Get all providers with deduplication applied"""
     try:
-        from ai_models import MODEL_SPECS, _registry
-        for model_key, spec in MODEL_SPECS.items():
-            is_loaded = model_key in _registry._pipelines
-            result.append({
-                "id": f"hf_model_{model_key}",
-                "provider_id": f"hf_model_{model_key}",
-                "name": f"HF Model: {spec.model_id}",
-                "category": spec.category,
-                "type": "hf_model",
-                "status": "available" if is_loaded else "not_loaded",
-                "model_key": model_key,
-                "model_id": spec.model_id,
-                "task": spec.task,
-                "requires_auth": spec.requires_auth,
-                "endpoint": f"/api/models/{model_key}/predict",
-                "added_by": "hf_models"
-            })
+        # Load primary config
+        config = load_providers_config()
+        providers_dict = config.get("providers", {})
+        
+        # Load auto-discovery report for validation status
+        discovery_report = load_auto_discovery_report()
+        discovery_results = {}
+        if discovery_report and "http_providers" in discovery_report:
+            for result in discovery_report["http_providers"].get("results", []):
+                discovery_results[result.get("provider_id")] = result
+        
+        # Build provider list from primary config
+        providers_list = []
+        for provider_id, provider_data in providers_dict.items():
+            # Merge with auto-discovery data if available
+            discovery_data = discovery_results.get(provider_id, {})
+            
+            # Determine auth requirement
+            auth_required = provider_data.get("requires_auth", False)
+            free = not auth_required
+            
+            # Extract tags from provider data
+            tags = []
+            if "tags" in provider_data:
+                tags = provider_data["tags"] if isinstance(provider_data["tags"], list) else [provider_data["tags"]]
+            
+            # Build description
+            description = provider_data.get("description", "") or provider_data.get("note", "")
+            if not description and provider_data.get("name"):
+                description = f"{provider_data.get('name')} - {provider_data.get('category', 'unknown')} provider"
+            
+            provider_entry = {
+                "id": provider_id,
+                "name": provider_data.get("name", provider_id),
+                "category": provider_data.get("category", "unknown"),
+                "base_url": provider_data.get("base_url", ""),
+                "auth_required": auth_required,
+                "free": free,
+                "tags": tags,
+                "description": description,
+                "type": provider_data.get("type", "http"),
+                "priority": provider_data.get("priority", 0),
+                "weight": provider_data.get("weight", 0),
+                "rate_limit": provider_data.get("rate_limit", {}),
+                "endpoints": provider_data.get("endpoints", {}),
+                "status": discovery_data.get("status", "UNKNOWN") if discovery_data else "unvalidated",
+                "validated_at": provider_data.get("validated_at"),
+                "response_time_ms": discovery_data.get("response_time_ms") or provider_data.get("response_time_ms"),
+                "added_by": provider_data.get("added_by", "manual")
+            }
+            providers_list.append(provider_entry)
+        
+        # Add HF Models as providers (with proper structure)
+        try:
+            from ai_models import MODEL_SPECS, _registry
+            for model_key, spec in MODEL_SPECS.items():
+                is_loaded = model_key in _registry._pipelines
+                providers_list.append({
+                    "id": f"hf_model_{model_key}",
+                    "name": f"HF Model: {spec.model_id}",
+                    "category": spec.category,
+                    "base_url": f"/api/models/{model_key}/predict",
+                    "auth_required": spec.requires_auth,
+                    "free": not spec.requires_auth,
+                    "tags": ["huggingface", "ai-model", spec.task, spec.category],
+                    "description": f"Hugging Face {spec.task} model for {spec.category}",
+                    "type": "hf_model",
+                    "status": "available" if is_loaded else "not_loaded",
+                    "model_key": model_key,
+                    "model_id": spec.model_id,
+                    "task": spec.task,
+                    "added_by": "hf_models"
+                })
+        except Exception as e:
+            logger.warning(f"Could not add HF models as providers: {e}")
+        
+        # Apply deduplication
+        deduplicated_providers = deduplicate_providers(providers_list)
+        
+        return {
+            "providers": deduplicated_providers,
+            "total": len(deduplicated_providers),
+            "source": "providers_config_extended.json + PROVIDER_AUTO_DISCOVERY_REPORT.json + HF Models (deduplicated)"
+        }
     except Exception as e:
-        logger.warning(f"Could not add HF models as providers: {e}")
-    
-    return {
-        "providers": result,
-        "total": len(result),
-        "source": "providers_config_extended.json + HF Models + Auto-Discovery Report"
-    }
+        logger.error(f"Error in get_providers: {e}")
+        return {
+            "providers": [],
+            "total": 0,
+            "error": str(e),
+            "source": "error"
+        }
 
 
 @app.get("/api/providers/{provider_id}")
@@ -2055,18 +2514,21 @@ async def get_models_status():
 async def initialize_ai_models():
     """Initialize AI models (force reload)"""
     try:
-        from ai_models import initialize_models, registry_status
+        from ai_models import initialize_models, _registry
         
         result = initialize_models()
-        registry_info = registry_status()
+        registry_status = _registry.get_registry_status()
         
-        return {
-            "success": True,
-            "initialization": result,
-            "registry": registry_info
-        }
+        return registry_status
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to initialize models: {str(e)}")
+        logger.error(f"Failed to initialize models: {e}")
+        return {
+            "models_total": 0,
+            "models_loaded": 0,
+            "models_failed": 0,
+            "items": [],
+            "error": str(e)
+        }
 
 
 # ===== Model-based Data Endpoints (Using HF Models as Data Sources) =====
