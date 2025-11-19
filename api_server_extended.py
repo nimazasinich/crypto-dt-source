@@ -1363,7 +1363,10 @@ async def analyze_sentiment(request: Dict[str, Any]):
             analyze_crypto_sentiment,
             analyze_financial_sentiment,
             analyze_social_sentiment,
-            analyze_market_text
+            analyze_market_text,
+            _registry,
+            MODEL_SPECS,
+            ModelNotAvailable
         )
         
         text = request.get("text", "").strip()
@@ -1376,12 +1379,115 @@ async def analyze_sentiment(request: Dict[str, Any]):
         symbol = request.get("symbol")
         
         try:
+            # If model_key is provided, use that specific model
+            if model_key and model_key in MODEL_SPECS:
+                try:
+                    pipeline = _registry.get_pipeline(model_key)
+                    spec = MODEL_SPECS[model_key]
+                    
+                    # Handle different task types
+                    if spec.task == "text-generation":
+                        # For trading signal models or generation models
+                        raw_result = pipeline(text, max_length=200, num_return_sequences=1)
+                        if isinstance(raw_result, list) and raw_result:
+                            raw_result = raw_result[0]
+                        
+                        generated_text = raw_result.get("generated_text", str(raw_result))
+                        
+                        # Parse trading signals if applicable
+                        if spec.category == "trading_signal":
+                            # Extract signal from generated text
+                            decision = "HOLD"
+                            if "buy" in generated_text.lower():
+                                decision = "BUY"
+                            elif "sell" in generated_text.lower():
+                                decision = "SELL"
+                            
+                            return {
+                                "ok": True,
+                                "available": True,
+                                "sentiment": decision.lower(),
+                                "label": decision.lower(),
+                                "score": 0.7,
+                                "confidence": 0.7,
+                                "model": model_key,
+                                "engine": "huggingface",
+                                "mode": "trading",
+                                "extra": {
+                                    "decision": decision,
+                                    "rationale": generated_text,
+                                    "raw": raw_result
+                                }
+                            }
+                        else:
+                            # Generation model - return generated text
+                            return {
+                                "ok": True,
+                                "available": True,
+                                "sentiment": "neutral",
+                                "label": "neutral",
+                                "score": 0.5,
+                                "confidence": 0.5,
+                                "model": model_key,
+                                "engine": "huggingface",
+                                "mode": "generation",
+                                "extra": {
+                                    "generated_text": generated_text,
+                                    "raw": raw_result
+                                }
+                            }
+                    else:
+                        # Text classification / sentiment
+                        raw_result = pipeline(text[:512])
+                        if isinstance(raw_result, list) and raw_result:
+                            raw_result = raw_result[0]
+                        
+                        label = raw_result.get("label", "neutral").upper()
+                        score = raw_result.get("score", 0.5)
+                        
+                        # Map labels to standard format
+                        mapped = "bullish" if "POSITIVE" in label or "BULLISH" in label or "LABEL_2" in label else (
+                            "bearish" if "NEGATIVE" in label or "BEARISH" in label or "LABEL_0" in label else "neutral"
+                        )
+                        
+                        return {
+                            "ok": True,
+                            "available": True,
+                            "sentiment": mapped,
+                            "label": mapped,
+                            "score": score,
+                            "confidence": score,
+                            "raw_label": label,
+                            "model": model_key,
+                            "engine": "huggingface",
+                            "mode": mode,
+                            "extra": {
+                                "vote": score if mapped == "bullish" else (-score if mapped == "bearish" else 0.0),
+                                "raw": raw_result
+                            }
+                        }
+                except ModelNotAvailable as e:
+                    logger.warning(f"Model {model_key} not available: {e}")
+                    return {
+                        "ok": False,
+                        "available": False,
+                        "error": f"Model {model_key} not available: {str(e)}",
+                        "label": "neutral",
+                        "sentiment": "neutral",
+                        "score": 0.0,
+                        "confidence": 0.0
+                    }
+            
+            # Default mode-based analysis
             if mode == "crypto":
                 result = analyze_crypto_sentiment(text)
             elif mode == "financial":
                 result = analyze_financial_sentiment(text)
             elif mode == "social":
                 result = analyze_social_sentiment(text)
+            elif mode == "trading":
+                # Try to use trading signal model
+                result = analyze_crypto_sentiment(text)
             else:
                 result = analyze_market_text(text)
             
@@ -1389,14 +1495,17 @@ async def analyze_sentiment(request: Dict[str, Any]):
             confidence = result.get("confidence", result.get("score", 0.5))
             model_used = result.get("model_count", result.get("model", result.get("engine", "unknown")))
             
-            # Prepare response compatible with ai_tools.html format
+            # Prepare response compatible with frontend format
             response_data = {
                 "ok": True,
                 "available": True,
+                "sentiment": sentiment_label.lower(),
                 "label": sentiment_label.lower(),
+                "confidence": float(confidence),
                 "score": float(confidence),
                 "model": f"{model_used} models" if isinstance(model_used, int) else str(model_used),
-                "engine": result.get("engine", "huggingface")
+                "engine": result.get("engine", "huggingface"),
+                "mode": mode
             }
             
             # Add details if available for score bars
@@ -1445,7 +1554,9 @@ async def analyze_sentiment(request: Dict[str, Any]):
                 "ok": False,
                 "available": False,
                 "error": f"Analysis failed: {str(e)}",
+                "sentiment": "neutral",
                 "label": "neutral",
+                "confidence": 0.0,
                 "score": 0.0
             }
             
@@ -1843,9 +1954,20 @@ async def initialize_ai_models():
 async def list_available_models():
     """List all available Hugging Face models as data sources"""
     try:
-        from ai_models import get_model_info, MODEL_SPECS, _registry, CRYPTO_SENTIMENT_MODELS, SOCIAL_SENTIMENT_MODELS, FINANCIAL_SENTIMENT_MODELS, NEWS_SENTIMENT_MODELS
+        from ai_models import get_model_info, MODEL_SPECS, _registry, CRYPTO_SENTIMENT_MODELS, SOCIAL_SENTIMENT_MODELS, FINANCIAL_SENTIMENT_MODELS, NEWS_SENTIMENT_MODELS, GENERATION_MODELS, TRADING_SIGNAL_MODELS
         
         model_info = get_model_info()
+        
+        # Model descriptions
+        model_descriptions = {
+            "kk08/CryptoBERT": "Crypto sentiment binary classification model trained on cryptocurrency-related text",
+            "ElKulako/cryptobert": "Crypto social sentiment classifier (Bullish/Neutral/Bearish) for social media and news",
+            "StephanAkkerman/FinTwitBERT-sentiment": "Financial tweet sentiment analysis model for market-related social media content",
+            "OpenC/crypto-gpt-o3-mini": "Crypto and DeFi text generation model for analysis and content creation",
+            "agarkovv/CryptoTrader-LM": "BTC/ETH trading signal generator providing daily buy/sell/hold recommendations",
+            "cardiffnlp/twitter-roberta-base-sentiment-latest": "General Twitter sentiment analysis (fallback model)",
+            "ProsusAI/finbert": "Financial sentiment analysis model for news and financial documents"
+        }
         
         models_list = []
         for key, spec in MODEL_SPECS.items():
@@ -1855,14 +1977,16 @@ async def list_available_models():
                 error_msg = str(_registry._failed_models[key])
             
             models_list.append({
-                "key": key,  # ai_tools.html expects "key"
-                "id": key,  # Keep for backward compatibility
+                "key": key,
+                "id": key,
+                "name": spec.model_id,
                 "model_id": spec.model_id,
                 "task": spec.task,
                 "category": spec.category,
                 "requires_auth": spec.requires_auth,
-                "loaded": is_loaded,  # ai_tools.html expects "loaded" boolean
-                "error": error_msg,  # ai_tools.html expects "error" string or null
+                "loaded": is_loaded,
+                "error": error_msg,
+                "description": model_descriptions.get(spec.model_id, f"{spec.category} model for {spec.task}"),
                 "endpoint": f"/api/models/{key}/predict"
             })
         
@@ -1874,7 +1998,9 @@ async def list_available_models():
                 "crypto_sentiment": CRYPTO_SENTIMENT_MODELS,
                 "social_sentiment": SOCIAL_SENTIMENT_MODELS,
                 "financial_sentiment": FINANCIAL_SENTIMENT_MODELS,
-                "news_sentiment": NEWS_SENTIMENT_MODELS
+                "news_sentiment": NEWS_SENTIMENT_MODELS,
+                "generation": GENERATION_MODELS,
+                "trading_signals": TRADING_SIGNAL_MODELS
             },
             "model_info": model_info
         }

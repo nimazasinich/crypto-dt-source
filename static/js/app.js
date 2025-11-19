@@ -106,8 +106,8 @@ function loadTabData(tabId) {
             loadModels();
             break;
         case 'sentiment':
-            loadSentimentModels();
-            loadSentimentHistory();
+            loadSentimentModels();  // Populate model dropdown
+            loadSentimentHistory();  // Load history from localStorage
             break;
         case 'news':
             loadNews();
@@ -549,7 +549,7 @@ async function initializeModels() {
     }
 }
 
-// Load Sentiment Models
+// Load Sentiment Models - updated to populate dropdown for sentiment analysis
 async function loadSentimentModels() {
     try {
         const response = await fetch('/api/models/list');
@@ -557,17 +557,31 @@ async function loadSentimentModels() {
         
         const models = data.models || data || [];
         const select = document.getElementById('sentiment-model');
-        select.innerHTML = '<option value="">Select Model...</option>';
+        if (!select) return;
         
+        select.innerHTML = '<option value="">Auto (Mode-based)</option>';
+        
+        // Filter and add models - only sentiment and generation models
         models.filter(m => {
-            const status = m.status || 'unknown';
-            return status === 'available' || status === 'loaded' || !m.status;
+            const category = m.category || '';
+            const task = m.task || '';
+            // Include sentiment models and generation/trading models
+            return category.includes('sentiment') || 
+                   category.includes('generation') || 
+                   category.includes('trading') ||
+                   task.includes('classification') ||
+                   task.includes('generation');
         }).forEach(model => {
             const option = document.createElement('option');
-            const modelId = model.model_id || model.name || model.key || 'unknown';
-            const task = model.task || model.category || '';
-            option.value = model.key || modelId;
-            option.textContent = `${modelId}${task ? ` (${task})` : ''}`;
+            const modelKey = model.key || model.id;
+            const modelName = model.model_id || model.name || modelKey;
+            const desc = model.description || model.category || '';
+            
+            option.value = modelKey;
+            // Show model name with short description
+            const displayName = modelName.length > 40 ? modelName.substring(0, 37) + '...' : modelName;
+            option.textContent = displayName;
+            option.title = desc; // Full description on hover
             select.appendChild(option);
         });
         
@@ -575,14 +589,18 @@ async function loadSentimentModels() {
         if (select.options.length === 1) {
             const option = document.createElement('option');
             option.value = '';
-            option.textContent = 'No models available';
+            option.textContent = 'No models available - will use fallback';
             option.disabled = true;
             select.appendChild(option);
         }
+        
+        console.log(`Loaded ${select.options.length - 1} sentiment models into dropdown`);
     } catch (error) {
         console.error('Error loading sentiment models:', error);
         const select = document.getElementById('sentiment-model');
-        select.innerHTML = '<option value="">Error loading models</option>';
+        if (select) {
+            select.innerHTML = '<option value="">Auto (Mode-based)</option>';
+        }
     }
 }
 
@@ -789,7 +807,7 @@ async function analyzeNewsSentiment() {
     }
 }
 
-// Analyze Sentiment (updated)
+// Analyze Sentiment (updated with model_key support)
 async function analyzeSentiment() {
     const text = document.getElementById('sentiment-text').value;
     const mode = document.getElementById('sentiment-mode').value;
@@ -806,11 +824,22 @@ async function analyzeSentiment() {
     try {
         let response;
         
-        // Use the sentiment/analyze endpoint with mode
+        // Build request body
+        const requestBody = { 
+            text: text, 
+            mode: mode 
+        };
+        
+        // Add model_key if specific model selected
+        if (modelKey && modelKey !== '') {
+            requestBody.model_key = modelKey;
+        }
+        
+        // Use the sentiment/analyze endpoint with mode and optional model_key
         response = await fetch('/api/sentiment/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text, mode: mode })
+            body: JSON.stringify(requestBody)
         });
         
         const data = await response.json();
