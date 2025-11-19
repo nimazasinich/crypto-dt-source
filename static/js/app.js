@@ -1617,6 +1617,207 @@ async function runDiagnostics() {
     }
 }
 
+// Load Health Diagnostics
+async function loadHealthDiagnostics() {
+    const resultDiv = document.getElementById('health-diagnostics-result');
+    resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading health data...</div>';
+    
+    try {
+        const response = await fetch('/api/diagnostics/health');
+        const data = await response.json();
+        
+        if (data.status !== 'success') {
+            resultDiv.innerHTML = `
+                <div class="alert alert-error">
+                    <strong>Error:</strong> ${data.error || 'Failed to load health diagnostics'}
+                </div>
+            `;
+            return;
+        }
+        
+        const providerSummary = data.providers.summary;
+        const modelSummary = data.models.summary;
+        const providerEntries = data.providers.entries || [];
+        const modelEntries = data.models.entries || [];
+        
+        // Helper function to get status color
+        const getStatusColor = (status) => {
+            switch (status) {
+                case 'healthy': return 'var(--success)';
+                case 'degraded': return 'var(--warning)';
+                case 'unavailable': return 'var(--danger)';
+                default: return 'var(--text-secondary)';
+            }
+        };
+        
+        // Helper function to get status badge
+        const getStatusBadge = (status, inCooldown) => {
+            const color = getStatusColor(status);
+            const icon = status === 'healthy' ? '✅' : 
+                        status === 'degraded' ? '⚠️' : 
+                        status === 'unavailable' ? '❌' : '❓';
+            const cooldownText = inCooldown ? ' (cooldown)' : '';
+            return `<span style="padding: 4px 10px; background: ${color}20; color: ${color}; border-radius: 5px; font-size: 12px; font-weight: 600;">${icon} ${status}${cooldownText}</span>`;
+        };
+        
+        resultDiv.innerHTML = `
+            <div style="display: grid; gap: 20px;">
+                <!-- Summary Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div style="padding: 15px; background: rgba(59, 130, 246, 0.1); border-radius: 10px; border-left: 4px solid var(--accent-blue);">
+                        <div style="font-size: 24px; font-weight: 800; color: var(--accent-blue); margin-bottom: 5px;">
+                            ${providerSummary.total}
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Total Providers</div>
+                        <div style="margin-top: 8px; display: flex; gap: 8px; font-size: 11px;">
+                            <span style="color: var(--success);">✅ ${providerSummary.healthy}</span>
+                            <span style="color: var(--warning);">⚠️ ${providerSummary.degraded}</span>
+                            <span style="color: var(--danger);">❌ ${providerSummary.unavailable}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; border-left: 4px solid var(--accent-purple);">
+                        <div style="font-size: 24px; font-weight: 800; color: var(--accent-purple); margin-bottom: 5px;">
+                            ${modelSummary.total}
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Total Models</div>
+                        <div style="margin-top: 8px; display: flex; gap: 8px; font-size: 11px;">
+                            <span style="color: var(--success);">✅ ${modelSummary.healthy}</span>
+                            <span style="color: var(--warning);">⚠️ ${modelSummary.degraded}</span>
+                            <span style="color: var(--danger);">❌ ${modelSummary.unavailable}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 15px; background: ${data.overall_health.providers_ok && data.overall_health.models_ok ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; border-radius: 10px; border-left: 4px solid ${data.overall_health.providers_ok && data.overall_health.models_ok ? 'var(--success)' : 'var(--warning)'};">
+                        <div style="font-size: 32px; margin-bottom: 5px;">
+                            ${data.overall_health.providers_ok && data.overall_health.models_ok ? '💚' : '⚠️'}
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Overall Health</div>
+                        <div style="margin-top: 8px; font-size: 14px; font-weight: 600; color: ${data.overall_health.providers_ok && data.overall_health.models_ok ? 'var(--success)' : 'var(--warning)'};">
+                            ${data.overall_health.providers_ok && data.overall_health.models_ok ? 'HEALTHY' : 'DEGRADED'}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Providers Health -->
+                ${providerEntries.length > 0 ? `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="margin: 0; color: var(--text-primary);">🔌 Provider Health (${providerEntries.length})</h4>
+                        </div>
+                        <div style="display: grid; gap: 10px; max-height: 300px; overflow-y: auto;">
+                            ${providerEntries.map(provider => `
+                                <div style="padding: 12px; background: rgba(31, 41, 55, 0.6); border-radius: 8px; border-left: 3px solid ${getStatusColor(provider.status)};">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                        <div style="font-weight: 600; color: var(--text-primary);">${provider.name}</div>
+                                        ${getStatusBadge(provider.status, provider.in_cooldown)}
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); display: grid; gap: 3px;">
+                                        <div>Errors: ${provider.error_count} | Successes: ${provider.success_count}</div>
+                                        ${provider.last_success ? `<div>Last Success: ${new Date(provider.last_success * 1000).toLocaleString()}</div>` : ''}
+                                        ${provider.last_error ? `<div>Last Error: ${new Date(provider.last_error * 1000).toLocaleString()}</div>` : ''}
+                                        ${provider.last_error_message ? `<div style="color: var(--danger); margin-top: 5px;">Error: ${provider.last_error_message.substring(0, 100)}${provider.last_error_message.length > 100 ? '...' : ''}</div>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : '<div class="alert alert-info">No provider health data available yet</div>'}
+                
+                <!-- Models Health -->
+                ${modelEntries.length > 0 ? `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="margin: 0; color: var(--text-primary);">🤖 Model Health (${modelEntries.length})</h4>
+                            <button class="btn-secondary" onclick="triggerSelfHeal()" style="padding: 6px 12px; font-size: 12px;">
+                                🔧 Auto-Heal Failed Models
+                            </button>
+                        </div>
+                        <div style="display: grid; gap: 10px; max-height: 400px; overflow-y: auto;">
+                            ${modelEntries.filter(m => m.loaded || m.status !== 'unknown').slice(0, 20).map(model => `
+                                <div style="padding: 12px; background: rgba(31, 41, 55, 0.6); border-radius: 8px; border-left: 3px solid ${getStatusColor(model.status)};">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; gap: 10px;">
+                                        <div>
+                                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 3px;">${model.model_id}</div>
+                                            <div style="font-size: 10px; color: var(--text-secondary);">${model.key} • ${model.category}</div>
+                                        </div>
+                                        <div style="text-align: right; white-space: nowrap;">
+                                            ${getStatusBadge(model.status, model.in_cooldown)}
+                                            ${model.status === 'unavailable' && !model.in_cooldown ? `<button class="btn-secondary" onclick="reinitModel('${model.key}')" style="padding: 4px 8px; font-size: 10px; margin-top: 5px;">Reinit</button>` : ''}
+                                        </div>
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); display: grid; gap: 3px;">
+                                        <div>Errors: ${model.error_count} | Successes: ${model.success_count} | Loaded: ${model.loaded ? 'Yes' : 'No'}</div>
+                                        ${model.last_success ? `<div>Last Success: ${new Date(model.last_success * 1000).toLocaleString()}</div>` : ''}
+                                        ${model.last_error ? `<div>Last Error: ${new Date(model.last_error * 1000).toLocaleString()}</div>` : ''}
+                                        ${model.last_error_message ? `<div style="color: var(--danger); margin-top: 5px;">Error: ${model.last_error_message.substring(0, 150)}${model.last_error_message.length > 150 ? '...' : ''}</div>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : '<div class="alert alert-info">No model health data available yet</div>'}
+                
+                <div style="text-align: center; padding: 15px; background: rgba(31, 41, 55, 0.3); border-radius: 8px; font-size: 11px; color: var(--text-secondary);">
+                    Last updated: ${new Date(data.timestamp).toLocaleString()}
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error loading health diagnostics:', error);
+        resultDiv.innerHTML = `
+            <div class="alert alert-error">
+                <strong>Error:</strong> ${error.message || 'Failed to load health diagnostics'}
+            </div>
+        `;
+    }
+}
+
+// Trigger self-heal for all failed models
+async function triggerSelfHeal() {
+    try {
+        const response = await fetch('/api/diagnostics/self-heal', { method: 'POST' });
+        const data = await response.json();
+        
+        if (data.status === 'completed') {
+            const summary = data.summary;
+            showSuccess(`Self-heal completed: ${summary.successful}/${summary.total_attempts} successful`);
+            // Reload health after a short delay
+            setTimeout(loadHealthDiagnostics, 2000);
+        } else {
+            showError(data.error || 'Self-heal failed');
+        }
+    } catch (error) {
+        showError('Error triggering self-heal: ' + error.message);
+    }
+}
+
+// Reinitialize specific model
+async function reinitModel(modelKey) {
+    try {
+        const response = await fetch(`/api/diagnostics/self-heal?model_key=${encodeURIComponent(modelKey)}`, { 
+            method: 'POST' 
+        });
+        const data = await response.json();
+        
+        if (data.status === 'completed' && data.results && data.results.length > 0) {
+            const result = data.results[0];
+            if (result.status === 'success') {
+                showSuccess(`Model ${modelKey} reinitialized successfully`);
+            } else {
+                showError(`Failed to reinit ${modelKey}: ${result.message || result.error || 'Unknown error'}`);
+            }
+            // Reload health after a short delay
+            setTimeout(loadHealthDiagnostics, 1500);
+        } else {
+            showError(data.error || 'Reinitialization failed');
+        }
+    } catch (error) {
+        showError('Error reinitializing model: ' + error.message);
+    }
+}
+
 // Test API
 async function testAPI() {
     const endpoint = document.getElementById('api-endpoint').value;
