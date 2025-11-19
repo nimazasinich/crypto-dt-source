@@ -212,6 +212,55 @@ class UnifiedConfigLoader:
                     'enabled': True
                 }
 
+            # Load local backend routes (PRIORITY 0 - highest)
+            for entry in registry.get('local_backend_routes', []):
+                api_id = entry['id']
+                notes = entry.get('notes', '')
+                
+                # Extract HTTP method from notes
+                method = 'GET'  # default
+                if notes:
+                    notes_lower = notes.lower()
+                    if 'post method' in notes_lower:
+                        method = 'POST'
+                    elif 'websocket' in notes_lower:
+                        method = 'WS'
+                
+                # Determine feature category from base_url
+                base_url = entry['base_url'].lower()
+                feature_category = 'local'
+                if '/market' in base_url:
+                    feature_category = 'market_data'
+                elif '/sentiment' in base_url:
+                    feature_category = 'sentiment'
+                elif '/news' in base_url:
+                    feature_category = 'news'
+                elif '/crypto' in base_url:
+                    feature_category = 'crypto_data'
+                elif '/models' in base_url or '/hf' in base_url:
+                    feature_category = 'ai_models'
+                elif '/providers' in base_url or '/pools' in base_url:
+                    feature_category = 'monitoring'
+                elif '/ws' in base_url or base_url.startswith('ws://'):
+                    feature_category = 'websocket'
+                
+                self.apis[api_id] = {
+                    'id': api_id,
+                    'name': entry['name'],
+                    'category': 'local',
+                    'feature_category': feature_category,  # Secondary categorization
+                    'base_url': entry['base_url'],
+                    'auth': entry.get('auth', {}),
+                    'docs_url': entry.get('docs_url'),
+                    'endpoints': entry.get('endpoints'),
+                    'notes': entry.get('notes'),
+                    'method': method,
+                    'priority': 0,  # Highest priority - prefer local routes
+                    'update_type': 'local',
+                    'enabled': True,
+                    'is_local': True
+                }
+
             logger.info(f"✓ Loaded unified config with {len(self.apis)} entries")
 
         except Exception as e:
@@ -341,6 +390,40 @@ class UnifiedConfigLoader:
     def get_apis_by_category(self, category: str) -> Dict[str, Dict[str, Any]]:
         """Get APIs filtered by category"""
         return {k: v for k, v in self.apis.items() if v.get('category') == category}
+    
+    def get_apis_by_feature(self, feature: str) -> List[Dict[str, Any]]:
+        """
+        Get APIs for a specific feature, prioritizing local routes
+        Returns sorted list by priority (0=highest)
+        """
+        matching_apis = []
+        
+        for api_id, api in self.apis.items():
+            # Check if this API matches the feature
+            matches = False
+            
+            # Local routes: check feature_category
+            if api.get('is_local') and api.get('feature_category') == feature:
+                matches = True
+            # External routes: check category
+            elif api.get('category') == feature:
+                matches = True
+            
+            if matches and api.get('enabled', True):
+                matching_apis.append(api)
+        
+        # Sort by priority (0=highest) and then by name
+        matching_apis.sort(key=lambda x: (x.get('priority', 999), x.get('name', '')))
+        
+        return matching_apis
+    
+    def get_local_routes(self) -> Dict[str, Dict[str, Any]]:
+        """Get all local backend routes"""
+        return {k: v for k, v in self.apis.items() if v.get('is_local', False)}
+    
+    def get_external_apis(self) -> Dict[str, Dict[str, Any]]:
+        """Get all external (non-local) APIs"""
+        return {k: v for k, v in self.apis.items() if not v.get('is_local', False)}
 
     def get_categories(self) -> List[str]:
         """Get all unique categories"""

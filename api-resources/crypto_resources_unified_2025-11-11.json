@@ -32,7 +32,8 @@
         "crypto_resources.ts",
         "additional JSON structures"
       ],
-      "total_entries": 200
+      "total_entries": 200,
+      "local_backend_routes_count": 120
     },
     "rpc_nodes": [
       {
@@ -2004,6 +2005,1106 @@
         },
         "docs_url": null,
         "notes": "Replace {API_BASE} with your local server base URL"
+      },
+      {
+        "id": "local_health",
+        "category": "local",
+        "name": "Local: Health Check",
+        "base_url": "{API_BASE}/health",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; System health check endpoint"
+      },
+      {
+        "id": "local_api_status",
+        "category": "local",
+        "name": "Local: API Status",
+        "base_url": "{API_BASE}/api/status",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; System status overview"
+      },
+      {
+        "id": "local_api_stats",
+        "category": "local",
+        "name": "Local: API Statistics",
+        "base_url": "{API_BASE}/api/stats",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; System statistics"
+      },
+      {
+        "id": "local_api_market",
+        "category": "local",
+        "name": "Local: Market Data",
+        "base_url": "{API_BASE}/api/market",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Real-time market data from CoinGecko"
+      },
+      {
+        "id": "local_api_market_history",
+        "category": "local",
+        "name": "Local: Market History",
+        "base_url": "{API_BASE}/api/market/history",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Price history from database (query params: symbol, limit)"
+      },
+      {
+        "id": "local_api_sentiment",
+        "category": "local",
+        "name": "Local: Sentiment Data",
+        "base_url": "{API_BASE}/api/sentiment",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Fear & Greed Index from Alternative.me"
+      },
+      {
+        "id": "local_api_sentiment_analyze",
+        "category": "local",
+        "name": "Local: Sentiment Analysis",
+        "base_url": "{API_BASE}/api/sentiment/analyze",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Analyze text sentiment using AI models"
+      },
+      {
+        "id": "local_api_sentiment_history",
+        "category": "local",
+        "name": "Local: Sentiment History",
+        "base_url": "{API_BASE}/api/sentiment/history",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Historical sentiment data (query params: hours)"
+      },
+      {
+        "id": "local_api_news",
+        "category": "local",
+        "name": "Local: News",
+        "base_url": "{API_BASE}/api/news",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Latest cryptocurrency news"
+      },
+      {
+        "id": "local_api_news_analyze",
+        "category": "local",
+        "name": "Local: News Analysis",
+        "base_url": "{API_BASE}/api/news/analyze",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Analyze news article sentiment"
+      },
+      {
+        "id": "local_api_news_latest",
+        "category": "local",
+        "name": "Local: Latest News",
+        "base_url": "{API_BASE}/api/news/latest",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Latest news articles"
+      },
+      {
+        "id": "local_api_resources",
+        "category": "local",
+        "name": "Local: Resources Summary",
+        "base_url": "{API_BASE}/api/resources",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Resources summary for dashboard"
+      },
+      {
+        "id": "local_api_resources_apis",
+        "category": "local",
+        "name": "Local: API Registry",
+        "base_url": "{API_BASE}/api/resources/apis",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; API registry metadata"
+      },
+      {
+        "id": "local_api_resources_apis_raw",
+        "category": "local",
+        "name": "Local: API Registry Raw",
+        "base_url": "{API_BASE}/api/resources/apis/raw",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Raw API registry JSON"
+      },
+      {
+        "id": "local_api_resources_search",
+        "category": "local",
+        "name": "Local: Resource Search",
+        "base_url": "{API_BASE}/api/resources/search",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Search resources (query params: q, source)"
+      },
+      {
+        "id": "local_api_trending",
+        "category": "local",
+        "name": "Local: Trending Coins",
+        "base_url": "{API_BASE}/api/trending",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Trending cryptocurrencies"
+      },
+      {
+        "id": "local_api_providers",
+        "category": "local",
+        "name": "Local: Providers List",
+        "base_url": "{API_BASE}/api/providers",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; List all providers"
+      },
+      {
+        "id": "local_api_providers_id",
+        "category": "local",
+        "name": "Local: Provider by ID",
+        "base_url": "{API_BASE}/api/providers/{provider_id}",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get provider details by ID"
+      },
+      {
+        "id": "local_api_providers_category",
+        "category": "local",
+        "name": "Local: Providers by Category",
+        "base_url": "{API_BASE}/api/providers/category/{category}",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get providers filtered by category"
+      },
+      {
+        "id": "local_api_providers_health_summary",
+        "category": "local",
+        "name": "Local: Providers Health Summary",
+        "base_url": "{API_BASE}/api/providers/health-summary",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Health summary for all providers"
+      },
+      {
+        "id": "local_api_pools",
+        "category": "local",
+        "name": "Local: Source Pools",
+        "base_url": "{API_BASE}/api/pools",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; List all source pools"
+      },
+      {
+        "id": "local_api_pools_id",
+        "category": "local",
+        "name": "Local: Pool by ID",
+        "base_url": "{API_BASE}/api/pools/{pool_id}",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get pool details by ID"
+      },
+      {
+        "id": "local_api_pools_members",
+        "category": "local",
+        "name": "Local: Add Pool Member",
+        "base_url": "{API_BASE}/api/pools/{pool_id}/members",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Add provider to pool"
+      },
+      {
+        "id": "local_api_pools_rotate",
+        "category": "local",
+        "name": "Local: Rotate Pool",
+        "base_url": "{API_BASE}/api/pools/{pool_id}/rotate",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Trigger manual rotation"
+      },
+      {
+        "id": "local_api_pools_failover",
+        "category": "local",
+        "name": "Local: Pool Failover",
+        "base_url": "{API_BASE}/api/pools/{pool_id}/failover",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Trigger failover"
+      },
+      {
+        "id": "local_api_pools_history",
+        "category": "local",
+        "name": "Local: Pool Rotation History",
+        "base_url": "{API_BASE}/api/pools/{pool_id}/history",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get rotation history (query params: limit)"
+      },
+      {
+        "id": "local_api_crypto_prices",
+        "category": "local",
+        "name": "Local: Crypto Prices",
+        "base_url": "{API_BASE}/api/crypto/prices",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Latest prices for all cryptocurrencies (query params: limit)"
+      },
+      {
+        "id": "local_api_crypto_prices_symbol",
+        "category": "local",
+        "name": "Local: Crypto Price by Symbol",
+        "base_url": "{API_BASE}/api/crypto/prices/{symbol}",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Latest price for specific cryptocurrency"
+      },
+      {
+        "id": "local_api_crypto_history",
+        "category": "local",
+        "name": "Local: Crypto Price History",
+        "base_url": "{API_BASE}/api/crypto/history/{symbol}",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Price history (query params: hours, interval)"
+      },
+      {
+        "id": "local_api_crypto_market_overview",
+        "category": "local",
+        "name": "Local: Market Overview",
+        "base_url": "{API_BASE}/api/crypto/market-overview",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Market overview with top cryptocurrencies"
+      },
+      {
+        "id": "local_api_crypto_news",
+        "category": "local",
+        "name": "Local: Crypto News",
+        "base_url": "{API_BASE}/api/crypto/news",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Latest news (query params: limit, source, sentiment)"
+      },
+      {
+        "id": "local_api_crypto_news_id",
+        "category": "local",
+        "name": "Local: News Article by ID",
+        "base_url": "{API_BASE}/api/crypto/news/{news_id}",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get specific news article"
+      },
+      {
+        "id": "local_api_crypto_news_search",
+        "category": "local",
+        "name": "Local: News Search",
+        "base_url": "{API_BASE}/api/crypto/news/search",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Search news articles (query params: q, limit)"
+      },
+      {
+        "id": "local_api_crypto_sentiment_current",
+        "category": "local",
+        "name": "Local: Current Sentiment",
+        "base_url": "{API_BASE}/api/crypto/sentiment/current",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Current market sentiment metrics"
+      },
+      {
+        "id": "local_api_crypto_sentiment_history",
+        "category": "local",
+        "name": "Local: Sentiment History",
+        "base_url": "{API_BASE}/api/crypto/sentiment/history",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Sentiment history (query params: hours)"
+      },
+      {
+        "id": "local_api_crypto_whales_transactions",
+        "category": "local",
+        "name": "Local: Whale Transactions",
+        "base_url": "{API_BASE}/api/crypto/whales/transactions",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Recent whale transactions (query params: limit, blockchain, min_amount_usd)"
+      },
+      {
+        "id": "local_api_crypto_whales_stats",
+        "category": "local",
+        "name": "Local: Whale Statistics",
+        "base_url": "{API_BASE}/api/crypto/whales/stats",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Whale activity statistics (query params: hours)"
+      },
+      {
+        "id": "local_api_crypto_blockchain_gas",
+        "category": "local",
+        "name": "Local: Gas Prices",
+        "base_url": "{API_BASE}/api/crypto/blockchain/gas",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Current gas prices for various blockchains"
+      },
+      {
+        "id": "local_api_crypto_blockchain_stats",
+        "category": "local",
+        "name": "Local: Blockchain Statistics",
+        "base_url": "{API_BASE}/api/crypto/blockchain/stats",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Blockchain statistics"
+      },
+      {
+        "id": "local_api_status",
+        "category": "local",
+        "name": "Local: System Status",
+        "base_url": "{API_BASE}/api/status",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Comprehensive system status overview"
+      },
+      {
+        "id": "local_api_categories",
+        "category": "local",
+        "name": "Local: Category Statistics",
+        "base_url": "{API_BASE}/api/categories",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Statistics for all provider categories"
+      },
+      {
+        "id": "local_api_providers_list",
+        "category": "local",
+        "name": "Local: Providers List (Filtered)",
+        "base_url": "{API_BASE}/api/providers",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Provider list with filters (query params: category, status, search)"
+      },
+      {
+        "id": "local_api_logs",
+        "category": "local",
+        "name": "Local: Connection Logs",
+        "base_url": "{API_BASE}/api/logs",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Query logs with pagination (query params: from, to, provider, status, page, per_page)"
+      },
+      {
+        "id": "local_api_logs_recent",
+        "category": "local",
+        "name": "Local: Recent Logs",
+        "base_url": "{API_BASE}/api/logs/recent",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Recent connection logs"
+      },
+      {
+        "id": "local_api_logs_errors",
+        "category": "local",
+        "name": "Local: Error Logs",
+        "base_url": "{API_BASE}/api/logs/errors",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Error logs only"
+      },
+      {
+        "id": "local_api_logs_summary",
+        "category": "local",
+        "name": "Local: Logs Summary",
+        "base_url": "{API_BASE}/api/logs/summary",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Logs summary statistics"
+      },
+      {
+        "id": "local_api_schedule",
+        "category": "local",
+        "name": "Local: Schedule Status",
+        "base_url": "{API_BASE}/api/schedule",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Schedule status for all providers"
+      },
+      {
+        "id": "local_api_schedule_trigger",
+        "category": "local",
+        "name": "Local: Trigger Health Check",
+        "base_url": "{API_BASE}/api/schedule/trigger",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Trigger immediate health check for provider"
+      },
+      {
+        "id": "local_api_freshness",
+        "category": "local",
+        "name": "Local: Data Freshness",
+        "base_url": "{API_BASE}/api/freshness",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Data freshness information for all providers"
+      },
+      {
+        "id": "local_api_failures",
+        "category": "local",
+        "name": "Local: Failure Analysis",
+        "base_url": "{API_BASE}/api/failures",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Comprehensive failure analysis"
+      },
+      {
+        "id": "local_api_rate_limits",
+        "category": "local",
+        "name": "Local: Rate Limit Status",
+        "base_url": "{API_BASE}/api/rate-limits",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Rate limit status for all providers"
+      },
+      {
+        "id": "local_api_config_keys",
+        "category": "local",
+        "name": "Local: API Keys Status",
+        "base_url": "{API_BASE}/api/config/keys",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; API key status for all providers"
+      },
+      {
+        "id": "local_api_config_keys_test",
+        "category": "local",
+        "name": "Local: Test API Key",
+        "base_url": "{API_BASE}/api/config/keys/test",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Test an API key by performing health check"
+      },
+      {
+        "id": "local_api_charts_health_history",
+        "category": "local",
+        "name": "Local: Health History Chart",
+        "base_url": "{API_BASE}/api/charts/health-history",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Health history data for charts (query params: hours)"
+      },
+      {
+        "id": "local_api_charts_compliance",
+        "category": "local",
+        "name": "Local: Compliance History Chart",
+        "base_url": "{API_BASE}/api/charts/compliance",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Schedule compliance history (query params: days)"
+      },
+      {
+        "id": "local_api_charts_rate_limit_history",
+        "category": "local",
+        "name": "Local: Rate Limit History Chart",
+        "base_url": "{API_BASE}/api/charts/rate-limit-history",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Rate limit usage history (query params: hours)"
+      },
+      {
+        "id": "local_api_charts_freshness_history",
+        "category": "local",
+        "name": "Local: Freshness History Chart",
+        "base_url": "{API_BASE}/api/charts/freshness-history",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Data freshness history (query params: hours)"
+      },
+      {
+        "id": "local_api_health",
+        "category": "local",
+        "name": "Local: API Health Check",
+        "base_url": "{API_BASE}/api/health",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; API health check endpoint"
+      },
+      {
+        "id": "local_api_models_status",
+        "category": "local",
+        "name": "Local: Models Status",
+        "base_url": "{API_BASE}/api/models/status",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Hugging Face models status"
+      },
+      {
+        "id": "local_api_models_initialize",
+        "category": "local",
+        "name": "Local: Initialize Models",
+        "base_url": "{API_BASE}/api/models/initialize",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Initialize all models"
+      },
+      {
+        "id": "local_api_models_list",
+        "category": "local",
+        "name": "Local: List Models",
+        "base_url": "{API_BASE}/api/models/list",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; List all available models"
+      },
+      {
+        "id": "local_api_models_info",
+        "category": "local",
+        "name": "Local: Model Info",
+        "base_url": "{API_BASE}/api/models/{model_key}/info",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get information about specific model"
+      },
+      {
+        "id": "local_api_models_predict",
+        "category": "local",
+        "name": "Local: Model Prediction",
+        "base_url": "{API_BASE}/api/models/{model_key}/predict",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Get prediction from model"
+      },
+      {
+        "id": "local_api_models_batch_predict",
+        "category": "local",
+        "name": "Local: Batch Prediction",
+        "base_url": "{API_BASE}/api/models/batch/predict",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Batch predictions from multiple models"
+      },
+      {
+        "id": "local_api_models_data_generated",
+        "category": "local",
+        "name": "Local: Generated Data",
+        "base_url": "{API_BASE}/api/models/data/generated",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get generated data from models"
+      },
+      {
+        "id": "local_api_models_data_stats",
+        "category": "local",
+        "name": "Local: Model Data Statistics",
+        "base_url": "{API_BASE}/api/models/data/stats",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Statistics about model-generated data"
+      },
+      {
+        "id": "local_api_hf_models",
+        "category": "local",
+        "name": "Local: HF Models",
+        "base_url": "{API_BASE}/api/hf/models",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Hugging Face models information"
+      },
+      {
+        "id": "local_api_hf_health",
+        "category": "local",
+        "name": "Local: HF Health",
+        "base_url": "{API_BASE}/api/hf/health",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Hugging Face models health check"
+      },
+      {
+        "id": "local_api_defi",
+        "category": "local",
+        "name": "Local: DeFi Data",
+        "base_url": "{API_BASE}/api/defi",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; DeFi protocol data"
+      },
+      {
+        "id": "local_api_ai_summarize",
+        "category": "local",
+        "name": "Local: AI Summarize",
+        "base_url": "{API_BASE}/api/ai/summarize",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Summarize text using AI models"
+      },
+      {
+        "id": "local_api_diagnostics_run",
+        "category": "local",
+        "name": "Local: Run Diagnostics",
+        "base_url": "{API_BASE}/api/diagnostics/run",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Run system diagnostics"
+      },
+      {
+        "id": "local_api_diagnostics_last",
+        "category": "local",
+        "name": "Local: Last Diagnostics",
+        "base_url": "{API_BASE}/api/diagnostics/last",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get last diagnostics report"
+      },
+      {
+        "id": "local_api_diagnostics_errors",
+        "category": "local",
+        "name": "Local: Diagnostics Errors",
+        "base_url": "{API_BASE}/api/diagnostics/errors",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get diagnostics errors"
+      },
+      {
+        "id": "local_api_apl_run",
+        "category": "local",
+        "name": "Local: Run APL",
+        "base_url": "{API_BASE}/api/apl/run",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Run Auto Provider Loader"
+      },
+      {
+        "id": "local_api_apl_report",
+        "category": "local",
+        "name": "Local: APL Report",
+        "base_url": "{API_BASE}/api/apl/report",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get Auto Provider Loader report"
+      },
+      {
+        "id": "local_api_apl_summary",
+        "category": "local",
+        "name": "Local: APL Summary",
+        "base_url": "{API_BASE}/api/apl/summary",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get APL summary"
+      },
+      {
+        "id": "local_api_providers_auto_discovery",
+        "category": "local",
+        "name": "Local: Auto Discovery Report",
+        "base_url": "{API_BASE}/api/providers/auto-discovery-report",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Get auto-discovery report"
+      },
+      {
+        "id": "local_api_v2_export",
+        "category": "local",
+        "name": "Local: V2 Export",
+        "base_url": "{API_BASE}/api/v2/export/{export_type}",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Export functionality (path param: export_type)"
+      },
+      {
+        "id": "local_api_v2_backup",
+        "category": "local",
+        "name": "Local: V2 Backup",
+        "base_url": "{API_BASE}/api/v2/backup",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Backup functionality"
+      },
+      {
+        "id": "local_api_v2_import_providers",
+        "category": "local",
+        "name": "Local: V2 Import Providers",
+        "base_url": "{API_BASE}/api/v2/import/providers",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "POST method; Import providers"
+      },
+      {
+        "id": "local_ws_live",
+        "category": "local",
+        "name": "Local: WebSocket Live",
+        "base_url": "ws://{API_BASE}/ws/live",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Real-time updates (status, logs, alerts, pings)"
+      },
+      {
+        "id": "local_ws_master",
+        "category": "local",
+        "name": "Local: WebSocket Master",
+        "base_url": "ws://{API_BASE}/ws/master",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Master endpoint with access to all services"
+      },
+      {
+        "id": "local_ws_all",
+        "category": "local",
+        "name": "Local: WebSocket All",
+        "base_url": "ws://{API_BASE}/ws/all",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Subscribe to all services"
+      },
+      {
+        "id": "local_ws",
+        "category": "local",
+        "name": "Local: WebSocket",
+        "base_url": "ws://{API_BASE}/ws",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; General WebSocket endpoint"
+      },
+      {
+        "id": "local_ws_stats",
+        "category": "local",
+        "name": "Local: WebSocket Stats",
+        "base_url": "{API_BASE}/ws/stats",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; WebSocket connection statistics"
+      },
+      {
+        "id": "local_ws_services",
+        "category": "local",
+        "name": "Local: WebSocket Services",
+        "base_url": "{API_BASE}/ws/services",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; Available WebSocket services"
+      },
+      {
+        "id": "local_ws_endpoints",
+        "category": "local",
+        "name": "Local: WebSocket Endpoints",
+        "base_url": "{API_BASE}/ws/endpoints",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "GET method; List all WebSocket endpoints"
+      },
+      {
+        "id": "local_ws_data",
+        "category": "local",
+        "name": "Local: WebSocket Data",
+        "base_url": "ws://{API_BASE}/ws/data",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Data collection services"
+      },
+      {
+        "id": "local_ws_market_data",
+        "category": "local",
+        "name": "Local: WebSocket Market Data",
+        "base_url": "ws://{API_BASE}/ws/market_data",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Real-time market data stream"
+      },
+      {
+        "id": "local_ws_whale_tracking",
+        "category": "local",
+        "name": "Local: WebSocket Whale Tracking",
+        "base_url": "ws://{API_BASE}/ws/whale_tracking",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Whale tracking updates"
+      },
+      {
+        "id": "local_ws_news",
+        "category": "local",
+        "name": "Local: WebSocket News",
+        "base_url": "ws://{API_BASE}/ws/news",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; News updates stream"
+      },
+      {
+        "id": "local_ws_sentiment",
+        "category": "local",
+        "name": "Local: WebSocket Sentiment",
+        "base_url": "ws://{API_BASE}/ws/sentiment",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Sentiment updates stream"
+      },
+      {
+        "id": "local_ws_monitoring",
+        "category": "local",
+        "name": "Local: WebSocket Monitoring",
+        "base_url": "ws://{API_BASE}/ws/monitoring",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Monitoring services stream"
+      },
+      {
+        "id": "local_ws_health",
+        "category": "local",
+        "name": "Local: WebSocket Health",
+        "base_url": "ws://{API_BASE}/ws/health",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Health checker updates"
+      },
+      {
+        "id": "local_ws_pool_status",
+        "category": "local",
+        "name": "Local: WebSocket Pool Status",
+        "base_url": "ws://{API_BASE}/ws/pool_status",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Pool status updates"
+      },
+      {
+        "id": "local_ws_scheduler_status",
+        "category": "local",
+        "name": "Local: WebSocket Scheduler Status",
+        "base_url": "ws://{API_BASE}/ws/scheduler_status",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Scheduler status updates"
+      },
+      {
+        "id": "local_ws_integration",
+        "category": "local",
+        "name": "Local: WebSocket Integration",
+        "base_url": "ws://{API_BASE}/ws/integration",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Integration services stream"
+      },
+      {
+        "id": "local_ws_huggingface",
+        "category": "local",
+        "name": "Local: WebSocket HuggingFace",
+        "base_url": "ws://{API_BASE}/ws/huggingface",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; HuggingFace model updates"
+      },
+      {
+        "id": "local_ws_persistence",
+        "category": "local",
+        "name": "Local: WebSocket Persistence",
+        "base_url": "ws://{API_BASE}/ws/persistence",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; Persistence service updates"
+      },
+      {
+        "id": "local_ws_ai",
+        "category": "local",
+        "name": "Local: WebSocket AI",
+        "base_url": "ws://{API_BASE}/ws/ai",
+        "auth": {
+          "type": "none"
+        },
+        "docs_url": null,
+        "notes": "WebSocket; AI service updates"
       }
     ],
     "cors_proxies": [
