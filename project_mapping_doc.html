@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Developer Mapping - Crypto Project</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; max-width: 1000px; margin: auto; padding: 2em; background: #f9f9f9; }
+        h1, h2, h3 { color: #2c3e50; }
+        code { background: #eef; padding: 2px 5px; border-radius: 4px; }
+        pre { background: #eee; padding: 10px; border-left: 4px solid #ccc; overflow-x: auto; }
+        section { margin-bottom: 2em; }
+    </style>
+</head>
+<body>
+    <h1>📁 Developer Mapping Document: Hugging Face Crypto Integration</h1>
+    <section>
+        <h2>✅ هدف</h2>
+        <p>ایجاد هماهنگی کامل بین مدل‌های Hugging Face، فایل‌های پایتون، و رابط HTML موجود در <code>index.html</code>.</p>
+    </section>
+    <section>
+        <h2>🧠 هماهنگی مدل‌ها با Frontend</h2>
+        <ul>
+            <li>کدهای <code>ai_models.py</code> مدل‌ها را با ساختار <code>PipelineSpec</code> تعریف می‌کنند.</li>
+            <li><code>/api/models/list</code> باید داده‌ها را برای تب Models در <code>index.html</code> فراهم کند.</li>
+            <li>تابع <code>initializeModels()</code> در JS، route بالا را صدا می‌زند.</li>
+        </ul>
+    </section>
+    <section>
+        <h2>💬 تحلیل احساسات</h2>
+        <ul>
+            <li>Route: <code>/api/sentiment</code></li>
+            <li>پارامتر ورودی: <code>sentiment-mode</code> و <code>text</code></li>
+            <li>ارتباط با مدل‌های تعریف شده در <code>ai_models.py</code></li>
+        </ul>
+    </section>
+    <section>
+        <h2>🗂 منابع داده و Whale Tracking</h2>
+        <ul>
+            <li>فایل: <code>providers_config_extended.json</code></li>
+            <li>Route: <code>/api/providers</code> برای لود در تب Providers</li>
+        </ul>
+    </section>
+    <section>
+        <h2>⚙️ تست و دیاگنوستیک</h2>
+        <ul>
+            <li>تب Diagnostics: تابع <code>runDiagnostics()</code></li>
+            <li>routeهایی نظیر <code>/api/status</code> و <code>/api/market</code></li>
+        </ul>
+    </section>
+    <section>
+        <h2>📌 سازگاری با Hugging Face</h2>
+        <ul>
+            <li>توکن‌ها از <code>config.py</code> خوانده می‌شوند.</li>
+            <li>فایل <code>hf_unified_server.py</code> در Docker Space قابل استفاده است.</li>
+        </ul>
+    </section>
+</body>
+</html>
