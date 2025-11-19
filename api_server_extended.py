@@ -1863,6 +1863,126 @@ async def get_latest_news(
         raise HTTPException(status_code=500, detail=f"Failed to fetch news: {str(e)}")
 
 
+@app.post("/api/news/summarize")
+async def summarize_news(request: Dict[str, Any]):
+    """
+    Summarize crypto/financial news using Hugging Face Crypto-Financial-News-Summarizer model
+    
+    Expects: { "title": "News Title", "content": "Full article text" }
+    Returns: { "summary": "Summarized news paragraph", "model": "Crypto-Financial-News-Summarizer" }
+    """
+    try:
+        from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
+        
+        title = request.get("title", "").strip()
+        content = request.get("content", "").strip()
+        
+        if not title and not content:
+            raise HTTPException(status_code=400, detail="Title or content is required")
+        
+        # Combine title and content for summarization
+        text_to_summarize = f"{title}. {content}" if title and content else (title or content)
+        
+        try:
+            # Try to use the Crypto-Financial-News-Summarizer model
+            summarization_key = "summarization_0"
+            
+            if summarization_key in MODEL_SPECS:
+                try:
+                    pipeline = _registry.get_pipeline(summarization_key)
+                    spec = MODEL_SPECS[summarization_key]
+                    
+                    # Use HF model for summarization
+                    # Limit input text to avoid token length issues
+                    max_input_length = 1024
+                    text_input = text_to_summarize[:max_input_length]
+                    
+                    try:
+                        # Try with parameters first
+                        summary_result = pipeline(
+                            text_input,
+                            max_length=150,
+                            min_length=50,
+                            do_sample=False,
+                            truncation=True
+                        )
+                    except TypeError:
+                        # Some pipelines don't accept these parameters
+                        summary_result = pipeline(text_input, truncation=True)
+                    
+                    # Extract summary text from result
+                    if isinstance(summary_result, list) and summary_result:
+                        summary_text = summary_result[0].get("summary_text", summary_result[0].get("generated_text", str(summary_result[0])))
+                    elif isinstance(summary_result, dict):
+                        summary_text = summary_result.get("summary_text", summary_result.get("generated_text", str(summary_result)))
+                    else:
+                        summary_text = str(summary_result)
+                    
+                    return {
+                        "success": True,
+                        "summary": summary_text,
+                        "model": spec.model_id,
+                        "available": True,
+                        "input_length": len(text_input),
+                        "title": title,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    
+                except ModelNotAvailable as e:
+                    logger.warning(f"Crypto-Financial-News-Summarizer not available: {e}")
+                    # Fall through to fallback
+                except Exception as e:
+                    logger.warning(f"HF summarization failed: {e}, using fallback")
+                    # Fall through to fallback
+            
+            # Fallback: Simple extractive summarization
+            # Split into sentences and take the most important ones
+            sentences = []
+            current_sentence = ""
+            
+            for char in text_to_summarize:
+                current_sentence += char
+                if char in ".!?":
+                    sentence = current_sentence.strip()
+                    if sentence and len(sentence) > 10:  # Filter out very short sentences
+                        sentences.append(sentence)
+                        current_sentence = ""
+                        if len(sentences) >= 5:  # Take first 5 sentences max
+                            break
+            
+            # If we didn't get enough sentences, add the rest
+            if len(sentences) < 3 and current_sentence.strip():
+                sentences.append(current_sentence.strip())
+            
+            # Take first 3 sentences as summary
+            summary = " ".join(sentences[:3]) if sentences else text_to_summarize[:500]
+            
+            return {
+                "success": True,
+                "summary": summary,
+                "model": "fallback_extractive",
+                "available": False,
+                "note": "Using fallback extractive summarization (HF model not available)",
+                "title": title,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Summarization error: {str(e)}")
+            return {
+                "success": False,
+                "error": f"Summarization failed: {str(e)}",
+                "summary": "",
+                "model": "error",
+                "available": False
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"News summarization failed: {str(e)}")
+
+
 @app.get("/api/models/status")
 async def get_models_status():
     """Get AI models status and registry info - honest status reporting"""
@@ -1966,7 +2086,8 @@ async def list_available_models():
             "OpenC/crypto-gpt-o3-mini": "Crypto and DeFi text generation model for analysis and content creation",
             "agarkovv/CryptoTrader-LM": "BTC/ETH trading signal generator providing daily buy/sell/hold recommendations",
             "cardiffnlp/twitter-roberta-base-sentiment-latest": "General Twitter sentiment analysis (fallback model)",
-            "ProsusAI/finbert": "Financial sentiment analysis model for news and financial documents"
+            "ProsusAI/finbert": "Financial sentiment analysis model for news and financial documents",
+            "FurkanGozukara/Crypto-Financial-News-Summarizer": "Specialized model for summarizing cryptocurrency and financial news articles"
         }
         
         models_list = []
@@ -2000,7 +2121,8 @@ async def list_available_models():
                 "financial_sentiment": FINANCIAL_SENTIMENT_MODELS,
                 "news_sentiment": NEWS_SENTIMENT_MODELS,
                 "generation": GENERATION_MODELS,
-                "trading_signals": TRADING_SIGNAL_MODELS
+                "trading_signals": TRADING_SIGNAL_MODELS,
+                "summarization": ["FurkanGozukara/Crypto-Financial-News-Summarizer"]
             },
             "model_info": model_info
         }
