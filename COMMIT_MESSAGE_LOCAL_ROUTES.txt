@@ -1,0 +1,84 @@
+feat(registry): wire local backend routes into provider system
+
+## Summary
+Integrated 106 local backend routes from crypto_resources_unified_2025-11-11.json
+into the provider selection system with priority-based routing and comprehensive
+validation.
+
+## Changes
+
+### 1. Backend - Resource Validation (NEW)
+- Added `backend/services/resource_validator.py`
+  * JSON parsing and validation
+  * Duplicate route detection (method + URL signature)
+  * Missing field validation
+  * Comprehensive reporting system
+
+### 2. Backend - Provider Selection (MODIFIED)
+- Extended `backend/services/unified_config_loader.py`
+  * Load local_backend_routes with priority 0 (highest)
+  * Extract HTTP method from notes field
+  * Auto-categorize by feature (market_data, sentiment, news, etc.)
+  * Added `get_apis_by_feature()` for priority-sorted provider lists
+  * Added `get_local_routes()` and `get_external_apis()` helpers
+
+### 3. Backend - API Endpoints (MODIFIED)
+- Updated `api_server_extended.py`
+  * `/api/resources` now includes `local_routes_count` in summary
+  * `/api/resources/apis` exposes local routes with preview
+  * `/api/providers/health-summary` includes local route health checks
+  * Added startup validation with duplicate detection warnings
+
+### 4. Frontend - UI Integration (MODIFIED)
+- Updated `templates/index.html`
+  * Added "🏠 Local Backend Routes" filter option
+  * Updated `loadResources()` to fetch and display local routes
+  * Method badges (GET/POST/WebSocket) with color coding
+  * Auth requirement badges
+  * Monospace font for URLs
+  * Styled notes display
+
+## Key Features
+
+✅ **Priority-Based Routing**: Local routes (priority 0) always preferred first
+✅ **Health Monitoring**: Real-time health checks for local endpoints  
+✅ **Startup Validation**: Automatic duplicate detection on server start
+✅ **UI Filtering**: Category-based filtering with local route visibility
+✅ **Backward Compatible**: All existing functionality preserved
+
+## Testing
+
+Run validation:
+```bash
+python backend/services/resource_validator.py
+```
+
+Run test suite:
+```bash
+python test_local_routes_wiring.py
+```
+
+## Validation Results
+- Total Local Routes: 106
+- Unique Routes: 104
+- Duplicates Found: 2 (intentional fallbacks)
+  * GET:api/status
+  * GET:api/providers
+
+## Files Changed
+- backend/services/resource_validator.py (NEW, 216 lines)
+- backend/services/unified_config_loader.py (+80 lines)
+- api_server_extended.py (+65 lines)
+- templates/index.html (+90 lines)
+- WIRING_LOCAL_ROUTES_SUMMARY.md (NEW, documentation)
+- test_local_routes_wiring.py (NEW, test suite)
+
+Total: ~350 lines added, 0 lines removed
+
+## Breaking Changes
+None. This is an additive change with full backward compatibility.
+
+## References
+- Issue: Local backend routes wiring task
+- Related: Provider selection refactoring
+

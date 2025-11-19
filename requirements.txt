@@ -1,41 +1,57 @@
-# Unified dependencies for API server + Gradio dashboards (Hugging Face Spaces).
-#
-# This single file is what Hugging Face Spaces will install. It includes:
-# - Core API server stack
-# - Database/SQLAlchemy layer
-# - Gradio dashboard + Plotly charts
-# - Optional Transformers-based AI features
+# Unified dependencies for Crypto Intelligence Hub (HuggingFace Space)
+# Optimized for HF deployment with minimal conflicts
 
-# Core API Server Requirements
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-sqlalchemy==2.0.25
-httpx==0.26.0
-websockets>=12.0
-python-dotenv
-python-multipart
-requests
-aiohttp>=3.8.0
+# ===== Core API Stack =====
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+pydantic==2.9.0
+pydantic-settings==2.5.0
+sqlalchemy==2.0.35
+httpx==0.27.2
+websockets>=10.4,<12.0  # Compatible with gradio-client
+python-dotenv==1.0.1
+python-multipart==0.0.9
+requests==2.32.3
+aiohttp==3.10.5
 
-# Data Processing
-pandas>=2.1.0
+# ===== Data Processing =====
+pandas==2.2.3
+numpy>=1.26.0,<2.0.0
 
-# Gradio Dashboard & UI (Required for app.py)
-gradio==4.12.0
-plotly==5.18.0
-psutil==5.9.6
+# ===== Gradio Dashboard =====
+gradio==4.44.0
+plotly==5.24.1
+psutil==6.0.0
 
-# AI/ML Libraries (optional but recommended for AI features)
-transformers>=4.36.0
-torch>=2.0.0
-sentencepiece>=0.1.99
+# ===== HuggingFace & AI/ML =====
+# Core transformers with minimal deps
+transformers>=4.45.0
+tokenizers>=0.20.0
+huggingface-hub>=0.25.0
+safetensors>=0.4.0
 
-# RSS Feed Parsing (Optional)
-feedparser>=6.0.10
+# Datasets library
+datasets>=3.0.0
 
-# HTML Parsing (Optional)
-beautifulsoup4>=4.12.0
+# PyTorch - CPU only for space efficiency
+torch>=2.4.0,<2.5.0
+torchaudio>=2.4.0,<2.5.0
 
-# HuggingFace Hub (For model validation)
-huggingface-hub>=0.19.0
+# Optional: Sentence transformers for embeddings
+sentence-transformers>=3.1.0
+
+# Tokenization
+sentencepiece==0.2.0
+
+# ===== Content Parsing =====
+feedparser==6.0.11
+beautifulsoup4==4.12.3
+lxml==5.3.0
+
+# ===== Utilities =====
+python-dateutil>=2.9.0
+pytz>=2024.1
+tenacity>=9.0.0
+
+# ===== Optional: Acceleration =====
+# accelerate>=0.34.0  # Uncomment if using multi-GPU

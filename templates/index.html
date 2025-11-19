@@ -10,6 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="/static/css/connection-status.css">
     <script src="/static/js/websocket-client.js"></script>
+    <script src="/static/js/trading-pairs-loader.js"></script>
+    <script src="/static/js/app.js"></script>
+    <link rel="stylesheet" href="/static/css/main.css">
     <style>
         * {
             margin: 0;
@@ -1860,6 +1863,62 @@
         <symbol id="icon-live" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" fill="currentColor"/>
         </symbol>
+
+        <!-- Bitcoin Icon -->
+        <symbol id="icon-bitcoin" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 11.5c0 1.93-1.57 3.5-3.5 3.5h-2v-3h2c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-2V8h2c.83 0 1.5-.67 1.5-1.5S12.83 5 12 5h-2V3h2c1.93 0 3.5 1.57 3.5 3.5 0 1.25-.68 2.34-1.68 2.93.84.59 1.18 1.68 1.18 2.57z" fill="currentColor"/>
+        </symbol>
+
+        <!-- Home Icon -->
+        <symbol id="icon-home" viewBox="0 0 24 24">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+
+        <!-- Check Icon -->
+        <symbol id="icon-check" viewBox="0 0 24 24">
+            <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </symbol>
+
+        <!-- Close Icon -->
+        <symbol id="icon-close" viewBox="0 0 24 24">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+
+        <!-- News Icon -->
+        <symbol id="icon-news" viewBox="0 0 24 24">
+            <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M7 7h10M7 11h10M7 15h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </symbol>
+
+        <!-- Sentiment Icon -->
+        <symbol id="icon-sentiment" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="9" cy="9" r="1" fill="currentColor"/>
+            <circle cx="15" cy="9" r="1" fill="currentColor"/>
+        </symbol>
+
+        <!-- Whale Icon -->
+        <symbol id="icon-whale" viewBox="0 0 24 24">
+            <path d="M2 12c0-2.2 1.8-4 4-4h12c2.2 0 4 1.8 4 4v5c0 2.2-1.8 4-4 4H6c-2.2 0-4-1.8-4-4v-5z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M6 8V6M10 8V5M14 8V5M18 8V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="8" cy="12" r="1" fill="currentColor"/>
+        </symbol>
+
+        <!-- Database Icon -->
+        <symbol id="icon-database" viewBox="0 0 24 24">
+            <ellipse cx="12" cy="5" rx="9" ry="3" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3" stroke="currentColor" stroke-width="2"/>
+        </symbol>
+
+        <!-- Rocket Icon -->
+        <symbol id="icon-rocket" viewBox="0 0 24 24">
+            <path d="M9 11L3 17v4l2-2 4-4M15 11l6 6v4l-2-2-4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 2c3.87 0 7 3.13 7 7v4l-7 7-7-7V9c0-3.87 3.13-7 7-7z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="12" cy="8" r="2" fill="currentColor"/>
+        </symbol>
     </svg>
 </head>
 
@@ -1875,28 +1934,30 @@
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner-large"></div>
-        <div class="loading-text" id="loadingText">در حال بارگذاری...</div>
+        <div class="loading-text" id="loadingText">Loading...</div>
     </div>
 
     <!-- Feedback Overlay -->
     <div class="feedback-overlay" id="feedbackOverlay">
         <div class="feedback-card">
-            <div class="feedback-icon" id="feedbackIcon">✅</div>
-            <div class="feedback-title" id="feedbackTitle">موفق!</div>
-            <div class="feedback-message" id="feedbackMessage">عملیات با موفقیت انجام شد</div>
-            <button class="refresh-btn ripple" onclick="hideFeedback()">بستن</button>
+            <div class="feedback-icon" id="feedbackIcon">
+                <svg width="48" height="48"><use href="#icon-check"></use></svg>
+            </div>
+            <div class="feedback-title" id="feedbackTitle">Success!</div>
+            <div class="feedback-message" id="feedbackMessage">Operation completed successfully</div>
+            <button class="refresh-btn ripple" onclick="hideFeedback()">Close</button>
         </div>
     </div>
 
     <!-- Floating Action Button -->
-    <button class="fab ripple" onclick="scrollToTop()" title="بازگشت به بالا">
+    <button class="fab ripple" onclick="scrollToTop()" title="Back to top">
         ↑
     </button>
 
     <!-- WebSocket Status Indicator -->
     <div id="ws-connection-status" class="ws-status-indicator disconnected">
         <div id="ws-status-dot" class="status-dot status-dot-offline"></div>
-        <span id="ws-status-text" class="ws-status-text">در حال اتصال...</span>
+        <span id="ws-status-text" class="ws-status-text">Connecting...</span>
         <div id="online-users-badge" class="badge badge-info badge-pulse" style="margin-left: 10px;">0</div>
     </div>
 
@@ -1961,6 +2022,10 @@
                     <span class="tab-icon"><svg><use href="#icon-reports"></use></svg></span>
                     Reports
                 </button>
+                <a href="/ai-tools" class="tab" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                    <span class="tab-icon"><svg><use href="#icon-hf"></use></svg></span>
+                    AI Tools
+                </a>
             </div>
         </div>
 
@@ -1981,10 +2046,10 @@
                         </div>
                     </div>
                     <div class="stat-value shimmer" id="active-users-count">0</div>
-                    <div class="stat-label">کاربران آنلاین</div>
+                    <div class="stat-label">Online Users</div>
                     <div class="stat-change positive">
-                        <span>📊</span>
-                        <span>کل نشست‌ها: <span id="total-sessions-count">0</span></span>
+                        <svg width="20" height="20"><use href="#icon-market"></use></svg>
+                        <span>Total Sessions: <span id="total-sessions-count">0</span></span>
                     </div>
                     <div class="animated-progress"></div>
                 </div>
@@ -2068,7 +2133,7 @@
                         <span class="icon icon-md" style="margin-left: 8px;"><svg><use href="#icon-diamond"></use></svg></span>
                         Live Market Data
                     </div>
-                    <button class="refresh-btn ripple" onclick="loadMarketData()" data-tooltip="به‌روزرسانی داده‌های بازار">
+                    <button class="refresh-btn ripple" onclick="loadMarketData()" data-tooltip="Refresh market data">
                         <span class="icon icon-sm"><svg><use href="#icon-refresh"></use></svg></span>
                         Refresh
                     </button>
@@ -2077,24 +2142,24 @@
                 <!-- Search Bar -->
                 <div class="search-container">
                     <span class="search-icon icon"><svg><use href="#icon-search"></use></svg></span>
-                    <input type="text" class="search-input" id="marketSearch" placeholder="جستجوی ارز دیجیتال (مثال: Bitcoin, BTC, Ethereum)..." oninput="filterMarketTable()">
+                    <input type="text" class="search-input" id="marketSearch" placeholder="Search cryptocurrency (e.g., Bitcoin, BTC, Ethereum)..." oninput="filterMarketTable()">
                 </div>
                 
                 <!-- Filter Chips -->
                 <div class="filter-chips">
-                    <button class="filter-chip active" onclick="filterByCategory('all')">همه</button>
+                    <button class="filter-chip active" onclick="filterByCategory('all')">All</button>
                     <button class="filter-chip" onclick="filterByCategory('top10')">Top 10</button>
                     <button class="filter-chip" onclick="filterByCategory('gainers')">
                         <span class="icon icon-sm status-icon-success"><svg><use href="#icon-trending-up"></use></svg></span>
-                        در حال رشد
+                        Gainers
                     </button>
                     <button class="filter-chip" onclick="filterByCategory('losers')">
                         <span class="icon icon-sm status-icon-error"><svg><use href="#icon-trending-down"></use></svg></span>
-                        در حال سقوط
+                        Losers
                     </button>
                     <button class="filter-chip" onclick="filterByCategory('volume')">
                         <span class="icon icon-sm"><svg><use href="#icon-volume"></use></svg></span>
-                        حجم بالا
+                        High Volume
                     </button>
                 </div>
                 <div style="overflow-x: auto;">
@@ -2126,18 +2191,39 @@
             <div
                 style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-bottom: 30px;">
                 <div class="chart-container">
-                    <div class="section-title" style="margin-bottom: 20px;">📈 Market Dominance</div>
+                    <div class="section-title" style="margin-bottom: 20px;">
+                        <svg width="24" height="24" style="vertical-align: middle; margin-right: 8px;"><use href="#icon-trending-up"></use></svg>
+                        Market Dominance
+                    </div>
                     <canvas id="dominanceChart"></canvas>
                 </div>
 
                 <div class="chart-container">
-                    <div class="section-title" style="margin-bottom: 20px;">😱 Fear & Greed Index</div>
-                    <div style="text-align: center;">
+                    <div class="section-title" style="margin-bottom: 20px;">
+                        <svg width="24" height="24" style="vertical-align: middle; margin-right: 8px;"><use href="#icon-sentiment"></use></svg>
+                        Fear & Greed Index
+                    </div>
+                    <div style="text-align: center; padding: 20px;">
                         <canvas id="gaugeChart"></canvas>
-                        <div style="font-size: 48px; font-weight: 900; margin: 20px 0 10px;" id="sentimentValue">50
+                        <div style="margin-top: 20px;">
+                            <div style="font-size: 64px; font-weight: 900; margin-bottom: 10px; line-height: 1;" id="sentimentValue">50</div>
+                            <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px;" id="sentimentText">Neutral</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;" id="sentimentDescription">
+                                Market sentiment is balanced
+                            </div>
+                            <!-- Sentiment Meter Bar -->
+                            <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; margin-bottom: 15px;">
+                                <div id="sentimentBar" style="height: 100%; width: 50%; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 25%, #6b7280 50%, #3b82f6 75%, #10b981 100%); border-radius: 4px; transition: width 0.5s ease;"></div>
+                            </div>
+                            <!-- Sentiment Scale Labels -->
+                            <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); margin-top: 5px;">
+                                <span>Extreme Fear</span>
+                                <span>Fear</span>
+                                <span>Neutral</span>
+                                <span>Greed</span>
+                                <span>Extreme Greed</span>
+                            </div>
                         </div>
-                        <div style="color: var(--text-secondary); font-size: 16px; font-weight: 600;"
-                            id="sentimentText">Neutral</div>
                     </div>
                 </div>
             </div>
@@ -2350,15 +2436,24 @@ Market is bullish today</textarea>
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <button class="refresh-btn" onclick="exportJSON()">💾 Export JSON</button>
-                    <button class="refresh-btn" onclick="exportCSV()">📊 Export CSV</button>
-                    <button class="refresh-btn" onclick="createBackup()">🔄 Create Backup</button>
+                    <button class="refresh-btn" onclick="exportCSV()">
+                        <svg width="16" height="16" style="vertical-align: middle; margin-right: 5px;"><use href="#icon-export"></use></svg>
+                        Export CSV
+                    </button>
+                    <button class="refresh-btn" onclick="createBackup()">
+                        <svg width="16" height="16" style="vertical-align: middle; margin-right: 5px;"><use href="#icon-refresh"></use></svg>
+                        Create Backup
+                    </button>
                     <button class="refresh-btn" onclick="clearCache()">🗑️ Clear Cache</button>
                     <button class="refresh-btn" onclick="forceUpdateAll()">🔃 Force Update All</button>
                 </div>
             </div>
 
             <div class="market-section">
-                <div class="section-title" style="margin-bottom: 20px;">📈 Recent Activity</div>
+                    <div class="section-title" style="margin-bottom: 20px;">
+                        <svg width="24" height="24" style="vertical-align: middle; margin-right: 8px;"><use href="#icon-market"></use></svg>
+                        Recent Activity
+                    </div>
                 <div id="activityLog"
                     style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">
                     <div style="padding: 10px; border-left: 3px solid var(--accent-blue); margin-bottom: 8px;">
@@ -2645,13 +2740,20 @@ Crypto market is bullish today</textarea>
                 <div class="section-header">
                     <div class="section-title">📦 Resource Management</div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="refresh-btn" onclick="loadResources()">🔄 Refresh</button>
+                        <button class="refresh-btn" onclick="loadResources()">
+                            <svg width="16" height="16" style="vertical-align: middle; margin-right: 5px;"><use href="#icon-refresh"></use></svg>
+                            Refresh
+                        </button>
                         <button class="refresh-btn" onclick="exportResourcesJSON()"
-                            style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">💾 Export
-                            JSON</button>
+                            style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">
+                            <svg width="16" height="16" style="vertical-align: middle; margin-right: 5px;"><use href="#icon-database"></use></svg>
+                            Export JSON
+                        </button>
                         <button class="refresh-btn" onclick="exportResourcesCSV()"
-                            style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">📊 Export
-                            CSV</button>
+                            style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">
+                            <svg width="16" height="16" style="vertical-align: middle; margin-right: 5px;"><use href="#icon-export"></use></svg>
+                            Export CSV
+                        </button>
                         <button class="refresh-btn" onclick="backupResources()"
                             style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue);">💾 Backup</button>
                         <button class="refresh-btn" onclick="showImportModal()"
@@ -2685,6 +2787,7 @@ Crypto market is bullish today</textarea>
                     <select class="form-select" id="resourceCategoryFilter" onchange="loadResources()"
                         style="max-width: 300px;">
                         <option value="">All Categories</option>
+                        <option value="local">🏠 Local Backend Routes</option>
                         <option value="market_data">Market Data</option>
                         <option value="exchange">Exchange</option>
                         <option value="blockchain_explorer">Block Explorer</option>
@@ -2826,10 +2929,19 @@ Crypto market is bullish today</textarea>
         <div id="tab-pools" class="tab-content">
             <div class="market-section">
                 <div class="section-header">
-                    <div class="section-title">🔄 Source Pool Management</div>
+                    <div class="section-title">
+                        <svg width="24" height="24" style="vertical-align: middle; margin-right: 8px;"><use href="#icon-pools"></use></svg>
+                        Source Pool Management
+                    </div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="refresh-btn" onclick="showCreatePoolModal()">➕ Create Pool</button>
-                        <button class="refresh-btn" onclick="loadPools()">🔄 Refresh</button>
+                        <button class="refresh-btn" onclick="showCreatePoolModal()">
+                            <svg width="16" height="16" style="vertical-align: middle; margin-right: 5px;"><use href="#icon-check"></use></svg>
+                            Create Pool
+                        </button>
+                        <button class="refresh-btn" onclick="loadPools()">
+                            <svg width="16" height="16" style="vertical-align: middle; margin-right: 5px;"><use href="#icon-refresh"></use></svg>
+                            Refresh
+                        </button>
                     </div>
                 </div>
                 <div id="poolsContainer"
@@ -2985,7 +3097,7 @@ Crypto market is bullish today</textarea>
                 // Show loading state
                 const marketTableBody = document.getElementById('marketTableBody');
                 if (marketTableBody) {
-                    marketTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;"><div class="loading"><div class="spinner"></div></div><div style="margin-top: 10px; color: var(--text-secondary);">در حال بارگذاری داده‌های بازار...</div></td></tr>';
+                    marketTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;"><div class="loading"><div class="spinner"></div></div><div style="margin-top: 10px; color: var(--text-secondary);">Loading market data...</div></td></tr>';
                 }
 
                 showProgress(60);
@@ -3001,11 +3113,11 @@ Crypto market is bullish today</textarea>
                 showProgress(80);
 
                 // Check if responses are OK
-                if (!marketRes.ok) throw new Error(`خطا در دریافت داده‌های بازار: ${marketRes.status}`);
-                if (!statsRes.ok) throw new Error(`خطا در دریافت آمار: ${statsRes.status}`);
-                if (!sentimentRes.ok) throw new Error(`خطا در دریافت احساسات: ${sentimentRes.status}`);
-                if (!trendingRes.ok) throw new Error(`خطا در دریافت ترندها: ${trendingRes.status}`);
-                if (!defiRes.ok) throw new Error(`خطا در دریافت DeFi: ${defiRes.status}`);
+                if (!marketRes.ok) throw new Error(`Error fetching market data: ${marketRes.status}`);
+                if (!statsRes.ok) throw new Error(`Error fetching stats: ${statsRes.status}`);
+                if (!sentimentRes.ok) throw new Error(`Error fetching sentiment: ${sentimentRes.status}`);
+                if (!trendingRes.ok) throw new Error(`Error fetching trending: ${trendingRes.status}`);
+                if (!defiRes.ok) throw new Error(`Error fetching DeFi: ${defiRes.status}`);
 
                 const [market, stats, sentiment, trending, defi] = await Promise.all([
                     marketRes.json(),
@@ -3017,30 +3129,30 @@ Crypto market is bullish today</textarea>
 
                 // Validate data with more detailed checks
                 if (!market || !Array.isArray(market.cryptocurrencies)) {
-                    throw new Error('داده‌های بازار نامعتبر است: cryptocurrencies array not found');
+                    throw new Error('Invalid market data: cryptocurrencies array not found');
                 }
                 if (!stats || typeof stats !== 'object' || stats === null) {
                     console.error('Invalid stats:', stats);
-                    throw new Error('آمار نامعتبر است: stats object not found');
+                    throw new Error('Invalid stats: stats object not found');
                 }
                 // Check if stats.market exists and is an object
                 if (!stats.market || typeof stats.market !== 'object' || stats.market === null || Array.isArray(stats.market)) {
                     console.error('Invalid stats.market:', stats.market);
                     console.error('Full stats object:', JSON.stringify(stats, null, 2));
-                    throw new Error('آمار نامعتبر است: stats.market object not found');
+                    throw new Error('Invalid stats: stats.market object not found');
                 }
                 if (!sentiment || typeof sentiment !== 'object' || sentiment === null) {
-                    throw new Error('داده‌های احساسات نامعتبر است: sentiment object not found');
+                    throw new Error('Invalid sentiment data: sentiment object not found');
                 }
                 // Note: sentiment can have different structures:
                 // - sentiment.fear_greed_index (from /api/sentiment)
                 // - sentiment.fear_greed_value (from /api/stats)
                 // So we don't validate the exact structure here
                 if (!trending || !Array.isArray(trending.trending)) {
-                    throw new Error('داده‌های ترند نامعتبر است: trending array not found');
+                    throw new Error('Invalid trending data: trending array not found');
                 }
                 if (!defi || typeof defi !== 'object' || defi === null) {
-                    throw new Error('داده‌های DeFi نامعتبر است: defi object not found');
+                    throw new Error('Invalid DeFi data: defi object not found');
                 }
 
                 // Call updateStats with validated data - double check before calling
@@ -3048,7 +3160,7 @@ Crypto market is bullish today</textarea>
                 updateStats(stats, sentiment);
                 } else {
                     console.error('Failed final validation before updateStats:', { stats, sentiment });
-                    throw new Error('داده‌های stats.market نامعتبر است');
+                    throw new Error('Invalid stats.market data');
                 }
                 updateMarketTable(market.cryptocurrencies);
                 updateTrending(trending.trending);
@@ -3060,12 +3172,12 @@ Crypto market is bullish today</textarea>
                 if (marketTableBody) {
                     marketTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--accent-red);">
                         <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
-                        <div style="font-weight: 600; margin-bottom: 5px;">خطا در بارگذاری داده‌ها</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">${error.message || 'خطای نامشخص'}</div>
-                        <button onclick="loadMarketData()" style="margin-top: 15px; padding: 10px 20px; background: var(--accent-blue); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;">تلاش مجدد</button>
+                        <div style="font-weight: 600; margin-bottom: 5px;">Error loading data</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">${error.message || 'Unknown error'}</div>
+                        <button onclick="loadMarketData()" style="margin-top: 15px; padding: 10px 20px; background: var(--accent-blue); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;">Try Again</button>
                     </td></tr>`;
                 }
-                showToast('❌ خطا در بارگذاری داده‌های بازار: ' + (error.message || 'خطای نامشخص'), 'error');
+                showToast('❌ Error loading market data: ' + (error.message || 'Unknown error'), 'error');
             }
         }
 
@@ -3162,7 +3274,7 @@ Crypto market is bullish today</textarea>
                 if (!cryptos || !Array.isArray(cryptos) || cryptos.length === 0) {
             const tbody = document.getElementById('marketTableBody');
                     if (tbody) {
-                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">هیچ داده‌ای یافت نشد</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">No data found</td></tr>';
                     }
                     return;
                 }
@@ -3179,9 +3291,11 @@ Crypto market is bullish today</textarea>
                     const marketCap = crypto.market_cap || 0;
                     const volume24h = crypto.volume_24h || 0;
                     const symbol = crypto.symbol || 'N/A';
-                    const name = crypto.name || 'نامشخص';
+                    const name = crypto.name || 'Unknown';
                     const changeClass = change24h >= 0 ? 'positive' : 'negative';
-                    const changeIcon = change24h >= 0 ? '📈' : '📉';
+                    const changeIcon = change24h >= 0 ? 
+                        '<svg width="16" height="16" style="vertical-align: middle;"><use href="#icon-trending-up"></use></svg>' : 
+                        '<svg width="16" height="16" style="vertical-align: middle;"><use href="#icon-trending-down"></use></svg>';
 
                     return `
                         <tr data-name="${name.toLowerCase()}" data-symbol="${symbol.toLowerCase()}" data-change="${change24h}" data-rank="${crypto.rank || index + 1}">
@@ -3207,7 +3321,7 @@ Crypto market is bullish today</textarea>
                 console.error('Error updating market table:', error);
                 const tbody = document.getElementById('marketTableBody');
                 if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--accent-red);">خطا در نمایش داده‌ها</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--accent-red);">Error displaying data</td></tr>';
                 }
             }
         }
@@ -3218,12 +3332,12 @@ Crypto market is bullish today</textarea>
                 if (!grid) return;
 
                 if (!trending || !Array.isArray(trending) || trending.length === 0) {
-                    grid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">هیچ ترندی یافت نشد</div>';
+                    grid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No trending coins found</div>';
                     return;
                 }
 
                 grid.innerHTML = trending.map((coin, index) => {
-                    const name = coin.name || 'نامشخص';
+                    const name = coin.name || 'Unknown';
                     const symbol = coin.symbol || 'N/A';
                     return `
                 <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 12px;">
@@ -3240,7 +3354,7 @@ Crypto market is bullish today</textarea>
                 console.error('Error updating trending:', error);
                 const grid = document.getElementById('trendingGrid');
                 if (grid) {
-                    grid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--accent-red);">خطا در نمایش ترندها</div>';
+                    grid.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--accent-red);">Error displaying trending</div>';
                 }
             }
         }
@@ -3260,7 +3374,7 @@ Crypto market is bullish today</textarea>
                 </div>
                 <div style="display: grid; gap: 12px;">
                         ${protocols.length > 0 ? protocols.map((p, i) => {
-                            const name = p.name || 'نامشخص';
+                            const name = p.name || 'Unknown';
                             const chain = p.chain || 'N/A';
                             const tvl = p.tvl || 0;
                             const change24h = p.change_24h || 0;
@@ -3277,20 +3391,20 @@ Crypto market is bullish today</textarea>
                             <div style="text-align: right;">
                                             <div class="stat-value" style="font-size: 18px; margin-bottom: 4px;">$${(tvl / 1e9).toFixed(2)}B</div>
                                             <div class="stat-change ${changeClass}" style="font-size: 13px;">
-                                                ${change24h >= 0 ? '📈' : '📉'} ${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}%
+                                                ${changeIcon} ${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}%
                                 </div>
                             </div>
                         </div>
                 </div>
             `;
-                        }).join('') : '<div class="empty-state"><div class="empty-state-icon">📦</div><div>هیچ پروتکلی یافت نشد</div></div>'}
+                        }).join('') : '<div class="empty-state"><div class="empty-state-icon">📦</div><div>No protocols found</div></div>'}
                     </div>
                 `;
             } catch (error) {
                 console.error('Error updating DeFi:', error);
                 const list = document.getElementById('defiList');
                 if (list) {
-                    list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--accent-red);">خطا در نمایش داده‌های DeFi</div>';
+                    list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--accent-red);">Error displaying DeFi data</div>';
                 }
             }
         }
@@ -3336,29 +3450,81 @@ Crypto market is bullish today</textarea>
         }
 
         function updateCharts(market, sentiment) {
-            const btcDom = market.global.btc_dominance;
-            const ethDom = market.global.eth_dominance;
-            charts.dominance.data.datasets[0].data = [btcDom, ethDom, 100 - btcDom - ethDom];
+            const btcDom = market.global?.btc_dominance || market.btc_dominance || 0;
+            const ethDom = market.global?.eth_dominance || 0;
+            charts.dominance.data.datasets[0].data = [btcDom, ethDom, Math.max(0, 100 - btcDom - ethDom)];
             charts.dominance.update();
 
-            const fg = sentiment.fear_greed_index.value;
+            // Handle different sentiment data structures
+            let fg = 50;
+            let classification = 'Neutral';
+            
+            if (sentiment.fear_greed_index && typeof sentiment.fear_greed_index === 'object') {
+                fg = sentiment.fear_greed_index.value || sentiment.fear_greed_index || 50;
+                classification = sentiment.fear_greed_index.value_classification || sentiment.fear_greed_index.classification || 'Neutral';
+            } else if (typeof sentiment.fear_greed_index === 'number') {
+                fg = sentiment.fear_greed_index;
+                classification = sentiment.fear_greed_label || 'Neutral';
+            } else if (typeof sentiment.fear_greed_value !== 'undefined') {
+                fg = sentiment.fear_greed_value;
+                classification = sentiment.classification || 'Neutral';
+            } else if (typeof sentiment.value !== 'undefined') {
+                fg = sentiment.value;
+                classification = sentiment.classification || 'Neutral';
+            }
+            
+            // Ensure fg is between 0-100
+            fg = Math.max(0, Math.min(100, fg));
+            
             charts.gauge.data.datasets[0].data = [fg, 100 - fg];
 
+            let barColor = '#6b7280';
+            let description = 'Market sentiment is balanced';
+            
             if (fg < 25) {
                 charts.gauge.data.datasets[0].backgroundColor[0] = '#ef4444';
+                barColor = '#ef4444';
+                description = 'Extreme fear - investors are very worried, potential buying opportunity';
             } else if (fg < 45) {
                 charts.gauge.data.datasets[0].backgroundColor[0] = '#f59e0b';
+                barColor = '#f59e0b';
+                description = 'Fear - market shows concern, cautious sentiment';
             } else if (fg < 55) {
                 charts.gauge.data.datasets[0].backgroundColor[0] = '#6b7280';
+                barColor = '#6b7280';
+                description = 'Neutral - balanced market sentiment';
             } else if (fg < 75) {
                 charts.gauge.data.datasets[0].backgroundColor[0] = '#3b82f6';
+                barColor = '#3b82f6';
+                description = 'Greed - optimistic market sentiment';
             } else {
                 charts.gauge.data.datasets[0].backgroundColor[0] = '#10b981';
+                barColor = '#10b981';
+                description = 'Extreme greed - very optimistic, potential correction risk';
             }
 
             charts.gauge.update();
-            document.getElementById('sentimentValue').textContent = fg;
-            document.getElementById('sentimentText').textContent = sentiment.fear_greed_index.classification;
+            
+            const sentimentValueEl = document.getElementById('sentimentValue');
+            const sentimentTextEl = document.getElementById('sentimentText');
+            const sentimentDescEl = document.getElementById('sentimentDescription');
+            const sentimentBarEl = document.getElementById('sentimentBar');
+            
+            if (sentimentValueEl) {
+                sentimentValueEl.textContent = fg;
+                sentimentValueEl.style.color = barColor;
+            }
+            if (sentimentTextEl) {
+                sentimentTextEl.textContent = classification;
+                sentimentTextEl.style.color = barColor;
+            }
+            if (sentimentDescEl) {
+                sentimentDescEl.textContent = description;
+            }
+            if (sentimentBarEl) {
+                sentimentBarEl.style.width = fg + '%';
+                sentimentBarEl.style.background = `linear-gradient(90deg, #ef4444 0%, #f59e0b 25%, #6b7280 50%, #3b82f6 75%, #10b981 100%)`;
+            }
         }
 
         // استفاده از WebSocket Client جدید
@@ -4508,67 +4674,87 @@ Crypto market is bullish today</textarea>
             try {
                 const category = document.getElementById('resourceCategoryFilter')?.value || '';
 
-                let url = '/api/resources';
-                if (category) {
-                    url = `/api/resources/category/${category}`;
-                }
-
-                const response = await fetch(url);
+                // Fetch main resources data
+                const response = await fetch('/api/resources');
                 const data = await response.json();
+                
+                // Fetch local routes from apis endpoint
+                const apisResponse = await fetch('/api/resources/apis');
+                const apisData = await apisResponse.json();
+                const localRoutes = apisData?.local_routes?.routes || [];
 
                 // Update stats
-                const stats = category ? { count: data.count } : data.statistics;
-                if (stats && document.getElementById('totalResources')) {
-                    document.getElementById('totalResources').textContent = stats.total_providers || stats.count || 0;
-                    document.getElementById('freeResources').textContent = stats.by_free?.free || 0;
-                    document.getElementById('paidResources').textContent = stats.by_free?.paid || 0;
-                    document.getElementById('authResources').textContent = stats.by_auth?.requires_auth || 0;
+                if (data.success && data.summary && document.getElementById('totalResources')) {
+                    document.getElementById('totalResources').textContent = data.summary.total_resources || 0;
+                    document.getElementById('freeResources').textContent = data.summary.free_resources || 0;
+                    document.getElementById('paidResources').textContent = (data.summary.total_resources - data.summary.free_resources) || 0;
+                    document.getElementById('authResources').textContent = data.summary.local_routes_count || 0;
                 }
 
-                // Update grid
+                // Determine what to display
                 const grid = document.getElementById('resourcesGrid');
-                const providers = category ? data.providers : Object.values(data.providers || {});
+                let itemsToDisplay = [];
 
-                if (providers && providers.length > 0) {
-                    grid.innerHTML = providers.map(provider => {
-                        const authBadge = provider.requires_auth
-                            ? '<span class="badge badge-warning">Auth Required</span>'
-                            : '<span class="badge badge-success">No Auth</span>';
+                if (category === 'local') {
+                    // Show local routes only
+                    itemsToDisplay = localRoutes;
+                } else if (category) {
+                    // Filter by category (not implemented in current API but placeholder)
+                    itemsToDisplay = localRoutes.filter(r => r.category === category);
+                } else {
+                    // Show sample local routes
+                    itemsToDisplay = localRoutes.slice(0, 20);
+                }
 
-                        const freeBadge = provider.free !== false
-                            ? '<span class="badge badge-success">Free</span>'
-                            : '<span class="badge badge-danger">Paid</span>';
+                if (itemsToDisplay && itemsToDisplay.length > 0) {
+                    grid.innerHTML = itemsToDisplay.map(item => {
+                        const isLocal = item.category === 'local';
+                        const method = item.notes?.match(/(GET|POST|WS)/i)?.[0] || 'GET';
+                        
+                        const categoryBadge = isLocal 
+                            ? '<span class="badge badge-success">🏠 Local</span>'
+                            : `<span class="badge badge-info">${item.category || 'unknown'}</span>`;
+
+                        const authType = item.auth?.type || 'none';
+                        const authBadge = authType === 'none'
+                            ? '<span class="badge badge-success">No Auth</span>'
+                            : '<span class="badge badge-warning">Auth Required</span>';
+
+                        const methodBadge = method === 'POST' 
+                            ? '<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-yellow);">POST</span>'
+                            : method === 'WS'
+                            ? '<span class="badge" style="background: rgba(139, 92, 246, 0.2); color: var(--accent-purple);">WebSocket</span>'
+                            : '<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: var(--accent-blue);">GET</span>';
 
                         return `
                             <div class="stat-card pool-card-hover">
                                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
                                     <div>
-                                        <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">${provider.name}</div>
-                                        <span class="badge badge-info">${provider.category}</span>
+                                        <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">${item.name || 'Unknown'}</div>
+                                        ${categoryBadge}
                                     </div>
                                     <div style="display: flex; gap: 5px; flex-direction: column;">
+                                        ${methodBadge}
                                         ${authBadge}
-                                        ${freeBadge}
                                     </div>
                                 </div>
-                                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; word-break: break-all;">
-                                    ${provider.base_url}
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; word-break: break-all; font-family: 'Courier New', monospace;">
+                                    ${item.base_url || 'N/A'}
                                 </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
-                                    <span>Priority: ${provider.priority || 5}</span>
-                                    <span>Weight: ${provider.weight || 50}</span>
-                                </div>
-                                ${provider.docs_url ? `<div style="margin-top: 10px;"><a href="${provider.docs_url}" target="_blank" style="color: var(--accent-blue); font-size: 12px;">📖 Docs</a></div>` : ''}
+                                ${item.notes ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 10px; padding: 8px; background: rgba(255, 255, 255, 0.02); border-radius: 5px;">
+                                    ${item.notes}
+                                </div>` : ''}
+                                ${item.docs_url ? `<div style="margin-top: 10px;"><a href="${item.docs_url}" target="_blank" style="color: var(--accent-blue); font-size: 12px;">📖 Docs</a></div>` : ''}
                             </div>
                         `;
                     }).join('');
                 } else {
-                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">No resources found</div>';
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">No resources found for this category</div>';
                 }
             } catch (error) {
                 console.error('Error loading resources:', error);
                 if (document.getElementById('resourcesGrid')) {
-                    document.getElementById('resourcesGrid').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--accent-red);">Error loading resources</div>';
+                    document.getElementById('resourcesGrid').innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--accent-red);">Error loading resources: ' + error.message + '</div>';
                 }
             }
         }
@@ -5120,4 +5306,5 @@ Crypto market is bullish today</textarea>
     </script>
 </body>
 
+</html>
 </html>

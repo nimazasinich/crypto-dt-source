@@ -1,1216 +1,378 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto API Monitor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Crypto Intelligence Hub - AI-Powered Data Center</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        * { box-sizing: border-box; }
-        :root {
-            --bg: #f5f6fb;
-            --card: #ffffff;
-            --muted: #6b7280;
-            --text: #1f2937;
-            --primary: #2563eb;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --warning: #d97706;
-            --border: #e5e7eb;
-        }
-        body {
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background: var(--card);
-            padding: 18px 24px;
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgba(15,23,42,0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-        .logo h1 { margin: 0; font-size: 20px; color: var(--primary); }
-        .header-actions { display: flex; gap: 12px; align-items: center; }
-        .status-pill {
-            padding: 6px 12px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            background: #fee2e2;
-            color: var(--danger);
-        }
-        .btn {
-            padding: 10px 18px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            background: var(--primary);
-            color: #fff;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 4px rgba(37,99,235,0.2);
-        }
-        .btn:hover {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(37,99,235,0.3);
-        }
-        .btn:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 2px rgba(37,99,235,0.2);
-        }
-        .btn.secondary {
-            background: var(--card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            box-shadow: 0 1px 2px rgba(15,23,42,0.1);
-        }
-        .btn.secondary:hover {
-            background: #f9fafb;
-            border-color: var(--primary);
-            color: var(--primary);
-            box-shadow: 0 2px 4px rgba(37,99,235,0.15);
-        }
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-            margin: 16px 0;
-        }
-        .kpi-card {
-            background: var(--card);
-            padding: 14px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(15,23,42,0.08);
-            border: 1px solid var(--border);
-            transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .kpi-card:hover {
-            box-shadow: 0 4px 12px rgba(37,99,235,0.15);
-            transform: translateY(-2px);
-            border-color: var(--primary);
-        }
-        .kpi-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-        .kpi-icon {
-            width: 32px;
-            height: 32px;
-            padding: 6px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .kpi-icon svg {
-            width: 20px;
-            height: 20px;
-            stroke-width: 2;
-        }
-        .kpi-icon.blue { background: #dbeafe; color: #2563eb; }
-        .kpi-icon.green { background: #dcfce7; color: #16a34a; }
-        .kpi-icon.orange { background: #fed7aa; color: #ea580c; }
-        .kpi-icon.purple { background: #e9d5ff; color: #9333ea; }
-        .kpi-label {
-            font-size: 11px;
-            color: var(--muted);
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-            font-weight: 600;
-            flex: 1;
-        }
-        .kpi-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text);
-            line-height: 1.2;
-        }
-        .kpi-trend {
-            font-size: 11px;
-            color: var(--muted);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .tabs {
-            background: var(--card);
-            border-radius: 10px;
-            padding: 8px;
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            box-shadow: 0 1px 3px rgba(15,23,42,0.08);
-        }
-        .tab {
-            border: none;
-            background: transparent;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            color: var(--muted);
-            cursor: pointer;
-        }
-        .tab.active { background: var(--primary); color: #fff; }
-        .tab-content { margin-top: 16px; display: none; }
-        .tab-content.active { display: block; }
-        .card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(15,23,42,0.08);
-            border: 1px solid var(--border);
-            margin-bottom: 16px;
-            transition: all 0.2s ease;
-        }
-        .card:hover {
-            box-shadow: 0 4px 12px rgba(15,23,42,0.12);
-            border-color: rgba(37,99,235,0.2);
-        }
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid var(--border);
-        }
-        .card-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .grid { display: grid; gap: 16px; }
-        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            font-size: 13px;
-        }
-        thead {
-            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        thead th {
-            padding: 14px 16px;
-            text-align: left;
-            font-weight: 700;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--muted);
-            border-bottom: 2px solid var(--border);
-            white-space: nowrap;
-        }
-        thead th:first-child { border-top-left-radius: 8px; }
-        thead th:last-child { border-top-right-radius: 8px; }
-        tbody tr {
-            transition: all 0.15s ease;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        tbody tr:hover {
-            background: #f9fafb;
-            transform: scale(1.001);
-            box-shadow: 0 2px 8px rgba(37,99,235,0.08);
-        }
-        tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
-        tbody tr:last-child td:last-child { border-bottom-right-radius: 8px; }
-        tbody td {
-            padding: 14px 16px;
-            color: var(--text);
-            vertical-align: middle;
-        }
-        tbody td strong {
-            font-weight: 600;
-            color: var(--text);
-        }
-        tbody td:first-child {
-            font-weight: 600;
-        }
-        .badge {
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-        }
-        .badge.success {
-            background: #dcfce7;
-            color: #15803d;
-            border-color: #86efac;
-        }
-        .badge.warn {
-            background: #fef3c7;
-            color: #d97706;
-            border-color: #fde047;
-        }
-        .badge.danger {
-            background: #fee2e2;
-            color: #b91c1c;
-            border-color: #fca5a5;
-        }
-        .badge.info {
-            background: #dbeafe;
-            color: #1e40af;
-            border-color: #93c5fd;
-        }
-        .list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .list-item {
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--card);
-            transition: all 0.15s ease;
-        }
-        .list-item:hover {
-            background: #f9fafb;
-            border-color: var(--primary);
-            transform: translateX(2px);
-            box-shadow: 0 2px 8px rgba(37,99,235,0.1);
-        }
-        .list-item:last-child {
-            margin-bottom: 0;
-        }
-        .resource-search { display: flex; gap: 12px; }
-        .resource-search input {
-            flex: 1;
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            font-size: 14px;
-        }
-        .resource-columns {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
-        }
-        .resource-item {
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            margin-bottom: 8px;
-            font-size: 13px;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-        }
-        label { font-size: 12px; font-weight: 600; color: var(--muted); }
-        input, textarea, select {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            background: var(--card);
-            color: var(--text);
-            transition: all 0.2s ease;
-        }
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-        }
-        input:hover, textarea:hover, select:hover {
-            border-color: rgba(37,99,235,0.3);
-        }
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-        }
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .toast {
-            background: #111827;
-            color: white;
-            padding: 12px 16px;
-            border-radius: 6px;
-            min-width: 240px;
-            box-shadow: 0 8px 20px rgba(15,23,42,0.25);
-        }
-        @media (max-width: 720px) {
-            .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
-            .grid-2 { grid-template-columns: 1fr; }
-            .resource-search { flex-direction: column; }
-        }
-    </style>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="/static/js/trading-pairs-loader.js" defer></script>
+    <script src="/static/js/app.js" defer></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
 </head>
 <body>
-<div class="toast-container" id="toastContainer"></div>
-<div class="container">
-    <div class="header">
-        <div class="logo">
-            <h1>🚀 Crypto API Monitor</h1>
-            <div style="font-size:12px; color:var(--muted);">Real API diagnostics + market intelligence</div>
-        </div>
-        <div class="header-actions">
-            <div class="status-pill" id="wsStatus">Connecting...</div>
-            <button class="btn secondary" onclick="refreshAll()">Refresh</button>
-            <button class="btn" onclick="loadErrorSummary()">Diagnostics</button>
-        </div>
-    </div>
-
-    <div class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-header">
-                <div class="kpi-label">Total APIs</div>
-                <div class="kpi-icon blue">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                </div>
-            </div>
-            <div class="kpi-value" id="kpiTotalAPIs">--</div>
-            <div class="kpi-trend" id="kpiTotalTrend">Loading…</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-header">
-                <div class="kpi-label">Online</div>
-                <div class="kpi-icon green">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-            </div>
-            <div class="kpi-value" id="kpiOnline">--</div>
-            <div class="kpi-trend" id="kpiOnlineTrend">Loading…</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-header">
-                <div class="kpi-label">Avg Response</div>
-                <div class="kpi-icon orange">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                </div>
-            </div>
-            <div class="kpi-value" id="kpiAvgResponse">--</div>
-            <div class="kpi-trend" id="kpiResponseTrend">Loading…</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-header">
-                <div class="kpi-label">Last Update</div>
-                <div class="kpi-icon purple">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-            </div>
-            <div class="kpi-value" id="kpiLastUpdate" style="font-size:16px;">--</div>
-            <div class="kpi-trend">Auto-refresh</div>
-        </div>
-    </div>
-
-    <div class="tabs" id="tabBar">
-        <button class="tab active" data-tab="dashboard" onclick="switchTab(event, 'dashboard')">Dashboard</button>
-        <button class="tab" data-tab="providers" onclick="switchTab(event, 'providers')">Providers</button>
-        <button class="tab" data-tab="market" onclick="switchTab(event, 'market')">Market</button>
-        <button class="tab" data-tab="sentiment" onclick="switchTab(event, 'sentiment')">Sentiment</button>
-        <button class="tab" data-tab="news" onclick="switchTab(event, 'news')">News</button>
-        <button class="tab" data-tab="resources" onclick="switchTab(event, 'resources')">Resources & Tools</button>
-    </div>
-
-    <div class="tab-content active" id="tab-dashboard">
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Provider Overview</h3>
-                    <button class="btn secondary" onclick="loadProviders()">Reload</button>
-                </div>
-                <div class="table-wrapper" style="overflow:auto;">
-                    <table>
-                        <thead>
-                        <tr><th>Provider</th><th>Status</th><th>Response</th><th>Uptime</th></tr>
-                        </thead>
-                        <tbody id="providersTableBody">
-                        <tr><td colspan="4" style="text-align:center; padding:40px; color:var(--muted);">Loading providers…</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Error Monitor</h3>
-                    <button class="btn secondary" onclick="loadErrorSummary()">Refresh</button>
-                </div>
-                <div id="errorSummaryCard" style="font-size:13px; color:var(--muted);">Gathering diagnostics…</div>
-                <div id="diagnosticsList" class="list" style="margin-top:12px;"></div>
-            </div>
-        </div>
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Health Trend</h3></div>
-                <div style="height:260px;"><canvas id="healthChart"></canvas></div>
-            </div>
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Status Distribution</h3></div>
-                <div style="height:260px;"><canvas id="statusChart"></canvas></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="tab-content" id="tab-providers">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Providers Detail</h3>
-                <button class="btn secondary" onclick="loadProviders()">Reload</button>
-            </div>
-            <div id="providersDetail"></div>
-        </div>
-    </div>
-
-    <div class="tab-content" id="tab-market">
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Global Stats</h3></div>
-                <div id="marketGlobalStats" class="list"></div>
-            </div>
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Top Movers</h3></div>
-                <div style="height:260px;"><canvas id="marketChart"></canvas></div>
-            </div>
-        </div>
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Top Assets</h3></div>
-                <div class="table-wrapper" style="overflow:auto; max-height:320px;">
-                    <table>
-                        <thead><tr><th>Rank</th><th>Name</th><th>Price</th><th>24h</th><th>Market Cap</th></tr></thead>
-                        <tbody id="marketTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Trending Now</h3></div>
-                <div id="trendingList" class="list"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="tab-content" id="tab-sentiment">
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Fear & Greed Index</h3></div>
-                <div id="sentimentCard" style="font-size:14px; color:var(--muted);">Loading sentiment…</div>
-            </div>
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">DeFi TVL</h3></div>
-                <div class="table-wrapper" style="overflow:auto; max-height:280px;">
-                    <table>
-                        <thead><tr><th>Protocol</th><th>TVL</th><th>24h</th><th>Chain</th></tr></thead>
-                        <tbody id="defiTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="tab-content" id="tab-news">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Latest Headlines</h3>
-                <button class="btn secondary" onclick="loadNews()">Reload</button>
-            </div>
-            <div id="newsList" class="list"></div>
-        </div>
-    </div>
-
-    <div class="tab-content" id="tab-resources">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Resource Search</h3>
-                <span style="font-size:12px;color:var(--muted);">Live search across providers + HuggingFace registry</span>
-            </div>
-            <div class="resource-search">
-                <input type="text" id="resourceSearch" placeholder="Search provider, model or dataset..." />
-                <select id="resourceFilter" onchange="loadResourceSearch()">
-                    <option value="all">All sources</option>
-                    <option value="providers">Providers</option>
-                    <option value="models">Models</option>
-                    <option value="datasets">Datasets</option>
-                </select>
-            </div>
-            <div class="resource-columns">
-                <div>
-                    <h4>Providers <span id="resourceCountProviders" style="color:var(--muted);"></span></h4>
-                    <div id="resourceResultsProviders"></div>
-                </div>
-                <div>
-                    <h4>Models <span id="resourceCountModels" style="color:var(--muted);"></span></h4>
-                    <div id="resourceResultsModels"></div>
-                </div>
-                <div>
-                    <h4>Datasets <span id="resourceCountDatasets" style="color:var(--muted);"></span></h4>
-                    <div id="resourceResultsDatasets"></div>
-                </div>
-            </div>
-        </div>
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Export & Backup</h3></div>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button class="btn" onclick="handleExport('json')">Export JSON Snapshot</button>
-                    <button class="btn" onclick="handleExport('csv')">Export CSV</button>
-                    <button class="btn secondary" onclick="handleBackup()">Create Backup</button>
-                </div>
-                <div id="exportHistory" class="list" style="margin-top:12px;"></div>
-            </div>
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Import Provider</h3></div>
-                <form id="importForm" onsubmit="handleImportSingle(event)">
-                    <div class="form-grid">
-                        <div><label>Name</label><input name="name" required></div>
-                        <div><label>Category</label><input name="category" required></div>
-                        <div><label>Endpoint URL</label><input name="endpoint_url" required></div>
-                        <div><label>Health Endpoint</label><input name="health_check_endpoint"></div>
-                        <div><label>Rate Limit</label><input name="rate_limit"></div>
-                        <div><label>Timeout (ms)</label><input name="timeout_ms" type="number" value="10000"></div>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-rocket"></i>
                     </div>
-                    <label style="margin-top:12px; display:block;">Notes<textarea name="notes"></textarea></label>
-                    <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
-                        <label style="display:flex; gap:6px; align-items:center; font-size:13px;">
-                            <input type="checkbox" name="requires_key"> Requires API Key
-                        </label>
-                        <input name="api_key" placeholder="API Key (optional)" style="flex:1;">
+                    <div class="logo-text">
+                        <h1>Crypto Intelligence Hub</h1>
+                        <p><i class="fas fa-brain"></i> AI-Powered Crypto Data Collection Center</p>
                     </div>
-                    <button class="btn" style="margin-top:12px;" type="submit">Import Provider</button>
-                </form>
-                <hr style="margin:20px 0; border:none; border-top:1px solid var(--border);">
-                <label style="display:block; font-size:13px; color:var(--muted); margin-bottom:6px;">Bulk JSON Import</label>
-                <textarea id="bulkImportTextarea" placeholder='[{"name":"Sample API","category":"market","endpoint_url":"https://..."}]'></textarea>
-                <button class="btn secondary" style="margin-top:10px;" onclick="handleImportBulk()">Run Bulk Import</button>
+                </div>
+                <div class="header-actions">
+                    <div class="header-stats">
+                        <div class="mini-stat">
+                            <i class="fas fa-database"></i>
+                            <span id="header-resources">-</span>
+                            <small>Resources</small>
+                        </div>
+                        <div class="mini-stat">
+                            <i class="fas fa-robot"></i>
+                            <span id="header-models">-</span>
+                            <small>Models</small>
+                        </div>
+                    </div>
+                    <div class="status-badge" id="api-status">
+                        <span class="status-dot"></span>
+                        <span>Checking...</span>
+                    </div>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
             </div>
-        </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs-nav">
+            <button class="tab-btn active" data-tab="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="tab-btn" data-tab="market">
+                <i class="fas fa-coins"></i>
+                <span>Market</span>
+            </button>
+            <button class="tab-btn" data-tab="models">
+                <i class="fas fa-robot"></i>
+                <span>AI Models</span>
+            </button>
+            <button class="tab-btn" data-tab="sentiment">
+                <i class="fas fa-brain"></i>
+                <span>Sentiment</span>
+            </button>
+            <button class="tab-btn" data-tab="news">
+                <i class="fas fa-newspaper"></i>
+                <span>News</span>
+            </button>
+            <button class="tab-btn" data-tab="providers">
+                <i class="fas fa-server"></i>
+                <span>Providers</span>
+            </button>
+            <button class="tab-btn" data-tab="diagnostics">
+                <i class="fas fa-stethoscope"></i>
+                <span>Diagnostics</span>
+            </button>
+            <button class="tab-btn" data-tab="api-explorer">
+                <i class="fas fa-code"></i>
+                <span>API</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <section id="tab-dashboard" class="tab-content active">
+                <div class="section-header">
+                    <h2>System Overview</h2>
+                    <button class="btn-refresh" onclick="loadDashboard()">🔄 Refresh</button>
+                </div>
+                
+                <div class="stats-grid" id="dashboard-stats">
+                    <div class="stat-card gradient-purple">
+                        <div class="stat-icon"><i class="fas fa-database"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="stat-total-resources">-</div>
+                            <div class="stat-label">Total Resources</div>
+                            <div class="stat-trend"><i class="fas fa-arrow-up"></i> Active</div>
+                        </div>
+                    </div>
+                    <div class="stat-card gradient-green">
+                        <div class="stat-icon"><i class="fas fa-gift"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="stat-free-resources">-</div>
+                            <div class="stat-label">Free Resources</div>
+                            <div class="stat-trend"><i class="fas fa-check-circle"></i> Available</div>
+                        </div>
+                    </div>
+                    <div class="stat-card gradient-blue">
+                        <div class="stat-icon"><i class="fas fa-robot"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="stat-models">-</div>
+                            <div class="stat-label">AI Models</div>
+                            <div class="stat-trend"><i class="fas fa-brain"></i> Ready</div>
+                        </div>
+                    </div>
+                    <div class="stat-card gradient-orange">
+                        <div class="stat-icon"><i class="fas fa-server"></i></div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="stat-providers">-</div>
+                            <div class="stat-label">Providers</div>
+                            <div class="stat-trend"><i class="fas fa-signal"></i> Online</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>System Status</h3>
+                        <div id="system-status"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Category Statistics</h3>
+                        <canvas id="categories-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Market Tab -->
+            <section id="tab-market" class="tab-content">
+                <div class="section-header">
+                    <h2>Market Data</h2>
+                    <button class="btn-refresh" onclick="loadMarketData()">🔄 Refresh</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Top Cryptocurrencies</h3>
+                    <div id="market-data"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Trending Coins</h3>
+                    <div id="trending-coins"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Fear & Greed Index</h3>
+                    <div id="fear-greed"></div>
+                </div>
+            </section>
+
+            <!-- Models Tab -->
+            <section id="tab-models" class="tab-content">
+                <div class="section-header">
+                    <h2>Hugging Face Models</h2>
+                    <button class="btn-refresh" onclick="loadModels()">🔄 Refresh</button>
+                    <button class="btn-primary" onclick="initializeModels()">🚀 Load Models</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Models Status</h3>
+                    <div id="models-status"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Models List</h3>
+                    <div id="models-list"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Usage Statistics</h3>
+                    <div id="models-stats"></div>
+                </div>
+            </section>
+
+            <!-- Sentiment Analysis Tab -->
+            <section id="tab-sentiment" class="tab-content">
+                <div class="section-header">
+                    <h2>Sentiment Analysis</h2>
+                </div>
+                
+                <!-- Global Market Sentiment -->
+                <div class="card">
+                    <h3>Global Market Sentiment</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Analyze overall crypto market sentiment using AI models</p>
+                    <button class="btn-primary" onclick="analyzeGlobalSentiment()">📊 Analyze Market Sentiment</button>
+                    <div id="global-sentiment-result" style="margin-top: 20px;"></div>
+                </div>
+                
+                <!-- Per-Asset Sentiment -->
+                <div class="card">
+                    <h3>Per-Asset Sentiment Analysis</h3>
+                    <div class="form-group">
+                        <label>Trading Pair:</label>
+                        <div id="asset-symbol-container">
+                            <input type="text" id="asset-symbol" placeholder="Loading pairs..." readonly>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Related Text or News (Optional):</label>
+                        <textarea id="asset-sentiment-text" rows="3" placeholder="Example: Bitcoin breaks resistance at $50,000"></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="analyzeAssetSentiment()">🔍 Analyze Asset Sentiment</button>
+                    <div id="asset-sentiment-result" style="margin-top: 20px;"></div>
+                </div>
+                
+                <!-- Text Analysis -->
+                <div class="card">
+                    <h3>Text Analysis</h3>
+                    <div class="form-group">
+                        <label>Text to Analyze:</label>
+                        <textarea id="sentiment-text" rows="5" placeholder="Example: Bitcoin price is rising rapidly!"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Analysis Type:</label>
+                        <select id="sentiment-mode">
+                            <option value="auto">Auto (Crypto)</option>
+                            <option value="crypto">Crypto</option>
+                            <option value="financial">Financial</option>
+                            <option value="social">Social</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Select Model (Optional):</label>
+                        <select id="sentiment-model"></select>
+                    </div>
+                    <button class="btn-primary" onclick="analyzeSentiment()">🔍 Analyze</button>
+                    <div id="sentiment-result"></div>
+                </div>
+                
+                <!-- News/Financial Sentiment -->
+                <div class="card">
+                    <h3>News & Financial Sentiment Analysis</h3>
+                    <div class="form-group">
+                        <label>News Title:</label>
+                        <input type="text" id="news-title" placeholder="Example: Bitcoin ETF Approval Expected">
+                    </div>
+                    <div class="form-group">
+                        <label>Content or Description:</label>
+                        <textarea id="news-content" rows="4" placeholder="Full news text or description..."></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="analyzeNewsSentiment()">📰 Analyze News</button>
+                    <div id="news-sentiment-result" style="margin-top: 20px;"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Analysis History</h3>
+                    <div id="sentiment-history"></div>
+                </div>
+            </section>
+
+            <!-- News Tab -->
+            <section id="tab-news" class="tab-content">
+                <div class="section-header">
+                    <h2>Crypto News</h2>
+                    <button class="btn-refresh" onclick="loadNews()">🔄 Refresh</button>
+                </div>
+                
+                <div id="news-list"></div>
+            </section>
+
+            <!-- Providers Tab -->
+            <section id="tab-providers" class="tab-content">
+                <div class="section-header">
+                    <h2>Resources & Providers</h2>
+                    <button class="btn-refresh" onclick="loadProviders()">🔄 Refresh</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Providers List</h3>
+                    <div id="providers-list"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Search Resources</h3>
+                    <div class="form-group">
+                        <input type="text" id="search-resources" placeholder="Search..." onkeypress="if(event.key === 'Enter') searchResources()">
+                        <button class="btn-primary" onclick="searchResources()">🔍 Search</button>
+                    </div>
+                    <div id="search-results"></div>
+                </div>
+            </section>
+
+            <!-- Diagnostics Tab -->
+            <section id="tab-diagnostics" class="tab-content">
+                <div class="section-header">
+                    <h2>Diagnostics & Reports</h2>
+                    <button class="btn-primary" onclick="runDiagnostics()">▶️ Run Diagnostics</button>
+                </div>
+                
+                <div class="card">
+                    <h3>System Status</h3>
+                    <div id="diagnostics-status"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Error Reports</h3>
+                    <div id="error-logs"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Recent Logs</h3>
+                    <div id="recent-logs"></div>
+                </div>
+            </section>
+
+            <!-- API Explorer Tab -->
+            <section id="tab-api-explorer" class="tab-content">
+                <div class="section-header">
+                    <h2>API Explorer</h2>
+                </div>
+                
+                <div class="card">
+                    <h3>Test API Endpoints</h3>
+                    <div class="form-group">
+                        <label>Select Endpoint:</label>
+                        <select id="api-endpoint">
+                            <option value="/api/health">GET /api/health</option>
+                            <option value="/api/status">GET /api/status</option>
+                            <option value="/api/market">GET /api/market</option>
+                            <option value="/api/sentiment">GET /api/sentiment</option>
+                            <option value="/api/resources">GET /api/resources</option>
+                            <option value="/api/providers">GET /api/providers</option>
+                            <option value="/api/models/list">GET /api/models/list</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Method:</label>
+                        <select id="api-method">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Body (JSON - for POST):</label>
+                        <textarea id="api-body" rows="5"></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="testAPI()">▶️ Execute</button>
+                    <div id="api-result"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Crypto Intelligence Hub - Powered by FastAPI & Hugging Face</p>
+            <p><a href="/docs" target="_blank">📖 API Documentation</a> | <a href="/health" target="_blank">💚 System Health</a></p>
+        </footer>
     </div>
-</div>
-
-<script>
-const config = {
-    apiBaseUrl: '',
-    wsUrl: (() => {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        return `${protocol}//${window.location.host}/ws`;
-    })(),
-    autoRefreshInterval: 30000
-};
-
-const state = {
-    ws: null,
-    wsConnected: false,
-    providers: [],
-    market: { cryptocurrencies: [], global: {} },
-    trending: [],
-    sentiment: null,
-    defi: [],
-    news: [],
-    errorSummary: null,
-    diagnostics: null,
-    resources: { providers: [], models: [], datasets: [] },
-    exports: [],
-    charts: { health: null, status: null, market: null },
-    currentTab: 'dashboard',
-    resourceSearchTimeout: null,
-    lastUpdate: null
-};
-
-function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.style.background = type === 'error' ? '#b91c1c' : (type === 'success' ? '#065f46' : '#111827');
-    toast.textContent = message;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-async function apiCall(endpoint, options = {}) {
-    const response = await fetch(config.apiBaseUrl + endpoint, options);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-}
-
-function initializeWebSocket() {
-    try {
-        state.ws = new WebSocket(config.wsUrl);
-        state.ws.onopen = () => {
-            state.wsConnected = true;
-            const pill = document.getElementById('wsStatus');
-            pill.textContent = 'Connected';
-            pill.style.background = '#dcfce7';
-            pill.style.color = '#15803d';
-        };
-        state.ws.onclose = () => {
-            state.wsConnected = false;
-            const pill = document.getElementById('wsStatus');
-            pill.textContent = 'Disconnected';
-            pill.style.background = '#fee2e2';
-            pill.style.color = '#b91c1c';
-        };
-        state.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === 'status_update' && data.data?.providers) {
-                updateKPIs(data.data.providers);
-            }
-            if (data.type === 'market_update' && Array.isArray(data.data)) {
-                state.market.cryptocurrencies = data.data;
-                renderMarketTable();
-                updateMarketChart();
-            }
-            if (data.type === 'sentiment_update') {
-                state.sentiment = data.data;
-                renderSentiment();
-            }
-        };
-    } catch (err) {
-        console.error('WebSocket error', err);
-    }
-}
-
-async function loadInitialData() {
-    try {
-        await Promise.all([
-            loadProviders(),
-            loadMarket(),
-            loadTrending(),
-            loadSentimentData(),
-            loadDefi(),
-            loadErrorSummary(),
-            loadNews(),
-            loadResourceSearch()
-        ]);
-        initializeCharts();
-        state.lastUpdate = new Date();
-        updateLastUpdateDisplay();
-        showToast('Dashboard ready', 'success');
-    } catch (err) {
-        console.error(err);
-        showToast('Failed to load initial data', 'error');
-    }
-}
-
-async function loadProviders() {
-    try {
-        const data = await apiCall('/api/providers');
-        state.providers = Array.isArray(data) ? data : [];
-        renderProvidersTable();
-        renderProvidersDetail();
-        updateStatusChart();
-        updateKPIs(state.providers);
-    } catch (err) {
-        console.error(err);
-        document.getElementById('providersTableBody').innerHTML = `<tr><td colspan="4" style="padding:40px; text-align:center;">${err.message}</td></tr>`;
-    }
-}
-
-function renderProvidersTable() {
-    const tbody = document.getElementById('providersTableBody');
-    if (!state.providers.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px; color:var(--muted);">No providers available</td></tr>';
-        return;
-    }
-    tbody.innerHTML = state.providers.slice(0, 8).map(p => `
-        <tr>
-            <td>
-                <div style="font-weight:600;">${p.name || 'Unknown'}</div>
-                <div style="font-size:11px;color:var(--muted);">${p.category || 'general'}</div>
-            </td>
-            <td>${renderStatusBadge(p.status)}</td>
-            <td>${p.response_time_ms ? `${p.response_time_ms}ms` : '--'}</td>
-            <td>${p.uptime ? `${Math.round(p.uptime)}%` : '--'}</td>
-        </tr>
-    `).join('');
-}
-
-function renderProvidersDetail() {
-    const container = document.getElementById('providersDetail');
-    if (!state.providers.length) {
-        container.innerHTML = '<div style="padding:40px; text-align:center; color:var(--muted);">No providers data available</div>';
-        return;
-    }
-    container.innerHTML = `
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>Response Time</th>
-                        <th>Success Rate</th>
-                        <th>Rate Limit</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${state.providers.map(p => `
-                        <tr>
-                            <td>
-                                <strong>${p.name || 'Unknown'}</strong>
-                                <div style="font-size:11px;color:var(--muted);margin-top:2px;">${p.category || 'general'}</div>
-                            </td>
-                            <td>${renderStatusBadge(p.status)}</td>
-                            <td><strong>${p.avg_response_time_ms ? `${p.avg_response_time_ms}ms` : (p.response_time_ms ? `${p.response_time_ms}ms` : '--')}</strong></td>
-                            <td><strong>${p.uptime ? `${Math.round(p.uptime)}%` : '--'}</strong></td>
-                            <td style="font-size:12px;color:var(--muted);">${p.rate_limit || '—'}</td>
-                        </tr>`).join('')}
-                </tbody>
-            </table>
-        </div>`;
-}
-
-function renderStatusBadge(status = 'unknown') {
-    const normalized = (status || '').toLowerCase();
-    let cls = 'badge warn';
-    if (['online', 'healthy'].includes(normalized)) cls = 'badge success';
-    if (['offline', 'error'].includes(normalized)) cls = 'badge danger';
-    return `<span class="${cls}">${status || 'unknown'}</span>`;
-}
-
-function updateKPIs(data) {
-    const providers = Array.isArray(data) ? data : (data?.providers || []);
-    const total = providers.length;
-    const online = providers.filter(p => ['online', 'healthy'].includes((p.status || '').toLowerCase())).length;
-    const responseTimes = providers.map(p => p.response_time_ms || p.avg_response_time_ms).filter(Boolean);
-    const avgResponse = responseTimes.length ? Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length) : 0;
-
-    document.getElementById('kpiTotalAPIs').textContent = total;
-    document.getElementById('kpiTotalTrend').textContent = `${total} tracked providers`;
-    document.getElementById('kpiOnline').textContent = online;
-    document.getElementById('kpiOnlineTrend').textContent = total ? `${Math.round((online / total) * 100)}% uptime` : 'No data';
-    document.getElementById('kpiAvgResponse').textContent = avgResponse ? `${avgResponse}ms` : '--';
-    document.getElementById('kpiResponseTrend').textContent = avgResponse < 500 ? 'Optimal' : avgResponse < 1000 ? 'Acceptable' : 'Slow';
-    updateHealthChart(avgResponse);
-}
-
-function updateLastUpdateDisplay() {
-    if (!state.lastUpdate) return;
-    document.getElementById('kpiLastUpdate').textContent = state.lastUpdate.toLocaleTimeString();
-}
-
-function initializeCharts() {
-    const healthCtx = document.getElementById('healthChart').getContext('2d');
-    const statusCtx = document.getElementById('statusChart').getContext('2d');
-    const marketCtx = document.getElementById('marketChart').getContext('2d');
-
-    if (state.charts.health) state.charts.health.destroy();
-    if (state.charts.status) state.charts.status.destroy();
-    if (state.charts.market) state.charts.market.destroy();
-
-    state.charts.health = new Chart(healthCtx, {
-        type: 'line',
-        data: { labels: [], datasets: [{ label: 'Avg Response (ms)', data: [], borderColor: '#2563eb', fill: false }] },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-
-    state.charts.status = new Chart(statusCtx, {
-        type: 'doughnut',
-        data: { labels: ['Online', 'Degraded', 'Offline'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#16a34a', '#fcd34d', '#f87171'] }] },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-
-    state.charts.market = new Chart(marketCtx, {
-        type: 'bar',
-        data: { labels: [], datasets: [{ label: 'Market Cap (B USD)', data: [], backgroundColor: '#93c5fd' }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-    });
-}
-
-function updateHealthChart(value) {
-    if (!state.charts.health || !value) return;
-    const chart = state.charts.health;
-    chart.data.labels.push(new Date().toLocaleTimeString());
-    chart.data.datasets[0].data.push(value);
-    if (chart.data.labels.length > 12) {
-        chart.data.labels.shift();
-        chart.data.datasets[0].data.shift();
-    }
-    chart.update();
-}
-
-function updateStatusChart() {
-    if (!state.charts.status) return;
-    const online = state.providers.filter(p => (p.status || '').toLowerCase() === 'online').length;
-    const degraded = state.providers.filter(p => (p.status || '').toLowerCase() === 'degraded').length;
-    const offline = state.providers.length - online - degraded;
-    state.charts.status.data.datasets[0].data = [online, degraded, offline];
-    state.charts.status.update();
-}
-
-async function loadMarket() {
-    const data = await apiCall('/api/market');
-    state.market = data;
-    renderMarketCards();
-    renderMarketTable();
-    updateMarketChart();
-}
-
-function renderMarketCards() {
-    const stats = state.market.global || {};
-    const container = document.getElementById('marketGlobalStats');
-    container.innerHTML = `
-        <div><strong>Total Market Cap:</strong> $${formatNumber(stats.total_market_cap)}</div>
-        <div><strong>Total Volume:</strong> $${formatNumber(stats.total_volume)}</div>
-        <div><strong>BTC Dominance:</strong> ${stats.btc_dominance ? stats.btc_dominance.toFixed(2) + '%' : '--'}</div>
-        <div><strong>ETH Dominance:</strong> ${stats.eth_dominance ? stats.eth_dominance.toFixed(2) + '%' : '--'}</div>
-        <div><strong>Active Cryptos:</strong> ${stats.active_cryptocurrencies || '--'}</div>
-        <div><strong>Markets:</strong> ${stats.markets || '--'}</div>
-    `;
-}
-
-function renderMarketTable() {
-    const tbody = document.getElementById('marketTableBody');
-    const coins = state.market.cryptocurrencies || [];
-    if (!coins.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted);">Market data unavailable</td></tr>';
-        return;
-    }
-    tbody.innerHTML = coins.slice(0, 12).map(coin => `
-        <tr>
-            <td>${coin.rank || coin.market_cap_rank || '-'}</td>
-            <td>${coin.name} <span style="color:var(--muted);">${coin.symbol}</span></td>
-            <td>$${formatNumber(coin.price)}</td>
-            <td style="color:${coin.change_24h >= 0 ? '#16a34a' : '#dc2626'};">${coin.change_24h ? coin.change_24h.toFixed(2) : '0'}%</td>
-            <td>$${formatNumber(coin.market_cap)}</td>
-        </tr>
-    `).join('');
-}
-
-function updateMarketChart() {
-    if (!state.charts.market) return;
-    const coins = state.market.cryptocurrencies || [];
-    const top = coins.slice(0, 5);
-    state.charts.market.data.labels = top.map(c => c.name);
-    state.charts.market.data.datasets[0].data = top.map(c => c.market_cap ? (c.market_cap / 1e9).toFixed(2) : 0);
-    state.charts.market.update();
-}
-
-async function loadTrending() {
-    const data = await apiCall('/api/trending');
-    state.trending = data.trending || [];
-    const list = document.getElementById('trendingList');
-    if (!state.trending.length) {
-        list.innerHTML = '<div class="list-item" style="color:var(--muted);">No trending assets</div>';
-        return;
-    }
-    list.innerHTML = state.trending.map(item => `
-        <div class="list-item">
-            <div style="font-weight:600;">${item.name} (${item.symbol})</div>
-            <div style="font-size:12px;color:var(--muted);">Rank: ${item.rank || '—'}</div>
-        </div>`).join('');
-}
-
-async function loadSentimentData() {
-    const data = await apiCall('/api/sentiment');
-    state.sentiment = data.fear_greed_index;
-    renderSentiment();
-}
-
-function renderSentiment() {
-    const container = document.getElementById('sentimentCard');
-    if (!state.sentiment) {
-        container.textContent = 'No sentiment data';
-        return;
-    }
-    const timestamp = Number(state.sentiment.timestamp);
-    container.innerHTML = `
-        <div style="font-size:32px; font-weight:700;">${state.sentiment.value}</div>
-        <div style="font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">${state.sentiment.classification}</div>
-        <div style="font-size:12px; color:var(--muted);">Updated: ${timestamp ? new Date(timestamp * 1000).toLocaleString() : '--'}</div>
-    `;
-}
-
-async function loadDefi() {
-    const data = await apiCall('/api/defi');
-    state.defi = data.protocols || [];
-    const tbody = document.getElementById('defiTableBody');
-    if (!state.defi.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px; color:var(--muted);">No DeFi data</td></tr>';
-        return;
-    }
-    tbody.innerHTML = state.defi.slice(0, 10).map(proto => `
-        <tr>
-            <td>${proto.name}</td>
-            <td>$${formatNumber(proto.tvl)}</td>
-            <td style="color:${proto.change_24h >= 0 ? '#16a34a' : '#dc2626'};">${proto.change_24h ? proto.change_24h.toFixed(2) : 0}%</td>
-            <td>${proto.chain || '—'}</td>
-        </tr>`).join('');
-}
-
-async function loadNews() {
-    const data = await apiCall('/api/news');
-    state.news = data.articles || [];
-    const list = document.getElementById('newsList');
-    if (!state.news.length) {
-        list.innerHTML = '<div class="list-item" style="color:var(--muted);">No news available</div>';
-        return;
-    }
-    list.innerHTML = state.news.slice(0, 12).map(article => `
-        <div class="news-item list-item">
-            <h4>${article.title}</h4>
-            <div class="news-meta">${article.source || 'Unknown'} • ${article.published_at ? new Date(article.published_at).toLocaleString() : ''}</div>
-            <p style="margin:6px 0;">${article.description || ''}</p>
-            <a href="${article.link}" target="_blank" style="font-size:12px; color:var(--primary);">Read article →</a>
-        </div>`).join('');
-}
-
-async function loadErrorSummary() {
-    try {
-        const [summary, diagnostics] = await Promise.all([
-            apiCall('/api/logs/summary'),
-            apiCall('/api/diagnostics/errors')
-        ]);
-        state.errorSummary = summary;
-        state.diagnostics = diagnostics;
-        renderErrorSummary();
-    } catch (err) {
-        console.error(err);
-        document.getElementById('errorSummaryCard').textContent = 'Failed to load diagnostics';
-    }
-}
-
-function renderErrorSummary() {
-    const summary = state.errorSummary;
-    const card = document.getElementById('errorSummaryCard');
-    if (!summary) {
-        card.textContent = 'No diagnostics available';
-        return;
-    }
-    card.innerHTML = `
-        <div><strong>Total Logs:</strong> ${summary.total}</div>
-        <div><strong>Last Error:</strong> ${summary.last_error ? summary.last_error.provider + ' @ ' + summary.last_error.timestamp : 'None'}</div>
-        <div><strong>Top Offenders:</strong> ${Object.keys(summary.by_provider || {}).slice(0,3).join(', ') || '—'}</div>
-    `;
-    const diag = state.diagnostics || { recent: [] };
-    const list = document.getElementById('diagnosticsList');
-    list.innerHTML = diag.recent.slice(0,5).map(item => `
-        <div class="list-item">
-            <div style="font-weight:600;">${item.provider}</div>
-            <div style="font-size:12px; color:var(--muted);">${item.timestamp}</div>
-            <div style="font-size:13px; color:${item.status === 'offline' ? '#dc2626' : '#d97706'};">${item.message || 'No message'}</div>
-        </div>`).join('');
-}
-
-async function loadResourceSearch() {
-    const query = document.getElementById('resourceSearch')?.value || '';
-    const source = document.getElementById('resourceFilter').value;
-    const data = await apiCall(`/api/resources/search?q=${encodeURIComponent(query)}&source=${source}`);
-    state.resources = data.results;
-    document.getElementById('resourceCountProviders').textContent = `(${data.counts.providers})`;
-    document.getElementById('resourceCountModels').textContent = `(${data.counts.models})`;
-    document.getElementById('resourceCountDatasets').textContent = `(${data.counts.datasets})`;
-    renderResourceResults();
-}
-
-function renderResourceResults() {
-    const providersContainer = document.getElementById('resourceResultsProviders');
-    const modelsContainer = document.getElementById('resourceResultsModels');
-    const datasetsContainer = document.getElementById('resourceResultsDatasets');
-
-    providersContainer.innerHTML = state.resources.providers.slice(0,6).map(p => `
-        <div class="resource-item">
-            <strong>${p.name}</strong>
-            <div style="font-size:12px;color:var(--muted);">${p.category}</div>
-            <div style="font-size:12px;">Status: ${p.status}</div>
-        </div>`).join('') || '<div class="resource-item" style="color:var(--muted);">No matches</div>';
-
-    modelsContainer.innerHTML = state.resources.models.slice(0,6).map(m => `
-        <div class="resource-item">
-            <strong>${m.id}</strong>
-            <div style="font-size:12px;color:var(--muted);">${m.description || 'No description'}</div>
-        </div>`).join('') || '<div class="resource-item" style="color:var(--muted);">No matches</div>';
-
-    datasetsContainer.innerHTML = state.resources.datasets.slice(0,6).map(d => `
-        <div class="resource-item">
-            <strong>${d.id}</strong>
-            <div style="font-size:12px;color:var(--muted);">${d.description || 'No description'}</div>
-        </div>`).join('') || '<div class="resource-item" style="color:var(--muted);">No matches</div>';
-}
-
-async function handleExport(type) {
-    try {
-        const res = await apiCall(`/api/v2/export/${type}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-        state.exports.unshift({ type, url: res.download_url, timestamp: res.timestamp });
-        renderExportHistory();
-        showToast(`${type.toUpperCase()} export ready`, 'success');
-    } catch (err) {
-        console.error(err);
-        showToast('Export failed', 'error');
-    }
-}
-
-async function handleBackup() {
-    try {
-        const res = await apiCall('/api/v2/backup', { method: 'POST' });
-        state.exports.unshift({ type: 'backup', url: res.download_url, timestamp: res.timestamp });
-        renderExportHistory();
-        showToast('Backup created', 'success');
-    } catch (err) {
-        console.error(err);
-        showToast('Backup failed', 'error');
-    }
-}
-
-function renderExportHistory() {
-    const container = document.getElementById('exportHistory');
-    if (!state.exports.length) {
-        container.innerHTML = '<div style="color:var(--muted); font-size:13px;">No exports yet</div>';
-        return;
-    }
-    container.innerHTML = state.exports.slice(0,5).map(entry => `
-        <div class="list-item" style="border-bottom:1px solid var(--border);">
-            <div style="font-weight:600;">${entry.type.toUpperCase()}</div>
-            <div style="font-size:12px; color:var(--muted);">${new Date(entry.timestamp).toLocaleString()}</div>
-            <a href="${entry.url}" style="font-size:12px; color:var(--primary);" target="_blank">Download</a>
-        </div>`).join('');
-}
-
-async function handleImportSingle(event) {
-    event.preventDefault();
-    const form = event.target;
-    const payload = Object.fromEntries(new FormData(form).entries());
-    payload.requires_key = form.elements['requires_key'].checked;
-    payload.timeout_ms = Number(payload.timeout_ms) || 10000;
-    try {
-        await apiCall('/api/providers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        showToast('Provider imported', 'success');
-        form.reset();
-        loadProviders();
-    } catch (err) {
-        console.error(err);
-        showToast('Import failed', 'error');
-    }
-}
-
-async function handleImportBulk() {
-    const textarea = document.getElementById('bulkImportTextarea');
-    if (!textarea.value.trim()) {
-        showToast('Paste provider JSON first', 'error');
-        return;
-    }
-    try {
-        const providers = JSON.parse(textarea.value);
-        await apiCall('/api/v2/import/providers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ providers })
-        });
-        showToast('Bulk import complete', 'success');
-        textarea.value = '';
-        loadProviders();
-    } catch (err) {
-        console.error(err);
-        showToast('Bulk import failed', 'error');
-    }
-}
-
-function switchTab(event, tabName) {
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    document.getElementById(`tab-${tabName}`).classList.add('active');
-    state.currentTab = tabName;
-    if (tabName === 'market') loadMarket();
-    if (tabName === 'sentiment') { loadSentimentData(); loadDefi(); }
-    if (tabName === 'news') loadNews();
-}
-
-function startAutoRefresh() {
-    setInterval(() => {
-        if (state.wsConnected) {
-            refreshAll();
-        }
-    }, config.autoRefreshInterval);
-}
-
-function refreshAll() {
-    loadProviders();
-    loadMarket();
-    loadTrending();
-    loadSentimentData();
-    loadDefi();
-    loadErrorSummary();
-    loadNews();
-    loadResourceSearch();
-}
-
-function formatNumber(value) {
-    if (!value && value !== 0) return '--';
-    if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
-    if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
-    if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
-    if (value >= 1e3) return (value / 1e3).toFixed(2) + 'K';
-    return Number(value).toFixed(2);
-}
-
-function setupResourceSearch() {
-    const input = document.getElementById('resourceSearch');
-    input.addEventListener('input', () => {
-        clearTimeout(state.resourceSearchTimeout);
-        state.resourceSearchTimeout = setTimeout(loadResourceSearch, 400);
-    });
-}
-
-initializeWebSocket();
-setupResourceSearch();
-loadInitialData();
-startAutoRefresh();
-</script>
 </body>
 </html>
-

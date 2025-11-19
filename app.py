@@ -1,1201 +1,743 @@
 #!/usr/bin/env python3
 """
-Crypto Data Aggregator - Admin Dashboard (Gradio App)
-STRICT REAL-DATA-ONLY implementation for Hugging Face Spaces
+Crypto Intelligence Hub - Hugging Face Space Application
+یکپارچه‌سازی کامل بک‌اند و فرانت‌اند برای جمع‌آوری داده‌های رمز ارز
+Hub کامل با منابع رایگان و مدل‌های Hugging Face
 
-7 Tabs:
-1. Status - System health & overview
-2. Providers - API provider management
-3. Market Data - Live cryptocurrency data
-4. APL Scanner - Auto Provider Loader
-5. HF Models - Hugging Face model status
-6. Diagnostics - System diagnostics & auto-repair
-7. Logs - System logs viewer
+پشتیبانی از دو حالت:
+1. Gradio UI (پیش‌فرض)
+2. FastAPI + HTML (در صورت تنظیم USE_FASTAPI_HTML=true)
 """
 
-import sys
 import os
+import json
+import asyncio
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, List, Optional, Any
 from datetime import datetime
-import json
-import traceback
-import asyncio
-import time
+import gradio as gr
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+import httpx
 
-# Check for Gradio
+# Import backend services
 try:
-    import gradio as gr
-except ImportError:
-    print("ERROR: gradio not installed. Run: pip install gradio")
-    sys.exit(1)
+    from api_server_extended import app as fastapi_app
+    from ai_models import ModelRegistry, MODEL_SPECS, get_model_info, registry_status
+    FASTAPI_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"FastAPI not available: {e}")
+    FASTAPI_AVAILABLE = False
+    ModelRegistry = None
+    MODEL_SPECS = {}
+    get_model_info = None
+    registry_status = None
 
-# Check for optional dependencies
-try:
-    import pandas as pd
-    PANDAS_AVAILABLE = True
-except ImportError:
-    PANDAS_AVAILABLE = False
-    print("WARNING: pandas not installed. Some features disabled.")
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-try:
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-    PLOTLY_AVAILABLE = True
-except ImportError:
-    PLOTLY_AVAILABLE = False
-    print("WARNING: plotly not installed. Charts disabled.")
+# Environment detection
+IS_DOCKER = os.path.exists("/.dockerenv") or os.path.exists("/app") or os.getenv("DOCKER_CONTAINER") == "true"
+# Default to FastAPI+HTML in Docker, Gradio otherwise
+USE_FASTAPI_HTML = os.getenv("USE_FASTAPI_HTML", "true" if IS_DOCKER else "false").lower() == "true"
+USE_GRADIO = os.getenv("USE_GRADIO", "false" if IS_DOCKER else "true").lower() == "true"
 
-# Import local modules
-import config
-import database
-import collectors
+# Global state
+WORKSPACE_ROOT = Path("/app" if Path("/app").exists() else Path("."))
+RESOURCES_JSON = WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+ALL_APIS_JSON = WORKSPACE_ROOT / "all_apis_merged_2025.json"
 
-# ==================== INDEPENDENT LOGGING SETUP ====================
-# DO NOT use utils.setup_logging() - set up independently
+# Fallback paths
+if not RESOURCES_JSON.exists():
+    RESOURCES_JSON = WORKSPACE_ROOT / "all_apis_merged_2025.json"
+if not ALL_APIS_JSON.exists():
+    ALL_APIS_JSON = WORKSPACE_ROOT / "all_apis_merged_2025.json"
 
-logger = logging.getLogger("app")
-if not logger.handlers:
-    level_name = getattr(config, "LOG_LEVEL", "INFO")
-    level = getattr(logging, level_name.upper(), logging.INFO)
-    logger.setLevel(level)
+# Initialize model registry
+model_registry = ModelRegistry() if ModelRegistry else None
+
+
+class CryptoDataHub:
+    """مرکز داده‌های رمز ارز با پشتیبانی از منابع رایگان و مدل‌های Hugging Face"""
     
-    formatter = logging.Formatter(
-        getattr(config, "LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    )
+    def __init__(self):
+        self.resources = {}
+        self.models_loaded = False
+        self.load_resources()
+        self.initialize_models()
     
-    # Console handler
-    ch = logging.StreamHandler()
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-    
-    # File handler if log file exists
-    try:
-        if hasattr(config, 'LOG_FILE'):
-            fh = logging.FileHandler(config.LOG_FILE)
-            fh.setFormatter(formatter)
-            logger.addHandler(fh)
-    except Exception as e:
-        print(f"Warning: Could not setup file logging: {e}")
-
-logger.info("=" * 60)
-logger.info("Crypto Admin Dashboard Starting")
-logger.info("=" * 60)
-
-# Initialize database
-db = database.get_database()
-
-
-# ==================== TAB 1: STATUS ====================
-
-def get_status_tab() -> Tuple[str, str, str]:
-    """
-    Get system status overview.
-    Returns: (markdown_summary, db_stats_json, system_info_json)
-    """
-    try:
-        # Get database stats
-        db_stats = db.get_database_stats()
-        
-        # Count providers
-        providers_config_path = config.BASE_DIR / "providers_config_extended.json"
-        provider_count = 0
-        if providers_config_path.exists():
-            with open(providers_config_path, 'r') as f:
-                providers_data = json.load(f)
-                provider_count = len(providers_data.get('providers', {}))
-        
-        # Pool count (from config)
-        pool_count = 0
-        if providers_config_path.exists():
-            with open(providers_config_path, 'r') as f:
-                providers_data = json.load(f)
-                pool_count = len(providers_data.get('pool_configurations', []))
-        
-        # Market snapshot
-        latest_prices = db.get_latest_prices(3)
-        market_snapshot = ""
-        if latest_prices:
-            for p in latest_prices[:3]:
-                symbol = p.get('symbol', 'N/A')
-                price = p.get('price_usd', 0)
-                change = p.get('percent_change_24h', 0)
-                market_snapshot += f"**{symbol}**: ${price:,.2f} ({change:+.2f}%)\n"
-        else:
-            market_snapshot = "No market data available yet."
-        
-        # Get API request count from health log
-        api_requests_count = 0
+    def load_resources(self):
+        """بارگذاری منابع از فایل‌های JSON"""
         try:
-            health_log_path = Path("data/logs/provider_health.jsonl")
-            if health_log_path.exists():
-                with open(health_log_path, 'r', encoding='utf-8') as f:
-                    api_requests_count = sum(1 for _ in f)
+            # Load unified resources
+            if RESOURCES_JSON.exists():
+                with open(RESOURCES_JSON, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.resources['unified'] = data
+                    logger.info(f"✅ Loaded unified resources: {RESOURCES_JSON}")
+            
+            # Load all APIs merged
+            if ALL_APIS_JSON.exists():
+                with open(ALL_APIS_JSON, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.resources['all_apis'] = data
+                    logger.info(f"✅ Loaded all APIs: {ALL_APIS_JSON}")
+            
+            logger.info(f"📊 Total resource files loaded: {len(self.resources)}")
         except Exception as e:
-            logger.warning(f"Could not get API request stats: {e}")
+            logger.error(f"❌ Error loading resources: {e}")
+    
+    def initialize_models(self):
+        """بارگذاری مدل‌های Hugging Face"""
+        if not model_registry:
+            logger.warning("Model registry not available")
+            return
         
-        # Build summary with copy-friendly format
-        summary = f"""
-## 🎯 System Status
-
-**Overall Health**: {"🟢 Operational" if db_stats.get('prices_count', 0) > 0 else "🟡 Initializing"}
-
-### Quick Stats
-```
-Total Providers:  {provider_count}
-Active Pools:     {pool_count}
-API Requests:     {api_requests_count:,}
-Price Records:    {db_stats.get('prices_count', 0):,}
-News Articles:    {db_stats.get('news_count', 0):,}
-Unique Symbols:   {db_stats.get('unique_symbols', 0)}
-```
-
-### Market Snapshot (Top 3)
-```
-{market_snapshot}
-```
-
-**Last Update**: `{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}`
-
----
-### 📋 Provider Details (Copy-Friendly)
-```
-Total: {provider_count} providers
-Config File: providers_config_extended.json
-```
-"""
+        try:
+            # Initialize available models
+            result = model_registry.initialize_models()
+            self.models_loaded = result.get('status') == 'ok'
+            logger.info(f"✅ Hugging Face models initialized: {result}")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not initialize all models: {e}")
+    
+    def get_market_data_sources(self) -> List[Dict]:
+        """دریافت منابع داده‌های بازار"""
+        sources = []
         
-        # System info
-        import platform
-        system_info = {
-            "Python Version": sys.version.split()[0],
-            "Platform": platform.platform(),
-            "Working Directory": str(config.BASE_DIR),
-            "Database Size": f"{db_stats.get('database_size_mb', 0):.2f} MB",
-            "Last Price Update": db_stats.get('latest_price_update', 'N/A'),
-            "Last News Update": db_stats.get('latest_news_update', 'N/A')
+        # Try unified resources first
+        if 'unified' in self.resources:
+            registry = self.resources['unified'].get('registry', {})
+            
+            # Market data APIs
+            market_apis = registry.get('market_data', [])
+            for api in market_apis:
+                sources.append({
+                    'name': api.get('name', 'Unknown'),
+                    'category': 'market',
+                    'base_url': api.get('base_url', ''),
+                    'free': api.get('free', False),
+                    'auth_required': bool(api.get('auth', {}).get('key'))
+                })
+        
+        # Try all_apis structure
+        if 'all_apis' in self.resources:
+            data = self.resources['all_apis']
+            
+            # Check for discovered_keys which indicates market data sources
+            if 'discovered_keys' in data:
+                for provider, keys in data['discovered_keys'].items():
+                    if provider in ['coinmarketcap', 'cryptocompare']:
+                        sources.append({
+                            'name': provider.upper(),
+                            'category': 'market',
+                            'base_url': f'https://api.{provider}.com' if provider == 'coinmarketcap' else f'https://min-api.{provider}.com',
+                            'free': False,
+                            'auth_required': True
+                        })
+            
+            # Check raw_files for API configurations
+            if 'raw_files' in data:
+                for file_info in data['raw_files']:
+                    content = file_info.get('content', '')
+                    if 'CoinGecko' in content or 'coingecko' in content.lower():
+                        sources.append({
+                            'name': 'CoinGecko',
+                            'category': 'market',
+                            'base_url': 'https://api.coingecko.com/api/v3',
+                            'free': True,
+                            'auth_required': False
+                        })
+                    if 'Binance' in content or 'binance' in content.lower():
+                        sources.append({
+                            'name': 'Binance Public',
+                            'category': 'market',
+                            'base_url': 'https://api.binance.com/api/v3',
+                            'free': True,
+                            'auth_required': False
+                        })
+        
+        # Remove duplicates
+        seen = set()
+        unique_sources = []
+        for source in sources:
+            key = source['name']
+            if key not in seen:
+                seen.add(key)
+                unique_sources.append(source)
+        
+        return unique_sources
+    
+    def get_available_models(self) -> List[Dict]:
+        """دریافت لیست مدل‌های در دسترس"""
+        models = []
+        
+        if MODEL_SPECS:
+            for key, spec in MODEL_SPECS.items():
+                models.append({
+                    'key': key,
+                    'name': spec.model_id,
+                    'task': spec.task,
+                    'category': spec.category,
+                    'requires_auth': spec.requires_auth
+                })
+        
+        return models
+    
+    async def analyze_sentiment(self, text: str, model_key: str = "crypto_sent_0", use_backend: bool = False) -> Dict:
+        """تحلیل احساسات با استفاده از مدل‌های Hugging Face"""
+        # Try backend API first if requested and available
+        if use_backend and FASTAPI_AVAILABLE:
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(
+                        "http://localhost:7860/api/hf/run-sentiment",
+                        json={"texts": [text]},
+                        headers={"Content-Type": "application/json"}
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data.get("results"):
+                            result = data["results"][0]
+                            return {
+                                'sentiment': result.get('label', 'unknown'),
+                                'confidence': result.get('confidence', 0.0),
+                                'model': 'backend_api',
+                                'text': text[:100],
+                                'vote': result.get('vote', 0.0)
+                            }
+            except Exception as e:
+                logger.warning(f"Backend API call failed, falling back to direct model: {e}")
+        
+        # Direct model access
+        if not model_registry or not self.models_loaded:
+            return {
+                'error': 'Models not available',
+                'sentiment': 'unknown',
+                'confidence': 0.0
+            }
+        
+        try:
+            pipeline = model_registry.get_pipeline(model_key)
+            result = pipeline(text)
+            
+            # Handle different result formats
+            if isinstance(result, list) and len(result) > 0:
+                result = result[0]
+            
+            return {
+                'sentiment': result.get('label', 'unknown'),
+                'confidence': result.get('score', 0.0),
+                'model': model_key,
+                'text': text[:100]
+            }
+        except Exception as e:
+            logger.error(f"Error analyzing sentiment: {e}")
+            return {
+                'error': str(e),
+                'sentiment': 'error',
+                'confidence': 0.0
+            }
+    
+    def get_resource_summary(self) -> Dict:
+        """خلاصه منابع موجود"""
+        summary = {
+            'total_resources': 0,
+            'categories': {},
+            'free_resources': 0,
+            'models_available': len(self.get_available_models())
         }
         
-        return summary, json.dumps(db_stats, indent=2), json.dumps(system_info, indent=2)
+        if 'unified' in self.resources:
+            registry = self.resources['unified'].get('registry', {})
+            
+            for category, items in registry.items():
+                if isinstance(items, list):
+                    count = len(items)
+                    summary['total_resources'] += count
+                    summary['categories'][category] = count
+                    
+                    # Count free resources
+                    free_count = sum(1 for item in items if item.get('free', False))
+                    summary['free_resources'] += free_count
+        
+        # Add market sources
+        market_sources = self.get_market_data_sources()
+        if market_sources:
+            summary['total_resources'] += len(market_sources)
+            summary['categories']['market_data'] = len(market_sources)
+            summary['free_resources'] += sum(1 for s in market_sources if s.get('free', False))
+        
+        return summary
+
+
+# Initialize global hub
+hub = CryptoDataHub()
+
+
+# =============================================================================
+# Gradio Interface Functions
+# =============================================================================
+
+def get_dashboard_summary():
+    """نمایش خلاصه داشبورد"""
+    summary = hub.get_resource_summary()
     
-    except Exception as e:
-        logger.error(f"Error in get_status_tab: {e}\n{traceback.format_exc()}")
-        return f"⚠️ Error loading status: {str(e)}", "{}", "{}"
-
-
-def run_diagnostics_from_status(auto_fix: bool) -> str:
-    """Run diagnostics from status tab"""
-    try:
-        from backend.services.diagnostics_service import DiagnosticsService
+    html = f"""
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+        <h2>📊 خلاصه منابع و مدل‌ها</h2>
         
-        diagnostics = DiagnosticsService()
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white;">
+                <h3>منابع کل</h3>
+                <p style="font-size: 32px; margin: 10px 0; font-weight: bold;">{summary['total_resources']}</p>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 20px; border-radius: 10px; color: white;">
+                <h3>منابع رایگان</h3>
+                <p style="font-size: 32px; margin: 10px 0; font-weight: bold;">{summary['free_resources']}</p>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); padding: 20px; border-radius: 10px; color: white;">
+                <h3>مدل‌های AI</h3>
+                <p style="font-size: 32px; margin: 10px 0; font-weight: bold;">{summary['models_available']}</p>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 10px; color: white;">
+                <h3>دسته‌بندی‌ها</h3>
+                <p style="font-size: 32px; margin: 10px 0; font-weight: bold;">{len(summary['categories'])}</p>
+            </div>
+        </div>
         
-        # Run async in sync context
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        report = loop.run_until_complete(diagnostics.run_full_diagnostics(auto_fix=auto_fix))
-        loop.close()
-        
-        # Format output
-        output = f"""
-# Diagnostics Report
-
-**Timestamp**: {report.timestamp}
-**Duration**: {report.duration_ms:.2f}ms
-
-## Summary
-- **Total Issues**: {report.total_issues}
-- **Critical**: {report.critical_issues}
-- **Warnings**: {report.warnings}
-- **Info**: {report.info_issues}
-- **Fixed**: {len(report.fixed_issues)}
-
-## Issues
-"""
-        for issue in report.issues:
-            emoji = {"critical": "🔴", "warning": "🟡", "info": "🔵"}.get(issue.severity, "⚪")
-            fixed_mark = " ✅ FIXED" if issue.auto_fixed else ""
-            output += f"\n### {emoji} [{issue.category.upper()}] {issue.title}{fixed_mark}\n"
-            output += f"{issue.description}\n"
-            if issue.fixable and not issue.auto_fixed:
-                output += f"**Fix**: `{issue.fix_action}`\n"
-        
-        return output
-    
-    except Exception as e:
-        logger.error(f"Error running diagnostics: {e}")
-        return f"❌ Diagnostics failed: {str(e)}"
-
-
-# ==================== TAB 2: PROVIDERS ====================
-
-def get_providers_table(category_filter: str = "All") -> Any:
+        <h3>دسته‌بندی منابع:</h3>
+        <ul>
     """
-    Get providers from providers_config_extended.json with enhanced formatting
-    Returns: DataFrame or dict
+    
+    for category, count in summary['categories'].items():
+        html += f"<li><strong>{category}:</strong> {count} منبع</li>"
+    
+    html += """
+        </ul>
+    </div>
     """
+    
+    return html
+
+
+def get_resources_table():
+    """جدول منابع"""
+    sources = hub.get_market_data_sources()
+    
+    if not sources:
+        return pd.DataFrame({'پیام': ['هیچ منبعی یافت نشد. لطفاً فایل‌های JSON را بررسی کنید.']})
+    
+    df_data = []
+    for source in sources[:100]:  # Limit to 100 for display
+        df_data.append({
+            'نام': source['name'],
+            'دسته': source['category'],
+            'رایگان': '✅' if source['free'] else '❌',
+            'نیاز به کلید': '✅' if source['auth_required'] else '❌',
+            'URL پایه': source['base_url'][:60] + '...' if len(source['base_url']) > 60 else source['base_url']
+        })
+    
+    return pd.DataFrame(df_data)
+
+
+def get_models_table():
+    """جدول مدل‌ها"""
+    models = hub.get_available_models()
+    
+    if not models:
+        return pd.DataFrame({'پیام': ['هیچ مدلی یافت نشد. مدل‌ها در حال بارگذاری هستند...']})
+    
+    df_data = []
+    for model in models:
+        df_data.append({
+            'کلید': model['key'],
+            'نام مدل': model['name'],
+            'نوع کار': model['task'],
+            'دسته': model['category'],
+            'نیاز به احراز هویت': '✅' if model['requires_auth'] else '❌'
+        })
+    
+    return pd.DataFrame(df_data)
+
+
+def analyze_text_sentiment(text: str, model_selection: str, use_backend: bool = False):
+    """تحلیل احساسات متن"""
+    if not text.strip():
+        return "⚠️ لطفاً متنی وارد کنید", ""
+    
     try:
-        providers_path = config.BASE_DIR / "providers_config_extended.json"
-        
-        if not providers_path.exists():
-            if PANDAS_AVAILABLE:
-                return pd.DataFrame({"Error": ["providers_config_extended.json not found"]})
-            return {"error": "providers_config_extended.json not found"}
-        
-        with open(providers_path, 'r') as f:
-            data = json.load(f)
-        
-        providers = data.get('providers', {})
-        
-        # Build table data with copy-friendly IDs
-        table_data = []
-        for provider_id, provider_info in providers.items():
-            if category_filter != "All":
-                if provider_info.get('category', '').lower() != category_filter.lower():
-                    continue
-            
-            # Format auth status with emoji
-            auth_status = "✅ Yes" if provider_info.get('requires_auth', False) else "❌ No"
-            validation = "✅ Valid" if provider_info.get('validated', False) else "⏳ Pending"
-            
-            table_data.append({
-                "Provider ID": provider_id,
-                "Name": provider_info.get('name', provider_id),
-                "Category": provider_info.get('category', 'unknown'),
-                "Type": provider_info.get('type', 'http_json'),
-                "Base URL": provider_info.get('base_url', 'N/A'),
-                "Auth Required": auth_status,
-                "Priority": provider_info.get('priority', 'N/A'),
-                "Status": validation
-            })
-        
-        if PANDAS_AVAILABLE:
-            return pd.DataFrame(table_data) if table_data else pd.DataFrame({"Message": ["No providers found"]})
+        # Extract model key from dropdown selection
+        if model_selection and " - " in model_selection:
+            model_key = model_selection.split(" - ")[0]
         else:
-            return {"providers": table_data} if table_data else {"error": "No providers found"}
+            model_key = model_selection if model_selection else "crypto_sent_0"
+        
+        result = asyncio.run(hub.analyze_sentiment(text, model_key, use_backend=use_backend))
+        
+        if 'error' in result:
+            return f"❌ خطا: {result['error']}", ""
+        
+        sentiment_emoji = {
+            'POSITIVE': '📈',
+            'NEGATIVE': '📉',
+            'NEUTRAL': '➡️',
+            'LABEL_0': '📈',
+            'LABEL_1': '📉',
+            'LABEL_2': '➡️',
+            'positive': '📈',
+            'negative': '📉',
+            'neutral': '➡️',
+            'bullish': '📈',
+            'bearish': '📉'
+        }.get(result['sentiment'], '❓')
+        
+        confidence_pct = result['confidence'] * 100 if result['confidence'] <= 1.0 else result['confidence']
+        
+        vote_info = ""
+        if 'vote' in result:
+            vote_emoji = '📈' if result['vote'] > 0 else '📉' if result['vote'] < 0 else '➡️'
+            vote_info = f"\n**رأی مدل:** {vote_emoji} {result['vote']:.2f}"
+        
+        result_text = f"""
+## نتیجه تحلیل احساسات
+
+**احساسات:** {sentiment_emoji} {result['sentiment']}
+**اعتماد:** {confidence_pct:.2f}%
+**مدل استفاده شده:** {result['model']}
+**متن تحلیل شده:** {result['text']}
+{vote_info}
+        """
+        
+        result_json = json.dumps(result, indent=2, ensure_ascii=False)
+        
+        return result_text, result_json
+    except Exception as e:
+        return f"❌ خطا در تحلیل: {str(e)}", ""
+
+
+def create_category_chart():
+    """نمودار دسته‌بندی منابع"""
+    summary = hub.get_resource_summary()
     
-    except Exception as e:
-        logger.error(f"Error loading providers: {e}")
-        if PANDAS_AVAILABLE:
-            return pd.DataFrame({"Error": [str(e)]})
-        return {"error": str(e)}
-
-
-def reload_providers_config() -> Tuple[Any, str]:
-    """Reload providers config and return updated table + message with stats"""
-    try:
-        # Count providers
-        providers_path = config.BASE_DIR / "providers_config_extended.json"
-        with open(providers_path, 'r') as f:
-            data = json.load(f)
-        
-        total_providers = len(data.get('providers', {}))
-        
-        # Count by category
-        categories = {}
-        for provider_info in data.get('providers', {}).values():
-            cat = provider_info.get('category', 'unknown')
-            categories[cat] = categories.get(cat, 0) + 1
-        
-        # Force reload by re-reading file
-        table = get_providers_table("All")
-        
-        # Build detailed message
-        message = f"""✅ **Providers Reloaded Successfully!**
-
-**Total Providers**: `{total_providers}`
-**Reload Time**: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`
-
-**By Category**:
-"""
-        for cat, count in sorted(categories.items(), key=lambda x: x[1], reverse=True)[:10]:
-            message += f"- {cat}: `{count}`\n"
-        
-        return table, message
-    except Exception as e:
-        logger.error(f"Error reloading providers: {e}")
-        return get_providers_table("All"), f"❌ Reload failed: {str(e)}"
-
-
-def get_provider_categories() -> List[str]:
-    """Get unique provider categories"""
-    try:
-        providers_path = config.BASE_DIR / "providers_config_extended.json"
-        if not providers_path.exists():
-            return ["All"]
-        
-        with open(providers_path, 'r') as f:
-            data = json.load(f)
-        
-        categories = set()
-        for provider in data.get('providers', {}).values():
-            cat = provider.get('category', 'unknown')
-            categories.add(cat)
-        
-        return ["All"] + sorted(list(categories))
-    except Exception as e:
-        logger.error(f"Error getting categories: {e}")
-        return ["All"]
-
-
-# ==================== TAB 3: MARKET DATA ====================
-
-def get_market_data_table(search_filter: str = "") -> Any:
-    """Get latest market data from database with enhanced formatting"""
-    try:
-        prices = db.get_latest_prices(100)
-        
-        if not prices:
-            if PANDAS_AVAILABLE:
-                return pd.DataFrame({"Message": ["No market data available. Click 'Refresh Prices' to collect data."]})
-            return {"error": "No data available"}
-        
-        # Filter if search provided
-        filtered_prices = prices
-        if search_filter:
-            search_lower = search_filter.lower()
-            filtered_prices = [
-                p for p in prices
-                if search_lower in p.get('name', '').lower() or search_lower in p.get('symbol', '').lower()
-            ]
-        
-        table_data = []
-        for p in filtered_prices:
-            # Format change with emoji
-            change = p.get('percent_change_24h', 0)
-            change_emoji = "🟢" if change > 0 else ("🔴" if change < 0 else "⚪")
-            
-            table_data.append({
-                "#": p.get('rank', 999),
-                "Symbol": p.get('symbol', 'N/A'),
-                "Name": p.get('name', 'Unknown'),
-                "Price": f"${p.get('price_usd', 0):,.2f}" if p.get('price_usd') else "N/A",
-                "24h Change": f"{change_emoji} {change:+.2f}%" if change is not None else "N/A",
-                "Volume 24h": f"${p.get('volume_24h', 0):,.0f}" if p.get('volume_24h') else "N/A",
-                "Market Cap": f"${p.get('market_cap', 0):,.0f}" if p.get('market_cap') else "N/A"
-            })
-        
-        if PANDAS_AVAILABLE:
-            df = pd.DataFrame(table_data)
-            return df.sort_values('#') if not df.empty else pd.DataFrame({"Message": ["No matching data"]})
-        else:
-            return {"prices": table_data}
+    categories = list(summary['categories'].keys())
+    counts = list(summary['categories'].values())
     
-    except Exception as e:
-        logger.error(f"Error getting market data: {e}")
-        if PANDAS_AVAILABLE:
-            return pd.DataFrame({"Error": [str(e)]})
-        return {"error": str(e)}
-
-
-def refresh_market_data() -> Tuple[Any, str]:
-    """Refresh market data by collecting from APIs with detailed stats"""
-    try:
-        logger.info("Refreshing market data...")
-        start_time = time.time()
-        success, count = collectors.collect_price_data()
-        duration = time.time() - start_time
-        
-        # Get database stats
-        db_stats = db.get_database_stats()
-        
-        if success:
-            message = f"""✅ **Market Data Refreshed Successfully!**
-
-**Collection Stats**:
-- New Records: `{count}`
-- Duration: `{duration:.2f}s`
-- Time: `{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}`
-
-**Database Stats**:
-- Total Price Records: `{db_stats.get('prices_count', 0):,}`
-- Unique Symbols: `{db_stats.get('unique_symbols', 0)}`
-- Last Update: `{db_stats.get('latest_price_update', 'N/A')}`
-"""
-        else:
-            message = f"""⚠️ **Collection completed with issues**
-
-- Records Collected: `{count}`
-- Duration: `{duration:.2f}s`
-- Check logs for details
-"""
-        
-        # Return updated table
-        table = get_market_data_table("")
-        return table, message
-    
-    except Exception as e:
-        logger.error(f"Error refreshing market data: {e}")
-        return get_market_data_table(""), f"❌ Refresh failed: {str(e)}"
-
-
-def plot_price_history(symbol: str, timeframe: str) -> Any:
-    """Plot price history for a symbol"""
-    if not PLOTLY_AVAILABLE:
-        return None
-    
-    try:
-        # Parse timeframe
-        hours_map = {"24h": 24, "7d": 168, "30d": 720, "90d": 2160}
-        hours = hours_map.get(timeframe, 168)
-        
-        # Get history
-        history = db.get_price_history(symbol.upper(), hours)
-        
-        if not history or len(history) < 2:
-            fig = go.Figure()
-            fig.add_annotation(
-                text=f"No historical data for {symbol}",
-                xref="paper", yref="paper",
-                x=0.5, y=0.5, showarrow=False
-            )
-            return fig
-        
-        # Extract data
-        timestamps = [datetime.fromisoformat(h['timestamp'].replace('Z', '+00:00')) if isinstance(h['timestamp'], str) else datetime.now() for h in history]
-        prices = [h.get('price_usd', 0) for h in history]
-        
-        # Create plot
+    if not categories:
         fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=timestamps,
-            y=prices,
-            mode='lines',
-            name='Price',
-            line=dict(color='#2962FF', width=2)
-        ))
-        
-        fig.update_layout(
-            title=f"{symbol} - {timeframe}",
-            xaxis_title="Time",
-            yaxis_title="Price (USD)",
-            hovermode='x unified',
-            height=400
+        fig.add_annotation(
+            text="No data available",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False
         )
-        
         return fig
     
-    except Exception as e:
-        logger.error(f"Error plotting price history: {e}")
-        fig = go.Figure()
-        fig.add_annotation(text=f"Error: {str(e)}", xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
-        return fig
-
-
-# ==================== TAB 4: APL SCANNER ====================
-
-def run_apl_scan() -> str:
-    """Run Auto Provider Loader scan"""
-    try:
-        logger.info("Running APL scan...")
-        
-        # Import APL
-        import auto_provider_loader
-        
-        # Run scan
-        apl = auto_provider_loader.AutoProviderLoader()
-        
-        # Run async in sync context
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(apl.run())
-        loop.close()
-        
-        # Build summary
-        stats = apl.stats
-        output = f"""
-# APL Scan Complete
-
-**Timestamp**: {stats.timestamp}
-**Execution Time**: {stats.execution_time_sec:.2f}s
-
-## HTTP Providers
-- **Candidates**: {stats.total_http_candidates}
-- **Valid**: {stats.http_valid} ✅
-- **Invalid**: {stats.http_invalid} ❌
-- **Conditional**: {stats.http_conditional} ⚠️
-
-## HuggingFace Models
-- **Candidates**: {stats.total_hf_candidates}
-- **Valid**: {stats.hf_valid} ✅
-- **Invalid**: {stats.hf_invalid} ❌
-- **Conditional**: {stats.hf_conditional} ⚠️
-
-## Total Active Providers
-**{stats.total_active_providers}** providers are now active.
-
----
-
-✅ All valid providers have been integrated into `providers_config_extended.json`.
-
-See `PROVIDER_AUTO_DISCOVERY_REPORT.md` for full details.
-"""
-        
-        return output
+    fig = go.Figure(data=[
+        go.Bar(
+            x=categories,
+            y=counts,
+            marker_color='lightblue',
+            text=counts,
+            textposition='auto'
+        )
+    ])
     
-    except Exception as e:
-        logger.error(f"Error running APL: {e}\n{traceback.format_exc()}")
-        return f"❌ APL scan failed: {str(e)}\n\nCheck logs for details."
-
-
-def get_apl_report() -> str:
-    """Get last APL report"""
-    try:
-        report_path = config.BASE_DIR / "PROVIDER_AUTO_DISCOVERY_REPORT.md"
-        if report_path.exists():
-            with open(report_path, 'r') as f:
-                return f.read()
-        else:
-            return "No APL report found. Run a scan first."
-    except Exception as e:
-        logger.error(f"Error reading APL report: {e}")
-        return f"Error reading report: {str(e)}"
-
-
-# ==================== TAB 5: HF MODELS ====================
-
-def get_hf_models_status() -> Any:
-    """Get HuggingFace models status with unified display"""
-    try:
-        import ai_models
-        
-        model_info = ai_models.get_model_info()
-        
-        # Build unified table - avoid duplicates
-        table_data = []
-        seen_models = set()
-        
-        # First, add loaded models
-        if model_info.get('models_initialized'):
-            for model_name, loaded in model_info.get('loaded_models', {}).items():
-                if model_name not in seen_models:
-                    status = "✅ Loaded" if loaded else "❌ Failed"
-                    model_id = config.HUGGINGFACE_MODELS.get(model_name, 'N/A')
-                    table_data.append({
-                        "Model Type": model_name,
-                        "Model ID": model_id,
-                        "Status": status,
-                        "Source": "config.py"
-                    })
-                    seen_models.add(model_name)
-        
-        # Then add configured but not loaded models
-        for model_type, model_id in config.HUGGINGFACE_MODELS.items():
-            if model_type not in seen_models:
-                table_data.append({
-                    "Model Type": model_type,
-                    "Model ID": model_id,
-                    "Status": "⏳ Not Loaded",
-                    "Source": "config.py"
-                })
-                seen_models.add(model_type)
-        
-        # Add models from providers_config if any
-        try:
-            providers_path = config.BASE_DIR / "providers_config_extended.json"
-            if providers_path.exists():
-                with open(providers_path, 'r') as f:
-                    providers_data = json.load(f)
-                
-                for provider_id, provider_info in providers_data.get('providers', {}).items():
-                    if provider_info.get('category') == 'hf-model':
-                        model_name = provider_info.get('name', provider_id)
-                        if model_name not in seen_models:
-                            table_data.append({
-                                "Model Type": model_name,
-                                "Model ID": provider_id,
-                                "Status": "📚 Registry",
-                                "Source": "providers_config"
-                            })
-                            seen_models.add(model_name)
-        except Exception as e:
-            logger.warning(f"Could not load models from providers_config: {e}")
-        
-        if not table_data:
-            table_data.append({
-                "Model Type": "No models",
-                "Model ID": "N/A",
-                "Status": "⚠️ None configured",
-                "Source": "N/A"
-            })
-        
-        if PANDAS_AVAILABLE:
-            return pd.DataFrame(table_data)
-        else:
-            return {"models": table_data}
+    fig.update_layout(
+        title='توزیع منابع بر اساس دسته‌بندی',
+        xaxis_title='دسته‌بندی',
+        yaxis_title='تعداد منابع',
+        template='plotly_white',
+        height=400
+    )
     
-    except Exception as e:
-        logger.error(f"Error getting HF models status: {e}")
-        if PANDAS_AVAILABLE:
-            return pd.DataFrame({"Error": [str(e)]})
-        return {"error": str(e)}
+    return fig
 
 
-def test_hf_model(model_name: str, test_text: str) -> str:
-    """Test a HuggingFace model with text"""
-    try:
-        if not test_text or not test_text.strip():
-            return "⚠️ Please enter test text"
-        
-        import ai_models
-        
-        if model_name in ["sentiment_twitter", "sentiment_financial", "sentiment"]:
-            # Test sentiment analysis
-            result = ai_models.analyze_sentiment(test_text)
-            
-            output = f"""
-## Sentiment Analysis Result
-
-**Input**: {test_text}
-
-**Label**: {result.get('label', 'N/A')}
-**Score**: {result.get('score', 0):.4f}
-**Confidence**: {result.get('confidence', 0):.4f}
-
-**Details**:
-```json
-{json.dumps(result.get('details', {}), indent=2)}
-```
-"""
-            return output
-        
-        elif model_name == "summarization":
-            # Test summarization
-            summary = ai_models.summarize_text(test_text)
-            
-            output = f"""
-## Summarization Result
-
-**Original** ({len(test_text)} chars):
-{test_text}
-
-**Summary** ({len(summary)} chars):
-{summary}
-"""
-            return output
-        
-        else:
-            return f"⚠️ Model '{model_name}' not recognized or not testable"
+def get_model_status():
+    """وضعیت مدل‌ها"""
+    if not registry_status:
+        return "❌ Model registry not available"
     
-    except Exception as e:
-        logger.error(f"Error testing HF model: {e}")
-        return f"❌ Model test failed: {str(e)}"
-
-
-def initialize_hf_models() -> Tuple[Any, str]:
-    """Initialize HuggingFace models"""
-    try:
-        import ai_models
-        
-        result = ai_models.initialize_models()
-        
-        if result.get('success'):
-            message = f"✅ Models initialized successfully at {datetime.now().strftime('%H:%M:%S')}"
-        else:
-            message = f"⚠️ Model initialization completed with warnings: {result.get('status')}"
-        
-        # Return updated table
-        table = get_hf_models_status()
-        return table, message
+    status = registry_status()
     
-    except Exception as e:
-        logger.error(f"Error initializing HF models: {e}")
-        return get_hf_models_status(), f"❌ Initialization failed: {str(e)}"
-
-
-# ==================== TAB 6: DIAGNOSTICS ====================
-
-def run_full_diagnostics(auto_fix: bool) -> str:
-    """Run full system diagnostics"""
-    try:
-        from backend.services.diagnostics_service import DiagnosticsService
-        
-        logger.info(f"Running diagnostics (auto_fix={auto_fix})...")
-        
-        diagnostics = DiagnosticsService()
-        
-        # Run async in sync context
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        report = loop.run_until_complete(diagnostics.run_full_diagnostics(auto_fix=auto_fix))
-        loop.close()
-        
-        # Format detailed output
-        output = f"""
-# 🔧 System Diagnostics Report
-
-**Generated**: {report.timestamp}
-**Duration**: {report.duration_ms:.2f}ms
-
----
-
-## 📊 Summary
-
-| Metric | Count |
-|--------|-------|
-| **Total Issues** | {report.total_issues} |
-| **Critical** 🔴 | {report.critical_issues} |
-| **Warnings** 🟡 | {report.warnings} |
-| **Info** 🔵 | {report.info_issues} |
-| **Auto-Fixed** ✅ | {len(report.fixed_issues)} |
-
----
-
-## 🔍 Issues Detected
-
-"""
-        
-        if not report.issues:
-            output += "✅ **No issues detected!** System is healthy.\n"
-        else:
-            # Group by category
-            by_category = {}
-            for issue in report.issues:
-                cat = issue.category
-                if cat not in by_category:
-                    by_category[cat] = []
-                by_category[cat].append(issue)
-            
-            for category, issues in sorted(by_category.items()):
-                output += f"\n### {category.upper()}\n\n"
-                
-                for issue in issues:
-                    emoji = {"critical": "🔴", "warning": "🟡", "info": "🔵"}.get(issue.severity, "⚪")
-                    fixed_mark = " ✅ **AUTO-FIXED**" if issue.auto_fixed else ""
-                    
-                    output += f"**{emoji} {issue.title}**{fixed_mark}\n\n"
-                    output += f"{issue.description}\n\n"
-                    
-                    if issue.fixable and issue.fix_action and not issue.auto_fixed:
-                        output += f"💡 **Fix**: `{issue.fix_action}`\n\n"
-                    
-                    output += "---\n\n"
-        
-        # System info
-        output += "\n## 💻 System Information\n\n"
-        output += "```json\n"
-        output += json.dumps(report.system_info, indent=2)
-        output += "\n```\n"
-        
-        return output
+    html = f"""
+    <div style="padding: 20px;">
+        <h3>وضعیت مدل‌ها</h3>
+        <p><strong>وضعیت:</strong> {'✅ فعال' if status.get('ok') else '❌ غیرفعال'}</p>
+        <p><strong>مدل‌های بارگذاری شده:</strong> {status.get('pipelines_loaded', 0)}</p>
+        <p><strong>مدل‌های در دسترس:</strong> {len(status.get('available_models', []))}</p>
+        <p><strong>حالت Hugging Face:</strong> {status.get('hf_mode', 'unknown')}</p>
+        <p><strong>Transformers موجود:</strong> {'✅' if status.get('transformers_available') else '❌'}</p>
+    </div>
+    """
     
-    except Exception as e:
-        logger.error(f"Error running diagnostics: {e}\n{traceback.format_exc()}")
-        return f"❌ Diagnostics failed: {str(e)}\n\nCheck logs for details."
+    return html
 
 
-# ==================== TAB 7: LOGS ====================
+# =============================================================================
+# Build Gradio Interface
+# =============================================================================
 
-def get_logs(log_type: str = "recent", lines: int = 100) -> str:
-    """Get system logs with copy-friendly format"""
-    try:
-        log_file = config.LOG_FILE
-        
-        if not log_file.exists():
-            return "⚠️ Log file not found"
-        
-        # Read log file
-        with open(log_file, 'r') as f:
-            all_lines = f.readlines()
-        
-        # Filter based on log_type
-        if log_type == "errors":
-            filtered_lines = [line for line in all_lines if 'ERROR' in line or 'CRITICAL' in line]
-        elif log_type == "warnings":
-            filtered_lines = [line for line in all_lines if 'WARNING' in line]
-        else:  # recent
-            filtered_lines = all_lines
-        
-        # Get last N lines
-        recent_lines = filtered_lines[-lines:] if len(filtered_lines) > lines else filtered_lines
-        
-        if not recent_lines:
-            return f"ℹ️ No {log_type} logs found"
-        
-        # Format output with line numbers for easy reference
-        output = f"# 📋 {log_type.upper()} Logs (Last {len(recent_lines)} lines)\n\n"
-        output += "**Quick Stats:**\n"
-        output += f"- Total lines shown: `{len(recent_lines)}`\n"
-        output += f"- Log file: `{log_file}`\n"
-        output += f"- Type: `{log_type}`\n\n"
-        output += "---\n\n"
-        output += "```log\n"
-        for i, line in enumerate(recent_lines, 1):
-            output += f"{i:4d} | {line}"
-        output += "\n```\n"
-        output += "\n---\n"
-        output += "💡 **Tip**: You can now copy individual lines or the entire log block\n"
-        
-        return output
+def create_gradio_interface():
+    """ایجاد رابط کاربری Gradio"""
     
-    except Exception as e:
-        logger.error(f"Error reading logs: {e}")
-        return f"❌ Error reading logs: {str(e)}"
-
-
-def clear_logs() -> str:
-    """Clear log file"""
-    try:
-        log_file = config.LOG_FILE
-        
-        if log_file.exists():
-            # Backup first
-            backup_path = log_file.parent / f"{log_file.name}.backup.{int(datetime.now().timestamp())}"
-            import shutil
-            shutil.copy2(log_file, backup_path)
-            
-            # Clear
-            with open(log_file, 'w') as f:
-                f.write("")
-            
-            logger.info("Log file cleared")
-            return f"✅ Logs cleared (backup saved to {backup_path.name})"
-        else:
-            return "⚠️ No log file to clear"
+    # Get available models for dropdown
+    models = hub.get_available_models()
+    model_choices = [f"{m['key']} - {m['name']}" for m in models] if models else ["crypto_sent_0 - CryptoBERT"]
+    model_keys = [m['key'] for m in models] if models else ["crypto_sent_0"]
     
-    except Exception as e:
-        logger.error(f"Error clearing logs: {e}")
-        return f"❌ Error clearing logs: {str(e)}"
-
-
-# ==================== GRADIO INTERFACE ====================
-
-def build_interface():
-    """Build the complete Gradio Blocks interface"""
-    
-    with gr.Blocks(title="Crypto Admin Dashboard", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(
+        theme=gr.themes.Soft(primary_hue="blue", secondary_hue="purple"),
+        title="Crypto Intelligence Hub - مرکز هوش رمز ارز",
+        css="""
+        .gradio-container {
+            max-width: 1400px !important;
+        }
+        """
+    ) as app:
         
         gr.Markdown("""
-# 🚀 Crypto Data Aggregator - Admin Dashboard
-
-**Real-time cryptocurrency data aggregation and analysis platform**
-
-Features: Provider Management | Market Data | Auto Provider Loader | HF Models | System Diagnostics
+        # 🚀 Crypto Intelligence Hub
+        ## مرکز هوش مصنوعی و جمع‌آوری داده‌های رمز ارز
+        
+        **منابع رایگان | مدل‌های Hugging Face | رابط کاربری کامل**
+        
+        این برنامه یک رابط کامل برای دسترسی به منابع رایگان داده‌های رمز ارز و استفاده از مدل‌های هوش مصنوعی Hugging Face است.
         """)
         
-        with gr.Tabs():
+        # Tab 1: Dashboard
+        with gr.Tab("📊 داشبورد"):
+            dashboard_summary = gr.HTML()
+            refresh_dashboard_btn = gr.Button("🔄 به‌روزرسانی", variant="primary")
             
-            # ==================== TAB 1: STATUS ====================
-            with gr.Tab("📊 Status"):
-                gr.Markdown("### System Status Overview")
-                
-                with gr.Row():
-                    status_refresh_btn = gr.Button("🔄 Refresh Status", variant="primary")
-                    status_diag_btn = gr.Button("🔧 Run Quick Diagnostics")
-                
-                status_summary = gr.Markdown()
-                
-                with gr.Row():
-                    with gr.Column():
-                        gr.Markdown("#### Database Statistics")
-                        db_stats_json = gr.JSON()
-                    
-                    with gr.Column():
-                        gr.Markdown("#### System Information")
-                        system_info_json = gr.JSON()
-                
-                diag_output = gr.Markdown()
-                
-                # Load initial status
-                demo.load(
-                    fn=get_status_tab,
-                    outputs=[status_summary, db_stats_json, system_info_json]
-                )
-                
-                # Refresh button
-                status_refresh_btn.click(
-                    fn=get_status_tab,
-                    outputs=[status_summary, db_stats_json, system_info_json]
-                )
-                
-                # Quick diagnostics
-                status_diag_btn.click(
-                    fn=lambda: run_diagnostics_from_status(False),
-                    outputs=diag_output
-                )
+            refresh_dashboard_btn.click(
+                fn=get_dashboard_summary,
+                outputs=dashboard_summary
+            )
             
-            # ==================== TAB 2: PROVIDERS ====================
-            with gr.Tab("🔌 Providers"):
-                gr.Markdown("### API Provider Management")
-                
-                with gr.Row():
-                    provider_category = gr.Dropdown(
-                        label="Filter by Category",
-                        choices=get_provider_categories(),
-                        value="All"
-                    )
-                    provider_reload_btn = gr.Button("🔄 Reload Providers", variant="primary")
-                
-                providers_table = gr.Dataframe(
-                    label="Providers",
-                    interactive=False,
-                    wrap=True
-                ) if PANDAS_AVAILABLE else gr.JSON(label="Providers")
-                
-                provider_status = gr.Textbox(label="Status", interactive=False)
-                
-                # Load initial providers
-                demo.load(
-                    fn=lambda: get_providers_table("All"),
-                    outputs=providers_table
-                )
-                
-                # Category filter
-                provider_category.change(
-                    fn=get_providers_table,
-                    inputs=provider_category,
-                    outputs=providers_table
-                )
-                
-                # Reload button
-                provider_reload_btn.click(
-                    fn=reload_providers_config,
-                    outputs=[providers_table, provider_status]
-                )
+            app.load(
+                fn=get_dashboard_summary,
+                outputs=dashboard_summary
+            )
+        
+        # Tab 2: Resources
+        with gr.Tab("📚 منابع داده"):
+            gr.Markdown("### منابع رایگان برای جمع‌آوری داده‌های رمز ارز")
             
-            # ==================== TAB 3: MARKET DATA ====================
-            with gr.Tab("📈 Market Data"):
-                gr.Markdown("### Live Cryptocurrency Market Data")
-                
-                with gr.Row():
-                    market_search = gr.Textbox(
-                        label="Search",
-                        placeholder="Search by name or symbol..."
-                    )
-                    market_refresh_btn = gr.Button("🔄 Refresh Prices", variant="primary")
-                
-                market_table = gr.Dataframe(
-                    label="Market Data",
-                    interactive=False,
-                    wrap=True,
-                    height=400
-                ) if PANDAS_AVAILABLE else gr.JSON(label="Market Data")
-                
-                market_status = gr.Textbox(label="Status", interactive=False)
-                
-                # Price chart section
-                if PLOTLY_AVAILABLE:
-                    gr.Markdown("#### Price History Chart")
-                    
-                    with gr.Row():
-                        chart_symbol = gr.Textbox(
-                            label="Symbol",
-                            placeholder="BTC",
-                            value="BTC"
-                        )
-                        chart_timeframe = gr.Dropdown(
-                            label="Timeframe",
-                            choices=["24h", "7d", "30d", "90d"],
-                            value="7d"
-                        )
-                        chart_plot_btn = gr.Button("📊 Plot")
-                    
-                    price_chart = gr.Plot(label="Price History")
-                    
-                    chart_plot_btn.click(
-                        fn=plot_price_history,
-                        inputs=[chart_symbol, chart_timeframe],
-                        outputs=price_chart
-                    )
-                
-                # Load initial data
-                demo.load(
-                    fn=lambda: get_market_data_table(""),
-                    outputs=market_table
-                )
-                
-                # Search
-                market_search.change(
-                    fn=get_market_data_table,
-                    inputs=market_search,
-                    outputs=market_table
-                )
-                
-                # Refresh
-                market_refresh_btn.click(
-                    fn=refresh_market_data,
-                    outputs=[market_table, market_status]
+            resources_table = gr.DataFrame(
+                label="لیست منابع",
+                wrap=True
+            )
+            
+            refresh_resources_btn = gr.Button("🔄 به‌روزرسانی", variant="primary")
+            
+            refresh_resources_btn.click(
+                fn=get_resources_table,
+                outputs=resources_table
+            )
+            
+            app.load(
+                fn=get_resources_table,
+                outputs=resources_table
+            )
+            
+            category_chart = gr.Plot(label="نمودار دسته‌بندی")
+            
+            refresh_resources_btn.click(
+                fn=create_category_chart,
+                outputs=category_chart
+            )
+        
+        # Tab 3: AI Models
+        with gr.Tab("🤖 مدل‌های AI"):
+            gr.Markdown("### مدل‌های Hugging Face برای تحلیل احساسات و هوش مصنوعی")
+            
+            model_status_html = gr.HTML()
+            
+            models_table = gr.DataFrame(
+                label="لیست مدل‌ها",
+                wrap=True
+            )
+            
+            refresh_models_btn = gr.Button("🔄 به‌روزرسانی", variant="primary")
+            
+            refresh_models_btn.click(
+                fn=get_models_table,
+                outputs=models_table
+            )
+            
+            refresh_models_btn.click(
+                fn=get_model_status,
+                outputs=model_status_html
+            )
+            
+            app.load(
+                fn=get_models_table,
+                outputs=models_table
+            )
+            
+            app.load(
+                fn=get_model_status,
+                outputs=model_status_html
+            )
+        
+        # Tab 4: Sentiment Analysis
+        with gr.Tab("💭 تحلیل احساسات"):
+            gr.Markdown("### تحلیل احساسات متن با استفاده از مدل‌های Hugging Face")
+            
+            with gr.Row():
+                sentiment_text = gr.Textbox(
+                    label="متن برای تحلیل",
+                    placeholder="مثال: Bitcoin price is rising rapidly! The market shows strong bullish momentum.",
+                    lines=5
                 )
             
-            # ==================== TAB 4: APL SCANNER ====================
-            with gr.Tab("🔍 APL Scanner"):
-                gr.Markdown("### Auto Provider Loader")
-                gr.Markdown("Automatically discover, validate, and integrate API providers and HuggingFace models.")
-                
-                with gr.Row():
-                    apl_scan_btn = gr.Button("▶️ Run APL Scan", variant="primary", size="lg")
-                    apl_report_btn = gr.Button("📄 View Last Report")
-                
-                apl_output = gr.Markdown()
-                
-                apl_scan_btn.click(
-                    fn=run_apl_scan,
-                    outputs=apl_output
+            with gr.Row():
+                model_dropdown = gr.Dropdown(
+                    choices=model_choices,
+                    value=model_choices[0] if model_choices else None,
+                    label="انتخاب مدل"
                 )
-                
-                apl_report_btn.click(
-                    fn=get_apl_report,
-                    outputs=apl_output
+                use_backend_check = gr.Checkbox(
+                    label="استفاده از بک‌اند API (در صورت موجود بودن)",
+                    value=False
                 )
-                
-                # Load last report on startup
-                demo.load(
-                    fn=get_apl_report,
-                    outputs=apl_output
+                analyze_btn = gr.Button("🔍 تحلیل", variant="primary")
+            
+            with gr.Row():
+                sentiment_result = gr.Markdown(label="نتیجه")
+                sentiment_json = gr.Code(
+                    label="JSON خروجی",
+                    language="json"
                 )
             
-            # ==================== TAB 5: HF MODELS ====================
-            with gr.Tab("🤖 HF Models"):
-                gr.Markdown("### HuggingFace Models Status & Testing")
-                
-                with gr.Row():
-                    hf_init_btn = gr.Button("🔄 Initialize Models", variant="primary")
-                    hf_refresh_btn = gr.Button("🔄 Refresh Status")
-                
-                hf_models_table = gr.Dataframe(
-                    label="Models",
-                    interactive=False
-                ) if PANDAS_AVAILABLE else gr.JSON(label="Models")
-                
-                hf_status = gr.Textbox(label="Status", interactive=False)
-                
-                gr.Markdown("#### Test Model")
-                
-                with gr.Row():
-                    test_model_dropdown = gr.Dropdown(
-                        label="Model",
-                        choices=["sentiment", "sentiment_twitter", "sentiment_financial", "summarization"],
-                        value="sentiment"
-                    )
-                
-                test_input = gr.Textbox(
-                    label="Test Input",
-                    placeholder="Enter text to test the model...",
-                    lines=3
-                )
-                
-                test_btn = gr.Button("▶️ Run Test", variant="secondary")
-                
-                test_output = gr.Markdown(label="Test Output")
-                
-                # Load initial status
-                demo.load(
-                    fn=get_hf_models_status,
-                    outputs=hf_models_table
-                )
-                
-                # Initialize models
-                hf_init_btn.click(
-                    fn=initialize_hf_models,
-                    outputs=[hf_models_table, hf_status]
-                )
-                
-                # Refresh status
-                hf_refresh_btn.click(
-                    fn=get_hf_models_status,
-                    outputs=hf_models_table
-                )
-                
-                # Test model
-                test_btn.click(
-                    fn=test_hf_model,
-                    inputs=[test_model_dropdown, test_input],
-                    outputs=test_output
-                )
+            def analyze_with_selected_model(text, model_choice, use_backend):
+                return analyze_text_sentiment(text, model_choice, use_backend=use_backend)
             
-            # ==================== TAB 6: DIAGNOSTICS ====================
-            with gr.Tab("🔧 Diagnostics"):
-                gr.Markdown("### System Diagnostics & Auto-Repair")
-                
-                with gr.Row():
-                    diag_run_btn = gr.Button("▶️ Run Diagnostics", variant="primary")
-                    diag_autofix_btn = gr.Button("🔧 Run with Auto-Fix", variant="secondary")
-                
-                diagnostics_output = gr.Markdown()
-                
-                diag_run_btn.click(
-                    fn=lambda: run_full_diagnostics(False),
-                    outputs=diagnostics_output
-                )
-                
-                diag_autofix_btn.click(
-                    fn=lambda: run_full_diagnostics(True),
-                    outputs=diagnostics_output
-                )
+            analyze_btn.click(
+                fn=analyze_with_selected_model,
+                inputs=[sentiment_text, model_dropdown, use_backend_check],
+                outputs=[sentiment_result, sentiment_json]
+            )
             
-            # ==================== TAB 7: LOGS ====================
-            with gr.Tab("📋 Logs"):
-                gr.Markdown("### System Logs Viewer")
+            # Example texts
+            gr.Markdown("""
+            ### مثال‌های متن:
+            - "Bitcoin is showing strong bullish momentum"
+            - "Market crash expected due to regulatory concerns"
+            - "Ethereum network upgrade successful"
+            - "Crypto market sentiment is very positive today"
+            """)
+        
+        # Tab 5: API Integration
+        with gr.Tab("🔌 یکپارچه‌سازی API"):
+            gr.Markdown("""
+            ### اتصال به بک‌اند FastAPI
+            
+            این بخش به سرویس‌های بک‌اند متصل می‌شود که از منابع JSON استفاده می‌کنند.
+            
+            **وضعیت:** {'✅ فعال' if FASTAPI_AVAILABLE else '❌ غیرفعال'}
+            """)
+            
+            if FASTAPI_AVAILABLE:
+                gr.Markdown("""
+                **API Endpoints در دسترس:**
+                - `/api/market-data` - داده‌های بازار
+                - `/api/sentiment` - تحلیل احساسات
+                - `/api/news` - اخبار رمز ارز
+                - `/api/resources` - لیست منابع
+                """)
+            
+            # Show resource summary
+            resource_info = gr.Markdown()
+            
+            def get_resource_info():
+                summary = hub.get_resource_summary()
+                return f"""
+                ## اطلاعات منابع
                 
-                with gr.Row():
-                    log_type = gr.Dropdown(
-                        label="Log Type",
-                        choices=["recent", "errors", "warnings"],
-                        value="recent"
-                    )
-                    log_lines = gr.Slider(
-                        label="Lines to Show",
-                        minimum=10,
-                        maximum=500,
-                        value=100,
-                        step=10
-                    )
+                - **کل منابع:** {summary['total_resources']}
+                - **منابع رایگان:** {summary['free_resources']}
+                - **مدل‌های AI:** {summary['models_available']}
+                - **دسته‌بندی‌ها:** {len(summary['categories'])}
                 
-                with gr.Row():
-                    log_refresh_btn = gr.Button("🔄 Refresh Logs", variant="primary")
-                    log_clear_btn = gr.Button("🗑️ Clear Logs", variant="secondary")
-                
-                logs_output = gr.Markdown()
-                log_clear_status = gr.Textbox(label="Status", interactive=False, visible=False)
-                
-                # Load initial logs
-                demo.load(
-                    fn=lambda: get_logs("recent", 100),
-                    outputs=logs_output
-                )
-                
-                # Refresh logs
-                log_refresh_btn.click(
-                    fn=get_logs,
-                    inputs=[log_type, log_lines],
-                    outputs=logs_output
-                )
-                
-                # Update when dropdown changes
-                log_type.change(
-                    fn=get_logs,
-                    inputs=[log_type, log_lines],
-                    outputs=logs_output
-                )
-                
-                # Clear logs
-                log_clear_btn.click(
-                    fn=clear_logs,
-                    outputs=log_clear_status
-                ).then(
-                    fn=lambda: get_logs("recent", 100),
-                    outputs=logs_output
-                )
+                ### دسته‌بندی‌های موجود:
+                {', '.join(summary['categories'].keys()) if summary['categories'] else 'هیچ دسته‌ای یافت نشد'}
+                """
+            
+            app.load(
+                fn=get_resource_info,
+                outputs=resource_info
+            )
         
         # Footer
         gr.Markdown("""
----
-**Crypto Data Aggregator Admin Dashboard** | Real Data Only | No Mock/Fake Data
+        ---
+        ### 📝 اطلاعات
+        - **منابع:** از فایل‌های JSON بارگذاری شده
+        - **مدل‌ها:** Hugging Face Transformers
+        - **بک‌اند:** FastAPI (در صورت موجود بودن)
+        - **فرانت‌اند:** Gradio
+        - **محیط:** Hugging Face Spaces (Docker)
         """)
     
-    return demo
+    return app
 
 
-# ==================== MAIN ENTRY POINT ====================
-
-demo = build_interface()
+# =============================================================================
+# Main Entry Point
+# =============================================================================
 
 if __name__ == "__main__":
-    logger.info("Launching Gradio dashboard...")
+    logger.info("🚀 Starting Crypto Intelligence Hub...")
+    logger.info(f"📁 Workspace: {WORKSPACE_ROOT}")
+    logger.info(f"🐳 Docker detected: {IS_DOCKER}")
+    logger.info(f"🌐 Use FastAPI+HTML: {USE_FASTAPI_HTML}")
+    logger.info(f"🎨 Use Gradio: {USE_GRADIO}")
+    logger.info(f"📊 Resources loaded: {len(hub.resources)}")
+    logger.info(f"🤖 Models available: {len(hub.get_available_models())}")
+    logger.info(f"🔌 FastAPI available: {FASTAPI_AVAILABLE}")
     
-    demo.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        share=False
-    )
+    # Choose mode based on environment variables
+    if USE_FASTAPI_HTML and FASTAPI_AVAILABLE:
+        # Run FastAPI with HTML interface
+        logger.info("🌐 Starting FastAPI server with HTML interface...")
+        import uvicorn
+        port = int(os.getenv("PORT", "7860"))
+        uvicorn.run(
+            fastapi_app,
+            host="0.0.0.0",
+            port=port,
+            log_level="info"
+        )
+    elif USE_GRADIO:
+        # Run Gradio interface (default)
+        logger.info("🎨 Starting Gradio interface...")
+        app = create_gradio_interface()
+        app.launch(
+            server_name="0.0.0.0",
+            server_port=int(os.getenv("GRADIO_SERVER_PORT", "7860")),
+            share=False,
+            show_error=True
+        )
+    elif FASTAPI_AVAILABLE:
+        # Fallback to FastAPI if Gradio is disabled but FastAPI is available
+        logger.info("🌐 Starting FastAPI server (fallback)...")
+        import uvicorn
+        port = int(os.getenv("PORT", "7860"))
+        uvicorn.run(
+            fastapi_app,
+            host="0.0.0.0",
+            port=port,
+            log_level="info"
+        )
+    else:
+        # No UI mode available
+        logger.error("❌ No UI mode available (FastAPI unavailable and Gradio disabled). Exiting.")
+        raise SystemExit(1)

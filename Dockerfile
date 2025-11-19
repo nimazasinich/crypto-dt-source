@@ -1,24 +1,37 @@
-FROM python:3.10
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Create required directories
-RUN mkdir -p /app/logs /app/data /app/data/database /app/data/backups
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy requirements first for better caching
+COPY requirements_hf.txt ./requirements.txt
 
-# Copy application code
+# Install Python dependencies
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy application files
 COPY . .
 
-# Set environment variables
-ENV USE_MOCK_DATA=false
-ENV PORT=7860
-ENV PYTHONUNBUFFERED=1
+# Create necessary directories
+RUN mkdir -p data/database logs api-resources
 
-# Expose port
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PORT=7860
+ENV GRADIO_SERVER_NAME=0.0.0.0
+ENV GRADIO_SERVER_PORT=7860
+ENV DOCKER_CONTAINER=true
+# Default to FastAPI+HTML in Docker (for index.html frontend)
+ENV USE_FASTAPI_HTML=true
+ENV USE_GRADIO=false
+
 EXPOSE 7860
 
-# Launch command
-CMD ["uvicorn", "api_server_extended:app", "--host", "0.0.0.0", "--port", "7860"]
+# Run the application (will choose Gradio or FastAPI based on env vars)
+CMD ["python", "app.py"]
