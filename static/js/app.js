@@ -72,42 +72,23 @@ function initTabs() {
 function loadTabData(tabId) {
     switch(tabId) {
         case 'dashboard':
+            loadDashboard();
+            break;
         case 'market':
             loadMarketData();
             break;
-        case 'monitor':
-            loadMonitorData();
-            break;
-        case 'advanced':
-            loadAdvancedData();
-            break;
-        case 'admin':
-            loadAdminData();
-            break;
-        case 'hf':
-            loadHFHealth();
-            loadModels();
-            break;
-        case 'pools':
-            loadPools();
-            break;
-        case 'logs':
-            loadLogs();
-            break;
-        case 'resources':
-            loadResources();
-            loadAPIRegistry();
-            break;
-        case 'reports':
-            loadReports();
-            break;
-        // Legacy tab names for backward compatibility
         case 'models':
             loadModels();
             break;
         case 'sentiment':
             loadSentimentModels();  // Populate model dropdown
             loadSentimentHistory();  // Load history from localStorage
+            break;
+        case 'ai-analyst':
+            // AI analyst tab is interactive, no auto-load needed
+            break;
+        case 'trading-assistant':
+            // Trading assistant tab is interactive, no auto-load needed
             break;
         case 'news':
             loadNews();
@@ -121,6 +102,8 @@ function loadTabData(tabId) {
         case 'api-explorer':
             loadAPIEndpoints();
             break;
+        default:
+            console.log('No specific loader for tab:', tabId);
     }
 }
 
@@ -187,6 +170,21 @@ async function checkAPIStatus() {
 
 // Load Dashboard
 async function loadDashboard() {
+    // Show loading state
+    const statsElements = [
+        'stat-total-resources', 'stat-free-resources', 
+        'stat-models', 'stat-providers'
+    ];
+    statsElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '...';
+    });
+    
+    const systemStatusDiv = document.getElementById('system-status');
+    if (systemStatusDiv) {
+        systemStatusDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading system status...</div>';
+    }
+    
     try {
         // Load resources
         const resourcesRes = await fetch('/api/resources');
@@ -232,7 +230,13 @@ async function loadDashboard() {
         }
     } catch (error) {
         console.error('Error loading dashboard:', error);
-        showError('Error loading dashboard');
+        showError('Failed to load dashboard. Please check the backend is running.');
+        
+        // Show error state
+        const systemStatusDiv = document.getElementById('system-status');
+        if (systemStatusDiv) {
+            systemStatusDiv.innerHTML = '<div class="alert alert-error">Failed to load dashboard data. Please refresh or check backend status.</div>';
+        }
     }
 }
 
@@ -278,6 +282,15 @@ function createCategoriesChart(categories) {
 
 // Load Market Data
 async function loadMarketData() {
+    // Show loading states
+    const marketDiv = document.getElementById('market-data');
+    const trendingDiv = document.getElementById('trending-coins');
+    const fgDiv = document.getElementById('fear-greed');
+    
+    if (marketDiv) marketDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading market data...</div>';
+    if (trendingDiv) trendingDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading trending coins...</div>';
+    if (fgDiv) fgDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading Fear & Greed Index...</div>';
+    
     try {
         const response = await fetch('/api/market');
         const data = await response.json();
@@ -398,7 +411,12 @@ async function loadMarketData() {
         }
     } catch (error) {
         console.error('Error loading market data:', error);
-        showError('Error loading market data');
+        showError('Failed to load market data. Please check the backend connection.');
+        
+        const marketDiv = document.getElementById('market-data');
+        if (marketDiv) {
+            marketDiv.innerHTML = '<div class="alert alert-error">Failed to load market data. The backend may be offline or the CoinGecko API may be unavailable.</div>';
+        }
     }
 }
 
@@ -414,6 +432,13 @@ function formatNumber(num) {
 
 // Load Models
 async function loadModels() {
+    // Show loading state
+    const modelsListDiv = document.getElementById('models-list');
+    const statusDiv = document.getElementById('models-status');
+    
+    if (modelsListDiv) modelsListDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading models...</div>';
+    if (statusDiv) statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading status...</div>';
+    
     try {
         const response = await fetch('/api/models/list');
         const data = await response.json();
@@ -531,7 +556,12 @@ async function loadModels() {
         }
     } catch (error) {
         console.error('Error loading models:', error);
-        showError('Error loading models');
+        showError('Failed to load models. Please check the backend connection.');
+        
+        const modelsListDiv = document.getElementById('models-list');
+        if (modelsListDiv) {
+            modelsListDiv.innerHTML = '<div class="alert alert-error">Failed to load models. Check backend status.</div>';
+        }
     }
 }
 
@@ -1104,6 +1134,12 @@ function loadSentimentHistory() {
 
 // Load News
 async function loadNews() {
+    // Show loading state
+    const newsDiv = document.getElementById('news-list');
+    if (newsDiv) {
+        newsDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading news...</div>';
+    }
+    
     try {
         // Try /api/news/latest first, fallback to /api/news
         let response;
@@ -1268,6 +1304,12 @@ async function loadNews() {
 
 // Load Providers
 async function loadProviders() {
+    // Show loading state
+    const providersDiv = document.getElementById('providers-list');
+    if (providersDiv) {
+        providersDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading providers...</div>';
+    }
+    
     try {
         // Load providers and auto-discovery health summary in parallel
         const [providersRes, healthRes] = await Promise.all([
