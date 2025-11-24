@@ -27,6 +27,7 @@ except ImportError:
 # Import routers
 from backend.routers.integrated_api import router as integrated_router, set_services
 from backend.routers.advanced_api import router as advanced_router
+from backend.routers.hf_space_api import router as hf_space_router
 
 # Setup logging
 logging.basicConfig(
@@ -169,9 +170,21 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     title="Enhanced Crypto Data Tracker",
-    description="Comprehensive cryptocurrency data tracking with real-time updates, persistence, and scheduling",
+    description="""
+    Comprehensive cryptocurrency data tracking API with:
+    - Market data (pairs, OHLC, depth, tickers)
+    - Trading signals and ML model predictions
+    - News and sentiment analysis
+    - Whale tracking and large transactions
+    - Blockchain statistics and gas prices
+    - Automatic fallback to multiple data providers
+    - Real-time WebSocket updates
+    - Full OpenAPI/Swagger documentation
+    """,
     version="2.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # CORS middleware
@@ -186,6 +199,7 @@ app.add_middleware(
 # Include routers
 app.include_router(integrated_router)
 app.include_router(advanced_router)
+app.include_router(hf_space_router)
 
 # Mount static files
 try:
