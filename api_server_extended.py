@@ -649,6 +649,14 @@ class HTMLContentTypeMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(HTMLContentTypeMiddleware)
 
+# ===== Include Real Data Router - ZERO MOCK DATA =====
+try:
+    from backend.routers.real_data_api import router as real_data_router
+    app.include_router(real_data_router)
+    print("✓ ✅ Real Data API Router loaded - NO MOCK DATA")
+except Exception as router_error:
+    print(f"⚠ Failed to load Real Data Router: {router_error}")
+
 # Mount static files
 try:
     static_path = WORKSPACE_ROOT / "static"

@@ -1,3 +1,8 @@
+# API Keys
+.env.production
+.env.local
+*.key
+
 # Python
 __pycache__/
 *.py[cod]
@@ -20,7 +25,7 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
+# Virtual Environment
 venv/
 ENV/
 env/
@@ -30,20 +35,22 @@ env/
 .idea/
 *.swp
 *.swo
-
-# Data
-data/*.db
-data/*.db-journal
-data/exports/
-crypto_monitor.db
-crypto_monitor.db-journal
-
-# Environment
-.env
-
-# Logs
-*.log
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Data
+data/database/
+data/exports/
+
