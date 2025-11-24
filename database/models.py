@@ -361,3 +361,66 @@ class BlockchainStat(Base):
     difficulty = Column(Float, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     source = Column(String(100), nullable=False)
+
+
+# ============================================================================
+# HuggingFace Space API Cache Tables (REAL DATA ONLY)
+# ============================================================================
+
+class CachedMarketData(Base):
+    """
+    Cached market data from FREE APIs (CoinGecko, Binance, etc.)
+    
+    CRITICAL RULES:
+    - ONLY real data from external APIs
+    - NEVER fake/mock/generated data
+    - Updated by background workers
+    """
+    __tablename__ = 'cached_market_data'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    symbol = Column(String(20), nullable=False, index=True)  # BTC, ETH, etc.
+    price = Column(Float, nullable=False)  # Current price in USD
+    market_cap = Column(Float, nullable=True)  # Market cap in USD
+    volume_24h = Column(Float, nullable=True)  # 24h volume in USD
+    change_24h = Column(Float, nullable=True)  # 24h price change percentage
+    high_24h = Column(Float, nullable=True)  # 24h high price
+    low_24h = Column(Float, nullable=True)  # 24h low price
+    provider = Column(String(50), nullable=False)  # coingecko, binance, etc.
+    fetched_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)  # When fetched
+    
+    # Index for fast queries
+    __table_args__ = (
+        # Unique constraint to prevent duplicates
+        # Allow multiple entries per symbol for historical tracking
+    )
+
+
+class CachedOHLC(Base):
+    """
+    Cached OHLC (candlestick) data from FREE APIs (Binance, CryptoCompare, etc.)
+    
+    CRITICAL RULES:
+    - ONLY real candlestick data from exchanges
+    - NEVER generated/interpolated candles
+    - Updated by background workers
+    """
+    __tablename__ = 'cached_ohlc'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    symbol = Column(String(20), nullable=False, index=True)  # BTCUSDT, ETHUSDT, etc.
+    interval = Column(String(10), nullable=False, index=True)  # 1m, 5m, 15m, 1h, 4h, 1d
+    timestamp = Column(DateTime, nullable=False, index=True)  # Candle open time
+    open = Column(Float, nullable=False)  # Open price
+    high = Column(Float, nullable=False)  # High price
+    low = Column(Float, nullable=False)  # Low price
+    close = Column(Float, nullable=False)  # Close price
+    volume = Column(Float, nullable=False)  # Volume
+    provider = Column(String(50), nullable=False)  # binance, cryptocompare, etc.
+    fetched_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # When fetched
+    
+    # Composite index for fast queries
+    __table_args__ = (
+        # Unique constraint to prevent duplicate candles
+        # (symbol, interval, timestamp) should be unique
+    )
