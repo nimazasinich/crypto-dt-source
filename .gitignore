@@ -47,3 +47,6 @@ crypto_monitor.db-journal
 # OS
 .DS_Store
 Thumbs.db
+.env
+.env.production
+.env.local

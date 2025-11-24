@@ -307,7 +307,92 @@ class ProviderManager:
         self.pools: Dict[str, ProviderPool] = {}
         self.session: Optional[aiohttp.ClientSession] = None
         
+        # Load real API providers from config
+        self._load_real_api_providers()
+        
         self.load_config()
+    
+    def _load_real_api_providers(self):
+        """Load real external API providers with provided credentials"""
+        try:
+            # Import config to get real API keys
+            try:
+                from config import EXTERNAL_PROVIDERS, HF_SPACE_PRIMARY
+            except ImportError:
+                print("⚠️ Could not import EXTERNAL_PROVIDERS from config")
+                return
+            
+            # Add HuggingFace Space as primary provider
+            if HF_SPACE_PRIMARY.get("enabled"):
+                hf_provider = Provider(
+                    provider_id="hf_space_primary",
+                    name="HuggingFace Space Primary",
+                    category="ai_models",
+                    base_url=HF_SPACE_PRIMARY["base_url"],
+                    endpoints={
+                        "health": "/health",
+                        "models": "/api/models/list",
+                        "predict": "/api/models/{model_key}/predict"
+                    },
+                    rate_limit=RateLimitInfo(requests_per_minute=60, requests_per_hour=1000),
+                    requires_auth=True,
+                    priority=HF_SPACE_PRIMARY["priority"],
+                    weight=100
+                )
+                self.providers["hf_space_primary"] = hf_provider
+                print(f"✅ Loaded HF Space Primary: {HF_SPACE_PRIMARY['base_url']}")
+            
+            # Add external providers
+            for provider_id, provider_config in EXTERNAL_PROVIDERS.items():
+                if not provider_config.get("enabled"):
+                    continue
+                
+                # Create rate limit info
+                rate_limit_data = provider_config.get("rate_limit", {})
+                rate_limit = RateLimitInfo(
+                    requests_per_second=rate_limit_data.get("requests_per_second"),
+                    requests_per_minute=rate_limit_data.get("requests_per_minute"),
+                    requests_per_hour=rate_limit_data.get("requests_per_hour"),
+                    requests_per_day=rate_limit_data.get("requests_per_day")
+                )
+                
+                # Define endpoints based on category
+                endpoints = {}
+                if provider_config["category"] == "blockchain_explorer":
+                    endpoints = {
+                        "account": "/account",
+                        "transaction": "/transaction",
+                        "block": "/block"
+                    }
+                elif provider_config["category"] == "market_data":
+                    endpoints = {
+                        "listings": "/cryptocurrency/listings/latest",
+                        "quotes": "/cryptocurrency/quotes/latest",
+                        "info": "/cryptocurrency/info"
+                    }
+                elif provider_config["category"] == "news":
+                    endpoints = {
+                        "everything": "/everything",
+                        "top_headlines": "/top-headlines"
+                    }
+                
+                provider = Provider(
+                    provider_id=provider_id,
+                    name=provider_id.title().replace("_", " "),
+                    category=provider_config["category"],
+                    base_url=provider_config["base_url"],
+                    endpoints=endpoints,
+                    rate_limit=rate_limit,
+                    requires_auth=True,
+                    priority=provider_config["priority"],
+                    weight=50
+                )
+                
+                self.providers[provider_id] = provider
+                print(f"✅ Loaded real provider: {provider_id} ({provider_config['base_url']})")
+        
+        except Exception as e:
+            print(f"❌ Error loading real API providers: {e}")
     
     def load_config(self):
         """بارگذاری پیکربندی از فایل JSON"""
@@ -471,6 +556,255 @@ class ProviderManager:
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(stats, f, indent=2, ensure_ascii=False)
         print(f"✅ آمار در {filepath} ذخیره شد")
+
+
+# ==================== REAL PROVIDER IMPLEMENTATIONS ====================
+
+class TronscanProvider:
+    """Real Tronscan API integration for Tron blockchain data"""
+    
+    def __init__(self, api_key: str, base_url: str):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.session: Optional[aiohttp.ClientSession] = None
+    
+    async def _ensure_session(self):
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+    
+    async def get_account_info(self, address: str) -> Dict[str, Any]:
+        """Get Tron account information"""
+        await self._ensure_session()
+        try:
+            url = f"{self.base_url}/account"
+            params = {"address": address}
+            async with self.session.get(url, params=params, timeout=10) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def get_transactions(self, address: str, limit: int = 20) -> Dict[str, Any]:
+        """Get Tron transactions for address"""
+        await self._ensure_session()
+        try:
+            url = f"{self.base_url}/transaction"
+            params = {"address": address, "limit": limit}
+            async with self.session.get(url, params=params, timeout=10) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def close(self):
+        if self.session:
+            await self.session.close()
+
+
+class BscscanProvider:
+    """Real BSC Scan API integration for Binance Smart Chain"""
+    
+    def __init__(self, api_key: str, base_url: str):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.session: Optional[aiohttp.ClientSession] = None
+    
+    async def _ensure_session(self):
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+    
+    async def get_balance(self, address: str) -> Dict[str, Any]:
+        """Get BNB balance for address"""
+        await self._ensure_session()
+        try:
+            params = {
+                "module": "account",
+                "action": "balance",
+                "address": address,
+                "apikey": self.api_key
+            }
+            async with self.session.get(self.base_url, params=params, timeout=10) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def get_token_balance(self, address: str, contract_address: str) -> Dict[str, Any]:
+        """Get BEP-20 token balance"""
+        await self._ensure_session()
+        try:
+            params = {
+                "module": "account",
+                "action": "tokenbalance",
+                "address": address,
+                "contractaddress": contract_address,
+                "apikey": self.api_key
+            }
+            async with self.session.get(self.base_url, params=params, timeout=10) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def close(self):
+        if self.session:
+            await self.session.close()
+
+
+class EtherscanProvider:
+    """Real Etherscan API integration for Ethereum blockchain"""
+    
+    def __init__(self, api_key: str, base_url: str):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.session: Optional[aiohttp.ClientSession] = None
+    
+    async def _ensure_session(self):
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+    
+    async def get_eth_balance(self, address: str) -> Dict[str, Any]:
+        """Get ETH balance for address"""
+        await self._ensure_session()
+        try:
+            params = {
+                "module": "account",
+                "action": "balance",
+                "address": address,
+                "tag": "latest",
+                "apikey": self.api_key
+            }
+            async with self.session.get(self.base_url, params=params, timeout=10) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def get_transactions(self, address: str, startblock: int = 0, endblock: int = 99999999) -> Dict[str, Any]:
+        """Get Ethereum transactions"""
+        await self._ensure_session()
+        try:
+            params = {
+                "module": "account",
+                "action": "txlist",
+                "address": address,
+                "startblock": startblock,
+                "endblock": endblock,
+                "sort": "desc",
+                "apikey": self.api_key
+            }
+            async with self.session.get(self.base_url, params=params, timeout=15) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def close(self):
+        if self.session:
+            await self.session.close()
+
+
+class CoinMarketCapProvider:
+    """Real CoinMarketCap API integration for cryptocurrency market data"""
+    
+    def __init__(self, api_key: str, base_url: str):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.session: Optional[aiohttp.ClientSession] = None
+    
+    async def _ensure_session(self):
+        if not self.session:
+            headers = {"X-CMC_PRO_API_KEY": self.api_key, "Accept": "application/json"}
+            self.session = aiohttp.ClientSession(headers=headers)
+    
+    async def get_latest_listings(self, limit: int = 100) -> Dict[str, Any]:
+        """Get latest cryptocurrency listings"""
+        await self._ensure_session()
+        try:
+            url = f"{self.base_url}/cryptocurrency/listings/latest"
+            params = {"limit": limit, "convert": "USD"}
+            async with self.session.get(url, params=params, timeout=15) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}", "status": response.status}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def get_quotes(self, symbols: List[str]) -> Dict[str, Any]:
+        """Get latest quotes for specific symbols"""
+        await self._ensure_session()
+        try:
+            url = f"{self.base_url}/cryptocurrency/quotes/latest"
+            params = {"symbol": ",".join(symbols), "convert": "USD"}
+            async with self.session.get(url, params=params, timeout=15) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def close(self):
+        if self.session:
+            await self.session.close()
+
+
+class NewsAPIProvider:
+    """Real NewsAPI integration for cryptocurrency news"""
+    
+    def __init__(self, api_key: str, base_url: str):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.session: Optional[aiohttp.ClientSession] = None
+    
+    async def _ensure_session(self):
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+    
+    async def get_crypto_news(self, query: str = "cryptocurrency", limit: int = 20) -> Dict[str, Any]:
+        """Get cryptocurrency news"""
+        await self._ensure_session()
+        try:
+            url = f"{self.base_url}/everything"
+            params = {
+                "q": query,
+                "apiKey": self.api_key,
+                "language": "en",
+                "sortBy": "publishedAt",
+                "pageSize": limit
+            }
+            async with self.session.get(url, params=params, timeout=10) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def get_top_headlines(self, category: str = "business", country: str = "us") -> Dict[str, Any]:
+        """Get top headlines"""
+        await self._ensure_session()
+        try:
+            url = f"{self.base_url}/top-headlines"
+            params = {
+                "category": category,
+                "country": country,
+                "apiKey": self.api_key
+            }
+            async with self.session.get(url, params=params, timeout=10) as response:
+                if response.status == 200:
+                    return await response.json()
+                return {"error": f"HTTP {response.status}"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    async def close(self):
+        if self.session:
+            await self.session.close()
 
 
 # تست و نمونه استفاده
