@@ -1,0 +1,182 @@
+{
+  "title": "HuggingFace Space Deployment Guide",
+  "version": "1.0.0",
+  "last_updated": "2025-11-24",
+  
+  "overview": {
+    "purpose": "Complete cryptocurrency data provider with HF-first + fallback logic",
+    "features": [
+      "25+ REST endpoints (OpenAPI compliant)",
+      "HF-first with automatic fallback to external providers",
+      "Database persistence for all data categories",
+      "WebSocket support for real-time updates",
+      "Circuit breaker pattern for provider health",
+      "Rate limiting and CORS protection",
+      "Meta fields on all responses (source, timestamp, cache_ttl)"
+    ]
+  },
+  
+  "quick_start": {
+    "step_1": "Install dependencies: pip install -r requirements.txt",
+    "step_2": "Initialize database: python -c 'from database.db_manager import DatabaseManager; db = DatabaseManager(); db.init_database()'",
+    "step_3": "Start server: python app_complete.py",
+    "step_4": "Access API docs: http://localhost:7860/docs"
+  },
+  
+  "endpoints": {
+    "market_data": [
+      "GET /api/market - Market snapshot",
+      "GET /api/market/pairs - Trading pairs (HF-only)",
+      "GET /api/market/ohlc - OHLC data",
+      "GET /api/market/depth - Order book",
+      "GET /api/market/tickers - Market tickers"
+    ],
+    "trading_signals": [
+      "POST /api/models/{model_key}/predict - Model prediction (auth required)",
+      "POST /api/models/batch/predict - Batch prediction (auth required)",
+      "POST /api/trading/decision - Trading decision",
+      "GET /api/signals - Get signals history",
+      "POST /api/signals/ack - Acknowledge signal"
+    ],
+    "news": [
+      "GET /api/news - Get news articles",
+      "GET /api/news/{id} - Get specific article",
+      "POST /api/news/analyze - Analyze news content"
+    ],
+    "sentiment": [
+      "POST /api/sentiment/analyze - Analyze sentiment"
+    ],
+    "whale_tracking": [
+      "GET /api/crypto/whales/transactions - Whale transactions",
+      "GET /api/crypto/whales/stats - Whale statistics"
+    ],
+    "blockchain": [
+      "GET /api/crypto/blockchain/gas - Gas prices",
+      "GET /api/crypto/blockchain/stats - Blockchain statistics"
+    ],
+    "system": [
+      "GET /api/providers - List providers",
+      "GET /api/status - System status",
+      "GET /api/health - Health check",
+      "GET /api/freshness - Data freshness",
+      "GET /api/logs/recent - Recent logs"
+    ],
+    "websocket": [
+      "WS /ws - WebSocket connection for real-time updates"
+    ]
+  },
+  
+  "configuration": {
+    "fallback_config": "/mnt/data/api-config-complete.txt (or /workspace/api-resources/api-config-complete__1_.txt)",
+    "database": "data/hf_space.db (SQLite)",
+    "port": 7860,
+    "cors_origins": ["http://localhost:5173", "http://localhost:8001"],
+    "rate_limits": {
+      "market_endpoints": "120/minute",
+      "ohlc_endpoints": "60/minute",
+      "model_endpoints": "30/minute (requires auth)",
+      "health_endpoint": "unlimited"
+    }
+  },
+  
+  "data_flow": {
+    "priority": [
+      "1. Try HF HTTP endpoint (primary)",
+      "2. Try HF WebSocket (only for WS-exception endpoints)",
+      "3. Try fallback providers in order (from config file)",
+      "4. Return 502 with attempted providers list if all fail"
+    ],
+    "persistence": [
+      "All fetched data is saved to database before response",
+      "Market prices -> market_prices table",
+      "News -> news_articles table",
+      "Whale transactions -> whale_transactions table",
+      "Gas prices -> gas_prices table",
+      "Sentiment -> sentiment_metrics table"
+    ],
+    "meta_fields": {
+      "source": "Provider that served the data (hf, hf-ws, or provider URL)",
+      "generated_at": "ISO 8601 timestamp",
+      "cache_ttl_seconds": "Recommended cache duration",
+      "attempted": "List of providers tried (only in error responses)"
+    }
+  },
+  
+  "provider_health": {
+    "circuit_breaker": {
+      "failure_threshold": 5,
+      "timeout": 60,
+      "states": ["closed", "open", "half_open"]
+    },
+    "monitoring": "GET /api/status shows provider health and circuit breaker states"
+  },
+  
+  "authentication": {
+    "protected_endpoints": [
+      "/api/models/*",
+      "/api/trading/decision"
+    ],
+    "method": "X-API-Key header",
+    "note": "Simple API key check (enhance for production)"
+  },
+  
+  "websocket_usage": {
+    "url": "ws://localhost:7860/ws",
+    "subscribe_message": {
+      "action": "subscribe",
+      "service": "market_data",
+      "symbols": ["BTC", "ETH"]
+    },
+    "services": [
+      "market_data - Real-time price updates",
+      "sentiment - Sentiment changes",
+      "news - New articles",
+      "whale_tracking - Whale transactions"
+    ],
+    "note": "WebSocket is exception-only. Use REST for most data."
+  },
+  
+  "testing": {
+    "test_script": "python test_hf_fallback_behavior.py",
+    "endpoints_to_test": [
+      "/api/health",
+      "/api/market",
+      "/api/market/pairs",
+      "/api/news",
+      "/api/crypto/whales/transactions",
+      "/api/status"
+    ]
+  },
+  
+  "production_checklist": [
+    "✓ All 25+ endpoints implemented",
+    "✓ HF-first + fallback logic working",
+    "✓ Database persistence active",
+    "✓ Meta fields on all responses",
+    "✓ Circuit breaker for provider health",
+    "✓ Rate limiting configured",
+    "✓ CORS configured for frontend",
+    "✓ WebSocket endpoint working",
+    "TODO: Enhance authentication (JWT recommended)",
+    "TODO: Add Redis for production caching",
+    "TODO: Add comprehensive logging",
+    "TODO: Add metrics collection (Prometheus)",
+    "TODO: Add automated health checks"
+  ],
+  
+  "files": {
+    "main_application": "app_complete.py",
+    "api_client": "core/api_client.py (HF-first + fallback logic)",
+    "normalizers": "core/normalizers.py (Response normalization)",
+    "fallback_config": "core/fallback_config.py (Config parser)",
+    "database": "database/db_manager.py",
+    "openapi_spec": "../openapi_hf_space.yaml",
+    "contract": "../hf_space_implementation_contract.json"
+  },
+  
+  "deployment_options": {
+    "local": "python app_complete.py",
+    "docker": "docker build -t hf-space . && docker run -p 7860:7860 hf-space",
+    "huggingface": "Push to HuggingFace Space repository"
+  }
+}
