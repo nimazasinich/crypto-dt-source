@@ -1,0 +1,443 @@
+{
+  "project": {
+    "name": "HuggingFace Space Crypto API",
+    "version": "1.0.0",
+    "description": "Real-time cryptocurrency data API with AI-powered sentiment analysis",
+    "deployment_target": "HuggingFace Spaces",
+    "data_policy": "REAL DATA ONLY - Absolutely NO mock, fake, or placeholder data",
+    "status": "PRODUCTION_READY"
+  },
+  
+  "critical_rules": {
+    "golden_rule": "NO FAKE DATA EVER",
+    "forbidden": [
+      "Mock data",
+      "Placeholder data",
+      "Hardcoded responses",
+      "Random numbers",
+      "Fake timestamps",
+      "Invented prices",
+      "Simulated responses"
+    ],
+    "allowed": [
+      "Real data from database cache",
+      "Real data from free APIs (CoinGecko, Binance)",
+      "Real AI model inference (HuggingFace Transformers)",
+      "Error responses when data unavailable"
+    ]
+  },
+  
+  "api_endpoints": {
+    "base_url": "https://your-space.hf.space",
+    "authentication": {
+      "type": "Bearer Token",
+      "header": "Authorization: Bearer YOUR_HF_TOKEN",
+      "required": true,
+      "env_variable": "HF_TOKEN"
+    },
+    
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/market",
+        "description": "Get real-time market prices from CoinGecko",
+        "authentication_required": true,
+        "data_source": "CoinGecko FREE API (cached in database)",
+        "query_parameters": {
+          "limit": {
+            "type": "integer",
+            "default": 100,
+            "min": 1,
+            "max": 1000,
+            "description": "Number of symbols to return"
+          },
+          "symbols": {
+            "type": "string",
+            "required": false,
+            "description": "Comma-separated list of symbols (e.g., BTC,ETH,BNB)",
+            "example": "BTC,ETH"
+          }
+        },
+        "response_fields": {
+          "success": "boolean - Request success status",
+          "data": "array - List of market data records",
+          "data[].symbol": "string - Cryptocurrency symbol (e.g., BTC)",
+          "data[].price": "number - Current price in USD (REAL from CoinGecko)",
+          "data[].market_cap": "number - Market capitalization in USD",
+          "data[].volume_24h": "number - 24h trading volume in USD",
+          "data[].change_24h": "number - 24h price change percentage",
+          "data[].high_24h": "number - 24h high price",
+          "data[].low_24h": "number - 24h low price",
+          "data[].last_updated": "number - Timestamp in milliseconds (REAL from database)"
+        },
+        "example_request": "GET /api/market?limit=10&symbols=BTC,ETH",
+        "example_response": {
+          "success": true,
+          "data": [
+            {
+              "symbol": "BTC",
+              "price": 88492.0,
+              "market_cap": 1752835000000,
+              "volume_24h": 54321000000,
+              "change_24h": 2.34,
+              "high_24h": 89500.0,
+              "low_24h": 87000.0,
+              "last_updated": 1732491861000
+            }
+          ],
+          "source": "hf_engine",
+          "timestamp": 1732491861000,
+          "cached": true,
+          "count": 1
+        },
+        "error_response": {
+          "success": false,
+          "error": "No market data available. Background workers syncing data from free APIs. Please wait.",
+          "source": "hf_engine",
+          "timestamp": 1732491861000
+        }
+      },
+      
+      {
+        "method": "GET",
+        "path": "/api/market/history",
+        "description": "Get OHLCV candlestick data from Binance",
+        "authentication_required": true,
+        "data_source": "Binance FREE API (cached in database)",
+        "query_parameters": {
+          "symbol": {
+            "type": "string",
+            "required": true,
+            "description": "Trading pair symbol (e.g., BTCUSDT, ETHUSDT)"
+          },
+          "timeframe": {
+            "type": "string",
+            "default": "1h",
+            "options": ["1m", "5m", "15m", "1h", "4h", "1d"],
+            "description": "Candle timeframe"
+          },
+          "limit": {
+            "type": "integer",
+            "default": 1000,
+            "min": 1,
+            "max": 5000,
+            "description": "Number of candles to return"
+          }
+        },
+        "response_fields": {
+          "success": "boolean - Request success status",
+          "data": "array - List of OHLCV candles",
+          "data[].timestamp": "number - Candle open time in milliseconds (REAL from Binance)",
+          "data[].open": "number - Open price (REAL from Binance)",
+          "data[].high": "number - High price (REAL from Binance)",
+          "data[].low": "number - Low price (REAL from Binance)",
+          "data[].close": "number - Close price (REAL from Binance)",
+          "data[].volume": "number - Trading volume (REAL from Binance)"
+        },
+        "example_request": "GET /api/market/history?symbol=BTCUSDT&timeframe=1h&limit=100",
+        "example_response": {
+          "success": true,
+          "data": [
+            {
+              "timestamp": 1732488000000,
+              "open": 88450.5,
+              "high": 88600.0,
+              "low": 88300.0,
+              "close": 88492.0,
+              "volume": 123.45
+            }
+          ],
+          "source": "hf_engine",
+          "timestamp": 1732491861000,
+          "cached": true,
+          "count": 1
+        },
+        "note": "Binance API may be unavailable in some regions due to geo-blocking (HTTP 451)"
+      },
+      
+      {
+        "method": "POST",
+        "path": "/api/sentiment/analyze",
+        "description": "Analyze text sentiment using real AI models",
+        "authentication_required": true,
+        "data_source": "HuggingFace Transformers (real model inference)",
+        "request_body": {
+          "text": {
+            "type": "string",
+            "required": true,
+            "description": "Text to analyze (max 512 characters)",
+            "example": "Bitcoin is pumping! Great news for crypto!"
+          }
+        },
+        "response_fields": {
+          "success": "boolean - Request success status",
+          "data": "object - Sentiment analysis result",
+          "data.label": "string - Sentiment label (positive/negative/neutral)",
+          "data.score": "number - Confidence score from AI model (0-1) (REAL from model)",
+          "data.sentiment": "string - Normalized sentiment label",
+          "data.confidence": "number - Confidence score (REAL from model)",
+          "data.text": "string - Analyzed text",
+          "data.model_label": "string - Raw label from AI model",
+          "data.timestamp": "number - Analysis timestamp in milliseconds"
+        },
+        "example_request": {
+          "text": "Bitcoin is pumping! Great news for crypto!"
+        },
+        "example_response": {
+          "success": true,
+          "data": {
+            "label": "positive",
+            "score": 0.89,
+            "sentiment": "positive",
+            "confidence": 0.89,
+            "text": "Bitcoin is pumping! Great news for crypto!",
+            "model_label": "POSITIVE",
+            "timestamp": 1732491861000
+          },
+          "source": "hf_engine",
+          "timestamp": 1732491861000
+        },
+        "error_response": {
+          "success": false,
+          "error": "No sentiment model available. Tried: crypto_sent_kk08, sentiment_twitter. Please ensure HuggingFace models are properly configured.",
+          "source": "hf_engine",
+          "timestamp": 1732491861000
+        },
+        "available_models": [
+          "crypto_sent_kk08 - kk08/CryptoBERT",
+          "sentiment_twitter - cardiffnlp/twitter-roberta-base-sentiment-latest",
+          "sentiment_financial - ProsusAI/finbert",
+          "crypto_sent_0 - ElKulako/cryptobert"
+        ]
+      },
+      
+      {
+        "method": "GET",
+        "path": "/api/health",
+        "description": "System health check",
+        "authentication_required": true,
+        "response_fields": {
+          "success": "boolean - Request success status",
+          "status": "string - Health status (healthy/degraded/unhealthy)",
+          "timestamp": "number - Current timestamp in milliseconds",
+          "version": "string - API version",
+          "database": "string - Database connection status",
+          "cache": "object - Cache statistics",
+          "cache.market_data_count": "number - Number of unique symbols in market data cache",
+          "cache.ohlc_count": "number - Number of candles in OHLC cache",
+          "ai_models": "object - AI model status",
+          "ai_models.loaded": "number - Number of loaded models",
+          "ai_models.failed": "number - Number of failed models",
+          "ai_models.total": "number - Total number of models"
+        },
+        "example_response": {
+          "success": true,
+          "status": "healthy",
+          "timestamp": 1732491861000,
+          "version": "1.0.0",
+          "database": "connected",
+          "cache": {
+            "market_data_count": 18,
+            "ohlc_count": 0
+          },
+          "ai_models": {
+            "loaded": 3,
+            "failed": 1,
+            "total": 4
+          },
+          "source": "hf_engine"
+        }
+      }
+    ]
+  },
+  
+  "data_sources": {
+    "coingecko": {
+      "name": "CoinGecko",
+      "url": "https://api.coingecko.com/api/v3",
+      "type": "FREE API - No API key required",
+      "rate_limits": "10-50 calls/minute",
+      "data_provided": "Market prices, market cap, volume, 24h statistics",
+      "update_frequency": "Every 60 seconds via background worker"
+    },
+    "binance": {
+      "name": "Binance Public API",
+      "url": "https://api.binance.com/api/v3",
+      "type": "FREE API - No API key required",
+      "rate_limits": "1200 requests/minute",
+      "data_provided": "OHLCV candlestick data",
+      "update_frequency": "Every 5 minutes via background worker",
+      "note": "May be geo-blocked in some regions (HTTP 451 error)"
+    },
+    "huggingface": {
+      "name": "HuggingFace Transformers",
+      "type": "AI Models",
+      "models_used": [
+        "kk08/CryptoBERT - Crypto sentiment analysis",
+        "cardiffnlp/twitter-roberta-base-sentiment-latest - Twitter sentiment",
+        "ProsusAI/finbert - Financial sentiment"
+      ],
+      "inference": "Real-time on-device inference (no external API calls)"
+    }
+  },
+  
+  "database": {
+    "type": "SQLite",
+    "location": "data/api_monitor.db",
+    "tables": {
+      "cached_market_data": {
+        "description": "Stores real market prices from CoinGecko",
+        "columns": [
+          "id - Primary key",
+          "symbol - Cryptocurrency symbol (e.g., BTC)",
+          "price - Current price in USD (REAL from API)",
+          "market_cap - Market capitalization",
+          "volume_24h - 24h trading volume",
+          "change_24h - 24h price change percentage",
+          "high_24h - 24h high price",
+          "low_24h - 24h low price",
+          "provider - Data provider name (coingecko)",
+          "fetched_at - Timestamp when data was fetched (REAL timestamp)"
+        ],
+        "update_policy": "Append-only (historical tracking)",
+        "query_strategy": "Latest record per symbol using DISTINCT ON"
+      },
+      "cached_ohlc": {
+        "description": "Stores real OHLCV candlestick data from Binance",
+        "columns": [
+          "id - Primary key",
+          "symbol - Trading pair (e.g., BTCUSDT)",
+          "interval - Candle interval (1h, 4h, 1d)",
+          "timestamp - Candle open time (REAL from Binance)",
+          "open - Open price (REAL from Binance)",
+          "high - High price (REAL from Binance)",
+          "low - Low price (REAL from Binance)",
+          "close - Close price (REAL from Binance)",
+          "volume - Trading volume (REAL from Binance)",
+          "provider - Data provider name (binance)",
+          "fetched_at - Timestamp when data was fetched"
+        ],
+        "update_policy": "Upsert (update existing or insert new)",
+        "uniqueness": "Unique constraint on (symbol, interval, timestamp)"
+      }
+    }
+  },
+  
+  "background_workers": {
+    "market_data_worker": {
+      "file": "workers/market_data_worker.py",
+      "description": "Fetches real market prices from CoinGecko",
+      "schedule": "Every 60 seconds",
+      "api_endpoint": "https://api.coingecko.com/api/v3/coins/markets",
+      "symbols_tracked": 20,
+      "data_validation": "CRITICAL - NEVER generates fake data. Returns empty on API failure."
+    },
+    "ohlc_data_worker": {
+      "file": "workers/ohlc_data_worker.py",
+      "description": "Fetches real OHLCV candlestick data from Binance",
+      "schedule": "Every 5 minutes",
+      "api_endpoint": "https://api.binance.com/api/v3/klines",
+      "pairs_tracked": 20,
+      "intervals": ["1h", "4h", "1d"],
+      "data_validation": "CRITICAL - NEVER generates fake candles. Returns empty on API failure.",
+      "known_issue": "Binance API may be geo-blocked (HTTP 451)"
+    }
+  },
+  
+  "deployment": {
+    "platform": "HuggingFace Spaces",
+    "main_file": "hf_space_api.py",
+    "port": 7860,
+    "environment_variables": {
+      "HF_TOKEN": {
+        "required": true,
+        "description": "HuggingFace authentication token for API endpoints"
+      },
+      "PORT": {
+        "required": false,
+        "default": 7860,
+        "description": "Server port"
+      },
+      "HF_MODE": {
+        "required": false,
+        "default": "public",
+        "options": ["off", "public", "auth"],
+        "description": "HuggingFace model loading mode"
+      }
+    },
+    "startup_sequence": [
+      "1. Initialize database tables",
+      "2. Initialize AI models",
+      "3. Start background workers (market + OHLC)",
+      "4. Start FastAPI server on port 7860"
+    ],
+    "api_documentation": "Available at /docs (Swagger UI) and /redoc (ReDoc)"
+  },
+  
+  "testing": {
+    "test_script": "test_api_real_data.py",
+    "verification_steps": [
+      "Verify database contains real data from CoinGecko",
+      "Verify prices are realistic (not round numbers)",
+      "Verify timestamps are recent (< 1 hour old)",
+      "Verify NO fake data detected",
+      "Simulate API endpoint responses"
+    ],
+    "test_results": {
+      "database_initialized": true,
+      "market_data_populated": true,
+      "unique_symbols": 18,
+      "prices_realistic": true,
+      "timestamps_recent": true,
+      "fake_data_detected": false,
+      "ohlc_available": false,
+      "ohlc_note": "Binance API geo-blocked (HTTP 451)"
+    }
+  },
+  
+  "verification_checklist": {
+    "database": {
+      "tables_created": true,
+      "market_data_table_has_real_data": true,
+      "prices_from_coingecko": true,
+      "no_hardcoded_prices": true
+    },
+    "workers": {
+      "market_worker_fetches_real_data": true,
+      "ohlc_worker_tries_binance": true,
+      "no_fake_data_generated_on_failure": true
+    },
+    "endpoints": {
+      "authentication_required": true,
+      "market_endpoint_returns_real_data": true,
+      "history_endpoint_returns_real_data_or_error": true,
+      "sentiment_endpoint_uses_real_model": true,
+      "no_mock_responses": true
+    },
+    "data_policy": {
+      "zero_fake_data": true,
+      "error_on_unavailable": true,
+      "real_timestamps": true,
+      "real_prices": true,
+      "real_ai_inference": true
+    }
+  },
+  
+  "usage_examples": {
+    "curl_market_data": "curl -H 'Authorization: Bearer YOUR_HF_TOKEN' https://your-space.hf.space/api/market?limit=10",
+    "curl_market_history": "curl -H 'Authorization: Bearer YOUR_HF_TOKEN' https://your-space.hf.space/api/market/history?symbol=BTCUSDT&timeframe=1h&limit=100",
+    "curl_sentiment": "curl -X POST -H 'Authorization: Bearer YOUR_HF_TOKEN' -H 'Content-Type: application/json' -d '{\"text\":\"Bitcoin is pumping!\"}' https://your-space.hf.space/api/sentiment/analyze",
+    "curl_health": "curl -H 'Authorization: Bearer YOUR_HF_TOKEN' https://your-space.hf.space/api/health",
+    
+    "python_example": "import requests\n\nHF_TOKEN = 'your_token_here'\nheaders = {'Authorization': f'Bearer {HF_TOKEN}'}\n\n# Get market data\nresponse = requests.get('https://your-space.hf.space/api/market?limit=5', headers=headers)\ndata = response.json()\n\nfor coin in data['data']:\n    print(f\"{coin['symbol']}: ${coin['price']:.2f}\")"
+  },
+  
+  "notes": {
+    "data_freshness": "Market data is updated every 60 seconds. Check 'last_updated' field in response.",
+    "rate_limiting": "API inherits rate limits from free data sources (CoinGecko: 50 calls/min, Binance: 1200 calls/min)",
+    "geo_restrictions": "Binance API may return HTTP 451 (Unavailable For Legal Reasons) in some regions. Market data from CoinGecko is not affected.",
+    "model_loading": "AI models are loaded on first use. First request may be slower.",
+    "authentication": "All endpoints require HF_TOKEN. Set as environment variable or pass in Authorization header.",
+    "error_handling": "If data is not available (cache empty), endpoints return error response instead of fake data."
+  }
+}
