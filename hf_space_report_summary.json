@@ -1,0 +1,71 @@
+{
+  "status": "partial",
+  "critical_issues_count": 5,
+  "report_path": "/workspace/hf_space_operational_report.md",
+  "zip_path": "/workspace/hf_space_report.zip",
+  "tests_passed_count": 1,
+  "tests_total_count": 16,
+  "detailed_summary": {
+    "overall_status": "PARTIAL - NOT READY FOR PRODUCTION",
+    "production_ready": false,
+    "pass_rate_percent": 6.25,
+    "endpoint_coverage_percent": 30.8,
+    "critical_blockers": [
+      "/api/market/pairs endpoint missing (404) - MUST BE HF HTTP",
+      "Response schemas do not match OpenAPI specification",
+      "Meta fields missing in all responses (no traceability)",
+      "HF-first + fallback logic not implemented",
+      "6 additional endpoints missing (404)"
+    ],
+    "working_endpoints": [
+      "/api/health",
+      "/api/status",
+      "/api/market (schema mismatch)",
+      "/api/news (schema mismatch)",
+      "/api/providers"
+    ],
+    "missing_endpoints": [
+      "/api/market/pairs (CRITICAL)",
+      "/api/market/ohlc",
+      "/api/market/depth",
+      "/api/crypto/whales/transactions",
+      "/api/crypto/blockchain/gas",
+      "/api/signals"
+    ],
+    "websocket_status": "403 Forbidden - authentication required",
+    "database_persistence": "Unknown - no access endpoints available",
+    "openapi_spec_valid": true,
+    "implementation_matches_spec": false,
+    "remediation_effort": {
+      "p0_critical_days": 15,
+      "p1_high_days": 16,
+      "p2_medium_days": 10,
+      "total_estimated_days": 41,
+      "estimated_weeks": "6-8 weeks with 1 developer"
+    },
+    "artifacts_included": [
+      "hf_space_operational_report.md (comprehensive report)",
+      "test_output.txt (full test harness output)",
+      "openapi_validation_report.txt (OpenAPI validator result)",
+      "curl_examples.sh (runnable test scripts)",
+      "metrics_summary.json (performance and status metrics)",
+      "README.txt (evidence package guide)"
+    ],
+    "artifacts_not_available": [
+      "server_logs_tail.txt (no logs endpoint)",
+      "db_sample_dump/ (no DB access)",
+      "ws_session_capture.json (WebSocket rejected)",
+      "postman_collection.json (can be exported from /docs)"
+    ],
+    "key_findings": {
+      "hf_first_logic": "Not implemented - no evidence of HF attempts",
+      "fallback_config": "File /mnt/data/api-config-complete.txt does not exist",
+      "meta_fields": "0% compliance - missing in all responses",
+      "authentication": "WebSocket requires auth but method not documented",
+      "cors_policy": "Open (* allows all) - security concern for production",
+      "providers_available": 113,
+      "free_providers": 54,
+      "hf_models": 18
+    }
+  }
+}
