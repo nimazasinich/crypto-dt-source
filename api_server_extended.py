@@ -19,7 +19,7 @@ from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
-from fastapi import FastAPI, HTTPException, Response, Request
+from fastapi import FastAPI, HTTPException, Response, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -3441,6 +3441,542 @@ async def run_hf_sentiment(data: Dict[str, Any]):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Sentiment analysis failed: {str(e)}")
+
+
+# ==================== NEW MODEL ENDPOINTS ====================
+
+@app.post("/api/models/{model_key}/predict")
+async def model_predict(model_key: str, request: Request):
+    """
+    Single model prediction endpoint
+    Uses AI models to generate trading signals, sentiment, or fill data gaps
+    """
+    try:
+        from ai_models import call_model_safe, MODEL_SPECS
+        import uuid
+        from datetime import datetime, timedelta
+        
+        body = await request.json()
+        text = body.get("text", "")
+        symbol = body.get("symbol", "UNKNOWN")
+        
+        if not text:
+            raise HTTPException(status_code=400, detail="Missing 'text' field in request body")
+        
+        if model_key not in MODEL_SPECS:
+            raise HTTPException(status_code=404, detail=f"Model '{model_key}' not found")
+        
+        # Call model
+        result = call_model_safe(model_key, text)
+        
+        if result["status"] == "success":
+            # Save to database
+            output_id = str(uuid.uuid4())
+            db = get_database()
+            db.save_model_output({
+                "id": output_id,
+                "symbol": symbol,
+                "model_key": model_key,
+                "prediction_type": MODEL_SPECS[model_key].task,
+                "confidence_score": result.get("data", [{}])[0].get("score", 0.5) if isinstance(result.get("data"), list) else 0.5,
+                "prediction_data": result.get("data", {}),
+                "explanation": {},
+                "metadata": {"text_length": len(text)},
+                "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            })
+            
+            return {
+                "id": output_id,
+                "symbol": symbol,
+                "model": model_key,
+                "model_id": MODEL_SPECS[model_key].model_id,
+                "type": result.get("data", [{}])[0].get("label", "unknown") if isinstance(result.get("data"), list) else "unknown",
+                "confidence": result.get("data", [{}])[0].get("score", 0.5) if isinstance(result.get("data"), list) else 0.5,
+                "data": result.get("data", {}),
+                "meta": {
+                    "source": "hf-model",
+                    "model_key": model_key,
+                    "status": result["status"],
+                    "generated_at": datetime.utcnow().isoformat()
+                }
+            }
+        else:
+            return {
+                "id": None,
+                "symbol": symbol,
+                "model": model_key,
+                "error": result.get("error", "Model unavailable"),
+                "status": result["status"],
+                "meta": {
+                    "source": "hf-model",
+                    "model_key": model_key,
+                    "status": result["status"]
+                }
+            }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Model prediction failed: {str(e)}")
+
+
+@app.post("/api/models/batch/predict")
+async def batch_predict(request: Request):
+    """Batch predictions for multiple symbols"""
+    try:
+        from ai_models import call_model_safe, MODEL_SPECS
+        import uuid
+        from datetime import datetime
+        
+        body = await request.json()
+        items = body.get("items", [])
+        model_key = body.get("model_key", "crypto_sent_0")
+        
+        if not items:
+            raise HTTPException(status_code=400, detail="Missing 'items' array in request body")
+        
+        if model_key not in MODEL_SPECS:
+            raise HTTPException(status_code=404, detail=f"Model '{model_key}' not found")
+        
+        results = []
+        for item in items[:100]:  # Limit to 100 items
+            text = item.get("text", "")
+            symbol = item.get("symbol", "UNKNOWN")
+            
+            if text:
+                result = call_model_safe(model_key, text)
+                results.append({
+                    "symbol": symbol,
+                    "status": result["status"],
+                    "data": result.get("data", {}),
+                    "error": result.get("error")
+                })
+        
+        return {
+            "model_key": model_key,
+            "total_items": len(items),
+            "processed": len(results),
+            "results": results,
+            "meta": {
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Batch prediction failed: {str(e)}")
+
+
+@app.post("/api/gaps/detect")
+async def detect_gaps(request: Request):
+    """Detect missing/incomplete data in provided dataset"""
+    try:
+        from services.gap_filler import GapFillerService
+        
+        body = await request.json()
+        data = body.get("data", {})
+        required_fields = body.get("required_fields", [])
+        context = body.get("context", {})
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Missing 'data' field in request body")
+        
+        gap_filler = GapFillerService()
+        gaps = await gap_filler.detect_gaps(data, required_fields, context)
+        
+        return {
+            "status": "success",
+            "gaps_detected": len(gaps),
+            "gaps": gaps,
+            "data_summary": {
+                "fields_present": list(data.keys()),
+                "fields_required": required_fields,
+                "fields_missing": [f for f in required_fields if f not in data]
+            }
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gap detection failed: {str(e)}")
+
+
+@app.post("/api/gaps/fill")
+async def fill_gaps(request: Request):
+    """Fill detected gaps using AI models + fallback providers"""
+    try:
+        from services.gap_filler import GapFillerService
+        from ai_models import _registry
+        from provider_manager import ProviderManager
+        import uuid
+        from datetime import datetime
+        
+        body = await request.json()
+        data = body.get("data", {})
+        required_fields = body.get("required_fields", [])
+        context = body.get("context", {})
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Missing 'data' field in request body")
+        
+        # Initialize services
+        provider_manager = ProviderManager()
+        gap_filler = GapFillerService(
+            model_registry=_registry,
+            provider_manager=provider_manager
+        )
+        
+        # Fill all gaps
+        result = await gap_filler.fill_all_gaps(data, required_fields, context)
+        
+        # Save audit log
+        db = get_database()
+        for fill_result in result.get("fill_results", []):
+            if fill_result.get("filled"):
+                db.save_gap_fill_audit({
+                    "id": str(uuid.uuid4()),
+                    "request_id": str(uuid.uuid4()),
+                    "gap_type": fill_result["gap"].get("gap_type"),
+                    "strategy_used": fill_result.get("strategy_used"),
+                    "success": fill_result.get("filled"),
+                    "confidence": fill_result.get("confidence"),
+                    "execution_time_ms": fill_result.get("execution_time_ms"),
+                    "models_attempted": [a.get("method") for a in fill_result.get("attempts", [])],
+                    "providers_attempted": [],
+                    "filled_fields": [fill_result["gap"].get("field")],
+                    "metadata": {"timestamp": datetime.utcnow().isoformat()}
+                })
+        
+        return result
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gap filling failed: {str(e)}")
+
+
+@app.get("/api/models/list")
+async def list_models():
+    """List all available AI models with their capabilities"""
+    try:
+        from ai_models import MODEL_SPECS, _registry
+        
+        models = []
+        for key, spec in MODEL_SPECS.items():
+            model_info = {
+                "key": key,
+                "name": spec.model_id,
+                "task": spec.task,
+                "category": spec.category,
+                "requires_auth": spec.requires_auth,
+                "loaded": key in _registry._pipelines,
+                "failed": key in _registry._failed_models,
+                "status": "loaded" if key in _registry._pipelines else ("failed" if key in _registry._failed_models else "not_loaded")
+            }
+            models.append(model_info)
+        
+        return {
+            "total": len(models),
+            "loaded": sum(1 for m in models if m["loaded"]),
+            "failed": sum(1 for m in models if m["failed"]),
+            "models": models
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list models: {str(e)}")
+
+
+@app.get("/api/models/{model_key}/info")
+async def model_info(model_key: str):
+    """Get detailed information about a specific model"""
+    try:
+        from ai_models import MODEL_SPECS, _registry, get_model_health_registry
+        
+        if model_key not in MODEL_SPECS:
+            raise HTTPException(status_code=404, detail=f"Model '{model_key}' not found")
+        
+        spec = MODEL_SPECS[model_key]
+        
+        # Get health info
+        health_registry = get_model_health_registry()
+        health_info = next((h for h in health_registry if h["key"] == model_key), None)
+        
+        # Get usage statistics from database
+        db = get_database()
+        recent_outputs = db.get_model_outputs(model_key=model_key, limit=10)
+        
+        return {
+            "key": model_key,
+            "name": spec.model_id,
+            "task": spec.task,
+            "category": spec.category,
+            "requires_auth": spec.requires_auth,
+            "loaded": key in _registry._pipelines,
+            "health": health_info,
+            "recent_predictions": len(recent_outputs),
+            "recent_outputs": recent_outputs[:5]  # Return last 5
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get model info: {str(e)}")
+
+
+@app.get("/api/gaps/statistics")
+async def gap_fill_statistics():
+    """Get gap filling statistics"""
+    try:
+        db = get_database()
+        stats = db.get_gap_fill_statistics()
+        
+        return {
+            "status": "success",
+            "statistics": stats
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get statistics: {str(e)}")
+
+
+# ==================== WEBSOCKET SUPPORT ====================
+
+class WebSocketManager:
+    """Manages WebSocket connections for real-time model updates"""
+    
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
+        self.subscriptions: Dict[str, set] = {}
+    
+    async def connect(self, websocket: WebSocket, client_id: str):
+        """Connect a new WebSocket client"""
+        await websocket.accept()
+        self.active_connections[client_id] = websocket
+        self.subscriptions[client_id] = set()
+        logger.info(f"WebSocket client {client_id} connected. Total: {len(self.active_connections)}")
+    
+    async def disconnect(self, client_id: str):
+        """Disconnect a WebSocket client"""
+        if client_id in self.active_connections:
+            del self.active_connections[client_id]
+        if client_id in self.subscriptions:
+            del self.subscriptions[client_id]
+        logger.info(f"WebSocket client {client_id} disconnected. Total: {len(self.active_connections)}")
+    
+    async def subscribe_to_models(self, client_id: str, model_keys: List[str]):
+        """Subscribe to specific model outputs"""
+        if client_id in self.subscriptions:
+            self.subscriptions[client_id].update(f"model.{key}" for key in model_keys)
+            logger.debug(f"Client {client_id} subscribed to models: {model_keys}")
+    
+    async def subscribe_to_symbols(self, client_id: str, symbols: List[str]):
+        """Subscribe to updates for specific symbols"""
+        if client_id in self.subscriptions:
+            self.subscriptions[client_id].update(f"symbol.{sym}" for sym in symbols)
+            logger.debug(f"Client {client_id} subscribed to symbols: {symbols}")
+    
+    async def subscribe_to_gap_fills(self, client_id: str):
+        """Subscribe to gap filling events"""
+        if client_id in self.subscriptions:
+            self.subscriptions[client_id].add("gap_fills")
+            logger.debug(f"Client {client_id} subscribed to gap fills")
+    
+    async def broadcast_model_output(self, model_key: str, symbol: str, output: dict):
+        """Broadcast when a model generates new output"""
+        message = {
+            "type": "model_output",
+            "channel": f"model.{model_key}",
+            "symbol": symbol,
+            "model_key": model_key,
+            "data": output,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # Send to subscribers of this model
+        await self._broadcast_to_channel(f"model.{model_key}", message)
+        
+        # Send to subscribers of this symbol
+        await self._broadcast_to_channel(f"symbol.{symbol}", message)
+    
+    async def broadcast_gap_fill_event(self, gap_type: str, result: dict):
+        """Broadcast gap filling event"""
+        message = {
+            "type": "gap_fill",
+            "channel": "gap_fills",
+            "gap_type": gap_type,
+            "data": result,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        await self._broadcast_to_channel("gap_fills", message)
+    
+    async def broadcast_provider_status(self, provider_id: str, status: dict):
+        """Broadcast provider status change"""
+        message = {
+            "type": "provider_status",
+            "channel": f"provider.{provider_id}",
+            "provider_id": provider_id,
+            "data": status,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        await self._broadcast_to_channel(f"provider.{provider_id}", message)
+    
+    async def _broadcast_to_channel(self, channel: str, message: dict):
+        """Send message to all clients subscribed to a channel"""
+        disconnected = []
+        
+        for client_id, channels in self.subscriptions.items():
+            if channel in channels:
+                if client_id in self.active_connections:
+                    ws = self.active_connections[client_id]
+                    try:
+                        await ws.send_json(message)
+                    except Exception as e:
+                        logger.warning(f"Failed to send to client {client_id}: {e}")
+                        disconnected.append(client_id)
+        
+        # Clean up disconnected clients
+        for client_id in disconnected:
+            await self.disconnect(client_id)
+    
+    async def send_to_client(self, client_id: str, message: dict):
+        """Send message to a specific client"""
+        if client_id in self.active_connections:
+            ws = self.active_connections[client_id]
+            try:
+                await ws.send_json(message)
+            except Exception as e:
+                logger.warning(f"Failed to send to client {client_id}: {e}")
+                await self.disconnect(client_id)
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get WebSocket manager statistics"""
+        return {
+            "active_connections": len(self.active_connections),
+            "total_subscriptions": sum(len(subs) for subs in self.subscriptions.values()),
+            "clients": [
+                {
+                    "client_id": client_id,
+                    "subscriptions": list(subs)
+                }
+                for client_id, subs in self.subscriptions.items()
+            ]
+        }
+
+
+# Global WebSocket manager
+ws_manager = WebSocketManager()
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint for real-time updates
+    
+    Message format:
+    {
+        "action": "subscribe_models" | "subscribe_symbols" | "subscribe_gap_fills" | "unsubscribe",
+        "model_keys": ["crypto_sent_0", "financial_sent_0"],  // for subscribe_models
+        "symbols": ["BTC", "ETH"],  // for subscribe_symbols
+    }
+    """
+    import uuid
+    client_id = str(uuid.uuid4())
+    
+    await ws_manager.connect(websocket, client_id)
+    
+    try:
+        # Send welcome message
+        await websocket.send_json({
+            "type": "connected",
+            "client_id": client_id,
+            "message": "Connected to Crypto Data API WebSocket",
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+        while True:
+            # Receive message from client
+            data = await websocket.receive_text()
+            
+            try:
+                message = json.loads(data)
+            except json.JSONDecodeError:
+                await websocket.send_json({
+                    "type": "error",
+                    "error": "Invalid JSON"
+                })
+                continue
+            
+            action = message.get("action")
+            
+            if action == "subscribe_models":
+                model_keys = message.get("model_keys", [])
+                await ws_manager.subscribe_to_models(client_id, model_keys)
+                await websocket.send_json({
+                    "type": "subscribed",
+                    "action": "subscribe_models",
+                    "model_keys": model_keys,
+                    "status": "success"
+                })
+            
+            elif action == "subscribe_symbols":
+                symbols = message.get("symbols", [])
+                await ws_manager.subscribe_to_symbols(client_id, symbols)
+                await websocket.send_json({
+                    "type": "subscribed",
+                    "action": "subscribe_symbols",
+                    "symbols": symbols,
+                    "status": "success"
+                })
+            
+            elif action == "subscribe_gap_fills":
+                await ws_manager.subscribe_to_gap_fills(client_id)
+                await websocket.send_json({
+                    "type": "subscribed",
+                    "action": "subscribe_gap_fills",
+                    "status": "success"
+                })
+            
+            elif action == "unsubscribe":
+                await ws_manager.disconnect(client_id)
+                await websocket.send_json({
+                    "type": "unsubscribed",
+                    "status": "success"
+                })
+                break
+            
+            elif action == "ping":
+                await websocket.send_json({
+                    "type": "pong",
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+            
+            elif action == "get_stats":
+                stats = ws_manager.get_stats()
+                await websocket.send_json({
+                    "type": "stats",
+                    "data": stats
+                })
+            
+            else:
+                await websocket.send_json({
+                    "type": "error",
+                    "error": f"Unknown action: {action}"
+                })
+    
+    except WebSocketDisconnect:
+        await ws_manager.disconnect(client_id)
+    except Exception as e:
+        logger.error(f"WebSocket error for client {client_id}: {e}")
+        await ws_manager.disconnect(client_id)
+
+
+@app.get("/api/ws/stats")
+async def websocket_stats():
+    """Get WebSocket connection statistics"""
+    return ws_manager.get_stats()
 
 
 # ===== Main Entry Point =====

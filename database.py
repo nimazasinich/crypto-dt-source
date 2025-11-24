@@ -120,6 +120,54 @@ class CryptoDatabase:
                 )
             """)
 
+            # ==================== MODEL OUTPUTS TABLE ====================
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS model_outputs (
+                    id TEXT PRIMARY KEY,
+                    symbol TEXT NOT NULL,
+                    model_key TEXT NOT NULL,
+                    prediction_type TEXT NOT NULL,
+                    confidence_score REAL,
+                    prediction_data TEXT NOT NULL,
+                    explanation TEXT,
+                    metadata TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    expires_at DATETIME
+                )
+            """)
+
+            # ==================== GAP FILLING AUDIT TABLE ====================
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS gap_filling_audit (
+                    id TEXT PRIMARY KEY,
+                    request_id TEXT NOT NULL,
+                    gap_type TEXT NOT NULL,
+                    strategy_used TEXT NOT NULL,
+                    success INTEGER NOT NULL DEFAULT 0,
+                    confidence REAL,
+                    execution_time_ms INTEGER,
+                    models_attempted TEXT,
+                    providers_attempted TEXT,
+                    filled_fields TEXT,
+                    metadata TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # ==================== PROVIDER CACHE TABLE ====================
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS provider_cache (
+                    id TEXT PRIMARY KEY,
+                    provider_key TEXT NOT NULL,
+                    endpoint TEXT NOT NULL,
+                    params_hash TEXT NOT NULL,
+                    response_data TEXT NOT NULL,
+                    success INTEGER NOT NULL DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    expires_at DATETIME
+                )
+            """)
+
             # ==================== CREATE INDEXES ====================
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_prices_symbol ON prices(symbol)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_prices_timestamp ON prices(timestamp)")
@@ -129,6 +177,15 @@ class CryptoDatabase:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_news_sentiment ON news(sentiment_label)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_analysis_symbol ON market_analysis(symbol)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_analysis_timestamp ON market_analysis(timestamp)")
+            
+            # New indexes for new tables
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_outputs_symbol ON model_outputs(symbol)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_outputs_model_key ON model_outputs(model_key)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_model_outputs_created_at ON model_outputs(created_at)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_gap_audit_gap_type ON gap_filling_audit(gap_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_gap_audit_request_id ON gap_filling_audit(request_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_provider_cache_provider ON provider_cache(provider_key, endpoint)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_provider_cache_params ON provider_cache(params_hash)")
 
             conn.commit()
             logger.info("Database tables and indexes created successfully")
@@ -651,6 +708,294 @@ class CryptoDatabase:
             self._local.conn.close()
             delattr(self._local, 'conn')
             logger.info("Database connection closed")
+    
+    # ==================== MODEL OUTPUTS CRUD OPERATIONS ====================
+    
+    def save_model_output(self, output_data: Dict[str, Any]) -> bool:
+        """Save AI model prediction output"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO model_outputs
+                    (id, symbol, model_key, prediction_type, confidence_score,
+                     prediction_data, explanation, metadata, expires_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    output_data.get('id'),
+                    output_data.get('symbol'),
+                    output_data.get('model_key'),
+                    output_data.get('prediction_type'),
+                    output_data.get('confidence_score'),
+                    json.dumps(output_data.get('prediction_data', {})),
+                    json.dumps(output_data.get('explanation', {})),
+                    json.dumps(output_data.get('metadata', {})),
+                    output_data.get('expires_at')
+                ))
+                conn.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Error saving model output: {e}")
+            return False
+    
+    def get_model_outputs(
+        self, 
+        symbol: Optional[str] = None, 
+        model_key: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Get model outputs with optional filters"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                query = "SELECT * FROM model_outputs WHERE 1=1"
+                params = []
+                
+                if symbol:
+                    query += " AND symbol = ?"
+                    params.append(symbol)
+                
+                if model_key:
+                    query += " AND model_key = ?"
+                    params.append(model_key)
+                
+                query += " ORDER BY created_at DESC LIMIT ?"
+                params.append(limit)
+                
+                cursor.execute(query, params)
+                results = []
+                for row in cursor.fetchall():
+                    output_dict = dict(row)
+                    # Parse JSON fields
+                    if output_dict.get('prediction_data'):
+                        output_dict['prediction_data'] = json.loads(output_dict['prediction_data'])
+                    if output_dict.get('explanation'):
+                        output_dict['explanation'] = json.loads(output_dict['explanation'])
+                    if output_dict.get('metadata'):
+                        output_dict['metadata'] = json.loads(output_dict['metadata'])
+                    results.append(output_dict)
+                
+                return results
+        except Exception as e:
+            logger.error(f"Error getting model outputs: {e}")
+            return []
+    
+    def delete_expired_model_outputs(self) -> int:
+        """Delete expired model outputs"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    DELETE FROM model_outputs
+                    WHERE expires_at IS NOT NULL 
+                    AND expires_at < datetime('now')
+                """)
+                conn.commit()
+                deleted = cursor.rowcount
+                logger.info(f"Deleted {deleted} expired model outputs")
+                return deleted
+        except Exception as e:
+            logger.error(f"Error deleting expired model outputs: {e}")
+            return 0
+    
+    # ==================== GAP FILLING AUDIT CRUD OPERATIONS ====================
+    
+    def save_gap_fill_audit(self, audit_data: Dict[str, Any]) -> bool:
+        """Save gap filling audit record"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO gap_filling_audit
+                    (id, request_id, gap_type, strategy_used, success,
+                     confidence, execution_time_ms, models_attempted,
+                     providers_attempted, filled_fields, metadata)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    audit_data.get('id'),
+                    audit_data.get('request_id'),
+                    audit_data.get('gap_type'),
+                    audit_data.get('strategy_used'),
+                    1 if audit_data.get('success') else 0,
+                    audit_data.get('confidence'),
+                    audit_data.get('execution_time_ms'),
+                    json.dumps(audit_data.get('models_attempted', [])),
+                    json.dumps(audit_data.get('providers_attempted', [])),
+                    json.dumps(audit_data.get('filled_fields', [])),
+                    json.dumps(audit_data.get('metadata', {}))
+                ))
+                conn.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Error saving gap fill audit: {e}")
+            return False
+    
+    def get_gap_fill_audit(
+        self, 
+        gap_type: Optional[str] = None,
+        request_id: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Get gap filling audit records"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                query = "SELECT * FROM gap_filling_audit WHERE 1=1"
+                params = []
+                
+                if gap_type:
+                    query += " AND gap_type = ?"
+                    params.append(gap_type)
+                
+                if request_id:
+                    query += " AND request_id = ?"
+                    params.append(request_id)
+                
+                query += " ORDER BY created_at DESC LIMIT ?"
+                params.append(limit)
+                
+                cursor.execute(query, params)
+                results = []
+                for row in cursor.fetchall():
+                    audit_dict = dict(row)
+                    # Parse JSON fields
+                    if audit_dict.get('models_attempted'):
+                        audit_dict['models_attempted'] = json.loads(audit_dict['models_attempted'])
+                    if audit_dict.get('providers_attempted'):
+                        audit_dict['providers_attempted'] = json.loads(audit_dict['providers_attempted'])
+                    if audit_dict.get('filled_fields'):
+                        audit_dict['filled_fields'] = json.loads(audit_dict['filled_fields'])
+                    if audit_dict.get('metadata'):
+                        audit_dict['metadata'] = json.loads(audit_dict['metadata'])
+                    results.append(audit_dict)
+                
+                return results
+        except Exception as e:
+            logger.error(f"Error getting gap fill audit: {e}")
+            return []
+    
+    def get_gap_fill_statistics(self) -> Dict[str, Any]:
+        """Get gap filling statistics"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                stats = {}
+                
+                # Total attempts
+                cursor.execute("SELECT COUNT(*) as count FROM gap_filling_audit")
+                stats['total_attempts'] = cursor.fetchone()['count']
+                
+                # Success rate
+                cursor.execute("SELECT COUNT(*) as count FROM gap_filling_audit WHERE success = 1")
+                successful = cursor.fetchone()['count']
+                stats['successful_fills'] = successful
+                stats['success_rate'] = successful / stats['total_attempts'] if stats['total_attempts'] > 0 else 0
+                
+                # Average confidence
+                cursor.execute("SELECT AVG(confidence) as avg_conf FROM gap_filling_audit WHERE confidence IS NOT NULL")
+                stats['average_confidence'] = cursor.fetchone()['avg_conf'] or 0
+                
+                # Average execution time
+                cursor.execute("SELECT AVG(execution_time_ms) as avg_time FROM gap_filling_audit")
+                stats['average_execution_time_ms'] = cursor.fetchone()['avg_time'] or 0
+                
+                # By gap type
+                cursor.execute("""
+                    SELECT gap_type, COUNT(*) as count 
+                    FROM gap_filling_audit 
+                    GROUP BY gap_type
+                """)
+                stats['by_gap_type'] = {row['gap_type']: row['count'] for row in cursor.fetchall()}
+                
+                # By strategy
+                cursor.execute("""
+                    SELECT strategy_used, COUNT(*) as count 
+                    FROM gap_filling_audit 
+                    GROUP BY strategy_used
+                """)
+                stats['by_strategy'] = {row['strategy_used']: row['count'] for row in cursor.fetchall()}
+                
+                return stats
+        except Exception as e:
+            logger.error(f"Error getting gap fill statistics: {e}")
+            return {}
+    
+    # ==================== PROVIDER CACHE CRUD OPERATIONS ====================
+    
+    def save_provider_cache(self, cache_data: Dict[str, Any]) -> bool:
+        """Save provider response to cache"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT OR REPLACE INTO provider_cache
+                    (id, provider_key, endpoint, params_hash, response_data,
+                     success, expires_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    cache_data.get('id'),
+                    cache_data.get('provider_key'),
+                    cache_data.get('endpoint'),
+                    cache_data.get('params_hash'),
+                    json.dumps(cache_data.get('response_data', {})),
+                    1 if cache_data.get('success') else 0,
+                    cache_data.get('expires_at')
+                ))
+                conn.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Error saving provider cache: {e}")
+            return False
+    
+    def get_provider_cache(
+        self, 
+        provider_key: str, 
+        endpoint: str, 
+        params_hash: str
+    ) -> Optional[Dict[str, Any]]:
+        """Get cached provider response"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT * FROM provider_cache
+                    WHERE provider_key = ? AND endpoint = ? AND params_hash = ?
+                    AND (expires_at IS NULL OR expires_at > datetime('now'))
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                """, (provider_key, endpoint, params_hash))
+                
+                row = cursor.fetchone()
+                if row:
+                    cache_dict = dict(row)
+                    if cache_dict.get('response_data'):
+                        cache_dict['response_data'] = json.loads(cache_dict['response_data'])
+                    return cache_dict
+                return None
+        except Exception as e:
+            logger.error(f"Error getting provider cache: {e}")
+            return None
+    
+    def delete_expired_provider_cache(self) -> int:
+        """Delete expired provider cache entries"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    DELETE FROM provider_cache
+                    WHERE expires_at IS NOT NULL 
+                    AND expires_at < datetime('now')
+                """)
+                conn.commit()
+                deleted = cursor.rowcount
+                logger.info(f"Deleted {deleted} expired cache entries")
+                return deleted
+        except Exception as e:
+            logger.error(f"Error deleting expired cache: {e}")
+            return 0
 
 
 # Singleton instance
