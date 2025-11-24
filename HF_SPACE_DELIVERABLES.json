@@ -1,0 +1,340 @@
+{
+  "title": "HuggingFace Space Implementation Deliverables",
+  "عنوان": "فایل‌های تحویلی پیاده‌سازی فضای HuggingFace",
+  "generated_at": "2025-11-24",
+  "status": "COMPLETE - آماده برای ارائه به maintainer",
+  
+  "files_created": {
+    "openapi_spec": {
+      "file": "openapi_hf_space.yaml",
+      "description": "OpenAPI 3.0 specification - مستندات کامل API",
+      "description_fa": "مشخصات OpenAPI 3.0 - شامل تمام endpoint‌ها، schema‌ها، و مثال‌ها",
+      "usage": "Use for /docs and /redoc endpoints",
+      "key_sections": [
+        "تمام 25+ endpoint مورد نیاز",
+        "Schema‌های کامل با Pydantic models",
+        "Meta fields در همه response‌ها",
+        "مثال‌های curl و JavaScript",
+        "مستندات WebSocket",
+        "توضیحات fallback behavior"
+      ]
+    },
+    
+    "implementation_contract": {
+      "file": "hf_space_implementation_contract.json",
+      "description": "Complete contract in JSON format",
+      "description_fa": "قرارداد کامل به صورت JSON - راهنمای جامع پیاده‌سازی",
+      "usage": "Reference document for maintainer",
+      "key_sections": [
+        "Space info و URLs",
+        "Priority rules (HF-first → fallback)",
+        "تمام endpoint‌های required با جزئیات",
+        "Meta fields specification",
+        "Fallback behavior و normalization",
+        "Caching strategy",
+        "Authentication requirements",
+        "Client examples (curl, JS, Python)",
+        "Deliverables checklist"
+      ]
+    },
+    
+    "python_skeleton": {
+      "file": "hf_space_python_skeleton.py",
+      "description": "Python implementation skeleton",
+      "description_fa": "اسکلت پیاده‌سازی Python - نمونه کد عملی",
+      "usage": "Starting point for Python/FastAPI implementation",
+      "key_features": [
+        "FallbackConfig class برای خواندن config file",
+        "APIClient با HF-first + fallback logic",
+        "مثال‌های normalize functions",
+        "FastAPI endpoints با Pydantic models",
+        "Meta fields injection",
+        "Error handling با 502 responses",
+        "Startup event برای loading config"
+      ],
+      "how_to_complete": [
+        "کامل کردن _parse_config_content() برای parse کردن /mnt/data/api-config-complete.txt",
+        "پیاده‌سازی _call_provider() برای هر fallback provider",
+        "اضافه کردن normalize functions برای هر provider",
+        "پیاده‌سازی authentication (API key check)",
+        "اضافه کردن caching layer (Redis)",
+        "نوشتن integration tests"
+      ]
+    },
+    
+    "test_script": {
+      "file": "test_hf_fallback_behavior.py",
+      "description": "Validation test script",
+      "description_fa": "اسکریپت تست اعتبارسنجی - برای validate کردن پیاده‌سازی",
+      "usage": "Run after implementation to validate behavior",
+      "tests_included": [
+        "تست تمام endpoint‌های required",
+        "بررسی وجود و صحت meta fields",
+        "تست error response format",
+        "بررسی cache TTL values",
+        "تست consistency در تمام endpoint‌ها",
+        "راهنمای manual test برای fallback behavior"
+      ],
+      "run_command": "python test_hf_fallback_behavior.py"
+    }
+  },
+  
+  "implementation_checklist": {
+    "phase_1_setup": [
+      "☐ Clone/fork repository",
+      "☐ Read openapi_hf_space.yaml thoroughly",
+      "☐ Read hf_space_implementation_contract.json",
+      "☐ Understand priority rules (HF-first → fallback)",
+      "☐ Review hf_space_python_skeleton.py"
+    ],
+    
+    "phase_2_config": [
+      "☐ Locate /mnt/data/api-config-complete.txt",
+      "☐ Implement FallbackConfig parser",
+      "☐ Extract provider URLs, keys, priorities",
+      "☐ Test config loading on startup"
+    ],
+    
+    "phase_3_endpoints": [
+      "☐ Implement all market data endpoints",
+      "☐ Implement trading signals endpoints",
+      "☐ Implement news endpoints",
+      "☐ Implement sentiment endpoint",
+      "☐ Implement whale tracking endpoints",
+      "☐ Implement blockchain endpoints",
+      "☐ Implement system endpoints (status, health, providers)"
+    ],
+    
+    "phase_4_fallback": [
+      "☐ Implement HF-first logic",
+      "☐ Implement fallback chain",
+      "☐ Implement provider-specific API calls",
+      "☐ Implement normalization functions",
+      "☐ Test fallback switching"
+    ],
+    
+    "phase_5_meta": [
+      "☐ Inject meta.source in all responses",
+      "☐ Inject meta.generated_at (ISO 8601)",
+      "☐ Add meta.cache_ttl_seconds",
+      "☐ Add meta.attempted on errors",
+      "☐ Test meta fields consistency"
+    ],
+    
+    "phase_6_features": [
+      "☐ Implement caching (in-memory or Redis)",
+      "☐ Implement rate limiting",
+      "☐ Implement authentication for protected endpoints",
+      "☐ Implement circuit breaker for providers",
+      "☐ Implement logging (provider, latency, errors)"
+    ],
+    
+    "phase_7_docs": [
+      "☐ Add /docs endpoint (Swagger UI)",
+      "☐ Add /redoc endpoint",
+      "☐ Update README with auth instructions",
+      "☐ Document which endpoints are WS-only"
+    ],
+    
+    "phase_8_testing": [
+      "☐ Run test_hf_fallback_behavior.py",
+      "☐ Manual test: HF up → verify HF serves data",
+      "☐ Manual test: HF down → verify fallback works",
+      "☐ Manual test: All down → verify 502 with meta.attempted",
+      "☐ Test WebSocket subscriptions",
+      "☐ Test protected endpoints with API key",
+      "☐ Performance test: response times",
+      "☐ Load test: concurrent requests"
+    ],
+    
+    "phase_9_deployment": [
+      "☐ Test in HF Space environment",
+      "☐ Verify /mnt/data/api-config-complete.txt is accessible",
+      "☐ Test HF_API_TOKEN usage",
+      "☐ Monitor logs for errors",
+      "☐ Setup alerts for high error rates"
+    ]
+  },
+  
+  "endpoint_summary": {
+    "total_endpoints": 25,
+    "breakdown": {
+      "market_data": 5,
+      "trading_signals": 5,
+      "news": 3,
+      "sentiment": 1,
+      "whale_tracking": 2,
+      "blockchain": 2,
+      "providers_system": 7
+    },
+    "websocket": 1,
+    "priority_categories": {
+      "hf_http_first": 15,
+      "must_be_hf_http": 1,
+      "hf_first_with_specific_fallbacks": 4,
+      "system_endpoints": 5
+    }
+  },
+  
+  "key_requirements": {
+    "architectural": [
+      "Space = single provider (clients never call external providers directly)",
+      "HF-first priority (always try HF HTTP first)",
+      "WebSocket exception-only (not default)",
+      "Fallback providers from /mnt/data/api-config-complete.txt",
+      "Normalize all provider responses to Space schema"
+    ],
+    
+    "technical": [
+      "All responses include meta fields",
+      "502 errors include meta.attempted",
+      "Cache with appropriate TTLs",
+      "Rate limit per client",
+      "Respect provider rate limits",
+      "Circuit breaker pattern",
+      "Logging (provider, latency, fallbacks)"
+    ],
+    
+    "security": [
+      "Protect /api/models/* endpoints",
+      "API key authentication (X-API-Key header)",
+      "Don't expose provider keys to clients",
+      "Use HF_API_TOKEN from environment"
+    ],
+    
+    "documentation": [
+      "/docs endpoint (Swagger UI)",
+      "/redoc endpoint",
+      "Document auth method in README",
+      "Document WS-only endpoints",
+      "Provide integration test examples"
+    ]
+  },
+  
+  "success_criteria": {
+    "functional": [
+      "✓ All 25+ endpoints return 200 or proper error",
+      "✓ Meta fields present in all responses",
+      "✓ HF endpoints work when HF is up",
+      "✓ Fallbacks work when HF is down",
+      "✓ 502 with meta.attempted when all fail",
+      "✓ /api/market/pairs always from HF (no fallback)",
+      "✓ Protected endpoints require auth"
+    ],
+    
+    "performance": [
+      "✓ Average response time < 500ms",
+      "✓ Cache reduces provider calls by 70%+",
+      "✓ Can handle 100 concurrent requests",
+      "✓ Circuit breaker prevents provider overload"
+    ],
+    
+    "documentation": [
+      "✓ /docs shows all endpoints",
+      "✓ /redoc is accessible",
+      "✓ README explains auth",
+      "✓ OpenAPI spec matches implementation"
+    ]
+  },
+  
+  "client_integration_guide": {
+    "base_url": "https://really-amin-datasourceforcryptocurrency.hf.space",
+    
+    "examples": {
+      "curl_get_market": "curl \"https://really-amin-datasourceforcryptocurrency.hf.space/api/market?limit=20&sort=volume\"",
+      
+      "curl_post_predict": "curl -X POST \"https://really-amin-datasourceforcryptocurrency.hf.space/api/models/trade-model/predict\" -H \"Content-Type: application/json\" -H \"X-API-Key: YOUR_KEY\" -d '{\"symbol\":\"BTC\"}'",
+      
+      "javascript_fetch": "fetch('https://really-amin-datasourceforcryptocurrency.hf.space/api/market?limit=50').then(r => r.json()).then(data => console.log(data))",
+      
+      "javascript_websocket": "const ws = new WebSocket('wss://really-amin-datasourceforcryptocurrency.hf.space/ws'); ws.onopen = () => ws.send(JSON.stringify({action:'subscribe',service:'market_data',symbols:['BTC','ETH']}));",
+      
+      "python_requests": "import requests; r = requests.get('https://really-amin-datasourceforcryptocurrency.hf.space/api/market', params={'limit': 20}); print(r.json())"
+    },
+    
+    "authentication": {
+      "method": "API Key",
+      "header": "X-API-Key",
+      "required_for": [
+        "/api/models/{model_key}/predict",
+        "/api/models/batch/predict",
+        "/api/trading/decision"
+      ],
+      "note": "Contact Space maintainer for API key"
+    },
+    
+    "error_handling": {
+      "200": "Success",
+      "401": "Unauthorized - invalid or missing API key",
+      "404": "Not found",
+      "502": "Bad Gateway - all providers failed (check meta.attempted)",
+      "503": "Service temporarily unavailable"
+    }
+  },
+  
+  "maintainer_notes": {
+    "critical": [
+      "⚠️ /api/market/pairs MUST come from HF HTTP only (no fallback allowed)",
+      "⚠️ Always include meta fields in responses",
+      "⚠️ On 502, include meta.attempted to show which providers were tried",
+      "⚠️ Read /mnt/data/api-config-complete.txt at startup",
+      "⚠️ WebSocket is exception-only (document which endpoints are WS-only)"
+    ],
+    
+    "recommendations": [
+      "Use Redis for production caching",
+      "Implement circuit breaker (e.g., pybreaker library)",
+      "Use async HTTP client (httpx or aiohttp)",
+      "Log all fallback attempts",
+      "Monitor provider latencies",
+      "Setup alerts for high error rates",
+      "Consider implementing request queuing for rate-limited providers"
+    ],
+    
+    "optional_enhancements": [
+      "GraphQL endpoint alongside REST",
+      "gRPC for high-performance clients",
+      "Response compression (gzip)",
+      "Webhook notifications for whale transactions",
+      "Admin panel for provider management",
+      "Metrics dashboard (Prometheus + Grafana)",
+      "Historical data export (CSV, JSON)"
+    ]
+  },
+  
+  "next_steps": {
+    "for_maintainer": [
+      "1. Review all 4 delivered files",
+      "2. Setup development environment",
+      "3. Implement FallbackConfig parser",
+      "4. Implement endpoints one by one (start with /api/market)",
+      "5. Test with test_hf_fallback_behavior.py",
+      "6. Deploy to HF Space",
+      "7. Validate with production traffic"
+    ],
+    
+    "for_clients": [
+      "1. Read openapi_hf_space.yaml for API reference",
+      "2. Use base URL: https://really-amin-datasourceforcryptocurrency.hf.space",
+      "3. For protected endpoints, obtain API key",
+      "4. Implement error handling for 502 responses",
+      "5. Parse meta.source to know data origin",
+      "6. Respect cache_ttl_seconds for client-side caching"
+    ]
+  },
+  
+  "support": {
+    "documentation": [
+      "OpenAPI spec: /docs",
+      "ReDoc: /redoc",
+      "This file: HF_SPACE_DELIVERABLES.json",
+      "Implementation guide: hf_space_implementation_contract.json"
+    ],
+    
+    "testing": [
+      "Test script: test_hf_fallback_behavior.py",
+      "Health check: /api/health",
+      "System status: /api/status"
+    ]
+  }
+}

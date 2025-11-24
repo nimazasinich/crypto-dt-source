@@ -1,0 +1,360 @@
+{
+  "contract_version": "1.0.0",
+  "last_updated": "2025-11-24",
+  "description": "قرارداد پیاده‌سازی HuggingFace Space - مستندات کامل",
+  
+  "space_info": {
+    "url": "https://really-amin-datasourceforcryptocurrency.hf.space",
+    "role": "single provider for all cryptocurrency data",
+    "fallback_config_path": "/mnt/data/api-config-complete.txt",
+    "environment_variables": {
+      "HF_API_TOKEN": "برای دسترسی به مدل‌های خصوصی HF"
+    }
+  },
+  
+  "priority_rules": {
+    "order": [
+      "HF HTTP endpoints (primary)",
+      "HF WebSocket (exception only)",
+      "Fallback providers (from config file)"
+    ],
+    "notes": [
+      "همیشه ابتدا HF HTTP را امتحان کنید",
+      "WebSocket فقط برای endpoint‌های WS-only",
+      "Fallback فقط در صورت شکست HF"
+    ]
+  },
+  
+  "required_endpoints": {
+    "market_data": [
+      {
+        "path": "/api/market",
+        "method": "GET",
+        "priority": "HF HTTP FIRST",
+        "params": ["limit", "sort"],
+        "description": "لیست ارزهای برتر با قیمت و حجم"
+      },
+      {
+        "path": "/api/market/pairs",
+        "method": "GET",
+        "priority": "MUST BE HF HTTP",
+        "params": ["limit", "page"],
+        "description": "جفت‌های معاملاتی - باید حتماً از HF HTTP باشد"
+      },
+      {
+        "path": "/api/market/ohlc",
+        "method": "GET",
+        "priority": "HF HTTP FIRST",
+        "params": ["symbol", "interval", "limit"],
+        "description": "OHLC candles برای نمودار"
+      },
+      {
+        "path": "/api/market/depth",
+        "method": "GET",
+        "priority": "HF HTTP FIRST",
+        "params": ["symbol", "limit"],
+        "description": "Order book (bids/asks)"
+      },
+      {
+        "path": "/api/market/tickers",
+        "method": "GET",
+        "priority": "HF HTTP FIRST",
+        "params": ["limit", "sort"],
+        "description": "Tickers بازار"
+      }
+    ],
+    
+    "trading_signals": [
+      {
+        "path": "/api/models/{model_key}/predict",
+        "method": "POST",
+        "auth_required": true,
+        "body": {
+          "symbol": "string (required)",
+          "context": "string (optional)",
+          "params": "object (optional)"
+        },
+        "description": "پیش‌بینی با مدل AI"
+      },
+      {
+        "path": "/api/models/batch/predict",
+        "method": "POST",
+        "auth_required": true,
+        "body": {
+          "symbols": "array of strings",
+          "context": "string",
+          "params": "object"
+        },
+        "description": "پیش‌بینی دسته‌ای"
+      },
+      {
+        "path": "/api/trading/decision",
+        "method": "POST",
+        "auth_required": true,
+        "description": "Alias برای predict"
+      },
+      {
+        "path": "/api/signals",
+        "method": "GET",
+        "params": ["limit", "since"],
+        "description": "تاریخچه سیگنال‌ها از database"
+      },
+      {
+        "path": "/api/signals/ack",
+        "method": "POST",
+        "body": {
+          "id": "string",
+          "user": "string",
+          "ack_at": "ISO 8601 datetime"
+        },
+        "description": "تایید دریافت سیگنال"
+      }
+    ],
+    
+    "news": [
+      {
+        "path": "/api/news",
+        "method": "GET",
+        "params": ["limit", "source"],
+        "description": "لیست اخبار"
+      },
+      {
+        "path": "/api/news/{id}",
+        "method": "GET",
+        "description": "جزئیات یک خبر"
+      },
+      {
+        "path": "/api/news/analyze",
+        "method": "POST",
+        "body": {
+          "url": "string (URL خبر)",
+          "text": "string (متن خبر)"
+        },
+        "description": "تحلیل و خلاصه‌سازی خبر"
+      }
+    ],
+    
+    "sentiment": [
+      {
+        "path": "/api/sentiment/analyze",
+        "method": "POST",
+        "body": {
+          "text": "string (required)",
+          "mode": "simple|detailed"
+        },
+        "description": "تحلیل احساسات متن"
+      }
+    ],
+    
+    "whale_tracking": [
+      {
+        "path": "/api/crypto/whales/transactions",
+        "method": "GET",
+        "priority": "HF first, fallback to WhaleAlert/BitQuery",
+        "params": ["limit", "chain", "min_amount_usd"],
+        "description": "تراکنش‌های نهنگ‌ها"
+      },
+      {
+        "path": "/api/crypto/whales/stats",
+        "method": "GET",
+        "params": ["hours"],
+        "description": "آمار جمع‌آوری شده whale transactions"
+      }
+    ],
+    
+    "blockchain": [
+      {
+        "path": "/api/crypto/blockchain/gas",
+        "method": "GET",
+        "params": ["chain"],
+        "description": "هزینه gas (fast/standard/slow)"
+      },
+      {
+        "path": "/api/crypto/blockchain/stats",
+        "method": "GET",
+        "params": ["chain", "hours"],
+        "description": "آمار blockchain (blocks, txs, avg_gas)"
+      }
+    ],
+    
+    "system": [
+      {
+        "path": "/api/providers",
+        "method": "GET",
+        "description": "لیست providers و قابلیت‌ها"
+      },
+      {
+        "path": "/api/status",
+        "method": "GET",
+        "description": "وضعیت سیستم و model connectivity"
+      },
+      {
+        "path": "/api/health",
+        "method": "GET",
+        "description": "Health check"
+      },
+      {
+        "path": "/api/freshness",
+        "method": "GET",
+        "description": "آخرین زمان به‌روزرسانی subsystem‌ها"
+      },
+      {
+        "path": "/api/logs/recent",
+        "method": "GET",
+        "params": ["limit"],
+        "description": "لاگ‌های اخیر"
+      },
+      {
+        "path": "/docs",
+        "method": "GET",
+        "description": "OpenAPI Swagger UI"
+      },
+      {
+        "path": "/redoc",
+        "method": "GET",
+        "description": "ReDoc documentation"
+      }
+    ],
+    
+    "websocket": [
+      {
+        "path": "/ws",
+        "protocol": "WebSocket",
+        "url": "wss://really-amin-datasourceforcryptocurrency.hf.space/ws",
+        "description": "WebSocket برای real-time updates (فقط در موارد استثنایی)",
+        "subscribe_message": {
+          "action": "subscribe",
+          "service": "market_data|sentiment|news|whale_tracking",
+          "symbols": ["BTC", "ETH"]
+        },
+        "services": {
+          "market_data": "تیک‌های قیمت real-time",
+          "sentiment": "تغییرات sentiment",
+          "news": "اخبار جدید",
+          "whale_tracking": "تراکنش‌های whale"
+        },
+        "note": "WebSocket فقط برای endpoint‌های WS-only. برای pairs/OHLC همیشه HTTP استفاده کنید"
+      }
+    ]
+  },
+  
+  "meta_fields": {
+    "description": "تمام response‌ها باید شامل فیلد meta باشند",
+    "required_fields": {
+      "source": "منبع داده (hf, hf-ws, یا URL fallback provider)",
+      "generated_at": "زمان تولید (ISO 8601)"
+    },
+    "optional_fields": {
+      "cache_ttl_seconds": "مدت زمان cache (ثانیه)",
+      "attempted": "لیست منابع تلاش شده (فقط در error)"
+    },
+    "example": {
+      "meta": {
+        "source": "hf",
+        "cache_ttl_seconds": 30,
+        "generated_at": "2025-11-24T10:00:00Z"
+      }
+    }
+  },
+  
+  "fallback_behavior": {
+    "config_file": "/mnt/data/api-config-complete.txt",
+    "description": "Space باید این فایل را در startup خوانده و لیست ordered fallback providers را استخراج کند",
+    "process": [
+      "1. خواندن config file و parse کردن providers",
+      "2. برای هر درخواست، ابتدا HF HTTP را امتحان کنید",
+      "3. اگر WS-only endpoint باشد، HF WebSocket را امتحان کنید",
+      "4. در صورت شکست، به ترتیب از fallback providers استفاده کنید",
+      "5. Normalize کردن response به schema Space API",
+      "6. تنظیم meta.source به منبع موفق"
+    ],
+    "normalization": "Space باید response‌های provider (مثل CoinGecko/Binance) را به schema canonical تبدیل کند",
+    "error_handling": {
+      "all_failed": "اگر همه منابع شکست خوردند، 502 Bad Gateway با meta.attempted برگردانید"
+    }
+  },
+  
+  "caching": {
+    "recommended_ttls": {
+      "dashboard_snapshot": "30s",
+      "tickers_market": "30-60s",
+      "ohlc_history": "120s",
+      "whale_events": "10-60s"
+    },
+    "implementation": "استفاده از in-memory cache (dev) یا Redis (prod)",
+    "headers": "Space باید Cache-Control headers را تنظیم کند"
+  },
+  
+  "rate_limiting": {
+    "per_client": "محدودیت per-client برای جلوگیری از abuse",
+    "provider_limits": "رعایت rate limits هر provider در config file",
+    "circuit_breaker": "استفاده از circuit breaker pattern برای provider protection"
+  },
+  
+  "authentication": {
+    "public_endpoints": [
+      "/api/market/*",
+      "/api/news/*",
+      "/api/crypto/whales/*",
+      "/api/crypto/blockchain/*",
+      "/api/status",
+      "/api/health"
+    ],
+    "protected_endpoints": [
+      "/api/models/*",
+      "/api/trading/decision"
+    ],
+    "method": "API Key در header X-API-Key",
+    "note": "Space maintainer باید authentication method را مستند کند"
+  },
+  
+  "logging_monitoring": {
+    "requirements": [
+      "لاگ کردن provider که هر request را serve کرد",
+      "لاگ latency برای هر provider",
+      "لاگ fallback attempts",
+      "expose logs در /api/logs/recent"
+    ],
+    "integration_tests": "تست‌هایی که HF up/down را simulate می‌کنند"
+  },
+  
+  "client_examples": {
+    "curl": {
+      "market": "curl \"https://really-amin-datasourceforcryptocurrency.hf.space/api/market?limit=20&sort=volume\"",
+      "pairs": "curl \"https://really-amin-datasourceforcryptocurrency.hf.space/api/market/pairs?limit=200\"",
+      "ohlc": "curl \"https://really-amin-datasourceforcryptocurrency.hf.space/api/market/ohlc?symbol=BTC&interval=60&limit=200\"",
+      "predict": "curl -X POST \"https://really-amin-datasourceforcryptocurrency.hf.space/api/models/trade-model/predict\" -H \"Content-Type: application/json\" -H \"X-API-Key: YOUR_KEY\" -d '{\"symbol\":\"BTC\",\"context\":\"short-term\",\"params\":{\"horizon\":\"1h\"}}'"
+    },
+    "javascript": {
+      "fetch": "const res = await fetch('https://really-amin-datasourceforcryptocurrency.hf.space/api/market?limit=50'); const data = await res.json();",
+      "websocket": "const ws = new WebSocket('wss://really-amin-datasourceforcryptocurrency.hf.space/ws'); ws.onopen = () => ws.send(JSON.stringify({action:'subscribe',service:'market_data',symbols:['BTC','ETH']}));"
+    },
+    "python": {
+      "requests": "import requests; r = requests.get('https://really-amin-datasourceforcryptocurrency.hf.space/api/market', params={'limit': 20}); print(r.json())"
+    }
+  },
+  
+  "deliverables": [
+    "✅ تمام endpoints بالا را پیاده‌سازی کنید",
+    "✅ خواندن و استفاده از /mnt/data/api-config-complete.txt برای fallback",
+    "✅ اضافه کردن /docs (OpenAPI) و /redoc",
+    "✅ پیاده‌سازی caching، meta fields، logging",
+    "✅ نوشتن integration tests برای HF-first + fallback",
+    "✅ مستندسازی authentication method در README"
+  ],
+  
+  "wsOnlyEndpoints": {
+    "description": "Space باید یک registry از endpoint‌های WS-only نگه دارد",
+    "example": [],
+    "note": "در صورت نیاز، Space می‌تواند endpoint‌هایی را به عنوان WS-only علامت‌گذاری کند"
+  },
+  
+  "important_notes": [
+    "⚠️ Space = single provider. کلاینت‌ها هرگز مستقیماً به external providers دسترسی ندارند",
+    "⚠️ /api/market/pairs MUST be HF HTTP (نه fallback)",
+    "⚠️ WebSocket فقط برای WS-only endpoints مجاز است",
+    "⚠️ همه response‌ها باید meta fields داشته باشند",
+    "⚠️ Normalize کردن fallback responses به schema Space API",
+    "⚠️ در 502 errors، meta.attempted را include کنید"
+  ]
+}
