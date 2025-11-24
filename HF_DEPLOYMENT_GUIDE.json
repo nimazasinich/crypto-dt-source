@@ -1,0 +1,261 @@
+{
+  "title": "HuggingFace Space Deployment Guide - REAL DATA ONLY",
+  "description": "Complete guide for deploying crypto data API to HuggingFace Spaces",
+  
+  "critical_rules": {
+    "no_fake_data": "ABSOLUTELY NO mock, fake, placeholder, or generated data",
+    "real_apis_only": "Only use real free APIs (CoinGecko, Binance)",
+    "real_models_only": "Only use real AI model inference",
+    "error_on_unavailable": "Return error if data not available - never fake it"
+  },
+  
+  "prerequisites": {
+    "account": "HuggingFace account (free)",
+    "token": "HuggingFace API token (from Settings > Access Tokens)",
+    "space": "Create new Space (Python SDK)",
+    "environment": "Python 3.10+"
+  },
+  
+  "deployment_steps": [
+    {
+      "step": 1,
+      "title": "Create HuggingFace Space",
+      "actions": [
+        "Go to https://huggingface.co/new-space",
+        "Choose 'Gradio' SDK (we'll use custom FastAPI)",
+        "Set space name (e.g., 'crypto-data-engine')",
+        "Choose 'Public' visibility",
+        "Click 'Create Space'"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Configure Environment Variables",
+      "actions": [
+        "Go to Space Settings > Variables and secrets",
+        "Add HF_TOKEN: Your HuggingFace API token",
+        "Add PORT: 7860 (default)",
+        "Save settings"
+      ],
+      "critical": "HF_TOKEN is REQUIRED for authentication"
+    },
+    {
+      "step": 3,
+      "title": "Upload Files to Space",
+      "files_to_upload": [
+        "hf_space_server.py (main server)",
+        "api/hf_auth.py (authentication)",
+        "api/hf_endpoints.py (endpoints)",
+        "database/models.py (database models)",
+        "database/db_manager.py (database manager)",
+        "database/cache_queries.py (cache queries)",
+        "workers/market_data_worker.py (CoinGecko worker)",
+        "workers/ohlc_data_worker.py (Binance worker)",
+        "ai_models.py (AI model registry)",
+        "config.py (configuration)",
+        "utils/logger.py (logging)",
+        "requirements.txt (dependencies)"
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Create requirements.txt",
+      "content": [
+        "fastapi==0.104.1",
+        "uvicorn[standard]==0.24.0",
+        "httpx==0.25.1",
+        "sqlalchemy==2.0.23",
+        "pydantic==2.5.0",
+        "python-multipart==0.0.6",
+        "transformers==4.35.2",
+        "torch==2.1.0",
+        "huggingface-hub==0.19.4"
+      ]
+    },
+    {
+      "step": 5,
+      "title": "Create Dockerfile (optional)",
+      "content": [
+        "FROM python:3.10-slim",
+        "WORKDIR /app",
+        "COPY requirements.txt .",
+        "RUN pip install -r requirements.txt",
+        "COPY . .",
+        "CMD [\"python\", \"hf_space_server.py\"]"
+      ]
+    },
+    {
+      "step": 6,
+      "title": "Test Deployment",
+      "actions": [
+        "Wait for Space to build (2-5 minutes)",
+        "Check logs for startup messages",
+        "Verify workers started successfully",
+        "Run test_hf_endpoints.py locally",
+        "Confirm no fake data in responses"
+      ]
+    }
+  ],
+  
+  "api_endpoints": {
+    "base_url": "https://YOUR-USERNAME-YOUR-SPACE-NAME.hf.space",
+    "authentication": "Bearer token in Authorization header",
+    
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/market",
+        "description": "Get real-time market data from CoinGecko",
+        "params": {
+          "limit": "Number of symbols (1-1000, default 100)",
+          "symbols": "Comma-separated symbols (optional)"
+        },
+        "example": "curl -H 'Authorization: Bearer YOUR_TOKEN' https://YOUR-SPACE.hf.space/api/market?limit=10"
+      },
+      {
+        "method": "GET",
+        "path": "/api/market/history",
+        "description": "Get OHLCV candlestick data from Binance",
+        "params": {
+          "symbol": "Trading pair (e.g., BTCUSDT)",
+          "timeframe": "Interval (1h, 4h, 1d)",
+          "limit": "Number of candles (1-5000, default 1000)"
+        },
+        "example": "curl -H 'Authorization: Bearer YOUR_TOKEN' https://YOUR-SPACE.hf.space/api/market/history?symbol=BTCUSDT&timeframe=1h&limit=100"
+      },
+      {
+        "method": "POST",
+        "path": "/api/sentiment/analyze",
+        "description": "Analyze sentiment using real AI models",
+        "body": {
+          "text": "Text to analyze"
+        },
+        "example": "curl -X POST -H 'Authorization: Bearer YOUR_TOKEN' -H 'Content-Type: application/json' -d '{\"text\":\"Bitcoin is pumping!\"}' https://YOUR-SPACE.hf.space/api/sentiment/analyze"
+      },
+      {
+        "method": "GET",
+        "path": "/api/health",
+        "description": "Health check with system status",
+        "example": "curl -H 'Authorization: Bearer YOUR_TOKEN' https://YOUR-SPACE.hf.space/api/health"
+      }
+    ]
+  },
+  
+  "data_sources": {
+    "market_data": {
+      "provider": "CoinGecko",
+      "api": "https://api.coingecko.com/api/v3",
+      "tier": "Free (no API key required)",
+      "rate_limit": "10-50 calls/minute",
+      "update_frequency": "Every 60 seconds"
+    },
+    "ohlc_data": {
+      "provider": "Binance",
+      "api": "https://api.binance.com/api/v3",
+      "tier": "Free (no API key required)",
+      "rate_limit": "1200 requests/minute",
+      "update_frequency": "Every 5 minutes"
+    },
+    "sentiment": {
+      "provider": "HuggingFace Models",
+      "models": [
+        "kk08/CryptoBERT",
+        "cardiffnlp/twitter-roberta-base-sentiment-latest",
+        "ProsusAI/finbert"
+      ],
+      "fallback": "Lexical analysis if models unavailable"
+    }
+  },
+  
+  "verification_checklist": [
+    {
+      "check": "Database initialized",
+      "command": "Check logs for 'Database initialized successfully'"
+    },
+    {
+      "check": "Workers started",
+      "command": "Check logs for 'Market data worker started' and 'OHLC data worker started'"
+    },
+    {
+      "check": "Market data cached",
+      "command": "Wait 1-2 minutes, then call /api/market"
+    },
+    {
+      "check": "OHLC data cached",
+      "command": "Wait 5-6 minutes, then call /api/market/history?symbol=BTCUSDT&timeframe=1h"
+    },
+    {
+      "check": "AI models loaded",
+      "command": "Call /api/health and check ai_models.loaded > 0"
+    },
+    {
+      "check": "No fake data",
+      "command": "Verify prices are realistic (BTC ~$40k-60k, ETH ~$2k-4k)"
+    },
+    {
+      "check": "Timestamps are recent",
+      "command": "Verify last_updated is within last hour"
+    },
+    {
+      "check": "Authentication works",
+      "command": "Test with invalid token - should get 401"
+    }
+  ],
+  
+  "troubleshooting": {
+    "no_data_available": {
+      "error": "No market data available. Background workers syncing...",
+      "cause": "Workers haven't fetched data yet",
+      "solution": "Wait 1-2 minutes for initial data fetch"
+    },
+    "authentication_failed": {
+      "error": "Invalid authentication token",
+      "cause": "HF_TOKEN not set or incorrect",
+      "solution": "Set HF_TOKEN in Space settings"
+    },
+    "model_not_available": {
+      "error": "No sentiment model available",
+      "cause": "AI models failed to load",
+      "solution": "Check logs for model loading errors. Fallback lexical analysis will be used."
+    },
+    "database_error": {
+      "error": "Database error",
+      "cause": "Database initialization failed",
+      "solution": "Check logs for SQLAlchemy errors. Ensure sufficient disk space."
+    }
+  },
+  
+  "testing_commands": [
+    {
+      "test": "Health check",
+      "command": "curl -H 'Authorization: Bearer YOUR_TOKEN' https://YOUR-SPACE.hf.space/api/health"
+    },
+    {
+      "test": "Market data",
+      "command": "curl -H 'Authorization: Bearer YOUR_TOKEN' https://YOUR-SPACE.hf.space/api/market?limit=5"
+    },
+    {
+      "test": "OHLC data",
+      "command": "curl -H 'Authorization: Bearer YOUR_TOKEN' https://YOUR-SPACE.hf.space/api/market/history?symbol=BTCUSDT&timeframe=1h&limit=10"
+    },
+    {
+      "test": "Sentiment analysis",
+      "command": "curl -X POST -H 'Authorization: Bearer YOUR_TOKEN' -H 'Content-Type: application/json' -d '{\"text\":\"Bitcoin is amazing!\"}' https://YOUR-SPACE.hf.space/api/sentiment/analyze"
+    },
+    {
+      "test": "Run full test suite",
+      "command": "export HF_TOKEN=YOUR_TOKEN && export HF_BASE_URL=https://YOUR-SPACE.hf.space && python test_hf_endpoints.py"
+    }
+  ],
+  
+  "important_notes": [
+    "ALL data is REAL - no fake/mock/placeholder data anywhere",
+    "If workers fail, endpoints return errors (correct behavior)",
+    "CoinGecko free tier has rate limits - respect them",
+    "Binance API is stable and fast - primary OHLC source",
+    "AI models may take time to load on first startup",
+    "Database is SQLite - stored in Space persistent storage",
+    "Logs are crucial for debugging - check them first",
+    "Test thoroughly before sharing Space URL"
+  ]
+}
