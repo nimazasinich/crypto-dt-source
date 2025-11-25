@@ -1,0 +1,279 @@
+{
+  "service": "Unified Query Service API",
+  "version": "1.0.0",
+  "base_url": "https://really-amin-datasourceforcryptocurrency.hf.space",
+  "description": "Single unified service answering any data query about cryptocurrencies with HF-first → WS-exception → fallback resolution",
+  
+  "architecture": {
+    "priority_order": [
+      "HuggingFace Space (HTTP)",
+      "WebSocket (real-time only)",
+      "External fallback providers"
+    ],
+    "persistence": "All responses persisted to Space database",
+    "caching": "Smart caching with TTL per data type",
+    "auth": "API keys for heavy endpoints, public for reads"
+  },
+  
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/service/rate",
+      "description": "Current exchange rate for single pair",
+      "params": {
+        "pair": "Currency pair (required, e.g. BTC/USDT)",
+        "convert": "Optional conversion currency"
+      },
+      "response_example": {
+        "data": {
+          "pair": "BTC/USDT",
+          "price": 50234.12,
+          "quote": "USDT",
+          "ts": "2025-11-24T12:00:00Z"
+        },
+        "meta": {
+          "source": "hf",
+          "generated_at": "2025-11-24T12:00:00Z",
+          "cache_ttl_seconds": 10
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/rate/batch",
+      "description": "Current rates for multiple pairs",
+      "params": {
+        "pairs": "Comma-separated pairs (e.g. BTC/USDT,ETH/USDT)"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/pair/{pair}",
+      "description": "Canonical metadata for trading pair (MUST be served by HF first)",
+      "params": {
+        "pair": "Path parameter - trading pair"
+      },
+      "special_note": "This endpoint MUST return meta.source='hf' as primary requirement"
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/sentiment",
+      "description": "Sentiment analysis for text or symbol",
+      "params": {
+        "text": "Text to analyze (optional)",
+        "symbol": "Symbol to analyze (optional)",
+        "mode": "Analysis mode: news|social|crypto (default: crypto)"
+      },
+      "response_example": {
+        "data": {
+          "score": 0.73,
+          "label": "positive",
+          "summary": "Bullish sentiment driven by institutional adoption"
+        },
+        "meta": {
+          "source": "hf-model",
+          "generated_at": "2025-11-24T12:00:00Z",
+          "confidence": 0.73
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/econ-analysis",
+      "description": "Economic and macro analysis for currency",
+      "body": {
+        "currency": "Currency symbol (required)",
+        "period": "Time period (default: 1M)",
+        "context": "Analysis context (default: macro, inflow, rates)"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/history",
+      "description": "Historical OHLC candlestick data",
+      "params": {
+        "symbol": "Symbol (required, e.g. BTC)",
+        "interval": "Interval in minutes (default: 60)",
+        "limit": "Number of candles (default: 200)"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/market-status",
+      "description": "Current market overview with top movers",
+      "params": {},
+      "response_includes": [
+        "total_market_cap",
+        "btc_dominance",
+        "top_gainers",
+        "top_losers",
+        "active_cryptos"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/top",
+      "description": "Top N coins by market cap",
+      "params": {
+        "n": "Number of coins: 10 or 50"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/whales",
+      "description": "Whale transactions and movements",
+      "params": {
+        "chain": "Blockchain (default: ethereum)",
+        "min_amount_usd": "Minimum USD amount (default: 100000)",
+        "limit": "Number of transactions (default: 50)"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/service/onchain",
+      "description": "On-chain data for address or contract",
+      "params": {
+        "address": "Wallet/contract address (required)",
+        "chain": "Blockchain (default: ethereum)",
+        "limit": "Number of transactions (default: 50)"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/service/query",
+      "description": "Generic query endpoint - single entry for all query types",
+      "body": {
+        "type": "Query type: rate|history|sentiment|econ|whales|onchain|pair",
+        "payload": "Query-specific parameters",
+        "options": {
+          "prefer_hf": "Prefer HF source (default: true)",
+          "persist": "Persist to DB (default: true)"
+        }
+      }
+    },
+    {
+      "method": "WS",
+      "path": "/ws",
+      "description": "WebSocket for real-time subscriptions",
+      "subscribe_format": {
+        "action": "subscribe",
+        "service": "market_data",
+        "symbols": ["BTC", "ETH"]
+      },
+      "message_format": {
+        "type": "update",
+        "service": "market_data",
+        "symbol": "BTC",
+        "data": {},
+        "timestamp": "2025-11-24T12:00:00Z"
+      }
+    }
+  ],
+  
+  "response_contract": {
+    "success": {
+      "data": "<domain-specific payload>",
+      "meta": {
+        "source": "Source identifier",
+        "generated_at": "ISO timestamp with Z suffix",
+        "cache_ttl_seconds": "Cache validity in seconds",
+        "confidence": "Optional: AI model confidence 0-1",
+        "attempted": "Optional: array of attempted sources on fallback"
+      }
+    },
+    "failure": {
+      "data": null,
+      "meta": {
+        "source": "none",
+        "attempted": ["hf", "hf-ws", "provider1", "provider2"],
+        "generated_at": "ISO timestamp",
+        "error": "ERROR_CODE"
+      }
+    }
+  },
+  
+  "meta_source_values": {
+    "hf": "HuggingFace Space HTTP API (preferred)",
+    "hf-ws": "HuggingFace WebSocket stream",
+    "hf-model": "HuggingFace AI model inference",
+    "none": "No data available",
+    "default": "Default/hardcoded values",
+    "<provider-url>": "External provider that served data"
+  },
+  
+  "persistence": {
+    "enabled": true,
+    "tables": [
+      "cached_market_data",
+      "cached_ohlc",
+      "whale_transactions",
+      "news_articles",
+      "sentiment_metrics",
+      "gas_prices",
+      "blockchain_stats"
+    ],
+    "retention": {
+      "high_frequency": "7 days",
+      "aggregated": "30 days",
+      "historical": "indefinite"
+    },
+    "fields": {
+      "stored_from": "Source that provided data",
+      "stored_at": "Timestamp of storage"
+    }
+  },
+  
+  "fallback_providers": {
+    "configuration": "/mnt/data/api-config-complete.txt or /workspace/providers_config_ultimate.json",
+    "categories": {
+      "market_data": ["coingecko", "coinmarketcap", "binance"],
+      "blockchain": ["etherscan", "bscscan", "polygonscan"],
+      "news": ["newsapi", "cryptopanic", "coindesk"],
+      "sentiment": ["santiment", "lunarcrush"],
+      "onchain": ["nansen", "glassnode", "dune"]
+    },
+    "resolution_order": "By priority and weight in config"
+  },
+  
+  "security": {
+    "auth_required": {
+      "heavy_endpoints": ["/api/service/econ-analysis", "/api/service/query"],
+      "write_endpoints": [],
+      "method": "API key or JWT in header"
+    },
+    "cors": "Enabled for all origins",
+    "rate_limiting": "Per provider limits respected",
+    "api_keys": "Never exposed in responses or logs"
+  },
+  
+  "documentation": {
+    "swagger_ui": "/docs",
+    "openapi_json": "/openapi.json",
+    "examples_file": "service_usage_examples.sh",
+    "health_check": "/api/health"
+  },
+  
+  "acceptance_criteria": [
+    "All 12 endpoints implemented and reachable",
+    "GET /api/service/pair/{pair} MUST be served by HF first (meta.source='hf')",
+    "All fallback calls recorded in meta.attempted",
+    "WebSocket functional with persistence",
+    "All responses follow data + meta schema",
+    "All responses persisted to database",
+    "/docs reflects all endpoints with examples"
+  ],
+  
+  "deployment": {
+    "platform": "HuggingFace Spaces",
+    "runtime": "Python 3.9+ with FastAPI",
+    "database": "SQLite (local) or PostgreSQL (production)",
+    "dependencies": [
+      "fastapi",
+      "uvicorn",
+      "httpx",
+      "sqlalchemy",
+      "websockets",
+      "pydantic"
+    ]
+  }
+}
