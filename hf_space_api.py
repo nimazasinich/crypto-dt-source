@@ -46,11 +46,13 @@ from database.db_manager import db_manager
 from database.cache_queries import get_cache_queries
 from workers.market_data_worker import start_market_data_worker
 from workers.ohlc_data_worker import start_ohlc_data_worker
+from workers.comprehensive_data_worker import start_comprehensive_worker
 from ai_models import _registry
 from utils.logger import setup_logger
 
-# Import HF endpoints router
+# Import HF endpoints routers
 from api.hf_endpoints import router as hf_router
+from api.hf_data_hub_endpoints import router as hf_hub_router
 
 # Setup logging
 logger = setup_logger("hf_space_api", level="INFO")
@@ -112,11 +114,23 @@ async def lifespan(app: FastAPI):
         # Start market data worker (fetches from CoinGecko)
         await start_market_data_worker()
         logger.info("✅ Market data worker started")
-        
+
         # Start OHLC data worker (fetches from Binance)
         await start_ohlc_data_worker()
         logger.info("✅ OHLC data worker started")
-        
+
+        # Start comprehensive data worker (fetches from ALL sources)
+        await start_comprehensive_worker()
+        logger.info("✅ Comprehensive data worker started")
+        logger.info("   📊 Collecting from 148+ data sources:")
+        logger.info("      - 23 Market Data APIs")
+        logger.info("      - 15 News APIs")
+        logger.info("      - 12 Sentiment APIs")
+        logger.info("      - 13 On-chain Analytics APIs")
+        logger.info("      - 9 Whale Tracking APIs")
+        logger.info("      - 18 Block Explorers")
+        logger.info("      - And more...")
+
     except Exception as e:
         logger.error(f"❌ Worker startup error: {e}", exc_info=True)
         # Don't fail on worker errors - they will retry
@@ -205,10 +219,14 @@ async def root():
 
 
 # ============================================================================
-# Include HF Endpoints Router
+# Include HF Endpoints Routers
 # ============================================================================
 
+# Original HF Space endpoints (uses local SQLite cache)
 app.include_router(hf_router)
+
+# NEW: Data Hub endpoints (serves FROM HuggingFace Datasets)
+app.include_router(hf_hub_router)
 
 
 # ============================================================================
