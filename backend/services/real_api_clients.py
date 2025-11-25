@@ -27,21 +27,47 @@ class RealAPIConfiguration:
     BSCSCAN_API_KEY = os.getenv("BSCSCAN_API_KEY", "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT")
     BSCSCAN_BASE_URL = "https://api.bscscan.com/api"
     
+    # کلید دوم Etherscan (جدید)
     ETHERSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY", "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45")
     ETHERSCAN_BASE_URL = "https://api.etherscan.io/api"
     
-    # Market Data
+    # Market Data - کلیدهای جدید
     COINMARKETCAP_API_KEY = os.getenv("COINMARKETCAP_API_KEY", "a35ffaec-c66c-4f16-81e3-41a717e4822f")
     COINMARKETCAP_BASE_URL = "https://pro-api.coinmarketcap.com/v1"
     
-    # News
+    # News - کلید جدید
     NEWSAPI_API_KEY = os.getenv("NEWSAPI_API_KEY", "968a5e25552b4cb5ba3280361d8444ab")
     NEWSAPI_BASE_URL = "https://newsapi.org/v2"
     
-    # HuggingFace Space
+    # HuggingFace Space - کلید جدید
     HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
     HF_SPACE_BASE_URL = os.getenv("HF_SPACE_BASE_URL", "https://really-amin-datasourceforcryptocurrency.hf.space")
     HF_SPACE_WS_URL = os.getenv("HF_SPACE_WS_URL", "wss://really-amin-datasourceforcryptocurrency.hf.space/ws")
+    
+    # منابع اضافی جدید
+    # TronGrid (منبع دوم برای Tron)
+    TRONGRID_API_KEY = os.getenv("TRONGRID_API_KEY", "7ae72726-bffe-4e74-9c33-97b761eeea21")  # همان کلید TronScan
+    TRONGRID_BASE_URL = "https://api.trongrid.io/v1"
+    
+    # Blockchair (برای چندین بلاکچین)
+    BLOCKCHAIR_API_KEY = os.getenv("BLOCKCHAIR_API_KEY", "YOUR_BLOCKCHAIR_KEY")
+    BLOCKCHAIR_BASE_URL = "https://api.blockchair.com"
+    
+    # Alternative.me برای Fear & Greed Index
+    ALTERNATIVE_ME_BASE_URL = "https://api.alternative.me"
+    
+    # CoinGecko (بدون نیاز به کلید)
+    COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
+    
+    # Binance Public API (بدون نیاز به کلید)
+    BINANCE_BASE_URL = "https://api.binance.com/api/v3"
+    
+    # CryptoCompare 
+    CRYPTOCOMPARE_API_KEY = os.getenv("CRYPTOCOMPARE_API_KEY", "YOUR_CRYPTOCOMPARE_KEY")
+    CRYPTOCOMPARE_BASE_URL = "https://min-api.cryptocompare.com/data"
+    
+    # Reddit API (برای احساسات اجتماعی)
+    REDDIT_BASE_URL = "https://www.reddit.com/r"
 
 
 class CoinMarketCapClient:
