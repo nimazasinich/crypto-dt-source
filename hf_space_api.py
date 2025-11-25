@@ -49,8 +49,9 @@ from workers.ohlc_data_worker import start_ohlc_data_worker
 from ai_models import _registry
 from utils.logger import setup_logger
 
-# Import HF endpoints router
+# Import HF endpoints routers
 from api.hf_endpoints import router as hf_router
+from api.hf_data_hub_endpoints import router as hf_hub_router
 
 # Setup logging
 logger = setup_logger("hf_space_api", level="INFO")
@@ -205,10 +206,14 @@ async def root():
 
 
 # ============================================================================
-# Include HF Endpoints Router
+# Include HF Endpoints Routers
 # ============================================================================
 
+# Original HF Space endpoints (uses local SQLite cache)
 app.include_router(hf_router)
+
+# NEW: Data Hub endpoints (serves FROM HuggingFace Datasets)
+app.include_router(hf_hub_router)
 
 
 # ============================================================================

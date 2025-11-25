@@ -12,6 +12,7 @@ CRITICAL RULES:
 import asyncio
 import time
 import logging
+import os
 from datetime import datetime
 from typing import List, Dict, Any
 import httpx
@@ -24,6 +25,21 @@ logger = setup_logger("ohlc_worker")
 
 # Get cache queries instance
 cache = get_cache_queries(db_manager)
+
+# HuggingFace Dataset Uploader (optional - only if HF_TOKEN is set)
+HF_UPLOAD_ENABLED = bool(os.getenv("HF_TOKEN") or os.getenv("HF_API_TOKEN"))
+if HF_UPLOAD_ENABLED:
+    try:
+        from hf_dataset_uploader import get_dataset_uploader
+        hf_uploader = get_dataset_uploader()
+        logger.info("✅ HuggingFace Dataset upload ENABLED for OHLC data")
+    except Exception as e:
+        logger.warning(f"HuggingFace Dataset upload disabled: {e}")
+        HF_UPLOAD_ENABLED = False
+        hf_uploader = None
+else:
+    logger.info("ℹ️  HuggingFace Dataset upload DISABLED (no HF_TOKEN)")
+    hf_uploader = None
 
 # Binance API (FREE - no API key required)
 BINANCE_BASE_URL = "https://api.binance.com/api/v3"
@@ -134,16 +150,22 @@ async def fetch_binance_klines(
 
 async def save_ohlc_data_to_cache(ohlc_data: List[Dict[str, Any]]) -> int:
     """
-    Save REAL OHLC data to database cache
-    
+    Save REAL OHLC data to database cache AND upload to HuggingFace Datasets
+
+    Data Flow:
+        1. Save to SQLite cache (local persistence)
+        2. Upload to HuggingFace Datasets (cloud storage & hub)
+        3. Clients can fetch from HuggingFace Datasets
+
     Args:
         ohlc_data: List of REAL OHLC data dictionaries
-        
+
     Returns:
         int: Number of candles saved
     """
     saved_count = 0
-    
+
+    # Step 1: Save to local SQLite cache
     for data in ohlc_data:
         try:
             success = cache.save_ohlc_candle(
@@ -157,14 +179,40 @@ async def save_ohlc_data_to_cache(ohlc_data: List[Dict[str, Any]]) -> int:
                 volume=data["volume"],
                 provider=data["provider"]
             )
-            
+
             if success:
                 saved_count += 1
-            
+
         except Exception as e:
             logger.error(f"Error saving OHLC data for {data.get('symbol')}: {e}")
             continue
-    
+
+    # Step 2: Upload to HuggingFace Datasets (if enabled)
+    if HF_UPLOAD_ENABLED and hf_uploader and ohlc_data:
+        try:
+            # Prepare data for upload (convert datetime to ISO string)
+            upload_data = []
+            for data in ohlc_data:
+                upload_record = data.copy()
+                if isinstance(upload_record.get("timestamp"), datetime):
+                    upload_record["timestamp"] = upload_record["timestamp"].isoformat() + "Z"
+                upload_data.append(upload_record)
+
+            logger.info(f"📤 Uploading {len(upload_data)} OHLC records to HuggingFace Datasets...")
+            upload_success = await hf_uploader.upload_ohlc_data(
+                upload_data,
+                append=True  # Append to existing data
+            )
+
+            if upload_success:
+                logger.info(f"✅ Successfully uploaded OHLC data to HuggingFace Datasets")
+            else:
+                logger.warning(f"⚠️  Failed to upload OHLC data to HuggingFace Datasets")
+
+        except Exception as e:
+            logger.error(f"Error uploading OHLC to HuggingFace Datasets: {e}")
+            # Don't fail if HF upload fails - local cache is still available
+
     return saved_count
 
 
