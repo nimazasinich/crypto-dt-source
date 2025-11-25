@@ -84,14 +84,25 @@ class HuggingFaceDatasetUploader:
         self.auto_create = auto_create
         self.api = HfApi(token=self.token)
 
-        # Dataset names
+        # Dataset names - ALL data types
         self.market_data_dataset = f"{self.namespace}/crypto-market-data"
         self.ohlc_dataset = f"{self.namespace}/crypto-ohlc-data"
+        self.news_dataset = f"{self.namespace}/crypto-news-data"
+        self.sentiment_dataset = f"{self.namespace}/crypto-sentiment-data"
+        self.onchain_dataset = f"{self.namespace}/crypto-onchain-data"
+        self.whale_dataset = f"{self.namespace}/crypto-whale-data"
+        self.explorer_dataset = f"{self.namespace}/crypto-explorer-data"
 
         logger.info(f"HuggingFace Dataset Uploader initialized")
         logger.info(f"  Namespace: {self.namespace}")
-        logger.info(f"  Market data dataset: {self.market_data_dataset}")
-        logger.info(f"  OHLC dataset: {self.ohlc_dataset}")
+        logger.info(f"  Datasets:")
+        logger.info(f"    - Market: {self.market_data_dataset}")
+        logger.info(f"    - OHLC: {self.ohlc_dataset}")
+        logger.info(f"    - News: {self.news_dataset}")
+        logger.info(f"    - Sentiment: {self.sentiment_dataset}")
+        logger.info(f"    - On-chain: {self.onchain_dataset}")
+        logger.info(f"    - Whale: {self.whale_dataset}")
+        logger.info(f"    - Explorer: {self.explorer_dataset}")
 
     def _ensure_dataset_exists(self, dataset_name: str, description: str) -> bool:
         """
@@ -365,22 +376,209 @@ All data is real - no mock or fake data.
             logger.error(f"Error uploading OHLC data: {e}", exc_info=True)
             return False
 
+    async def upload_news_data(
+        self,
+        news_data: List[Dict[str, Any]],
+        append: bool = True
+    ) -> bool:
+        """Upload news data to HuggingFace Dataset"""
+        try:
+            if not news_data:
+                return False
+
+            if not self._ensure_dataset_exists(
+                self.news_dataset,
+                "Real-time cryptocurrency news from multiple sources"
+            ):
+                return False
+
+            df = pd.DataFrame(news_data)
+            dataset = Dataset.from_pandas(df)
+
+            if append:
+                try:
+                    from datasets import load_dataset
+                    existing = load_dataset(self.news_dataset, split="train", token=self.token)
+                    existing_df = existing.to_pandas()
+                    combined_df = pd.concat([existing_df, df], ignore_index=True)
+                    combined_df = combined_df.drop_duplicates(subset=["url"], keep="last")
+                    dataset = Dataset.from_pandas(combined_df)
+                except:
+                    pass
+
+            dataset.push_to_hub(self.news_dataset, token=self.token, private=False)
+            logger.info(f"✅ Uploaded {len(dataset)} news records to {self.news_dataset}")
+            return True
+        except Exception as e:
+            logger.error(f"Error uploading news data: {e}", exc_info=True)
+            return False
+
+    async def upload_sentiment_data(
+        self,
+        sentiment_data: List[Dict[str, Any]],
+        append: bool = True
+    ) -> bool:
+        """Upload sentiment data to HuggingFace Dataset"""
+        try:
+            if not sentiment_data:
+                return False
+
+            if not self._ensure_dataset_exists(
+                self.sentiment_dataset,
+                "Cryptocurrency market sentiment indicators from multiple sources"
+            ):
+                return False
+
+            df = pd.DataFrame(sentiment_data)
+            dataset = Dataset.from_pandas(df)
+
+            if append:
+                try:
+                    from datasets import load_dataset
+                    existing = load_dataset(self.sentiment_dataset, split="train", token=self.token)
+                    existing_df = existing.to_pandas()
+                    combined_df = pd.concat([existing_df, df], ignore_index=True)
+                    dataset = Dataset.from_pandas(combined_df)
+                except:
+                    pass
+
+            dataset.push_to_hub(self.sentiment_dataset, token=self.token, private=False)
+            logger.info(f"✅ Uploaded {len(dataset)} sentiment records to {self.sentiment_dataset}")
+            return True
+        except Exception as e:
+            logger.error(f"Error uploading sentiment data: {e}", exc_info=True)
+            return False
+
+    async def upload_onchain_data(
+        self,
+        onchain_data: List[Dict[str, Any]],
+        append: bool = True
+    ) -> bool:
+        """Upload on-chain analytics to HuggingFace Dataset"""
+        try:
+            if not onchain_data:
+                return False
+
+            if not self._ensure_dataset_exists(
+                self.onchain_dataset,
+                "On-chain cryptocurrency analytics and metrics"
+            ):
+                return False
+
+            df = pd.DataFrame(onchain_data)
+            dataset = Dataset.from_pandas(df)
+
+            if append:
+                try:
+                    from datasets import load_dataset
+                    existing = load_dataset(self.onchain_dataset, split="train", token=self.token)
+                    existing_df = existing.to_pandas()
+                    combined_df = pd.concat([existing_df, df], ignore_index=True)
+                    dataset = Dataset.from_pandas(combined_df)
+                except:
+                    pass
+
+            dataset.push_to_hub(self.onchain_dataset, token=self.token, private=False)
+            logger.info(f"✅ Uploaded {len(dataset)} on-chain records to {self.onchain_dataset}")
+            return True
+        except Exception as e:
+            logger.error(f"Error uploading on-chain data: {e}", exc_info=True)
+            return False
+
+    async def upload_whale_data(
+        self,
+        whale_data: List[Dict[str, Any]],
+        append: bool = True
+    ) -> bool:
+        """Upload whale transaction data to HuggingFace Dataset"""
+        try:
+            if not whale_data:
+                return False
+
+            if not self._ensure_dataset_exists(
+                self.whale_dataset,
+                "Large cryptocurrency transactions and whale movements"
+            ):
+                return False
+
+            df = pd.DataFrame(whale_data)
+            dataset = Dataset.from_pandas(df)
+
+            if append:
+                try:
+                    from datasets import load_dataset
+                    existing = load_dataset(self.whale_dataset, split="train", token=self.token)
+                    existing_df = existing.to_pandas()
+                    combined_df = pd.concat([existing_df, df], ignore_index=True)
+                    dataset = Dataset.from_pandas(combined_df)
+                except:
+                    pass
+
+            dataset.push_to_hub(self.whale_dataset, token=self.token, private=False)
+            logger.info(f"✅ Uploaded {len(dataset)} whale transaction records to {self.whale_dataset}")
+            return True
+        except Exception as e:
+            logger.error(f"Error uploading whale data: {e}", exc_info=True)
+            return False
+
+    async def upload_explorer_data(
+        self,
+        explorer_data: List[Dict[str, Any]],
+        append: bool = True
+    ) -> bool:
+        """Upload block explorer data to HuggingFace Dataset"""
+        try:
+            if not explorer_data:
+                return False
+
+            if not self._ensure_dataset_exists(
+                self.explorer_dataset,
+                "Blockchain data from multiple block explorers"
+            ):
+                return False
+
+            df = pd.DataFrame(explorer_data)
+            dataset = Dataset.from_pandas(df)
+
+            if append:
+                try:
+                    from datasets import load_dataset
+                    existing = load_dataset(self.explorer_dataset, split="train", token=self.token)
+                    existing_df = existing.to_pandas()
+                    combined_df = pd.concat([existing_df, df], ignore_index=True)
+                    dataset = Dataset.from_pandas(combined_df)
+                except:
+                    pass
+
+            dataset.push_to_hub(self.explorer_dataset, token=self.token, private=False)
+            logger.info(f"✅ Uploaded {len(dataset)} explorer records to {self.explorer_dataset}")
+            return True
+        except Exception as e:
+            logger.error(f"Error uploading explorer data: {e}", exc_info=True)
+            return False
+
     def get_dataset_info(self, dataset_type: str = "market") -> Optional[Dict[str, Any]]:
         """
         Get information about a dataset
 
         Args:
-            dataset_type: "market" or "ohlc"
+            dataset_type: "market", "ohlc", "news", "sentiment", "onchain", "whale", or "explorer"
 
         Returns:
             Dataset information dictionary
         """
         try:
-            dataset_name = (
-                self.market_data_dataset if dataset_type == "market"
-                else self.ohlc_dataset
-            )
+            dataset_map = {
+                "market": self.market_data_dataset,
+                "ohlc": self.ohlc_dataset,
+                "news": self.news_dataset,
+                "sentiment": self.sentiment_dataset,
+                "onchain": self.onchain_dataset,
+                "whale": self.whale_dataset,
+                "explorer": self.explorer_dataset
+            }
 
+            dataset_name = dataset_map.get(dataset_type, self.market_data_dataset)
             info = self.api.dataset_info(dataset_name, token=self.token)
 
             return {
