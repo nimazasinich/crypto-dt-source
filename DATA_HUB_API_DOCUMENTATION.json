@@ -1,0 +1,385 @@
+{
+  "title": "Data Hub Complete API Documentation",
+  "version": "2.0.0",
+  "base_url": "/api/v2/data-hub",
+  "description": "مرکز جامع داده‌های ارز دیجیتال با پشتیبانی از تمام منابع و کلیدهای API جدید",
+  "api_keys_configured": {
+    "coinmarketcap": "✅ Configured via environment variable",
+    "newsapi": "✅ Configured via environment variable",
+    "huggingface": "✅ Configured via environment variable",
+    "etherscan": "✅ Configured via environment variable",
+    "bscscan": "✅ Configured via environment variable",
+    "tronscan": "✅ Configured via environment variable"
+  },
+  "endpoints": {
+    "market_data": {
+      "prices": {
+        "path": "/market/prices",
+        "methods": ["GET", "POST"],
+        "description": "دریافت قیمت‌های لحظه‌ای بازار",
+        "parameters": {
+          "symbols": "لیست سمبل‌ها (اختیاری)",
+          "limit": "تعداد نتایج (پیش‌فرض: 100)",
+          "source": "منبع داده: auto, coinmarketcap, coingecko, binance"
+        },
+        "sources": ["CoinMarketCap", "CoinGecko", "Binance", "HuggingFace"],
+        "example": "/market/prices?symbols=BTC,ETH&limit=10"
+      },
+      "ohlcv": {
+        "path": "/market/ohlcv",
+        "methods": ["GET", "POST"],
+        "description": "دریافت داده‌های کندل استیک",
+        "parameters": {
+          "symbol": "سمبل (اجباری)",
+          "interval": "بازه زمانی: 1m, 5m, 15m, 1h, 4h, 1d",
+          "limit": "تعداد کندل‌ها"
+        },
+        "sources": ["Binance", "HuggingFace"],
+        "example": "/market/ohlcv?symbol=BTC&interval=1h&limit=24"
+      },
+      "top_coins": {
+        "path": "/market/top",
+        "methods": ["GET"],
+        "description": "دریافت ارزهای برتر بر اساس Market Cap",
+        "example": "/market/top?limit=10"
+      }
+    },
+    "sentiment": {
+      "fear_greed": {
+        "path": "/sentiment/fear-greed",
+        "methods": ["GET"],
+        "description": "شاخص ترس و طمع بازار",
+        "source": "Alternative.me",
+        "returns": "مقدار 0-100 و طبقه‌بندی احساسات"
+      },
+      "analyze": {
+        "path": "/sentiment/analyze",
+        "methods": ["POST"],
+        "description": "تحلیل احساسات متن با AI",
+        "body": {
+          "text": "متن برای تحلیل",
+          "source": "huggingface"
+        },
+        "source": "HuggingFace Models"
+      },
+      "batch": {
+        "path": "/sentiment/batch",
+        "methods": ["POST"],
+        "description": "تحلیل احساسات دسته‌ای",
+        "body": ["array of texts"],
+        "limit": "حداکثر 50 متن"
+      }
+    },
+    "news": {
+      "latest": {
+        "path": "/news",
+        "methods": ["GET", "POST"],
+        "description": "دریافت آخرین اخبار ارز دیجیتال",
+        "parameters": {
+          "query": "کلمه جستجو",
+          "limit": "تعداد اخبار",
+          "source": "منبع: auto, newsapi, reddit"
+        },
+        "sources": ["NewsAPI", "Reddit"]
+      },
+      "by_symbol": {
+        "path": "/news/latest/{symbol}",
+        "methods": ["GET"],
+        "description": "اخبار مربوط به یک سمبل خاص"
+      }
+    },
+    "trending": {
+      "coins": {
+        "path": "/trending",
+        "methods": ["GET"],
+        "description": "ارزهای ترند روز",
+        "source": "CoinGecko"
+      },
+      "search": {
+        "path": "/trending/search",
+        "methods": ["GET"],
+        "description": "جستجو در ارزهای ترند"
+      }
+    },
+    "blockchain": {
+      "data": {
+        "path": "/blockchain/{chain}",
+        "methods": ["GET", "POST"],
+        "description": "داده‌های بلاکچین",
+        "chains": ["ethereum", "bsc", "tron"],
+        "types": ["transactions", "balance", "gas"],
+        "sources": ["Etherscan", "BSCScan", "TronScan"]
+      },
+      "gas": {
+        "path": "/blockchain/{chain}/gas",
+        "methods": ["GET"],
+        "description": "قیمت گس برای بلاکچین"
+      }
+    },
+    "whale_tracking": {
+      "activity": {
+        "path": "/whales",
+        "methods": ["GET", "POST"],
+        "description": "تراکنش‌های بزرگ نهنگ‌ها",
+        "parameters": {
+          "chain": "بلاکچین: all, ethereum, bsc, tron",
+          "min_value_usd": "حداقل مبلغ به دلار",
+          "limit": "تعداد تراکنش‌ها"
+        }
+      }
+    },
+    "social_media": {
+      "data": {
+        "path": "/social/{platform}",
+        "methods": ["GET", "POST"],
+        "description": "داده‌های شبکه‌های اجتماعی",
+        "platforms": ["reddit"],
+        "returns": "پست‌ها با امتیاز و کامنت‌ها"
+      }
+    },
+    "ai_predictions": {
+      "predict": {
+        "path": "/ai/predict/{symbol}",
+        "methods": ["GET", "POST"],
+        "description": "پیش‌بینی با مدل‌های AI",
+        "types": ["price", "trend", "signal"],
+        "timeframes": ["1h", "4h", "24h", "7d"],
+        "source": "HuggingFace Models"
+      }
+    },
+    "combined": {
+      "overview": {
+        "path": "/overview/{symbol}",
+        "methods": ["GET"],
+        "description": "نمای کلی یک سمبل (همه داده‌ها)",
+        "returns": "قیمت، اخبار، احساسات، پیش‌بینی، نمودار"
+      },
+      "dashboard": {
+        "path": "/dashboard",
+        "methods": ["GET"],
+        "description": "داشبورد کامل",
+        "returns": "Top coins، Fear & Greed، اخبار، ترندینگ، نهنگ‌ها"
+      }
+    },
+    "system": {
+      "health": {
+        "path": "/health",
+        "methods": ["GET"],
+        "description": "بررسی سلامت تمام منابع"
+      },
+      "status": {
+        "path": "/status",
+        "methods": ["GET"],
+        "description": "وضعیت کامل سیستم و API keys"
+      },
+      "sources": {
+        "path": "/sources",
+        "methods": ["GET"],
+        "description": "لیست منابع داده و قابلیت‌ها"
+      }
+    },
+    "websocket": {
+      "endpoint": {
+        "path": "/ws",
+        "protocol": "WebSocket",
+        "description": "دریافت داده‌های real-time",
+        "channels": ["prices", "news", "whales", "sentiment"],
+        "messages": {
+          "subscribe": {
+            "action": "subscribe",
+            "channels": ["prices", "news"]
+          },
+          "unsubscribe": {
+            "action": "unsubscribe"
+          },
+          "ping": {
+            "action": "ping"
+          }
+        }
+      }
+    }
+  },
+  "data_sources": {
+    "market_data": [
+      {
+        "name": "CoinMarketCap",
+        "api_key": "configured",
+        "capabilities": ["prices", "market_cap", "volume", "rankings"],
+        "rate_limit": "333/min"
+      },
+      {
+        "name": "CoinGecko",
+        "api_key": "not_required",
+        "capabilities": ["prices", "trending", "market_data"],
+        "rate_limit": "50/min"
+      },
+      {
+        "name": "Binance",
+        "api_key": "not_required",
+        "capabilities": ["prices", "ohlcv", "24hr_tickers"],
+        "rate_limit": "1200/min"
+      }
+    ],
+    "blockchain": [
+      {
+        "name": "Etherscan",
+        "api_key": "configured",
+        "capabilities": ["eth_transactions", "gas_prices", "balances", "smart_contracts"],
+        "rate_limit": "5/sec"
+      },
+      {
+        "name": "BSCScan",
+        "api_key": "configured",
+        "capabilities": ["bsc_transactions", "token_info", "defi_data"],
+        "rate_limit": "5/sec"
+      },
+      {
+        "name": "TronScan",
+        "api_key": "configured",
+        "capabilities": ["tron_transactions", "tron_blocks", "trc20_tokens"],
+        "rate_limit": "10/sec"
+      }
+    ],
+    "news": [
+      {
+        "name": "NewsAPI",
+        "api_key": "configured",
+        "capabilities": ["crypto_news", "headlines", "search"],
+        "rate_limit": "500/hour"
+      },
+      {
+        "name": "Reddit",
+        "api_key": "not_required",
+        "capabilities": ["posts", "comments", "sentiment"],
+        "subreddits": ["CryptoCurrency", "Bitcoin", "ethereum", "defi"]
+      }
+    ],
+    "sentiment": [
+      {
+        "name": "Alternative.me",
+        "api_key": "not_required",
+        "capabilities": ["fear_greed_index"],
+        "update_frequency": "daily"
+      },
+      {
+        "name": "HuggingFace",
+        "api_key": "configured",
+        "capabilities": ["text_sentiment", "ai_analysis", "nlp_models"]
+      }
+    ],
+    "ai_models": [
+      {
+        "name": "HuggingFace",
+        "api_key": "configured",
+        "capabilities": ["price_prediction", "trend_analysis", "trading_signals", "text_generation"]
+      }
+    ]
+  },
+  "response_format": {
+    "success_response": {
+      "success": true,
+      "data": "actual_data",
+      "source": "data_source_name",
+      "timestamp": "ISO_8601_timestamp"
+    },
+    "error_response": {
+      "success": false,
+      "error": "error_message",
+      "timestamp": "ISO_8601_timestamp"
+    }
+  },
+  "features": {
+    "caching": {
+      "enabled": true,
+      "ttl": {
+        "market_prices": 30,
+        "ohlcv": 60,
+        "news": 300,
+        "sentiment": 60,
+        "blockchain": 60,
+        "trending": 180,
+        "fear_greed": 3600
+      }
+    },
+    "rate_limiting": {
+      "enabled": true,
+      "automatic_throttling": true
+    },
+    "fallback": {
+      "enabled": true,
+      "strategy": "Try primary source first, fallback to secondary if failed"
+    },
+    "websocket": {
+      "enabled": true,
+      "real_time_updates": true,
+      "channels": ["prices", "news", "whales", "sentiment"]
+    }
+  },
+  "usage_examples": {
+    "get_bitcoin_price": {
+      "request": "GET /api/v2/data-hub/market/prices?symbols=BTC",
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "symbol": "BTC",
+            "name": "Bitcoin",
+            "price": 50000,
+            "change_24h": 2.5,
+            "volume_24h": 30000000000,
+            "market_cap": 1000000000000
+          }
+        ],
+        "source": "coinmarketcap"
+      }
+    },
+    "get_fear_greed": {
+      "request": "GET /api/v2/data-hub/sentiment/fear-greed",
+      "response": {
+        "success": true,
+        "current": {
+          "value": 65,
+          "value_classification": "Greed"
+        }
+      }
+    },
+    "analyze_sentiment": {
+      "request": "POST /api/v2/data-hub/sentiment/analyze",
+      "body": {
+        "text": "Bitcoin is going to the moon!",
+        "source": "huggingface"
+      },
+      "response": {
+        "success": true,
+        "data": {
+          "label": "positive",
+          "score": 0.95,
+          "confidence": 0.95
+        }
+      }
+    },
+    "websocket_subscribe": {
+      "connect": "ws://localhost:7860/api/v2/data-hub/ws",
+      "message": {
+        "action": "subscribe",
+        "channels": ["prices"]
+      },
+      "response": {
+        "type": "price_update",
+        "data": "real_time_price_data"
+      }
+    }
+  },
+  "deployment": {
+    "docker": {
+      "port": 7860,
+      "environment": "Hugging Face Spaces"
+    },
+    "local": {
+      "command": "python api_server_extended.py",
+      "test": "python test_data_hub_complete.py"
+    }
+  },
+  "last_updated": "2025-11-25",
+  "author": "Data Hub Development Team"
+}

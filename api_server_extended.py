@@ -657,6 +657,14 @@ try:
 except Exception as router_error:
     print(f"⚠ Failed to load Real Data Router: {router_error}")
 
+# ===== Include Data Hub Complete Router - All APIs Integrated =====
+try:
+    from backend.routers.data_hub_api import router as data_hub_router
+    app.include_router(data_hub_router)
+    print("✓ ✅ Data Hub Complete Router loaded - All APIs integrated with new keys")
+except Exception as data_hub_error:
+    print(f"⚠ Failed to load Data Hub Complete Router: {data_hub_error}")
+
 # Mount static files
 try:
     static_path = WORKSPACE_ROOT / "static"
