@@ -1,424 +1,408 @@
 #!/bin/bash
-# ============================================================================
-# Unified Query Service API - Usage Examples
-# ============================================================================
-# 
-# This file contains curl examples for all endpoints in the Unified Service API.
-# The service follows HF-first → WS-exception → fallback resolution pattern.
-#
-# Base URL for HuggingFace Space:
-BASE_URL="https://really-amin-datasourceforcryptocurrency.hf.space"
-#
-# Expected meta.source values:
-# - "hf" : Data served from HuggingFace Space (preferred)
-# - "hf-ws" : Data from WebSocket real-time stream
-# - "hf-model" : Data from HF AI models
-# - External provider URLs (e.g., "https://api.coingecko.com", "https://api.binance.com")
-# - "none" : No data available
-#
-# meta.attempted array shows all sources tried before success/failure
-# ============================================================================
 
-echo "=========================================="
-echo "Unified Query Service API - Test Suite"
-echo "=========================================="
-echo ""
+# ============================================
+# HF Space UI Service Usage Examples
+# Complete curl commands for all endpoints
+# ============================================
+
+# Configuration
+BASE_URL="${BASE_URL:-http://localhost:8000}"
+API_PREFIX="/api/service"
 
 # Colors for output
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
-RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# ============================================================================
-# 1. GET /api/service/rate - Single pair rate
-# ============================================================================
-echo -e "${BLUE}1. Testing Single Pair Rate (BTC/USDT)${NC}"
-echo "Endpoint: GET /api/service/rate?pair=BTC/USDT"
-echo ""
-
-curl -X GET "${BASE_URL}/api/service/rate?pair=BTC/USDT" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 2. GET /api/service/rate/batch - Multiple pairs
-# ============================================================================
-echo -e "${BLUE}2. Testing Batch Rates (BTC/USDT, ETH/USDT)${NC}"
-echo "Endpoint: GET /api/service/rate/batch?pairs=BTC/USDT,ETH/USDT"
-echo ""
-
-curl -X GET "${BASE_URL}/api/service/rate/batch?pairs=BTC/USDT,ETH/USDT" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 3. GET /api/service/pair/{pair} - Pair metadata (MUST be HF first)
-# ============================================================================
-echo -e "${BLUE}3. Testing Pair Metadata (BTC-USDT)${NC}"
-echo "Endpoint: GET /api/service/pair/BTC-USDT"
-echo "Note: This endpoint MUST be served by HF HTTP first (meta.source='hf')"
-echo ""
-
-curl -X GET "${BASE_URL}/api/service/pair/BTC-USDT" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 4. GET /api/service/sentiment - Sentiment analysis
-# ============================================================================
-echo -e "${BLUE}4. Testing Sentiment Analysis${NC}"
-echo "Endpoint: GET /api/service/sentiment"
-echo ""
-
-# With text parameter (URL encoded)
-curl -G "${BASE_URL}/api/service/sentiment" \
-  --data-urlencode "text=Bitcoin is surging to new all-time highs" \
-  --data-urlencode "mode=crypto" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# With symbol parameter
-echo -e "${BLUE}4b. Testing Sentiment Analysis (by symbol)${NC}"
-curl -X GET "${BASE_URL}/api/service/sentiment?symbol=BTC&mode=crypto" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 5. POST /api/service/econ-analysis - Economic analysis
-# ============================================================================
-echo -e "${BLUE}5. Testing Economic Analysis${NC}"
-echo "Endpoint: POST /api/service/econ-analysis"
-echo ""
-
-curl -X POST "${BASE_URL}/api/service/econ-analysis" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "currency": "BTC",
-    "period": "1M",
-    "context": "inflation, macro, federal reserve policy"
-  }' \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 6. GET /api/service/history - Historical OHLC data
-# ============================================================================
-echo -e "${BLUE}6. Testing Historical Data (BTC)${NC}"
-echo "Endpoint: GET /api/service/history?symbol=BTC&interval=60&limit=200"
-echo ""
-
-curl -X GET "${BASE_URL}/api/service/history?symbol=BTC&interval=60&limit=200" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 7. GET /api/service/market-status - Market overview
-# ============================================================================
-echo -e "${BLUE}7. Testing Market Status${NC}"
-echo "Endpoint: GET /api/service/market-status"
-echo ""
-
-curl -X GET "${BASE_URL}/api/service/market-status" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 8. GET /api/service/top - Top N coins
-# ============================================================================
-echo -e "${BLUE}8a. Testing Top 10 Coins${NC}"
-echo "Endpoint: GET /api/service/top?n=10"
-echo ""
-
-curl -X GET "${BASE_URL}/api/service/top?n=10" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-echo -e "${BLUE}8b. Testing Top 50 Coins${NC}"
-echo "Endpoint: GET /api/service/top?n=50"
-echo ""
-
-curl -X GET "${BASE_URL}/api/service/top?n=50" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 9. GET /api/service/whales - Whale movements
-# ============================================================================
-echo -e "${BLUE}9. Testing Whale Movements${NC}"
-echo "Endpoint: GET /api/service/whales?chain=ethereum&min_amount_usd=100000&limit=50"
-echo ""
-
-curl -X GET "${BASE_URL}/api/service/whales?chain=ethereum&min_amount_usd=100000&limit=50" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 10. GET /api/service/onchain - On-chain data
-# ============================================================================
-echo -e "${BLUE}10. Testing On-chain Data${NC}"
-echo "Endpoint: GET /api/service/onchain?address=0xabc...&chain=ethereum"
-echo ""
-
-curl -X GET "${BASE_URL}/api/service/onchain?address=0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1&chain=ethereum&limit=50" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 11. POST /api/service/query - Generic query endpoint
-# ============================================================================
-echo -e "${BLUE}11. Testing Generic Query Endpoint${NC}"
-echo "Endpoint: POST /api/service/query"
-echo ""
-
-# Example 1: Rate query
-echo "11a. Generic Query - Rate"
-curl -X POST "${BASE_URL}/api/service/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "rate",
-    "payload": {"pair": "BTC/USDT"},
-    "options": {"prefer_hf": true, "persist": true}
-  }' \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# Example 2: History query
-echo "11b. Generic Query - History"
-curl -X POST "${BASE_URL}/api/service/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "history",
-    "payload": {"symbol": "ETH", "interval": 60, "limit": 100},
-    "options": {"prefer_hf": true, "persist": true}
-  }' \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# Example 3: Sentiment query
-echo "11c. Generic Query - Sentiment"
-curl -X POST "${BASE_URL}/api/service/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "sentiment",
-    "payload": {"text": "Ethereum upgrade successful", "mode": "crypto"},
-    "options": {"prefer_hf": true, "persist": true}
-  }' \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# 12. WebSocket Connection Test
-# ============================================================================
-echo -e "${BLUE}12. WebSocket Connection (JavaScript Example)${NC}"
-echo "Endpoint: wss://${BASE_URL#https://}/ws"
-echo ""
-
-cat << 'EOF'
-// WebSocket connection example (run in browser console or Node.js)
-const ws = new WebSocket('wss://really-amin-datasourceforcryptocurrency.hf.space/ws');
-
-ws.onopen = () => {
-  console.log('Connected to WebSocket');
-  
-  // Subscribe to market data
-  ws.send(JSON.stringify({
-    "action": "subscribe",
-    "service": "market_data",
-    "symbols": ["BTC", "ETH", "BNB"]
-  }));
-};
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log('Received:', data);
-  
-  // Data will be persisted automatically on server side
-  // Expected format:
-  // {
-  //   "type": "update" | "subscribed",
-  //   "service": "market_data",
-  //   "symbol": "BTC",
-  //   "data": { ... },
-  //   "timestamp": "2025-11-24T12:00:00Z"
-  // }
-};
-
-ws.onerror = (error) => {
-  console.error('WebSocket error:', error);
-};
-
-ws.onclose = () => {
-  console.log('WebSocket connection closed');
-};
-EOF
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# Health Check
-# ============================================================================
-echo -e "${BLUE}13. Health Check${NC}"
-echo "Endpoint: GET /api/health"
-echo ""
-
-curl -X GET "${BASE_URL}/api/health" \
-  -H "Accept: application/json" \
-  | python3 -m json.tool
-
-echo ""
-echo "----------------------------------------"
-echo ""
-
-# ============================================================================
-# OpenAPI Documentation
-# ============================================================================
-echo -e "${BLUE}14. API Documentation${NC}"
-echo "Swagger UI: ${BASE_URL}/docs"
-echo "OpenAPI JSON: ${BASE_URL}/openapi.json"
-echo ""
-
-echo "To view interactive documentation, open in browser:"
-echo "  ${BASE_URL}/docs"
-echo ""
-
-# ============================================================================
-# Response Format Documentation
-# ============================================================================
-echo -e "${GREEN}=========================================="
-echo "RESPONSE FORMAT DOCUMENTATION"
-echo "==========================================${NC}"
-echo ""
-echo "All successful responses follow this format:"
-echo ""
-cat << 'EOF'
-{
-  "data": <domain-specific payload>,
-  "meta": {
-    "source": "hf" | "hf-ws" | "<provider-url>",
-    "generated_at": "2025-11-24T12:00:00Z",
-    "cache_ttl_seconds": 30,
-    "confidence": 0.85,              // Optional: for AI-generated data
-    "attempted": ["hf", "hf-ws"]     // Only on fallback/failure
-  }
+# Helper function to print section headers
+print_section() {
+    echo -e "\n${BLUE}============================================${NC}"
+    echo -e "${GREEN}$1${NC}"
+    echo -e "${BLUE}============================================${NC}\n"
 }
-EOF
 
-echo ""
-echo "On failure:"
-echo ""
-cat << 'EOF'
-{
-  "data": null,
-  "meta": {
-    "source": "none",
-    "attempted": ["hf", "hf-ws", "binance", "coingecko"],
-    "generated_at": "2025-11-24T12:00:00Z",
-    "error": "DATA_NOT_AVAILABLE"
-  }
+# Helper function to execute and show curl command
+exec_curl() {
+    local description="$1"
+    local curl_cmd="$2"
+    
+    echo -e "${YELLOW}▶ $description${NC}"
+    echo -e "${BLUE}Command:${NC} $curl_cmd"
+    echo -e "${GREEN}Response:${NC}"
+    eval "$curl_cmd" | jq '.' 2>/dev/null || eval "$curl_cmd"
+    echo -e "\n"
 }
-EOF
 
-echo ""
-echo -e "${GREEN}=========================================="
-echo "META.SOURCE VALUES EXPLAINED"
-echo "==========================================${NC}"
-echo ""
-echo "• 'hf'         : Data from HuggingFace Space (preferred source)"
-echo "• 'hf-ws'      : Real-time data from HF WebSocket"
-echo "• 'hf-model'   : AI-generated data from HF models"
-echo "• 'default'    : Default/fallback values when all sources fail"
-echo "• 'none'       : No data available from any source"
-echo "• External URLs: Fallback provider that served the data"
-echo ""
-echo "The 'attempted' array shows resolution order when HF couldn't serve the request."
-echo ""
+# ============================================
+# HEALTH & DIAGNOSTICS
+# ============================================
 
-echo -e "${GREEN}=========================================="
-echo "PERSISTENCE INFORMATION"
-echo "==========================================${NC}"
-echo ""
-echo "All returned datasets are automatically persisted to the Space database with:"
-echo "• stored_from : Source that provided the data"
-echo "• stored_at   : Timestamp when data was stored"
-echo "• Full meta object for audit trail"
-echo ""
-echo "Retention policy:"
-echo "• High-frequency data (rates, ticks): 7 days"
-echo "• Aggregated summaries: 30 days"
-echo "• Historical data: Indefinite"
-echo ""
+print_section "🏥 HEALTH & DIAGNOSTICS"
 
-echo -e "${GREEN}=========================================="
-echo "TEST COMPLETE!"
-echo "==========================================${NC}"
-echo ""
-echo "All endpoints have been tested. Check the responses above for:"
-echo "1. Proper data structure"
-echo "2. meta.source values (should prefer 'hf' when available)"
-echo "3. meta.attempted arrays on fallbacks"
-echo "4. Correct timestamp formats"
-echo ""
-echo "For production use, ensure:"
-echo "• HF_SPACE_BASE_URL environment variable is set"
-echo "• Database persistence is configured"
-echo "• Provider API keys are configured in /mnt/data/api-config-complete.txt"
-echo ""
+exec_curl "Health Check" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/health'"
+
+exec_curl "Detailed Diagnostics" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/diagnostics'"
+
+# ============================================
+# A. REAL-TIME MARKET DATA
+# ============================================
+
+print_section "📈 A. REAL-TIME MARKET DATA"
+
+exec_curl "Get single rate (BTC/USDT)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/rate?pair=BTC/USDT'"
+
+exec_curl "Get single rate (ETH/USDT)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/rate?pair=ETH/USDT'"
+
+exec_curl "Get batch rates" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/rate/batch?pairs=BTC/USDT,ETH/USDT,SOL/USDT'"
+
+# ============================================
+# B. PAIR METADATA (MUST BE HF)
+# ============================================
+
+print_section "🔍 B. PAIR METADATA (HF Priority)"
+
+exec_curl "Get BTC-USDT pair metadata" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/pair/BTC-USDT'"
+
+exec_curl "Get ETH-USDT pair metadata" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/pair/ETH-USDT'"
+
+exec_curl "Get SOL-USDT pair metadata" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/pair/SOL-USDT'"
+
+# Validate HF source
+echo -e "${YELLOW}⚠️  Validating HF source for pair metadata...${NC}"
+PAIR_RESPONSE=$(curl -s -X GET "${BASE_URL}${API_PREFIX}/pair/BTC-USDT")
+SOURCE=$(echo "$PAIR_RESPONSE" | jq -r '.meta.source')
+if [ "$SOURCE" == "hf" ]; then
+    echo -e "${GREEN}✓ Pair metadata correctly served from HF${NC}"
+else
+    echo -e "${RED}✗ WARNING: Pair metadata source is '$SOURCE', expected 'hf'${NC}"
+fi
+
+# ============================================
+# C. HISTORICAL DATA (OHLC)
+# ============================================
+
+print_section "📊 C. HISTORICAL DATA (OHLC)"
+
+exec_curl "Get BTC 1-minute candles (limit 10)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/history?symbol=BTC&interval=60&limit=10'"
+
+exec_curl "Get ETH 5-minute candles (limit 20)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/history?symbol=ETH&interval=300&limit=20'"
+
+exec_curl "Get BTC 1-hour candles (limit 100)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/history?symbol=BTC&interval=3600&limit=100'"
+
+# ============================================
+# D. MARKET OVERVIEW & TOP MOVERS
+# ============================================
+
+print_section "🌐 D. MARKET OVERVIEW & TOP MOVERS"
+
+exec_curl "Get market overview/status" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/market-status'"
+
+exec_curl "Get top 10 movers" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/top?n=10'"
+
+exec_curl "Get top 50 movers" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/top?n=50'"
+
+# ============================================
+# E. SENTIMENT & NEWS ANALYSIS
+# ============================================
+
+print_section "📰 E. SENTIMENT & NEWS ANALYSIS"
+
+exec_curl "Analyze text sentiment" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/sentiment' \
+        -H 'Content-Type: application/json' \
+        -d '{\"text\": \"Bitcoin is showing strong bullish signals\", \"mode\": \"general\"}'"
+
+exec_curl "Analyze symbol sentiment (BTC)" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/sentiment' \
+        -H 'Content-Type: application/json' \
+        -d '{\"symbol\": \"BTC\", \"mode\": \"news\"}'"
+
+exec_curl "Get latest news (limit 10)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/news?limit=10'"
+
+exec_curl "Get latest news (limit 25)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/news?limit=25'"
+
+exec_curl "Analyze news URL" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/news/analyze' \
+        -H 'Content-Type: application/json' \
+        -d '{\"url\": \"https://example.com/crypto-news\"}'"
+
+exec_curl "Analyze news text" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/news/analyze' \
+        -H 'Content-Type: application/json' \
+        -d '{\"text\": \"Federal Reserve announces new crypto regulations\"}'"
+
+# ============================================
+# F. ECONOMIC / MACRO ANALYSIS
+# ============================================
+
+print_section "💰 F. ECONOMIC / MACRO ANALYSIS"
+
+exec_curl "Economic analysis for USD (1 month)" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/econ-analysis' \
+        -H 'Content-Type: application/json' \
+        -d '{\"currency\": \"USD\", \"period\": \"1M\"}'"
+
+exec_curl "Economic analysis for EUR (3 months)" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/econ-analysis' \
+        -H 'Content-Type: application/json' \
+        -d '{\"currency\": \"EUR\", \"period\": \"3M\", \"context\": \"ECB policy impact\"}'"
+
+exec_curl "Economic analysis for JPY (1 year)" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/econ-analysis' \
+        -H 'Content-Type: application/json' \
+        -d '{\"currency\": \"JPY\", \"period\": \"1Y\"}'"
+
+# ============================================
+# G. WHALE TRACKING / ON-CHAIN
+# ============================================
+
+print_section "🐋 G. WHALE TRACKING / ON-CHAIN"
+
+exec_curl "Get whale transactions (Ethereum, >$100k)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/whales?chain=ethereum&min_amount_usd=100000&limit=10'"
+
+exec_curl "Get whale transactions (BSC, >$500k)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/whales?chain=bsc&min_amount_usd=500000&limit=20'"
+
+exec_curl "Get whale transactions (Polygon, >$1M)" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/whales?chain=polygon&min_amount_usd=1000000&limit=50'"
+
+exec_curl "Get on-chain data for address" \
+    "curl -X GET '${BASE_URL}${API_PREFIX}/onchain?address=0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb3&chain=ethereum'"
+
+# ============================================
+# H. MODEL PREDICTIONS / SIGNALS
+# ============================================
+
+print_section "🤖 H. MODEL PREDICTIONS / SIGNALS"
+
+exec_curl "Get prediction from single model" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/models/price_lstm/predict' \
+        -H 'Content-Type: application/json' \
+        -d '{\"symbol\": \"BTC\", \"horizon\": \"24h\"}'"
+
+exec_curl "Get prediction with features" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/models/sentiment_rf/predict' \
+        -H 'Content-Type: application/json' \
+        -d '{
+            \"symbol\": \"ETH\", 
+            \"horizon\": \"48h\",
+            \"features\": {
+                \"rsi\": 65,
+                \"volume_24h\": 15000000000,
+                \"sentiment_score\": 0.72
+            }
+        }'"
+
+exec_curl "Batch model predictions" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/models/batch/predict' \
+        -H 'Content-Type: application/json' \
+        -d '{
+            \"models\": [\"price_lstm\", \"sentiment_rf\", \"technical_xgb\"],
+            \"request\": {
+                \"symbol\": \"SOL\",
+                \"horizon\": \"12h\"
+            }
+        }'"
+
+# ============================================
+# I. GENERIC QUERY ENDPOINT
+# ============================================
+
+print_section "🔧 I. GENERIC QUERY ENDPOINT"
+
+exec_curl "Generic query - Get rate" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/query' \
+        -H 'Content-Type: application/json' \
+        -d '{\"type\": \"rate\", \"payload\": {\"pair\": \"BTC/USDT\"}}'"
+
+exec_curl "Generic query - Get history" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/query' \
+        -H 'Content-Type: application/json' \
+        -d '{\"type\": \"history\", \"payload\": {\"symbol\": \"ETH\", \"interval\": 60, \"limit\": 5}}'"
+
+exec_curl "Generic query - Sentiment analysis" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/query' \
+        -H 'Content-Type: application/json' \
+        -d '{\"type\": \"sentiment\", \"payload\": {\"text\": \"Crypto market rally\"}}'"
+
+exec_curl "Generic query - Whale tracking" \
+    "curl -X POST '${BASE_URL}${API_PREFIX}/query' \
+        -H 'Content-Type: application/json' \
+        -d '{\"type\": \"whales\", \"payload\": {\"chain\": \"ethereum\", \"min_amount_usd\": 250000}}'"
+
+# ============================================
+# SMOKE TESTS SUMMARY
+# ============================================
+
+print_section "✅ SMOKE TESTS SUMMARY"
+
+echo -e "${YELLOW}Running comprehensive smoke tests...${NC}\n"
+
+# Test counter
+TESTS_PASSED=0
+TESTS_FAILED=0
+
+# Function to test endpoint
+test_endpoint() {
+    local name="$1"
+    local cmd="$2"
+    local expected_field="$3"
+    
+    echo -n "Testing $name... "
+    
+    RESPONSE=$(eval "$cmd" 2>/dev/null)
+    
+    if [ $? -eq 0 ] && [ -n "$RESPONSE" ]; then
+        if [ -n "$expected_field" ]; then
+            FIELD_VALUE=$(echo "$RESPONSE" | jq -r "$expected_field" 2>/dev/null)
+            if [ "$FIELD_VALUE" != "null" ] && [ -n "$FIELD_VALUE" ]; then
+                echo -e "${GREEN}✓ PASSED${NC}"
+                ((TESTS_PASSED++))
+            else
+                echo -e "${RED}✗ FAILED (missing $expected_field)${NC}"
+                ((TESTS_FAILED++))
+            fi
+        else
+            echo -e "${GREEN}✓ PASSED${NC}"
+            ((TESTS_PASSED++))
+        fi
+    else
+        echo -e "${RED}✗ FAILED${NC}"
+        ((TESTS_FAILED++))
+    fi
+}
+
+# Run smoke tests
+test_endpoint "Health" "curl -s '${BASE_URL}${API_PREFIX}/health'" ".status"
+test_endpoint "Pair Metadata (HF)" "curl -s '${BASE_URL}${API_PREFIX}/pair/BTC-USDT'" ".meta.source"
+test_endpoint "Rate" "curl -s '${BASE_URL}${API_PREFIX}/rate?pair=BTC/USDT'" ".price"
+test_endpoint "History" "curl -s '${BASE_URL}${API_PREFIX}/history?symbol=BTC&interval=60&limit=5'" ".items[0].open"
+test_endpoint "Market Status" "curl -s '${BASE_URL}${API_PREFIX}/market-status'" ".total_market_cap"
+test_endpoint "Top Movers" "curl -s '${BASE_URL}${API_PREFIX}/top?n=5'" ".movers[0].symbol"
+test_endpoint "News" "curl -s '${BASE_URL}${API_PREFIX}/news?limit=5'" ".items[0].id"
+test_endpoint "Whales" "curl -s '${BASE_URL}${API_PREFIX}/whales?chain=ethereum&min_amount_usd=100000&limit=5'" ".transactions"
+test_endpoint "Generic Query" "curl -s -X POST '${BASE_URL}${API_PREFIX}/query' -H 'Content-Type: application/json' -d '{\"type\":\"rate\",\"payload\":{\"pair\":\"BTC/USDT\"}}'" ".price"
+
+# Summary
+echo -e "\n${BLUE}============================================${NC}"
+echo -e "${GREEN}SMOKE TEST RESULTS:${NC}"
+echo -e "  Tests Passed: ${GREEN}$TESTS_PASSED${NC}"
+echo -e "  Tests Failed: ${RED}$TESTS_FAILED${NC}"
+
+if [ $TESTS_FAILED -eq 0 ]; then
+    echo -e "\n${GREEN}✓ ALL SMOKE TESTS PASSED!${NC}"
+else
+    echo -e "\n${RED}✗ SOME TESTS FAILED - REVIEW REQUIRED${NC}"
+fi
+
+echo -e "${BLUE}============================================${NC}"
+
+# ============================================
+# PERFORMANCE TEST
+# ============================================
+
+print_section "⚡ PERFORMANCE TEST"
+
+echo -e "${YELLOW}Testing response times...${NC}\n"
+
+# Function to measure response time
+measure_time() {
+    local name="$1"
+    local cmd="$2"
+    
+    echo -n "$name: "
+    
+    START=$(date +%s%N)
+    eval "$cmd" > /dev/null 2>&1
+    END=$(date +%s%N)
+    
+    ELAPSED=$((($END - $START) / 1000000))
+    
+    if [ $ELAPSED -lt 1500 ]; then
+        echo -e "${GREEN}${ELAPSED}ms ✓${NC}"
+    elif [ $ELAPSED -lt 4000 ]; then
+        echo -e "${YELLOW}${ELAPSED}ms ⚠${NC}"
+    else
+        echo -e "${RED}${ELAPSED}ms ✗${NC}"
+    fi
+}
+
+measure_time "Rate endpoint" "curl -s '${BASE_URL}${API_PREFIX}/rate?pair=BTC/USDT'"
+measure_time "Pair metadata" "curl -s '${BASE_URL}${API_PREFIX}/pair/BTC-USDT'"
+measure_time "History (small)" "curl -s '${BASE_URL}${API_PREFIX}/history?symbol=BTC&interval=60&limit=10'"
+measure_time "Market status" "curl -s '${BASE_URL}${API_PREFIX}/market-status'"
+measure_time "Top movers" "curl -s '${BASE_URL}${API_PREFIX}/top?n=10'"
+
+# ============================================
+# META VALIDATION
+# ============================================
+
+print_section "🔍 META BLOCK VALIDATION"
+
+echo -e "${YELLOW}Validating meta blocks in responses...${NC}\n"
+
+validate_meta() {
+    local name="$1"
+    local cmd="$2"
+    
+    echo -n "$name: "
+    
+    RESPONSE=$(eval "$cmd" 2>/dev/null)
+    META=$(echo "$RESPONSE" | jq '.meta' 2>/dev/null)
+    
+    if [ -n "$META" ] && [ "$META" != "null" ]; then
+        SOURCE=$(echo "$META" | jq -r '.source')
+        GENERATED=$(echo "$META" | jq -r '.generated_at')
+        TTL=$(echo "$META" | jq -r '.cache_ttl_seconds')
+        
+        if [ -n "$SOURCE" ] && [ -n "$GENERATED" ] && [ -n "$TTL" ]; then
+            echo -e "${GREEN}✓ Valid meta (source: $SOURCE, ttl: ${TTL}s)${NC}"
+        else
+            echo -e "${YELLOW}⚠ Partial meta${NC}"
+        fi
+    else
+        echo -e "${RED}✗ Missing meta${NC}"
+    fi
+}
+
+validate_meta "Rate" "curl -s '${BASE_URL}${API_PREFIX}/rate?pair=BTC/USDT'"
+validate_meta "Pair" "curl -s '${BASE_URL}${API_PREFIX}/pair/BTC-USDT'"
+validate_meta "History" "curl -s '${BASE_URL}${API_PREFIX}/history?symbol=BTC&interval=60&limit=5'"
+validate_meta "News" "curl -s '${BASE_URL}${API_PREFIX}/news?limit=5'"
+validate_meta "Whales" "curl -s '${BASE_URL}${API_PREFIX}/whales?chain=ethereum&min_amount_usd=100000&limit=5'"
+
+# ============================================
+# FINAL MESSAGE
+# ============================================
+
+echo -e "\n${BLUE}============================================${NC}"
+echo -e "${GREEN}📋 SERVICE USAGE EXAMPLES COMPLETE${NC}"
+echo -e "${BLUE}============================================${NC}"
+echo -e "\nTo run specific tests:"
+echo -e "  ${YELLOW}./service_usage_examples.sh${NC} - Run all tests"
+echo -e "  ${YELLOW}BASE_URL=https://your-space.hf.space ./service_usage_examples.sh${NC} - Test remote"
+echo -e "\nFor production deployment:"
+echo -e "  1. Ensure all smoke tests pass"
+echo -e "  2. Verify pair metadata source is 'hf'"
+echo -e "  3. Check response times are < 1.5s (cached) or < 4s (fallback)"
+echo -e "  4. Confirm all responses include valid meta blocks"
+echo -e "${BLUE}============================================${NC}"
