@@ -1,0 +1,214 @@
+{
+  "title": "Cryptocurrency Data Engine API - Quick Start Guide",
+  "description": "Quick guide to start using the real data API",
+  
+  "step_1_environment_setup": {
+    "title": "Set Environment Variables",
+    "required": {
+      "HF_API_TOKEN": {
+        "description": "HuggingFace API token for sentiment analysis",
+        "get_from": "https://huggingface.co/settings/tokens",
+        "example": "export HF_API_TOKEN=hf_xxxxxxxxxxxxx"
+      }
+    },
+    "optional": {
+      "NEWSAPI_KEY": {
+        "description": "NewsAPI key for cryptocurrency news (will fallback to RSS if not set)",
+        "get_from": "https://newsapi.org/",
+        "example": "export NEWSAPI_KEY=xxxxxxxxxxxxxxxx"
+      },
+      "CRYPTOPANIC_TOKEN": {
+        "description": "CryptoPanic token for news fallback",
+        "get_from": "https://cryptopanic.com/developers/api/",
+        "example": "export CRYPTOPANIC_TOKEN=xxxxxxxxxxxxxxxx"
+      }
+    }
+  },
+  
+  "step_2_start_server": {
+    "title": "Start the Server",
+    "methods": {
+      "method_1_quick_start": {
+        "command": "./start_crypto_data_engine.sh",
+        "description": "Use the quick start script (Linux/Mac)"
+      },
+      "method_2_python": {
+        "command": "python crypto_data_engine_server.py",
+        "description": "Direct Python execution"
+      },
+      "method_3_uvicorn": {
+        "command": "uvicorn crypto_data_engine_server:app --host 0.0.0.0 --port 8000 --reload",
+        "description": "Use uvicorn with hot reload"
+      }
+    },
+    "server_url": "http://localhost:8000",
+    "api_documentation": "http://localhost:8000/docs"
+  },
+  
+  "step_3_test_endpoints": {
+    "title": "Test the API Endpoints",
+    "methods": {
+      "method_1_test_script": {
+        "command": "python test_real_data_endpoints.py",
+        "description": "Automated test of all endpoints"
+      },
+      "method_2_curl": {
+        "description": "Manual testing with curl",
+        "examples": [
+          {
+            "name": "Health Check",
+            "command": "curl http://localhost:8000/api/health"
+          },
+          {
+            "name": "Market Prices",
+            "command": "curl http://localhost:8000/api/market?limit=5"
+          },
+          {
+            "name": "OHLCV Data",
+            "command": "curl 'http://localhost:8000/api/market/history?symbol=BTC&timeframe=1h&limit=10'"
+          },
+          {
+            "name": "Sentiment Analysis",
+            "command": "curl -X POST http://localhost:8000/api/sentiment/analyze -H 'Content-Type: application/json' -d '{\"text\": \"Bitcoin is bullish\"}'"
+          }
+        ]
+      },
+      "method_3_browser": {
+        "description": "Use interactive API documentation",
+        "url": "http://localhost:8000/docs"
+      }
+    }
+  },
+  
+  "endpoint_summary": {
+    "GET /api/health": {
+      "description": "Check service health and data source status",
+      "data_source": "System check",
+      "example": "curl http://localhost:8000/api/health"
+    },
+    
+    "GET /api/market": {
+      "description": "Real-time market prices from CoinGecko",
+      "data_source": "CoinGecko API → Binance fallback",
+      "parameters": "?limit=100&symbols=BTC,ETH",
+      "example": "curl 'http://localhost:8000/api/market?symbols=BTC,ETH'"
+    },
+    
+    "GET /api/market/history": {
+      "description": "Historical OHLCV data from Binance",
+      "data_source": "Binance Public API",
+      "parameters": "?symbol=BTC&timeframe=1h&limit=100",
+      "example": "curl 'http://localhost:8000/api/market/history?symbol=BTC&timeframe=1h&limit=10'"
+    },
+    
+    "GET /api/trending": {
+      "description": "Trending cryptocurrencies from CoinGecko",
+      "data_source": "CoinGecko Trending API",
+      "parameters": "?limit=10",
+      "example": "curl http://localhost:8000/api/trending"
+    },
+    
+    "POST /api/sentiment/analyze": {
+      "description": "Sentiment analysis using HuggingFace models",
+      "data_source": "HuggingFace Inference API",
+      "body": "{\"text\": \"Your text here\"}",
+      "example": "curl -X POST http://localhost:8000/api/sentiment/analyze -H 'Content-Type: application/json' -d '{\"text\": \"Bitcoin looks bullish\"}'"
+    },
+    
+    "GET /api/news/latest": {
+      "description": "Latest cryptocurrency news",
+      "data_source": "NewsAPI → CryptoPanic → RSS feeds",
+      "parameters": "?limit=20",
+      "example": "curl http://localhost:8000/api/news/latest?limit=5"
+    },
+    
+    "GET /api/status": {
+      "description": "Detailed system status",
+      "data_source": "System information",
+      "example": "curl http://localhost:8000/api/status"
+    }
+  },
+  
+  "important_notes": [
+    "ALL endpoints return REAL data - NO MOCK DATA",
+    "HF_API_TOKEN is REQUIRED for sentiment analysis",
+    "First sentiment request may take 20 seconds (model loading)",
+    "NewsAPI key is optional - will use RSS feeds as fallback",
+    "Data is cached to reduce API calls and respect rate limits",
+    "CoinGecko rate limit: 50 calls/minute (free tier)",
+    "Binance rate limit: 1200 requests/minute"
+  ],
+  
+  "troubleshooting": {
+    "server_wont_start": {
+      "issue": "Server fails to start",
+      "solutions": [
+        "Check if port 8000 is already in use",
+        "Install dependencies: pip install -r requirements.txt",
+        "Check Python version (requires 3.8+)"
+      ]
+    },
+    
+    "sentiment_fails": {
+      "issue": "Sentiment analysis returns error",
+      "solutions": [
+        "Verify HF_API_TOKEN is set correctly",
+        "Wait 20 seconds if model is loading",
+        "Check HuggingFace API status"
+      ]
+    },
+    
+    "503_errors": {
+      "issue": "Getting 503 Service Unavailable errors",
+      "solutions": [
+        "Check internet connection",
+        "Verify API source is not down",
+        "Check if rate limit exceeded",
+        "Try again after a few seconds (cached data may be available)"
+      ]
+    },
+    
+    "no_news": {
+      "issue": "News endpoint returns empty or limited results",
+      "solutions": [
+        "Set NEWSAPI_KEY environment variable",
+        "NewsAPI free tier has 100 requests/day limit",
+        "Will automatically fallback to RSS feeds"
+      ]
+    }
+  },
+  
+  "next_steps": [
+    "Start the server using one of the methods above",
+    "Test endpoints using the test script or curl examples",
+    "Check API documentation at http://localhost:8000/docs",
+    "Integrate endpoints into your application",
+    "Monitor API usage and rate limits"
+  ],
+  
+  "files_created": {
+    "services": [
+      "backend/services/coingecko_client.py - CoinGecko API integration",
+      "backend/services/binance_client.py - Binance API integration",
+      "backend/services/huggingface_inference_client.py - HuggingFace Inference API",
+      "backend/services/crypto_news_client.py - Multi-source news aggregator"
+    ],
+    "routers": [
+      "backend/routers/crypto_data_engine_api.py - Main API router"
+    ],
+    "servers": [
+      "crypto_data_engine_server.py - Standalone FastAPI server"
+    ],
+    "testing": [
+      "test_real_data_endpoints.py - Automated test script",
+      "TEST_REAL_DATA_API.json - Detailed testing guide"
+    ],
+    "documentation": [
+      "IMPLEMENTATION_SUMMARY.json - Complete implementation details",
+      "QUICK_START.json - This quick start guide"
+    ],
+    "scripts": [
+      "start_crypto_data_engine.sh - Quick start script"
+    ]
+  }
+}

@@ -1,0 +1,212 @@
+{
+  "title": "Cryptocurrency Data Engine API - Test Guide",
+  "description": "Guide for testing all real data endpoints - NO MOCK DATA",
+  "server_startup": {
+    "command": "python crypto_data_engine_server.py",
+    "alternative": "uvicorn crypto_data_engine_server:app --host 0.0.0.0 --port 8000",
+    "environment_variables": {
+      "required": {
+        "HF_API_TOKEN": "Your HuggingFace API token from https://huggingface.co/settings/tokens"
+      },
+      "optional": {
+        "NEWSAPI_KEY": "Your NewsAPI key from https://newsapi.org/",
+        "CRYPTOPANIC_TOKEN": "Your CryptoPanic token from https://cryptopanic.com/developers/api/"
+      }
+    }
+  },
+  "test_endpoints": [
+    {
+      "name": "Health Check",
+      "method": "GET",
+      "endpoint": "/api/health",
+      "description": "Check service health and data source status",
+      "curl_example": "curl http://localhost:8000/api/health",
+      "expected_response": {
+        "status": "healthy",
+        "timestamp": 1700000000000,
+        "uptime": 60,
+        "version": "1.0.0",
+        "dataSources": {
+          "coingecko": "connected",
+          "binance": "connected",
+          "huggingface": "connected",
+          "newsapi": "connected"
+        }
+      }
+    },
+    {
+      "name": "Market Prices - All Coins",
+      "method": "GET",
+      "endpoint": "/api/market",
+      "description": "Get REAL market prices for top cryptocurrencies from CoinGecko",
+      "curl_example": "curl http://localhost:8000/api/market?limit=10",
+      "query_parameters": {
+        "limit": "Number of coins (default: 100)",
+        "symbols": "Comma-separated symbols (e.g., BTC,ETH)"
+      },
+      "expected_response": [
+        {
+          "symbol": "BTC",
+          "name": "Bitcoin",
+          "price": 98234.56,
+          "change24h": 1234.56,
+          "changePercent24h": 1.27,
+          "volume24h": 45678901234.5,
+          "marketCap": 1900000000000,
+          "source": "coingecko",
+          "timestamp": 1700000000000
+        }
+      ],
+      "notes": "Returns REAL prices from CoinGecko API - NO MOCK DATA"
+    },
+    {
+      "name": "Market Prices - Specific Symbols",
+      "method": "GET",
+      "endpoint": "/api/market?symbols=BTC,ETH,BNB",
+      "description": "Get REAL prices for specific cryptocurrencies",
+      "curl_example": "curl 'http://localhost:8000/api/market?symbols=BTC,ETH,BNB'",
+      "notes": "Fetches real-time prices only for specified symbols"
+    },
+    {
+      "name": "OHLCV Historical Data",
+      "method": "GET",
+      "endpoint": "/api/market/history",
+      "description": "Get REAL OHLCV candlestick data from Binance",
+      "curl_example": "curl 'http://localhost:8000/api/market/history?symbol=BTC&timeframe=1h&limit=100'",
+      "query_parameters": {
+        "symbol": "Cryptocurrency symbol (e.g., BTC, ETH) [REQUIRED]",
+        "timeframe": "Time interval: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w (default: 1h)",
+        "limit": "Number of candles (max 1000, default: 100)"
+      },
+      "expected_response": [
+        {
+          "timestamp": 1699281234000,
+          "open": 43100.0,
+          "high": 43300.0,
+          "low": 43050.0,
+          "close": 43250.0,
+          "volume": 1250.45
+        }
+      ],
+      "notes": "Returns REAL OHLCV data from Binance exchange - NO MOCK DATA"
+    },
+    {
+      "name": "Trending Coins",
+      "method": "GET",
+      "endpoint": "/api/trending",
+      "description": "Get REAL trending cryptocurrencies from CoinGecko",
+      "curl_example": "curl http://localhost:8000/api/trending?limit=10",
+      "query_parameters": {
+        "limit": "Number of trending coins (default: 10)"
+      },
+      "expected_response": [
+        {
+          "symbol": "BTC",
+          "name": "Bitcoin",
+          "rank": 1,
+          "price": 98234.56,
+          "change24h": 1.27,
+          "marketCapRank": 1,
+          "source": "coingecko",
+          "timestamp": 1700000000000
+        }
+      ],
+      "notes": "Returns REAL trending coins from CoinGecko API"
+    },
+    {
+      "name": "Sentiment Analysis",
+      "method": "POST",
+      "endpoint": "/api/sentiment/analyze",
+      "description": "Analyze REAL sentiment using HuggingFace NLP models",
+      "curl_example": "curl -X POST http://localhost:8000/api/sentiment/analyze -H 'Content-Type: application/json' -d '{\"text\": \"Bitcoin is showing strong bullish momentum\"}'",
+      "request_body": {
+        "text": "Text to analyze (required)"
+      },
+      "expected_response": {
+        "label": "POSITIVE",
+        "score": 0.9543,
+        "sentiment": "positive",
+        "confidence": 0.9543,
+        "text": "Bitcoin is showing strong bullish momentum",
+        "model": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+        "source": "huggingface",
+        "timestamp": 1700000000000
+      },
+      "model_loading_response": {
+        "error": "Model is currently loading",
+        "estimated_time": 20
+      },
+      "notes": "Uses REAL HuggingFace models - NO FAKE SENTIMENT. Model may take 20s to load first time."
+    },
+    {
+      "name": "Latest News",
+      "method": "GET",
+      "endpoint": "/api/news/latest",
+      "description": "Get REAL cryptocurrency news from NewsAPI, CryptoPanic, or RSS feeds",
+      "curl_example": "curl http://localhost:8000/api/news/latest?limit=20",
+      "query_parameters": {
+        "limit": "Number of articles (default: 20)"
+      },
+      "expected_response": [
+        {
+          "title": "Bitcoin Reaches New All-Time High",
+          "description": "Bitcoin price surged to $98,000...",
+          "url": "https://www.coindesk.com/bitcoin-ath-2024",
+          "source": "CoinDesk",
+          "timestamp": 1700000000000
+        }
+      ],
+      "notes": "Returns REAL news from NewsAPI, CryptoPanic, or RSS feeds - NO MOCK ARTICLES"
+    },
+    {
+      "name": "System Status",
+      "method": "GET",
+      "endpoint": "/api/status",
+      "description": "Get detailed system and data source status",
+      "curl_example": "curl http://localhost:8000/api/status",
+      "expected_response": {
+        "status": "operational",
+        "mode": "REAL_DATA_ONLY",
+        "mock_data": false,
+        "data_sources": {
+          "coingecko": {
+            "status": "active",
+            "endpoint": "https://api.coingecko.com/api/v3",
+            "purpose": "Market prices, trending coins"
+          },
+          "binance": {
+            "status": "active",
+            "endpoint": "https://api.binance.com/api/v3",
+            "purpose": "OHLCV historical data"
+          }
+        }
+      }
+    }
+  ],
+  "testing_workflow": {
+    "step_1": "Start server: python crypto_data_engine_server.py",
+    "step_2": "Test health check: curl http://localhost:8000/api/health",
+    "step_3": "Test market prices: curl http://localhost:8000/api/market?limit=5",
+    "step_4": "Test OHLCV data: curl 'http://localhost:8000/api/market/history?symbol=BTC&timeframe=1h&limit=10'",
+    "step_5": "Test sentiment: curl -X POST http://localhost:8000/api/sentiment/analyze -H 'Content-Type: application/json' -d '{\"text\": \"Bitcoin looks bullish\"}'",
+    "step_6": "Test news: curl http://localhost:8000/api/news/latest?limit=5",
+    "step_7": "Test trending: curl http://localhost:8000/api/trending?limit=5"
+  },
+  "important_notes": [
+    "ALL endpoints return REAL data from live APIs - NO MOCK DATA",
+    "HF_API_TOKEN is REQUIRED for sentiment analysis endpoint",
+    "NewsAPI key is optional - will fallback to RSS feeds",
+    "First sentiment analysis may take 20 seconds (model loading)",
+    "CoinGecko has rate limit: 50 calls/minute (free tier)",
+    "Binance has rate limit: 1200 requests/minute",
+    "Data is cached for 30-300 seconds to reduce API calls",
+    "All timestamps are Unix milliseconds",
+    "Symbol parameters accept both BTC and BTCUSDT formats"
+  ],
+  "troubleshooting": {
+    "503_error": "Data source temporarily unavailable - check internet connection",
+    "400_error": "Invalid parameters - check endpoint documentation",
+    "404_error": "Symbol not found - verify symbol exists on exchange",
+    "model_loading": "HuggingFace model is loading - wait 20 seconds and retry"
+  }
+}
