@@ -12,6 +12,7 @@ CRITICAL RULES:
 import asyncio
 import time
 import logging
+import os
 from datetime import datetime
 from typing import List, Dict, Any
 import httpx
@@ -24,6 +25,21 @@ logger = setup_logger("market_worker")
 
 # Get cache queries instance
 cache = get_cache_queries(db_manager)
+
+# HuggingFace Dataset Uploader (optional - only if HF_TOKEN is set)
+HF_UPLOAD_ENABLED = bool(os.getenv("HF_TOKEN") or os.getenv("HF_API_TOKEN"))
+if HF_UPLOAD_ENABLED:
+    try:
+        from hf_dataset_uploader import get_dataset_uploader
+        hf_uploader = get_dataset_uploader()
+        logger.info("✅ HuggingFace Dataset upload ENABLED")
+    except Exception as e:
+        logger.warning(f"HuggingFace Dataset upload disabled: {e}")
+        HF_UPLOAD_ENABLED = False
+        hf_uploader = None
+else:
+    logger.info("ℹ️  HuggingFace Dataset upload DISABLED (no HF_TOKEN)")
+    hf_uploader = None
 
 # CoinGecko API (FREE tier - no API key required)
 COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
@@ -141,16 +157,22 @@ async def fetch_coingecko_prices() -> List[Dict[str, Any]]:
 
 async def save_market_data_to_cache(market_data: List[Dict[str, Any]]) -> int:
     """
-    Save REAL market data to database cache
-    
+    Save REAL market data to database cache AND upload to HuggingFace Datasets
+
+    Data Flow:
+        1. Save to SQLite cache (local persistence)
+        2. Upload to HuggingFace Datasets (cloud storage & hub)
+        3. Clients can fetch from HuggingFace Datasets
+
     Args:
         market_data: List of REAL market data dictionaries
-        
+
     Returns:
         int: Number of records saved
     """
     saved_count = 0
-    
+
+    # Step 1: Save to local SQLite cache
     for data in market_data:
         try:
             success = cache.save_market_data(
@@ -163,15 +185,33 @@ async def save_market_data_to_cache(market_data: List[Dict[str, Any]]) -> int:
                 low_24h=data.get("low_24h"),
                 provider=data["provider"]
             )
-            
+
             if success:
                 saved_count += 1
                 logger.debug(f"Saved market data for {data['symbol']}: ${data['price']:.2f}")
-            
+
         except Exception as e:
             logger.error(f"Error saving market data for {data.get('symbol')}: {e}")
             continue
-    
+
+    # Step 2: Upload to HuggingFace Datasets (if enabled)
+    if HF_UPLOAD_ENABLED and hf_uploader and market_data:
+        try:
+            logger.info(f"📤 Uploading {len(market_data)} market records to HuggingFace Datasets...")
+            upload_success = await hf_uploader.upload_market_data(
+                market_data,
+                append=True  # Append to existing data
+            )
+
+            if upload_success:
+                logger.info(f"✅ Successfully uploaded market data to HuggingFace Datasets")
+            else:
+                logger.warning(f"⚠️  Failed to upload market data to HuggingFace Datasets")
+
+        except Exception as e:
+            logger.error(f"Error uploading to HuggingFace Datasets: {e}")
+            # Don't fail if HF upload fails - local cache is still available
+
     return saved_count
 
 
