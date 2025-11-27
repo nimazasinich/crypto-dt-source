@@ -1,0 +1,162 @@
+/**
+ * Utility Classes
+ * Helper classes for common styling needs
+ */
+
+/* ============================================================================
+   DISPLAY
+   ============================================================================ */
+
+.hidden { display: none !important; }
+.block { display: block !important; }
+.inline-block { display: inline-block !important; }
+.flex { display: flex !important; }
+.inline-flex { display: inline-flex !important; }
+.grid { display: grid !important; }
+
+/* ============================================================================
+   FLEX UTILITIES
+   ============================================================================ */
+
+.flex-row { flex-direction: row !important; }
+.flex-col { flex-direction: column !important; }
+.flex-wrap { flex-wrap: wrap !important; }
+.flex-nowrap { flex-wrap: nowrap !important; }
+
+.justify-start { justify-content: flex-start !important; }
+.justify-center { justify-content: center !important; }
+.justify-end { justify-content: flex-end !important; }
+.justify-between { justify-content: space-between !important; }
+.items-start { align-items: flex-start !important; }
+.items-center { align-items: center !important; }
+.items-end { align-items: flex-end !important; }
+.gap-1 { gap: var(--space-1) !important; }
+.gap-2 { gap: var(--space-2) !important; }
+.gap-3 { gap: var(--space-3) !important; }
+.gap-4 { gap: var(--space-4) !important; }
+.gap-6 { gap: var(--space-6) !important; }
+
+/* ============================================================================
+   SPACING
+   ============================================================================ */
+
+.m-0 { margin: 0 !important; }
+.m-1 { margin: var(--space-1) !important; }
+.m-2 { margin: var(--space-2) !important; }
+.m-3 { margin: var(--space-3) !important; }
+.m-4 { margin: var(--space-4) !important; }
+.m-6 { margin: var(--space-6) !important; }
+.m-8 { margin: var(--space-8) !important; }
+
+.mt-0 { margin-top: 0 !important; }
+.mt-2 { margin-top: var(--space-2) !important; }
+.mt-4 { margin-top: var(--space-4) !important; }
+.mt-6 { margin-top: var(--space-6) !important; }
+
+.mb-0 { margin-bottom: 0 !important; }
+.mb-2 { margin-bottom: var(--space-2) !important; }
+.mb-4 { margin-bottom: var(--space-4) !important; }
+.mb-6 { margin-bottom: var(--space-6) !important; }
+
+.p-0 { padding: 0 !important; }
+.p-2 { padding: var(--space-2) !important; }
+.p-4 { padding: var(--space-4) !important; }
+.p-6 { padding: var(--space-6) !important; }
+
+/* ============================================================================
+   TEXT
+   ============================================================================ */
+
+.text-left { text-align: left !important; }
+.text-center { text-align: center !important; }
+.text-right { text-align: right !important; }
+
+.text-xs { font-size: var(--font-size-xs) !important; }
+.text-sm { font-size: var(--font-size-sm) !important; }
+.text-base { font-size: var(--font-size-base) !important; }
+.text-lg { font-size: var(--font-size-lg) !important; }
+.text-xl { font-size: var(--font-size-xl) !important; }
+
+.font-normal { font-weight: var(--font-weight-normal) !important; }
+.font-medium { font-weight: var(--font-weight-medium) !important; }
+.font-semibold { font-weight: var(--font-weight-semibold) !important; }
+.font-bold { font-weight: var(--font-weight-bold) !important; }
+
+.text-strong { color: var(--text-strong) !important; }
+.text-normal { color: var(--text-normal) !important; }
+.text-soft { color: var(--text-soft) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+.uppercase { text-transform: uppercase !important; }
+.lowercase { text-transform: lowercase !important; }
+.capitalize { text-transform: capitalize !important; }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   COLORS
+   ============================================================================ */
+
+.bg-primary { background-color: var(--background-main) !important; }
+.bg-secondary { background-color: var(--background-secondary) !important; }
+
+.text-success { color: var(--success) !important; }
+.text-error { color: var(--danger) !important; }
+.text-warning { color: var(--warning) !important; }
+.text-info { color: var(--info) !important; }
+
+.bg-success { background-color: var(--success) !important; }
+.bg-error { background-color: var(--danger) !important; }
+.bg-warning { background-color: var(--warning) !important; }
+.bg-info { background-color: var(--info) !important; }
+
+/* ============================================================================
+   BORDERS
+   ============================================================================ */
+
+.border { border: 1px solid var(--border-default) !important; }
+.border-top { border-top: 1px solid var(--border-default) !important; }
+.border-bottom { border-bottom: 1px solid var(--border-default) !important; }
+
+.rounded-none { border-radius: 0 !important; }
+.rounded-sm { border-radius: var(--radius-sm) !important; }
+.rounded { border-radius: var(--radius-md) !important; }
+.rounded-lg { border-radius: var(--radius-lg) !important; }
+.rounded-full { border-radius: var(--radius-full) !important; }
+
+/* ============================================================================
+   EFFECTS
+   ============================================================================ */
+
+.shadow-sm { box-shadow: var(--shadow-sm) !important; }
+.shadow { box-shadow: var(--shadow-md) !important; }
+.shadow-lg { box-shadow: var(--shadow-lg) !important; }
+
+.opacity-0 { opacity: 0 !important; }
+.opacity-50 { opacity: 0.5 !important; }
+.opacity-100 { opacity: 1 !important; }
+
+/* ============================================================================
+   POSITIONING
+   ============================================================================ */
+
+.relative { position: relative !important; }
+.absolute { position: absolute !important; }
+.fixed { position: fixed !important; }
+.sticky { position: sticky !important; }
+
+/* ============================================================================
+   RESPONSIVE UTILITIES
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .hidden-mobile { display: none !important; }
+}
+
+@media (min-width: 769px) {
+  .hidden-desktop { display: none !important; }
+}

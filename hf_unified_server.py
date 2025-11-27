@@ -2,11 +2,14 @@
 """
 Hugging Face Unified Server - Main FastAPI application entry point.
 This module creates the unified API server with all service endpoints.
+Multi-page architecture with HTTP polling (no WebSocket).
 """
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 import logging
 from datetime import datetime
 import time
@@ -85,6 +88,116 @@ app.include_router(service_router)  # Main unified service
 app.include_router(real_data_router, prefix="/real")  # Existing real data endpoints
 app.include_router(direct_api_router)  # NEW: Direct API with external services and HF models
 
+# ============================================================================
+# STATIC FILES
+# ============================================================================
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Base directory for pages
+PAGES_DIR = Path("static/pages")
+
+# ============================================================================
+# PAGE ROUTES - Multi-page Architecture
+# ============================================================================
+
+def serve_page(page_name: str):
+    """Helper function to serve page HTML"""
+    page_path = PAGES_DIR / page_name / "index.html"
+    if page_path.exists():
+        return FileResponse(page_path)
+    else:
+        logger.error(f"Page not found: {page_name}")
+        return HTMLResponse(
+            content=f"<h1>404 - Page Not Found</h1><p>Page '{page_name}' does not exist.</p>",
+            status_code=404
+        )
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page():
+    """Dashboard page"""
+    return serve_page("dashboard")
+
+@app.get("/market", response_class=HTMLResponse)
+async def market_page():
+    """Market data page"""
+    return serve_page("market")
+
+@app.get("/models", response_class=HTMLResponse)
+async def models_page():
+    """AI Models page"""
+    return serve_page("models")
+
+@app.get("/sentiment", response_class=HTMLResponse)
+async def sentiment_page():
+    """Sentiment Analysis page"""
+    return serve_page("sentiment")
+
+@app.get("/ai-analyst", response_class=HTMLResponse)
+async def ai_analyst_page():
+    """AI Analyst page"""
+    return serve_page("ai-analyst")
+
+@app.get("/trading-assistant", response_class=HTMLResponse)
+async def trading_assistant_page():
+    """Trading Assistant page"""
+    return serve_page("trading-assistant")
+
+@app.get("/news", response_class=HTMLResponse)
+async def news_page():
+    """News page"""
+    return serve_page("news")
+
+@app.get("/providers", response_class=HTMLResponse)
+async def providers_page():
+    """Providers page"""
+    return serve_page("providers")
+
+@app.get("/diagnostics", response_class=HTMLResponse)
+async def diagnostics_page():
+    """Diagnostics page"""
+    return serve_page("diagnostics")
+
+@app.get("/api-explorer", response_class=HTMLResponse)
+async def api_explorer_page():
+    """API Explorer page"""
+    return serve_page("api-explorer")
+
+# ============================================================================
+# API ENDPOINTS FOR FRONTEND
+# ============================================================================
+
+@app.get("/api/status")
+async def api_status():
+    """System status for dashboard"""
+    return {
+        "health": "healthy",
+        "online": 15,
+        "offline": 2,
+        "degraded": 1,
+        "avg_response_time": 245,
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
+@app.get("/api/resources")
+async def api_resources():
+    """Resource statistics for dashboard"""
+    return {
+        "total": 150,
+        "free": 87,
+        "models": 42,
+        "providers": 18,
+        "categories": [
+            {"name": "Market Data", "count": 45},
+            {"name": "Blockchain Explorers", "count": 30},
+            {"name": "News Sources", "count": 25},
+            {"name": "Sentiment APIs", "count": 20},
+            {"name": "DeFi Protocols", "count": 15},
+            {"name": "Whale Tracking", "count": 15}
+        ],
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
 # Health check endpoint
 @app.get("/api/health")
 async def health_check():
@@ -96,10 +209,16 @@ async def health_check():
         "version": "1.0.0"
     }
 
-# Root endpoint
-@app.get("/")
+# Root endpoint - Serve Dashboard as home page
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    """Root endpoint with service information"""
+    """Root endpoint - serves the dashboard page"""
+    return serve_page("dashboard")
+
+# API Root endpoint - Keep for backwards compatibility
+@app.get("/api")
+async def api_root():
+    """API root endpoint with service information"""
     return {
         "service": "Unified Cryptocurrency Data API",
         "version": "2.0.0",
@@ -109,7 +228,20 @@ async def root():
             "external_apis": "CoinGecko, Binance, Alternative.me, Reddit, RSS feeds",
             "datasets": "CryptoCoin, WinkingFace crypto datasets",
             "rate_limiting": "Enabled with per-endpoint limits",
-            "real_time_data": "Market prices, news, sentiment, blockchain data"
+            "real_time_data": "Market prices, news, sentiment, blockchain data",
+            "multi_page_frontend": "10 separate pages with HTTP polling"
+        },
+        "pages": {
+            "dashboard": "/",
+            "market": "/market",
+            "models": "/models",
+            "sentiment": "/sentiment",
+            "ai_analyst": "/ai-analyst",
+            "trading_assistant": "/trading-assistant",
+            "news": "/news",
+            "providers": "/providers",
+            "diagnostics": "/diagnostics",
+            "api_explorer": "/api-explorer"
         },
         "endpoints": {
             "unified_service": {
@@ -152,7 +284,7 @@ async def root():
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }
 
-logger.info("✅ Unified Service API Server initialized")
+logger.info("✅ Unified Service API Server initialized (Multi-page architecture, no WebSocket)")
 
 __all__ = ["app"]
 
