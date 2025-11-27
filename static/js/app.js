@@ -172,34 +172,36 @@ async function checkAPIStatus() {
 async function loadDashboard() {
     // Show loading state
     const statsElements = [
-        'stat-total-resources', 'stat-free-resources', 
+        'stat-total-resources', 'stat-free-resources',
         'stat-models', 'stat-providers'
     ];
     statsElements.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = '...';
     });
-    
+
     const systemStatusDiv = document.getElementById('system-status');
     if (systemStatusDiv) {
         systemStatusDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading system status...</div>';
     }
-    
+
     try {
-        // Load resources
-        const resourcesRes = await fetch('/api/resources');
-        const resourcesData = await resourcesRes.json();
+        // Load resources - use enhanced API client with caching
+        const resourcesData = await window.apiClient.get('/api/resources', {
+            cacheDuration: 30000
+        });
         
         if (resourcesData.success && resourcesData.summary) {
             document.getElementById('stat-total-resources').textContent = resourcesData.summary.total_resources || 0;
             document.getElementById('stat-free-resources').textContent = resourcesData.summary.free_resources || 0;
             document.getElementById('stat-models').textContent = resourcesData.summary.models_available || 0;
         }
-        
-        // Load system status
+
+        // Load system status - use enhanced API client
         try {
-            const statusRes = await fetch('/api/status');
-            const statusData = await statusRes.json();
+            const statusData = await window.apiClient.get('/api/status', {
+                cacheDuration: 15000
+            });
             
             document.getElementById('stat-providers').textContent = statusData.total_apis || statusData.total_providers || 0;
             
@@ -240,22 +242,41 @@ async function loadDashboard() {
     }
 }
 
-// Create Categories Chart
+// Create Categories Chart - Enhanced with better visuals
 function createCategoriesChart(categories) {
     const ctx = document.getElementById('categories-chart');
     if (!ctx) return;
-    
+
     // Check if Chart.js is loaded
     if (typeof Chart === 'undefined') {
         console.error('Chart.js is not loaded');
         ctx.parentElement.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Chart library not loaded</p>';
         return;
     }
-    
+
     if (AppState.charts.categories) {
         AppState.charts.categories.destroy();
     }
-    
+
+    // Enhanced gradient colors
+    const colors = [
+        'rgba(102, 126, 234, 0.8)',
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(240, 147, 251, 0.8)',
+        'rgba(255, 107, 157, 0.8)'
+    ];
+
+    const borderColors = [
+        'rgba(102, 126, 234, 1)',
+        'rgba(16, 185, 129, 1)',
+        'rgba(245, 158, 11, 1)',
+        'rgba(59, 130, 246, 1)',
+        'rgba(240, 147, 251, 1)',
+        'rgba(255, 107, 157, 1)'
+    ];
+
     AppState.charts.categories = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -263,18 +284,69 @@ function createCategoriesChart(categories) {
             datasets: [{
                 label: 'Total Resources',
                 data: Object.values(categories),
-                backgroundColor: 'rgba(102, 126, 234, 0.6)',
-                borderColor: 'rgba(102, 126, 234, 1)',
-                borderWidth: 2
+                backgroundColor: colors,
+                borderColor: borderColors,
+                borderWidth: 2,
+                borderRadius: 8,
+                hoverBackgroundColor: borderColors
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    backdropFilter: 'blur(10px)',
+                    padding: 12,
+                    titleColor: '#f9fafb',
+                    bodyColor: '#f9fafb',
+                    borderColor: 'rgba(102, 126, 234, 0.5)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].label;
+                        },
+                        label: function(context) {
+                            return 'Resources: ' + context.parsed.y;
+                        }
+                    }
+                }
             },
             scales: {
-                y: { beginAtZero: true }
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
             }
         }
     });
@@ -286,14 +358,16 @@ async function loadMarketData() {
     const marketDiv = document.getElementById('market-data');
     const trendingDiv = document.getElementById('trending-coins');
     const fgDiv = document.getElementById('fear-greed');
-    
+
     if (marketDiv) marketDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading market data...</div>';
     if (trendingDiv) trendingDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading trending coins...</div>';
     if (fgDiv) fgDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Loading Fear & Greed Index...</div>';
-    
+
     try {
-        const response = await fetch('/api/market');
-        const data = await response.json();
+        // Use enhanced API client with caching
+        const data = await window.apiClient.get('/api/market', {
+            cacheDuration: 60000 // Cache for 1 minute
+        });
         
         if (data.cryptocurrencies && data.cryptocurrencies.length > 0) {
             const marketDiv = document.getElementById('market-data');
@@ -338,10 +412,11 @@ async function loadMarketData() {
             document.getElementById('market-data').innerHTML = '<div class="alert alert-warning">No data found</div>';
         }
         
-        // Load trending
+        // Load trending - use enhanced API client
         try {
-            const trendingRes = await fetch('/api/trending');
-            const trendingData = await trendingRes.json();
+            const trendingData = await window.apiClient.get('/api/trending', {
+                cacheDuration: 60000
+            });
             
             if (trendingData.trending && trendingData.trending.length > 0) {
                 const trendingDiv = document.getElementById('trending-coins');
@@ -369,10 +444,11 @@ async function loadMarketData() {
             document.getElementById('trending-coins').innerHTML = '<div class="alert alert-error">Error loading trending coins</div>';
         }
         
-        // Load Fear & Greed
+        // Load Fear & Greed - use enhanced API client
         try {
-            const sentimentRes = await fetch('/api/sentiment');
-            const sentimentData = await sentimentRes.json();
+            const sentimentData = await window.apiClient.get('/api/sentiment', {
+                cacheDuration: 60000
+            });
             
             if (sentimentData.fear_greed_index !== undefined) {
                 const fgDiv = document.getElementById('fear-greed');
