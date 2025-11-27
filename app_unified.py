@@ -3,6 +3,7 @@
 Unified App - Complete Integration
 FastAPI + Static UI + Unified Resource Loader
 Ready for Docker/HuggingFace Spaces deployment
+Full dashboard routing with static pages support
 """
 
 import os
@@ -14,7 +15,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 # Import our unified API service router
-from unified_api_service import router as api_router, init_loader
+try:
+    from unified_api_service import router as api_router, init_loader
+except ImportError:
+    api_router = None
+    def init_loader():
+        pass
 
 # Setup logging
 logging.basicConfig(
@@ -30,7 +36,13 @@ HOST = os.getenv("HOST", "0.0.0.0")
 # Paths
 WORKSPACE_ROOT = Path("/app" if Path("/app").exists() else ".")
 STATIC_DIR = WORKSPACE_ROOT / "static"
+PAGES_DIR = STATIC_DIR / "pages"
 STATIC_DIR.mkdir(exist_ok=True)
+
+def get_page_index(page_name: str) -> Path:
+    """Get the index.html path for a page"""
+    page_path = PAGES_DIR / page_name / "index.html"
+    return page_path if page_path.exists() else None
 
 # Create main app
 app = FastAPI(
@@ -63,7 +75,8 @@ async def startup():
 
 
 # Include the unified API router
-app.include_router(api_router)
+if api_router:
+    app.include_router(api_router)
 
 
 # Serve static files
@@ -71,45 +84,163 @@ if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
+# ============================================================================
+# PAGE ROUTES - Dynamic routing for all pages in static/pages
+# ============================================================================
+
 @app.get("/")
 async def serve_index():
-    """Serve the main index.html file"""
+    """Serve the main dashboard from static/pages/dashboard"""
+    page_path = get_page_index("dashboard")
+    if page_path:
+        return FileResponse(str(page_path))
+    
+    # Fallback to root index.html
     index_file = WORKSPACE_ROOT / "index.html"
-
     if index_file.exists():
         return FileResponse(str(index_file))
 
-    # Fallback: return API info
     return {
         "name": "Crypto Intelligence Hub - Unified",
         "version": "2.0.0",
         "status": "running",
         "api_docs": "/docs",
         "api_base": "/api",
-        "note": "index.html not found - serving API only"
+        "note": "Dashboard not found - serving API only"
     }
 
 
+@app.get("/dashboard")
+async def dashboard_page():
+    """Serve the main dashboard"""
+    return await serve_index()
+
+
+@app.get("/dashboard/{path:path}")
+async def dashboard_subpage(path: str):
+    """Handle dashboard sub-routes"""
+    path = path.strip("/")
+    page_path = get_page_index(path)
+    if page_path:
+        return FileResponse(str(page_path))
+    return await serve_index()
+
+
+@app.get("/market")
+async def market_page():
+    page_path = get_page_index("market")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Market page not found"}
+
+
+@app.get("/models")
+async def models_page():
+    page_path = get_page_index("models")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Models page not found"}
+
+
+@app.get("/sentiment")
+async def sentiment_page():
+    page_path = get_page_index("sentiment")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Sentiment page not found"}
+
+
+@app.get("/ai-analyst")
+async def ai_analyst_page():
+    page_path = get_page_index("ai-analyst")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "AI Analyst page not found"}
+
+
+@app.get("/trading-assistant")
+async def trading_assistant_page():
+    page_path = get_page_index("trading-assistant")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Trading Assistant page not found"}
+
+
+@app.get("/news")
+async def news_page():
+    page_path = get_page_index("news")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "News page not found"}
+
+
+@app.get("/providers")
+async def providers_page():
+    page_path = get_page_index("providers")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Providers page not found"}
+
+
+@app.get("/diagnostics")
+async def diagnostics_page():
+    page_path = get_page_index("diagnostics")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Diagnostics page not found"}
+
+
+@app.get("/api-explorer")
+async def api_explorer_page():
+    page_path = get_page_index("api-explorer")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "API Explorer page not found"}
+
+
+@app.get("/crypto-api-hub")
+async def crypto_api_hub_page():
+    page_path = get_page_index("crypto-api-hub")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Crypto API Hub page not found"}
+
+
+# Legacy routes
 @app.get("/ai-tools")
 async def serve_ai_tools():
     """Serve the AI tools page"""
     ai_tools_file = WORKSPACE_ROOT / "ai_tools.html"
-
     if ai_tools_file.exists():
         return FileResponse(str(ai_tools_file))
-
     return {"error": "AI tools page not found"}
 
 
 @app.get("/admin")
 async def serve_admin():
     """Serve the admin page"""
-    admin_file = WORKSPACE_ROOT / "admin.html"
-
+    admin_file = WORKSPACE_ROOT / "admin_improved.html"
     if admin_file.exists():
         return FileResponse(str(admin_file))
-
+    admin_file = WORKSPACE_ROOT / "admin.html"
+    if admin_file.exists():
+        return FileResponse(str(admin_file))
     return {"error": "Admin page not found"}
+
+
+@app.get("/api/pages")
+async def list_pages():
+    """List all available pages"""
+    pages = []
+    if PAGES_DIR.exists():
+        for page_dir in PAGES_DIR.iterdir():
+            if page_dir.is_dir() and (page_dir / "index.html").exists():
+                pages.append({
+                    "name": page_dir.name,
+                    "route": f"/{page_dir.name}",
+                    "dashboard_route": f"/dashboard/{page_dir.name}",
+                })
+    return {"total_pages": len(pages), "pages": pages}
 
 
 @app.get("/health")
