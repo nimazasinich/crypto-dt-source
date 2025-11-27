@@ -1,6 +1,6 @@
 /**
- * Dashboard-specific styles
- * Only styles unique to the dashboard page
+ * Dashboard-specific styles - Enhanced Edition
+ * Comprehensive styling for all dashboard components
  */
 
 /* ============================================================================
@@ -34,6 +34,7 @@
 .stat-icon {
   font-size: 2.5rem;
   flex-shrink: 0;
+  color: var(--brand-blue);
 }
 
 .stat-content {
@@ -107,16 +108,242 @@
 }
 
 /* ============================================================================
-   CHART CONTAINER
+   DASHBOARD SECTIONS
    ============================================================================ */
 
-.chart-container {
+.dashboard-section {
   background: var(--surface-glass);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   margin-bottom: var(--space-6);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.section-header h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-strong);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.section-header h2 svg {
+  color: var(--brand-blue);
+}
+
+.section-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* ============================================================================
+   SEARCH & SELECT CONTROLS
+   ============================================================================ */
+
+.search-input {
+  padding: var(--space-3) var(--space-4);
+  background: var(--background-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-normal);
+  font-size: var(--font-size-sm);
+  min-width: 200px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.select-control {
+  padding: var(--space-3) var(--space-4);
+  background: var(--background-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-normal);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.select-control:focus {
+  outline: none;
+  border-color: var(--brand-blue);
+}
+
+/* ============================================================================
+   TIMEFRAME SELECTOR
+   ============================================================================ */
+
+.timeframe-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--background-secondary);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+}
+
+.timeframe-btn {
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-soft);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timeframe-btn:hover {
+  color: var(--text-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.timeframe-btn.active {
+  background: var(--brand-blue);
+  color: white;
+}
+
+/* ============================================================================
+   DATA TABLES
+   ============================================================================ */
+
+.table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+}
+
+.data-table-wrapper {
+  min-width: 100%;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.data-table thead {
+  background: var(--background-secondary);
+  border-bottom: 2px solid var(--border-default);
+}
+
+.data-table th {
+  padding: var(--space-4) var(--space-3);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--font-size-xs);
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color 0.2s;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.data-table td {
+  padding: var(--space-4) var(--space-3);
+  color: var(--text-normal);
+  vertical-align: middle;
+}
+
+.rank-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  background: var(--background-secondary);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.coin-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.coin-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-strong);
+}
+
+.coin-symbol {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.price-cell {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-strong);
+  font-family: var(--font-family-mono);
+}
+
+.change-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xs);
+}
+
+.change-badge.positive {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.change-badge.negative {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-10);
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+}
+
+/* ============================================================================
+   CHART CONTAINER
+   ============================================================================ */
+
+.chart-container {
+  background: var(--surface-glass);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
 }
 
 .chart-header {
@@ -139,6 +366,73 @@
 .chart-body canvas {
   max-width: 100%;
   max-height: 100%;
+}
+
+/* ============================================================================
+   PERFORMANCE METRICS
+   ============================================================================ */
+
+.performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+.performance-card {
+  background: var(--background-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  text-align: center;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.performance-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-default);
+}
+
+.performance-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-3);
+}
+
+.performance-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--brand-blue);
+  font-family: var(--font-family-mono);
+}
+
+/* ============================================================================
+   LOADING STATES
+   ============================================================================ */
+
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10);
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+}
+
+.loading-spinner::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  margin-right: var(--space-3);
+  border: 2px solid var(--border-default);
+  border-top-color: var(--brand-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ============================================================================
@@ -190,8 +484,53 @@
     font-size: var(--font-size-xl);
   }
 
+  .dashboard-section {
+    padding: var(--space-4);
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-controls {
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .select-control {
+    width: 100%;
+  }
+
   .chart-body {
     height: 300px;
+  }
+
+  .data-table {
+    font-size: var(--font-size-xs);
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: var(--space-2);
+  }
+
+  .performance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .timeframe-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .timeframe-btn {
+    flex: 1;
+    text-align: center;
   }
 }
 
@@ -200,7 +539,88 @@
     font-size: var(--font-size-2xl);
   }
 
-  .chart-container {
-    padding: var(--space-4);
+  .dashboard-section {
+    padding: var(--space-3);
   }
+
+  .section-header h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  /* Make table scrollable on very small screens */
+  .table-container {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* Focus states for keyboard navigation */
+.search-input:focus,
+.select-control:focus,
+.timeframe-btn:focus {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .stat-card,
+  .performance-card,
+  .data-table tbody tr,
+  .timeframe-btn {
+    transition: none;
+  }
+
+  .stat-card.skeleton .stat-value,
+  .stat-card.skeleton .stat-label {
+    animation: none;
+  }
+
+  .loading-spinner::before {
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .stat-card,
+  .dashboard-section,
+  .performance-card {
+    border-width: 2px;
+  }
+
+  .change-badge.positive,
+  .change-badge.negative {
+    border: 1px solid currentColor;
+  }
+}
+
+/* ============================================================================
+   DARK/LIGHT THEME ADJUSTMENTS
+   ============================================================================ */
+
+[data-theme="light"] .stat-card,
+[data-theme="light"] .dashboard-section,
+[data-theme="light"] .chart-container {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .data-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .search-input,
+[data-theme="light"] .select-control {
+  background: #f5f5f5;
+}
+
+[data-theme="light"] .timeframe-selector {
+  background: #e5e5e5;
+}
+
+[data-theme="light"] .performance-card {
+  background: #f5f5f5;
 }
