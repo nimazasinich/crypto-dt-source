@@ -25,7 +25,7 @@ const svgIcons = {
 // ============================================================================
 
 async function fetchServices() {
-    """Fetch services data from backend API"""
+    // Fetch services data from backend API
     try {
         const response = await fetch('/api/crypto-hub/services');
         if (!response.ok) {
@@ -41,7 +41,7 @@ async function fetchServices() {
 }
 
 async function fetchStatistics() {
-    """Fetch hub statistics from backend"""
+    // Fetch hub statistics from backend
     try {
         const response = await fetch('/api/crypto-hub/stats');
         if (!response.ok) {
@@ -55,7 +55,7 @@ async function fetchStatistics() {
 }
 
 async function testAPIEndpoint(url, method = 'GET', headers = null, body = null) {
-    """Test an API endpoint via backend proxy"""
+    // Test an API endpoint via backend proxy
     try {
         const response = await fetch('/api/crypto-hub/test', {
             method: 'POST',
@@ -91,7 +91,7 @@ async function testAPIEndpoint(url, method = 'GET', headers = null, body = null)
 // ============================================================================
 
 function getIcon(category) {
-    """Get SVG icon for category"""
+    // Get SVG icon for category
     const icons = {
         explorer: svgIcons.chain,
         market: svgIcons.chart,
@@ -103,7 +103,7 @@ function getIcon(category) {
 }
 
 function renderServices() {
-    """Render all service cards in the grid"""
+    // Render all service cards in the grid
     if (!servicesData) {
         console.error('No services data available');
         return;
@@ -153,7 +153,7 @@ function renderServices() {
 }
 
 function renderEndpoints(service, endpoints) {
-    """Render endpoint list for a service"""
+    // Render endpoint list for a service
     const displayEndpoints = endpoints.slice(0, 2);
     const remaining = endpoints.length - 2;
 
@@ -197,12 +197,12 @@ function renderEndpoints(service, endpoints) {
 }
 
 function renderBaseEndpoint() {
-    """Render placeholder for services without specific endpoints"""
+    // Render placeholder for services without specific endpoints
     return '<div style="color: var(--text-secondary); font-size: 0.875rem;">Base endpoint available</div>';
 }
 
 async function updateStatistics() {
-    """Update statistics in the header"""
+    // Update statistics in the header
     const stats = await fetchStatistics();
     if (!stats) return;
 
@@ -229,7 +229,7 @@ async function updateStatistics() {
 // ============================================================================
 
 function setFilter(filter) {
-    """Set current category filter"""
+    // Set current category filter
     currentFilter = filter;
 
     // Update active filter tab
@@ -243,7 +243,7 @@ function setFilter(filter) {
 }
 
 function filterServices() {
-    """Filter services based on search input"""
+    // Filter services based on search input
     const search = document.getElementById('searchInput');
     if (!search) return;
 
@@ -261,7 +261,7 @@ function filterServices() {
 // ============================================================================
 
 function testEndpoint(url, key) {
-    """Open tester modal with pre-filled URL"""
+    // Open tester modal with pre-filled URL
     openTester();
 
     // Replace key placeholder if key exists
@@ -277,15 +277,20 @@ function testEndpoint(url, key) {
 }
 
 function openTester() {
-    """Open API tester modal"""
+    // Open API tester modal
     const modal = document.getElementById('testerModal');
     if (modal) {
         modal.classList.add('active');
+        // Focus on first input
+        setTimeout(() => {
+            const urlInput = document.getElementById('testUrl');
+            if (urlInput) urlInput.focus();
+        }, 100);
     }
 }
 
 function closeTester() {
-    """Close API tester modal"""
+    // Close API tester modal
     const modal = document.getElementById('testerModal');
     if (modal) {
         modal.classList.remove('active');
@@ -293,7 +298,7 @@ function closeTester() {
 }
 
 function setMethod(method, btn) {
-    """Set HTTP method for API test"""
+    // Set HTTP method for API test
     currentMethod = method;
 
     // Update active button
@@ -310,7 +315,7 @@ function setMethod(method, btn) {
 }
 
 async function sendRequest() {
-    """Send API test request"""
+    // Send API test request
     const urlInput = document.getElementById('testUrl');
     const headersInput = document.getElementById('testHeaders');
     const bodyInput = document.getElementById('testBody');
@@ -372,7 +377,7 @@ async function sendRequest() {
 // ============================================================================
 
 function copyText(text) {
-    """Copy text to clipboard"""
+    // Copy text to clipboard
     navigator.clipboard.writeText(text).then(() => {
         showToast('✅', 'Copied to clipboard!');
     }).catch(() => {
@@ -381,7 +386,7 @@ function copyText(text) {
 }
 
 function exportJSON() {
-    """Export all services data as JSON file"""
+    // Export all services data as JSON file
     if (!servicesData) {
         showToast('⚠️', 'No data to export');
         return;
@@ -406,7 +411,7 @@ function exportJSON() {
 }
 
 function showToast(icon, message) {
-    """Show toast notification"""
+    // Show toast notification
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toastIcon');
     const toastMessage = document.getElementById('toastMessage');
@@ -420,7 +425,7 @@ function showToast(icon, message) {
 }
 
 function escapeHtml(text, forAttribute = false) {
-    """Escape HTML to prevent XSS"""
+    // Escape HTML to prevent XSS
     if (!text) return '';
 
     const map = {
@@ -446,13 +451,14 @@ function escapeHtml(text, forAttribute = false) {
 // ============================================================================
 
 async function initializeDashboard() {
-    """Initialize the dashboard on page load"""
+    // Initialize the dashboard on page load
     console.log('Initializing Crypto API Hub Dashboard...');
 
     // Fetch services data
     const data = await fetchServices();
     if (!data) {
         console.error('Failed to load services data');
+        showErrorState();
         return;
     }
 
@@ -465,9 +471,56 @@ async function initializeDashboard() {
     console.log('Dashboard initialized successfully!');
 }
 
+function showErrorState() {
+    // Show error state when services fail to load
+    const grid = document.getElementById('servicesGrid');
+    if (!grid) return;
+
+    grid.innerHTML = `
+        <div class="error-state" style="grid-column: 1/-1;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <h3>Failed to Load Services</h3>
+            <p>We couldn't load the API services. Please check your connection and try again.</p>
+            <button class="retry-btn" onclick="location.reload()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 8px;">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                Retry
+            </button>
+        </div>
+    `;
+}
+
 // Auto-initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeDashboard);
 } else {
     initializeDashboard();
 }
+
+// ============================================================================
+// Event Listeners for Enhanced UX
+// ============================================================================
+
+// Close modal on ESC key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('testerModal');
+        if (modal && modal.classList.contains('active')) {
+            closeTester();
+        }
+    }
+});
+
+// Close modal when clicking outside
+document.addEventListener('click', (e) => {
+    const modal = document.getElementById('testerModal');
+    if (modal && e.target === modal) {
+        closeTester();
+    }
+});
