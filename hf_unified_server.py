@@ -15,6 +15,7 @@ import time
 from backend.routers.unified_service_api import router as service_router
 from backend.routers.real_data_api import router as real_data_router
 from backend.routers.direct_api import router as direct_api_router
+from backend.routers.sync_api import router as sync_api_router
 
 # Import rate limiter
 from utils.rate_limiter_simple import rate_limiter
@@ -83,7 +84,8 @@ async def rate_limit_middleware(request: Request, call_next):
 # Include routers
 app.include_router(service_router)  # Main unified service
 app.include_router(real_data_router, prefix="/real")  # Existing real data endpoints
-app.include_router(direct_api_router)  # NEW: Direct API with external services and HF models
+app.include_router(direct_api_router)  # Direct API with external services and HF models
+app.include_router(sync_api_router)  # Synchronization API
 
 # Health check endpoint
 @app.get("/api/health")
@@ -130,6 +132,15 @@ async def root():
                 "hf_models": "/api/v1/hf/models",
                 "hf_datasets": "/api/v1/hf/datasets",
                 "system_status": "/api/v1/status"
+            },
+            "synchronization": {
+                "run_sync": "/api/v1/sync/run",
+                "sync_status": "/api/v1/sync/status",
+                "github_commits": "/api/v1/sync/github/commits",
+                "hf_models_sync": "/api/v1/sync/hf/models",
+                "hf_datasets_sync": "/api/v1/sync/hf/datasets",
+                "sync_history": "/api/v1/sync/history",
+                "sync_reports": "/api/v1/sync/reports"
             },
             "documentation": {
                 "swagger_ui": "/docs",
