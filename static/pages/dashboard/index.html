@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Crypto Monitor ULTIMATE - System Dashboard">
+  <title>Dashboard | Crypto Monitor ULTIMATE</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+  
+  <!-- Shared CSS (in order) -->
+  <link rel="stylesheet" href="/static/shared/css/design-system.css">
+  <link rel="stylesheet" href="/static/shared/css/global.css">
+  <link rel="stylesheet" href="/static/shared/css/components.css">
+  <link rel="stylesheet" href="/static/shared/css/layout.css">
+  <link rel="stylesheet" href="/static/shared/css/utilities.css">
+  
+  <!-- Page-specific CSS -->
+  <link rel="stylesheet" href="./dashboard.css">
+  
+  <!-- Preload Chart.js (will be loaded by JS when needed) -->
+  <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation (injected by LayoutManager) -->
+    <aside id="sidebar-container"></aside>
+    
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Header (injected by LayoutManager) -->
+      <header id="header-container"></header>
+      
+      <!-- Dashboard Content -->
+      <div class="page-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-title">
+            <h1>📊 Dashboard</h1>
+            <p class="page-subtitle">System Overview & Statistics</p>
+          </div>
+          <div class="page-actions">
+            <button id="refresh-btn" class="btn-icon" title="Refresh data" aria-label="Refresh data">
+              <span class="icon">↻</span>
+            </button>
+            <span id="last-update" class="last-update" aria-live="polite">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Stats Grid (4 cards) -->
+        <div class="stats-grid" id="stats-grid">
+          <!-- Loading skeletons (will be replaced by actual data) -->
+          <div class="stat-card skeleton">
+            <div class="stat-icon">📦</div>
+            <div class="stat-content">
+              <div class="stat-value">--</div>
+              <div class="stat-label">Total Resources</div>
+            </div>
+          </div>
+          <div class="stat-card skeleton">
+            <div class="stat-icon">🆓</div>
+            <div class="stat-content">
+              <div class="stat-value">--</div>
+              <div class="stat-label">Free Resources</div>
+            </div>
+          </div>
+          <div class="stat-card skeleton">
+            <div class="stat-icon">🤖</div>
+            <div class="stat-content">
+              <div class="stat-value">--</div>
+              <div class="stat-label">AI Models</div>
+            </div>
+          </div>
+          <div class="stat-card skeleton">
+            <div class="stat-icon">🔌</div>
+            <div class="stat-content">
+              <div class="stat-value">--</div>
+              <div class="stat-label">Active Providers</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Status Alert -->
+        <div id="system-alert" class="alert-container" role="region" aria-label="System status"></div>
+
+        <!-- Categories Chart -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h2>Resources by Category</h2>
+          </div>
+          <div class="chart-body">
+            <canvas id="categories-chart" width="800" height="400" aria-label="Resources by category chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container (managed by Toast component) -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Load page script as ES6 module -->
+  <script type="module" src="./dashboard.js"></script>
+</body>
+</html>
