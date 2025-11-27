@@ -1,0 +1,155 @@
+{
+  "test_time": "2025-11-27T00:30:15.485259Z",
+  "summary": {
+    "total_apis": 5,
+    "successful": 2,
+    "partial": 0,
+    "failed": 3
+  },
+  "results": [
+    {
+      "success": true,
+      "url": "https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=30",
+      "status": "SUCCESS",
+      "valid_records": 180,
+      "expected_records": 30,
+      "fields_verified": [
+        "timestamp",
+        "open",
+        "high",
+        "low",
+        "close"
+      ],
+      "missing_data": "None",
+      "issues": "None",
+      "sample_data": {
+        "timestamp": 1761624000000,
+        "open": 114085.0,
+        "high": 114459.0,
+        "low": 113822.0,
+        "close": 113843.0
+      },
+      "raw_response_preview": [
+        [
+          1761624000000,
+          114085.0,
+          114459.0,
+          113822.0,
+          113843.0
+        ],
+        [
+          1761638400000,
+          113894.0,
+          114291.0,
+          113599.0,
+          114181.0
+        ],
+        [
+          1761652800000,
+          114189.0,
+          114603.0,
+          114140.0,
+          114330.0
+        ]
+      ],
+      "api_name": "CoinGecko",
+      "test_time": "2025-11-27T00:30:15.485259Z"
+    },
+    {
+      "success": false,
+      "url": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=365",
+      "status": "FAILURE",
+      "valid_records": 0,
+      "expected_records": 365,
+      "fields_verified": [],
+      "missing_data": "Unknown",
+      "issues": [],
+      "error": "HTTP 451",
+      "error_details": "{\n  \"code\": 0,\n  \"msg\": \"Service unavailable from a restricted location according to 'b. Eligibility' in https://www.binance.com/en/terms. Please contact customer service if you believe you received this message in error.\"\n}",
+      "api_name": "Binance",
+      "test_time": "2025-11-27T00:30:15.485259Z"
+    },
+    {
+      "success": false,
+      "url": "https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol=BTC&market=USD&apikey=demo",
+      "status": "FAILURE",
+      "valid_records": 0,
+      "expected_records": "~100 days",
+      "fields_verified": [],
+      "missing_data": "Unknown",
+      "issues": [],
+      "error": "Unexpected response format",
+      "error_details": "Response keys: ['Information']",
+      "api_name": "Alpha Vantage",
+      "test_time": "2025-11-27T00:30:15.485259Z"
+    },
+    {
+      "success": false,
+      "url": "https://api.twelvedata.com/time_series?symbol=BTC/USD&interval=1min&outputsize=1440&apikey=MISSING",
+      "status": "FAILURE",
+      "valid_records": 0,
+      "expected_records": 1440,
+      "fields_verified": [],
+      "missing_data": "Unknown",
+      "issues": [],
+      "error": "API key required",
+      "error_details": "Set TWELVE_DATA_API_KEY environment variable to test this API",
+      "api_name": "Twelve Data",
+      "test_time": "2025-11-27T00:30:15.485259Z"
+    },
+    {
+      "success": true,
+      "url": "https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=200",
+      "status": "SUCCESS",
+      "valid_records": 201,
+      "expected_records": 200,
+      "fields_verified": [
+        "time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volumefrom"
+      ],
+      "missing_data": "None",
+      "issues": "None",
+      "sample_data": {
+        "time": 1746921600,
+        "high": 104958.29,
+        "low": 103353.87,
+        "open": 104814.08,
+        "volumefrom": 10980.95,
+        "volumeto": 1144137614.49,
+        "close": 104124.02,
+        "conversionType": "direct",
+        "conversionSymbol": ""
+      },
+      "raw_response_preview": [
+        {
+          "time": 1746921600,
+          "high": 104958.29,
+          "low": 103353.87,
+          "open": 104814.08,
+          "volumefrom": 10980.95,
+          "volumeto": 1144137614.49,
+          "close": 104124.02,
+          "conversionType": "direct",
+          "conversionSymbol": ""
+        },
+        {
+          "time": 1747008000,
+          "high": 105783.35,
+          "low": 100723.18,
+          "open": 104124.02,
+          "volumefrom": 27678.93,
+          "volumeto": 2862364942.19,
+          "close": 102802.44,
+          "conversionType": "direct",
+          "conversionSymbol": ""
+        }
+      ],
+      "api_name": "CryptoCompare",
+      "test_time": "2025-11-27T00:30:15.485259Z"
+    }
+  ]
+}
