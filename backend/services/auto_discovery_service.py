@@ -13,10 +13,10 @@ import json
 import logging
 import os
 import re
+from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from contextlib import AsyncExitStack
 
 try:
     from duckduckgo_search import AsyncDDGS  # type: ignore

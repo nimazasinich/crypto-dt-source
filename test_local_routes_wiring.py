@@ -3,11 +3,12 @@
 Test script to verify local backend routes wiring
 Run this after starting api_server_extended.py
 """
-import sys
-import json
-import httpx
 import asyncio
+import json
+import sys
 from pathlib import Path
+
+import httpx
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))

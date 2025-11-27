@@ -4,27 +4,28 @@ API Server Extended - HuggingFace Spaces Deployment Ready
 Complete Admin API with Real Data Only - NO MOCKS
 """
 
-import os
 import asyncio
-import sqlite3
-import httpx
 import json
-import subprocess
 import logging
-from pathlib import Path
-from typing import Optional, Dict, Any, List
-from datetime import datetime
-from contextlib import asynccontextmanager
+import os
+import sqlite3
+import subprocess
 from collections import defaultdict
+from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
-from fastapi import FastAPI, HTTPException, Response, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Environment variables
 USE_MOCK_DATA = os.getenv("USE_MOCK_DATA", "false").lower() == "true"
@@ -394,10 +395,11 @@ async def fetch_coingecko_trending() -> Dict[str, Any]:
         return response.json()
 
 
+import time as time_module
+
 # ===== Self-Healing Health Registry =====
 from dataclasses import dataclass, field
 from typing import Callable
-import time as time_module
 
 
 @dataclass
@@ -1134,12 +1136,12 @@ async def analyze_sentiment_simple(request: Dict[str, Any]):
     """Analyze sentiment with mode routing - simplified endpoint"""
     try:
         from ai_models import (
+            MODEL_SPECS,
+            ModelNotAvailable,
+            _registry,
             analyze_crypto_sentiment,
             analyze_financial_sentiment,
             analyze_social_sentiment,
-            _registry,
-            MODEL_SPECS,
-            ModelNotAvailable,
         )
 
         text = request.get("text", "").strip()
@@ -2274,13 +2276,13 @@ async def analyze_sentiment(request: Dict[str, Any]):
     """Analyze sentiment using Hugging Face models"""
     try:
         from ai_models import (
-            analyze_crypto_sentiment,
-            analyze_financial_sentiment,
-            analyze_social_sentiment,
-            analyze_market_text,
-            _registry,
             MODEL_SPECS,
             ModelNotAvailable,
+            _registry,
+            analyze_crypto_sentiment,
+            analyze_financial_sentiment,
+            analyze_market_text,
+            analyze_social_sentiment,
         )
 
         text = request.get("text", "").strip()
@@ -2510,7 +2512,7 @@ async def summarize_text(request: Dict[str, Any]):
 
         # Try to use Hugging Face summarization model if available
         try:
-            from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
+            from ai_models import MODEL_SPECS, ModelNotAvailable, _registry
 
             # Check if summarization model is available
             summarization_key = None
@@ -2798,7 +2800,7 @@ async def summarize_news(request: Dict[str, Any]):
     Returns: { "summary": "Summarized news paragraph", "model": "Crypto-Financial-News-Summarizer" }
     """
     try:
-        from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
+        from ai_models import MODEL_SPECS, ModelNotAvailable, _registry
 
         title = request.get("title", "").strip()
         content = request.get("content", "").strip()
@@ -2920,11 +2922,11 @@ async def get_models_status():
     """Get AI models status and registry info - honest status reporting"""
     try:
         from ai_models import (
-            get_model_info,
-            registry_status,
             HF_MODE,
             TRANSFORMERS_AVAILABLE,
             _registry,
+            get_model_info,
+            registry_status,
         )
 
         model_info = get_model_info()
@@ -2992,7 +2994,7 @@ async def get_models_status():
 async def initialize_ai_models():
     """Initialize AI models (force reload)"""
     try:
-        from ai_models import initialize_models, _registry
+        from ai_models import _registry, initialize_models
 
         result = initialize_models()
         registry_status = _registry.get_registry_status()
@@ -3015,15 +3017,15 @@ async def list_available_models():
     """List all available Hugging Face models as data sources"""
     try:
         from ai_models import (
-            get_model_info,
-            MODEL_SPECS,
-            _registry,
             CRYPTO_SENTIMENT_MODELS,
-            SOCIAL_SENTIMENT_MODELS,
             FINANCIAL_SENTIMENT_MODELS,
-            NEWS_SENTIMENT_MODELS,
             GENERATION_MODELS,
+            MODEL_SPECS,
+            NEWS_SENTIMENT_MODELS,
+            SOCIAL_SENTIMENT_MODELS,
             TRADING_SIGNAL_MODELS,
+            _registry,
+            get_model_info,
         )
 
         model_info = get_model_info()
@@ -3121,7 +3123,7 @@ async def get_model_info_endpoint(model_key: str):
 async def predict_with_model(model_key: str, request: Dict[str, Any]):
     """Use a specific model to generate predictions/data"""
     try:
-        from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
+        from ai_models import MODEL_SPECS, ModelNotAvailable, _registry
 
         if model_key not in MODEL_SPECS:
             raise HTTPException(status_code=404, detail=f"Model {model_key} not found")
@@ -3169,7 +3171,7 @@ async def predict_with_model(model_key: str, request: Dict[str, Any]):
 async def batch_predict(request: Dict[str, Any]):
     """Batch prediction using multiple models"""
     try:
-        from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
+        from ai_models import MODEL_SPECS, ModelNotAvailable, _registry
 
         texts = request.get("texts", [])
         model_keys = request.get("models", [])
@@ -3233,7 +3235,7 @@ async def analyze_text(request: Dict[str, Any]):
     Returns: { "text": "...", "model": "OpenC/crypto-gpt-o3-mini" }
     """
     try:
-        from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
+        from ai_models import MODEL_SPECS, ModelNotAvailable, _registry
 
         prompt = request.get("prompt", "").strip()
         mode = request.get("mode", "analysis").lower()
@@ -3315,7 +3317,7 @@ async def trading_decision(request: Dict[str, Any]):
     }
     """
     try:
-        from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
+        from ai_models import MODEL_SPECS, ModelNotAvailable, _registry
 
         symbol = request.get("symbol", "").strip().upper()
         context = request.get("context", "").strip()
@@ -3546,7 +3548,7 @@ async def get_models_data_stats():
 async def run_hf_sentiment(data: Dict[str, Any]):
     """Run sentiment analysis using HF models (compatible with UI)"""
     try:
-        from ai_models import analyze_market_text, ModelNotAvailable
+        from ai_models import ModelNotAvailable, analyze_market_text
 
         texts = data.get("texts", [])
         if isinstance(texts, str):
@@ -3634,9 +3636,10 @@ async def model_predict(model_key: str, request: Request):
     Uses AI models to generate trading signals, sentiment, or fill data gaps
     """
     try:
-        from ai_models import call_model_safe, MODEL_SPECS
         import uuid
         from datetime import datetime, timedelta
+
+        from ai_models import MODEL_SPECS, call_model_safe
 
         body = await request.json()
         text = body.get("text", "")
@@ -3716,9 +3719,10 @@ async def model_predict(model_key: str, request: Request):
 async def batch_predict(request: Request):
     """Batch predictions for multiple symbols"""
     try:
-        from ai_models import call_model_safe, MODEL_SPECS
         import uuid
         from datetime import datetime
+
+        from ai_models import MODEL_SPECS, call_model_safe
 
         body = await request.json()
         items = body.get("items", [])
@@ -3798,11 +3802,12 @@ async def detect_gaps(request: Request):
 async def fill_gaps(request: Request):
     """Fill detected gaps using AI models + fallback providers"""
     try:
-        from services.gap_filler import GapFillerService
-        from ai_models import _registry
-        from provider_manager import ProviderManager
         import uuid
         from datetime import datetime
+
+        from ai_models import _registry
+        from provider_manager import ProviderManager
+        from services.gap_filler import GapFillerService
 
         body = await request.json()
         data = body.get("data", {})

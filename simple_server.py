@@ -1,11 +1,12 @@
 """Simple FastAPI server for testing HF integration"""
 
 import asyncio
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-import uvicorn
 
 # Create FastAPI app
 app = FastAPI(title="Crypto API Monitor - Simple", version="1.0.0")

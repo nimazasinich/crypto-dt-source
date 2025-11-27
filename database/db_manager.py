@@ -6,35 +6,34 @@ Provides comprehensive database operations for the crypto API monitoring system
 import os
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any, Tuple
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy import create_engine, func, and_, or_, desc, text
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy import and_, create_engine, desc, func, or_, text
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import Session, sessionmaker
 
-from database.models import (
-    Base,
-    Provider,
-    ConnectionAttempt,
-    DataCollection,
-    RateLimitUsage,
-    ScheduleConfig,
-    ScheduleCompliance,
-    FailureLog,
+from database.data_access import DataAccessMixin
+from database.models import (  # Crypto data models
     Alert,
-    SystemMetrics,
+    Base,
+    BlockchainStat,
+    ConnectionAttempt,
     ConnectionStatus,
-    ProviderCategory,
-    # Crypto data models
+    DataCollection,
+    FailureLog,
+    GasPrice,
     MarketPrice,
     NewsArticle,
-    WhaleTransaction,
+    Provider,
+    ProviderCategory,
+    RateLimitUsage,
+    ScheduleCompliance,
+    ScheduleConfig,
     SentimentMetric,
-    GasPrice,
-    BlockchainStat,
+    SystemMetrics,
+    WhaleTransaction,
 )
-from database.data_access import DataAccessMixin
 from utils.logger import setup_logger
 
 # Initialize logger

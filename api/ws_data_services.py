@@ -6,19 +6,20 @@ from all data collection services.
 """
 
 import asyncio
+import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-import logging
 
-from backend.services.ws_service_manager import ws_manager, ServiceType
-from collectors.market_data import MarketDataCollector
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
+from backend.services.ws_service_manager import ServiceType, ws_manager
 from collectors.explorers import ExplorerDataCollector
+from collectors.market_data import MarketDataCollector
 from collectors.news import NewsCollector
+from collectors.onchain import OnChainCollector
+from collectors.rpc_nodes import RPCNodeCollector
 from collectors.sentiment import SentimentCollector
 from collectors.whale_tracking import WhaleTrackingCollector
-from collectors.rpc_nodes import RPCNodeCollector
-from collectors.onchain import OnChainCollector
 from config import Config
 
 logger = logging.getLogger(__name__)

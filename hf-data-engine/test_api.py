@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Test script for HuggingFace Crypto Data Engine API"""
 import asyncio
-import httpx
 import json
 from typing import Optional
 
+import httpx
 
 BASE_URL = "http://localhost:8000"
 

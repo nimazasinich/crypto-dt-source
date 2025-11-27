@@ -2,8 +2,9 @@
 Authentication and Security for API Endpoints
 """
 
-from fastapi import Security, HTTPException, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import HTTPException, Request, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from config import config
 
 security = HTTPBearer(auto_error=False)

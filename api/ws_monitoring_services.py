@@ -6,16 +6,17 @@ including health checks, pool management, and scheduler status.
 """
 
 import asyncio
+import logging
 from datetime import datetime
 from typing import Any, Dict
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-import logging
 
-from backend.services.ws_service_manager import ws_manager, ServiceType
-from monitoring.health_checker import HealthChecker
-from monitoring.source_pool_manager import SourcePoolManager
-from monitoring.scheduler import TaskScheduler
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
+from backend.services.ws_service_manager import ServiceType, ws_manager
 from config import Config
+from monitoring.health_checker import HealthChecker
+from monitoring.scheduler import TaskScheduler
+from monitoring.source_pool_manager import SourcePoolManager
 
 logger = logging.getLogger(__name__)
 

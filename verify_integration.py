@@ -4,8 +4,8 @@ Integration Verification Script
 Tests that all models, endpoints, and frontend integrations are working correctly.
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 

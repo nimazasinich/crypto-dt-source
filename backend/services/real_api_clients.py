@@ -4,12 +4,13 @@ Real API Clients - ZERO MOCK DATA
 All clients fetch REAL data from external APIs
 """
 
-import httpx
 import asyncio
-import logging
-from typing import Dict, Any, List, Optional
-from datetime import datetime
 import hashlib
+import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import httpx
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)

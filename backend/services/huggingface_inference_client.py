@@ -5,11 +5,12 @@ Uses real Hugging Face models for sentiment analysis
 NO MOCK DATA - All predictions from real HF models
 """
 
-import httpx
 import logging
 import os
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, Optional
+
+import httpx
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)

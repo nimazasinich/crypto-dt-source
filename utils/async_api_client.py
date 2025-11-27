@@ -3,12 +3,13 @@ Unified Async API Client - Replace mixed sync/async HTTP calls
 Implements retry logic, error handling, and logging consistently
 """
 
-import aiohttp
 import asyncio
 import logging
-from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
 import traceback
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import aiohttp
 
 import config
 

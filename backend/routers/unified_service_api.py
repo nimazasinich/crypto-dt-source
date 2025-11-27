@@ -25,34 +25,33 @@ Endpoints:
 12. /ws - WebSocket برای real-time subscriptions
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body, WebSocket, WebSocketDisconnect, Path
-from fastapi.responses import JSONResponse
-from typing import Optional, List, Dict, Any, Union
-from datetime import datetime, timedelta
-from pydantic import BaseModel
-import logging
-import json
 import asyncio
+import json
+import logging
 import os
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Union
+
 import httpx
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Body, HTTPException, Path, Query, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 # Import internal modules
 from backend.services.hf_unified_client import get_hf_client
 from backend.services.real_websocket import ws_manager
 from database.models import (
     Base,
+    BlockchainStat,
     CachedMarketData,
     CachedOHLC,
-    WhaleTransaction,
+    GasPrice,
     NewsArticle,
     SentimentMetric,
-    GasPrice,
-    BlockchainStat,
+    WhaleTransaction,
 )
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -5,8 +5,9 @@ Tests verify that the index.html file has been properly translated
 
 import re
 from pathlib import Path
-from bs4 import BeautifulSoup
+
 import pytest
+from bs4 import BeautifulSoup
 
 
 # Load the HTML file once for all tests
@@ -139,7 +140,8 @@ class TestSpecificElements:
         ), f"Expected English status message, got: {status_text}"
 
 
-from hypothesis import given, strategies as st, settings
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 
 class TestPersianCharacterDetection:

@@ -3,13 +3,14 @@ Live Dashboard Tab - Real-time cryptocurrency price monitoring
 Refactored from app.py with improved type hints and structure
 """
 
-import pandas as pd
 import logging
 import traceback
 from typing import Tuple
 
-import database
+import pandas as pd
+
 import collectors
+import database
 import utils
 
 # Setup logging with error handling

@@ -5,9 +5,10 @@ Fetches whale transaction data from WhaleAlert, Arkham Intelligence, and other s
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
 from utils.api_client import get_client
-from utils.logger import setup_logger, log_api_request, log_error
+from utils.logger import log_api_request, log_error, setup_logger
 
 logger = setup_logger("whale_tracking_collector")
 

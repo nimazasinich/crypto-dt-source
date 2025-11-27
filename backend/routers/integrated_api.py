@@ -3,13 +3,14 @@ Integrated API Router
 Combines all services for a comprehensive backend API
 """
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse, JSONResponse
-from typing import Optional, List, Dict, Any
-from datetime import datetime
 import logging
-import uuid
 import os
+import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, JSONResponse
 
 logger = logging.getLogger(__name__)
 

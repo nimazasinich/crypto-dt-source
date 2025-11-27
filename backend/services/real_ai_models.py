@@ -4,16 +4,16 @@ Real AI Models Service - ZERO MOCK DATA
 All AI predictions use REAL models from HuggingFace
 """
 
-import logging
-from typing import Dict, Any, Optional
-from datetime import datetime
 import asyncio
+import logging
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 # Try to import transformers - if not available, use HF API
 try:
-    from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
@@ -21,6 +21,7 @@ except ImportError:
     logger.warning("⚠ Transformers not available, will use HF API")
 
 import httpx
+
 from backend.services.real_api_clients import RealAPIConfiguration
 
 

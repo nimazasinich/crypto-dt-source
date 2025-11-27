@@ -6,9 +6,10 @@ Runs periodic health checks with APScheduler
 import asyncio
 import logging
 from datetime import datetime
+from typing import Optional
+
 from apscheduler.schedulers.background import BackgroundScheduler as APScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

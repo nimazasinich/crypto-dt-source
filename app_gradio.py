@@ -3,21 +3,22 @@ Cryptocurrency API Monitor - Gradio Application
 Production-ready monitoring dashboard for Hugging Face Spaces
 """
 
+import asyncio
+import json
+import logging
+import time
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+
 import gradio as gr
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
-from datetime import datetime, timedelta
-import asyncio
-import time
-import logging
-from typing import List, Dict, Optional
-import json
+import plotly.graph_objects as go
 
 # Import local modules
 from config import config
-from monitor import APIMonitor, HealthStatus, HealthCheckResult
 from database import Database
+from monitor import APIMonitor, HealthCheckResult, HealthStatus
 from scheduler import BackgroundScheduler
 
 # Setup logging

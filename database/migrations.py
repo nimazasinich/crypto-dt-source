@@ -3,12 +3,12 @@ Database Migration System
 Handles schema versioning and migrations for SQLite database
 """
 
-import sqlite3
 import logging
-from typing import List, Callable, Tuple
+import sqlite3
+import traceback
 from datetime import datetime
 from pathlib import Path
-import traceback
+from typing import Callable, List, Tuple
 
 logger = logging.getLogger(__name__)
 

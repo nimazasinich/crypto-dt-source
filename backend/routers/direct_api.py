@@ -5,24 +5,26 @@ All external API integrations exposed through REST endpoints
 NO PIPELINES - Direct model loading and inference
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body
-from fastapi.responses import JSONResponse
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+from backend.services.binance_client import binance_client
+from backend.services.coingecko_client import coingecko_client
+from backend.services.crypto_news_client import crypto_news_client
+from backend.services.dataset_loader import crypto_dataset_loader
 
 # Import all clients and services
 from backend.services.direct_model_loader import direct_model_loader
-from backend.services.dataset_loader import crypto_dataset_loader
 from backend.services.external_api_clients import (
     alternative_me_client,
     reddit_client,
     rss_feed_client,
 )
-from backend.services.coingecko_client import coingecko_client
-from backend.services.binance_client import binance_client
-from backend.services.crypto_news_client import crypto_news_client
 
 logger = logging.getLogger(__name__)
 

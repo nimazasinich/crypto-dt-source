@@ -11,11 +11,12 @@ Test Script for HF-first + Fallback Behavior
 """
 
 import asyncio
-import httpx
 import json
-from typing import Dict, Any, List
-from datetime import datetime
 import sys
+from datetime import datetime
+from typing import Any, Dict, List
+
+import httpx
 
 # ============================================================================
 # Configuration

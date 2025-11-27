@@ -4,17 +4,18 @@ Extends DatabaseManager with methods to access collected cryptocurrency data
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
-from sqlalchemy import desc, func, and_
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session
 
 from database.models import (
+    BlockchainStat,
+    GasPrice,
     MarketPrice,
     NewsArticle,
-    WhaleTransaction,
     SentimentMetric,
-    GasPrice,
-    BlockchainStat,
+    WhaleTransaction,
 )
 from utils.logger import setup_logger
 

@@ -3,8 +3,8 @@ Main entry point for HuggingFace Space
 Loads the unified API server with all endpoints
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add current directory to path
 current_dir = Path(__file__).resolve().parent

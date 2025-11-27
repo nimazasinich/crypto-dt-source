@@ -4,14 +4,15 @@ Unified API Service
 FastAPI service that uses UnifiedResourceLoader to provide access to all crypto data
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, List, Any, Optional
-import httpx
 import asyncio
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from unified_resource_loader import get_loader, APIResource
+import httpx
+from fastapi import APIRouter, HTTPException, Query
+
+from unified_resource_loader import APIResource, get_loader
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

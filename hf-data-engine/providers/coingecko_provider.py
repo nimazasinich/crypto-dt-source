@@ -1,10 +1,11 @@
 """CoinGecko provider implementation"""
 
 from __future__ import annotations
-from typing import List
-from datetime import datetime
-import sys
+
 import os
+import sys
+from datetime import datetime
+from typing import List
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 

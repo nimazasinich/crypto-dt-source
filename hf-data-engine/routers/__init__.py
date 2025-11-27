@@ -11,9 +11,9 @@ All endpoints are REST-only (no WebSockets) and return standardized JSON respons
 """
 
 from .blockchain import router as blockchain_router
+from .hf_inference import router as hf_inference_router
 from .market import router as market_router
 from .news import router as news_router
-from .hf_inference import router as hf_inference_router
 
 __all__ = [
     "blockchain_router",

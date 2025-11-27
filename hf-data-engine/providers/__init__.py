@@ -8,23 +8,23 @@ This module exports:
 All providers use async HTTP with httpx.
 """
 
+# Base provider utilities
+from .base import BaseProvider as RestBaseProvider
+from .base import create_error_response, create_success_response
+
 # Original market data providers
 from .binance_provider import BinanceProvider
-from .coingecko_provider import CoinGeckoProvider
-from .kraken_provider import KrakenProvider
+from .bscscan_provider import BscscanProvider
 from .coincap_provider import CoinCapProvider
+from .coingecko_provider import CoinGeckoProvider
+from .coinmarketcap_provider import CoinMarketCapProvider
 
 # New REST API providers (no WebSockets)
 from .etherscan_provider import EtherscanProvider
-from .bscscan_provider import BscscanProvider
-from .tronscan_provider import TronscanProvider
-from .coinmarketcap_provider import CoinMarketCapProvider
-from .news_provider import NewsProvider
 from .hf_sentiment_provider import HFSentimentProvider
-
-# Base provider utilities
-from .base import BaseProvider as RestBaseProvider
-from .base import create_success_response, create_error_response
+from .kraken_provider import KrakenProvider
+from .news_provider import NewsProvider
+from .tronscan_provider import TronscanProvider
 
 __all__ = [
     # Original providers

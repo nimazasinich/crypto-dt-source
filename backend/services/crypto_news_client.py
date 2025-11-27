@@ -5,13 +5,14 @@ Fetches real news from NewsAPI, CryptoPanic, and RSS feeds
 NO MOCK DATA - All news from real sources
 """
 
-import httpx
+import hashlib
 import logging
 import os
-import hashlib
-import feedparser
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import feedparser
+import httpx
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)

@@ -6,10 +6,11 @@ Handles real-time data updates to connected clients
 import asyncio
 import json
 import logging
-from typing import Dict, Set, Any, List, Optional
-from datetime import datetime
-from fastapi import WebSocket, WebSocketDisconnect
 from collections import defaultdict
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set
+
+from fastapi import WebSocket, WebSocketDisconnect
 
 logger = logging.getLogger(__name__)
 

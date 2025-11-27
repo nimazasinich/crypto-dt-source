@@ -4,16 +4,17 @@ Data Collection Module for Crypto Data Aggregator
 Collects price data, news, and sentiment from various sources
 """
 
-import requests
-import aiohttp
 import asyncio
 import json
 import logging
-import time
-import threading
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
 import re
+import threading
+import time
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+
+import aiohttp
+import requests
 
 # Try to import optional dependencies
 try:

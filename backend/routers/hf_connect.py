@@ -1,8 +1,11 @@
 from __future__ import annotations
-from fastapi import APIRouter, Query, Body
-from typing import Literal, List
-from backend.services.hf_registry import REGISTRY
+
+from typing import List, Literal
+
+from fastapi import APIRouter, Body, Query
+
 from backend.services.hf_client import run_sentiment
+from backend.services.hf_registry import REGISTRY
 
 router = APIRouter(prefix="/api/hf", tags=["huggingface"])
 

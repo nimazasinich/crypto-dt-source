@@ -12,9 +12,10 @@ API Documentation: https://huggingface.co/docs/api-inference/
 """
 
 from __future__ import annotations
+
 from typing import Any, Dict, List, Optional
 
-from .base import BaseProvider, create_success_response, create_error_response
+from .base import BaseProvider, create_error_response, create_success_response
 
 
 class HFSentimentProvider(BaseProvider):

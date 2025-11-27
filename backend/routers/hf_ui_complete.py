@@ -3,32 +3,35 @@ Complete HF Space UI Backend - All Required Endpoints
 Ensures every UI data requirement is met with HF-first + fallback
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body, Depends
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timezone
-from pydantic import BaseModel, Field
-import aiohttp
 import asyncio
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import aiohttp
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+
+from database.models import (
+    OHLC,
+    MarketSnapshot,
+    ModelOutput,
+    News,
+    Pair,
+    Rate,
+    Sentiment,
+    Signal,
+    Whale,
+)
+
+from ..enhanced_logger import logger
 
 # Import services
 from ..services.hf_unified_client import HFUnifiedClient
 from ..services.persistence_service import PersistenceService
 from ..services.resource_validator import ResourceValidator
-from ..enhanced_logger import logger
-from database.models import (
-    Rate,
-    Pair,
-    OHLC,
-    MarketSnapshot,
-    News,
-    Sentiment,
-    Whale,
-    ModelOutput,
-    Signal,
-)
 
 router = APIRouter(prefix="/api/service", tags=["ui-complete"])
 

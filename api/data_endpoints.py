@@ -4,7 +4,8 @@ Provides user-facing endpoints to access collected cryptocurrency data
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, List
+from typing import List, Optional
+
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 

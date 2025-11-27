@@ -7,9 +7,10 @@ Usage:
     python3 test_endpoints.py
 """
 
-import requests
 import json
 import sys
+
+import requests
 
 BASE_URL = "http://127.0.0.1:7860"
 ENDPOINTS = [

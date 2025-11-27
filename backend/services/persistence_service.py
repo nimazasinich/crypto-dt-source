@@ -3,14 +3,15 @@ Persistence Service
 Handles data persistence with multiple export formats (JSON, CSV, database)
 """
 
-import json
+import asyncio
 import csv
+import json
 import logging
-from typing import Dict, Any, List, Optional
+from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-import asyncio
-from collections import defaultdict
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ class PersistenceService:
 
             with self.db_manager.get_session() as session:
                 # Find or create provider
-                from database.models import Provider, DataCollection
+                from database.models import DataCollection, Provider
 
                 provider = session.query(Provider).filter_by(name=api_id).first()
 

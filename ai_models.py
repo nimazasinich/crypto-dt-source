@@ -2,12 +2,14 @@
 """Centralized access to Hugging Face models with ensemble sentiment."""
 
 from __future__ import annotations
+
 import logging
 import os
 import threading
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence
+
 from config import HUGGINGFACE_MODELS, get_settings
 
 try:
@@ -885,6 +887,60 @@ def analyze_news_item(item: Dict[str, Any]):
         "sentiment": sent["label"],
         "sentiment_confidence": sent["confidence"],
         "sentiment_details": sent,
+    }
+
+
+def summarize_text(text: str, max_length: int = 150, min_length: int = 50) -> Dict[str, Any]:
+    """
+    Summarize text using the summarization model.
+
+    Args:
+        text: The text to summarize
+        max_length: Maximum length of summary
+        min_length: Minimum length of summary
+
+    Returns:
+        Dictionary containing the summary and metadata
+    """
+    if not text or len(text.strip()) < 10:
+        return {
+            "summary": text,
+            "original_length": len(text),
+            "summary_length": len(text),
+            "error": None,
+        }
+
+    try:
+        # Try to use the summarization model
+        result = call_model_safe(
+            "summarization_0", text, max_length=max_length, min_length=min_length
+        )
+
+        if result.get("success") and result.get("result"):
+            summary = result["result"]
+            if isinstance(summary, list) and len(summary) > 0:
+                summary_text = summary[0].get("summary_text", text[:max_length])
+            elif isinstance(summary, dict):
+                summary_text = summary.get("summary_text", text[:max_length])
+            else:
+                summary_text = str(summary)[:max_length]
+
+            return {
+                "summary": summary_text,
+                "original_length": len(text),
+                "summary_length": len(summary_text),
+                "error": None,
+            }
+    except Exception as e:
+        logger.warning(f"Summarization model failed: {e}")
+
+    # Fallback: Simple truncation with ellipsis
+    fallback_summary = text[:max_length].rsplit(" ", 1)[0] + "..."
+    return {
+        "summary": fallback_summary,
+        "original_length": len(text),
+        "summary_length": len(fallback_summary),
+        "error": "Using fallback summarization",
     }
 
 

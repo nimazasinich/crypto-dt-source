@@ -5,8 +5,9 @@ Manages rate limits per provider with in-memory tracking
 
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Tuple
 from threading import Lock
+from typing import Dict, Optional, Tuple
+
 from utils.logger import setup_logger
 
 logger = setup_logger("rate_limiter")

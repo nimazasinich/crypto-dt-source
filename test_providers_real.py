@@ -5,9 +5,10 @@ Test real providers to verify they actually work
 """
 
 import asyncio
-import httpx
 import json
 from datetime import datetime
+
+import httpx
 
 
 async def test_binance_direct():

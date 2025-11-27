@@ -3,15 +3,16 @@ Unit tests for database module
 Comprehensive test coverage for database operations
 """
 
-import pytest
-import sqlite3
-import tempfile
 import os
-from datetime import datetime
-from pathlib import Path
+import sqlite3
 
 # Import modules to test
 import sys
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

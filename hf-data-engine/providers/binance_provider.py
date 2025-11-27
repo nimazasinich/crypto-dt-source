@@ -1,9 +1,10 @@
 """Binance provider implementation"""
 
 from __future__ import annotations
-from typing import List
-import sys
+
 import os
+import sys
+from typing import List
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 

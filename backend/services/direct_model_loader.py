@@ -7,22 +7,23 @@ NO PIPELINE USAGE - Direct model inference only
 
 import logging
 import os
-from typing import Dict, Any, Optional, List
 from datetime import datetime
-import torch
-import numpy as np
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import numpy as np
+import torch
 
 logger = logging.getLogger(__name__)
 
 # Try to import transformers
 try:
     from transformers import (
-        AutoTokenizer,
-        AutoModelForSequenceClassification,
         AutoModelForCausalLM,
-        BertTokenizer,
+        AutoModelForSequenceClassification,
+        AutoTokenizer,
         BertForSequenceClassification,
+        BertTokenizer,
     )
 
     TRANSFORMERS_AVAILABLE = True

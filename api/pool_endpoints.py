@@ -4,8 +4,9 @@ Provides endpoints for managing source pools, rotation, and monitoring
 """
 
 from datetime import datetime
-from typing import Optional, List
-from fastapi import APIRouter, HTTPException, Body
+from typing import List, Optional
+
+from fastapi import APIRouter, Body, HTTPException
 from pydantic import BaseModel, Field
 
 from database.db_manager import db_manager
@@ -553,7 +554,7 @@ async def get_rotation_history(pool_id: int, limit: int = 50):
     try:
         session = db_manager.get_session()
 
-        from database.models import RotationHistory, Provider
+        from database.models import Provider, RotationHistory
 
         history = (
             session.query(RotationHistory)

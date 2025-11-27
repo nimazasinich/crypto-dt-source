@@ -5,10 +5,11 @@ Fetches real cryptocurrency market data from CoinGecko
 NO MOCK DATA - All data from live CoinGecko API
 """
 
-import httpx
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import httpx
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)

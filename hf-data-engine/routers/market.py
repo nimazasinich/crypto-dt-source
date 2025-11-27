@@ -12,10 +12,11 @@ All endpoints return standardized JSON with {success, source, data} format.
 """
 
 from __future__ import annotations
+
 import logging
 from typing import Optional
-from fastapi import APIRouter, Query, HTTPException
 
+from fastapi import APIRouter, HTTPException, Query
 from providers.coinmarketcap_provider import CoinMarketCapProvider
 
 # Configure logging

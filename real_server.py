@@ -1,14 +1,15 @@
 """Real data server - fetches actual data from free crypto APIs"""
 
 import asyncio
-import httpx
+import time
+from collections import defaultdict
 from datetime import datetime, timedelta
+
+import httpx
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-import uvicorn
-from collections import defaultdict
-import time
 
 # Create FastAPI app
 app = FastAPI(title="Crypto API Monitor - Real Data", version="1.0.0")

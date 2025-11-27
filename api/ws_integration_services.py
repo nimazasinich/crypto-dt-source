@@ -6,15 +6,16 @@ including HuggingFace AI models and persistence operations.
 """
 
 import asyncio
+import logging
 from datetime import datetime
 from typing import Any, Dict
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-import logging
 
-from backend.services.ws_service_manager import ws_manager, ServiceType
-from backend.services.hf_registry import HFRegistry
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 from backend.services.hf_client import HFClient
+from backend.services.hf_registry import HFRegistry
 from backend.services.persistence_service import PersistenceService
+from backend.services.ws_service_manager import ServiceType, ws_manager
 from config import Config
 
 logger = logging.getLogger(__name__)

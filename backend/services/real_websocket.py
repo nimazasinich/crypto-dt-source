@@ -5,14 +5,15 @@ All WebSocket data is REAL from external APIs
 """
 
 import asyncio
-import logging
 import json
-from typing import Dict, Set, Any
-from datetime import datetime
-from fastapi import WebSocket, WebSocketDisconnect
+import logging
 import uuid
+from datetime import datetime
+from typing import Any, Dict, Set
 
-from backend.services.real_api_clients import cmc_client, news_client, blockchain_client
+from fastapi import WebSocket, WebSocketDisconnect
+
+from backend.services.real_api_clients import blockchain_client, cmc_client, news_client
 
 logger = logging.getLogger(__name__)
 

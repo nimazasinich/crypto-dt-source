@@ -10,7 +10,8 @@ new manager if that module is unavailable.
 
 from importlib import util as _importlib_util
 from pathlib import Path as _Path
-from typing import Optional as _Optional, Any as _Any
+from typing import Any as _Any
+from typing import Optional as _Optional
 
 from .db_manager import DatabaseManager
 

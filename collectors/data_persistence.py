@@ -4,7 +4,8 @@ Saves collected data from all collectors into the database
 """
 
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from database.db_manager import db_manager
 from utils.logger import setup_logger
 

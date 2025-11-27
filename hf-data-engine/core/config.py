@@ -1,8 +1,10 @@
 """Configuration management for HuggingFace Crypto Data Engine"""
 
 from __future__ import annotations
+
 import os
 from typing import Optional
+
 from pydantic_settings import BaseSettings
 
 

@@ -4,13 +4,14 @@ Async health checks with retry logic, caching, and metrics tracking
 """
 
 import asyncio
-import aiohttp
-import time
 import logging
-from typing import Dict, List, Tuple, Optional
+import time
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
+
+import aiohttp
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

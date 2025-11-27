@@ -6,23 +6,23 @@ Unified interface to collect data from all available collectors
 import asyncio
 import os
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from utils.logger import setup_logger
+from typing import Any, Dict, List, Optional
+
+# Import data persistence
+from collectors.data_persistence import data_persistence
+from collectors.explorers import collect_explorer_data
 
 # Import all collectors
 from collectors.market_data import collect_market_data
 from collectors.market_data_extended import collect_extended_market_data
-from collectors.explorers import collect_explorer_data
 from collectors.news import collect_news
 from collectors.news_extended import collect_extended_news
-from collectors.sentiment import collect_sentiment
-from collectors.sentiment_extended import collect_extended_sentiment_data
 from collectors.onchain import collect_onchain_data
 from collectors.rpc_nodes import collect_rpc_data
+from collectors.sentiment import collect_sentiment
+from collectors.sentiment_extended import collect_extended_sentiment_data
 from collectors.whale_tracking import collect_whale_tracking_data
-
-# Import data persistence
-from collectors.data_persistence import data_persistence
+from utils.logger import setup_logger
 
 logger = setup_logger("master_collector")
 

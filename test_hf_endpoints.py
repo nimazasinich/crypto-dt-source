@@ -7,12 +7,13 @@ Usage:
     python test_hf_endpoints.py
 """
 
+import asyncio
 import os
 import sys
-import asyncio
-import httpx
 import time
-from typing import Dict, Any
+from typing import Any, Dict
+
+import httpx
 
 # Configuration
 BASE_URL = os.getenv("HF_BASE_URL", "http://localhost:7860")

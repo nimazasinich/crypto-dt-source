@@ -6,13 +6,15 @@ Provides real-time updates via WebSocket connections with connection management
 import asyncio
 import json
 from datetime import datetime
-from typing import Set, Dict, Any, Optional, List
-from fastapi import WebSocket, WebSocketDisconnect, APIRouter
+from typing import Any, Dict, List, Optional, Set
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
-from utils.logger import setup_logger
+
+from config import config
 from database.db_manager import db_manager
 from monitoring.rate_limiter import rate_limiter
-from config import config
+from utils.logger import setup_logger
 
 # Setup logger
 logger = setup_logger("websocket", level="INFO")

@@ -11,12 +11,12 @@ All providers use async HTTP with httpx, 10-second timeouts,
 and optional 30-second in-memory caching.
 """
 
-from .etherscan_provider import EtherscanProvider
 from .bscscan_provider import BscscanProvider
-from .tronscan_provider import TronscanProvider
 from .coinmarketcap_provider import CoinMarketCapProvider
-from .news_provider import NewsProvider
+from .etherscan_provider import EtherscanProvider
 from .hf_sentiment_provider import HFSentimentProvider
+from .news_provider import NewsProvider
+from .tronscan_provider import TronscanProvider
 
 __all__ = [
     "EtherscanProvider",

@@ -6,10 +6,11 @@ Tests all required endpoints and acceptance criteria
 import asyncio
 import json
 import time
-from typing import Dict, Any, List
 from datetime import datetime
-import pytest
+from typing import Any, Dict, List
+
 import aiohttp
+import pytest
 from colorama import Fore, Style, init
 
 # Initialize colorama for colored output

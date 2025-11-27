@@ -3,13 +3,13 @@ Authentication and Authorization System
 Implements JWT-based authentication for production deployments
 """
 
+import hashlib
+import logging
 import os
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-import hashlib
-import logging
 from functools import wraps
+from typing import Any, Dict, Optional
 
 try:
     import jwt

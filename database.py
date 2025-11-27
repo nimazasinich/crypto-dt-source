@@ -4,13 +4,13 @@ Database module for Crypto Data Aggregator
 Complete CRUD operations with the exact schema specified
 """
 
+import json
+import logging
 import sqlite3
 import threading
-import json
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Any, Tuple
 from contextlib import contextmanager
-import logging
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
 
 import config
 

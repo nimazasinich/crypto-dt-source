@@ -8,15 +8,15 @@ provides a comprehensive overview of data collection capabilities.
 import asyncio
 import json
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # Import all collector functions
 from collectors import (
-    collect_market_data,
     collect_explorer_data,
+    collect_market_data,
     collect_news_data,
-    collect_sentiment_data,
     collect_onchain_data,
+    collect_sentiment_data,
 )
 
 

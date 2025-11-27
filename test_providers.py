@@ -5,8 +5,9 @@
 
 import asyncio
 import time
-from provider_manager import ProviderManager, RotationStrategy
 from datetime import datetime
+
+from provider_manager import ProviderManager, RotationStrategy
 
 
 async def test_basic_functionality():

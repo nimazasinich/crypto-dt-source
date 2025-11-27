@@ -10,12 +10,13 @@ CRITICAL RULES:
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
-from sqlalchemy import desc, and_, func
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session
 
-from database.models import CachedMarketData, CachedOHLC
 from database.db_manager import DatabaseManager
+from database.models import CachedMarketData, CachedOHLC
 from utils.logger import setup_logger
 
 logger = setup_logger("cache_queries")

@@ -108,7 +108,7 @@ def test_ai_models_config():
 
     try:
         # Import modules
-        from ai_models import HF_MODE, TRANSFORMERS_AVAILABLE, MODEL_SPECS, LINKED_MODEL_IDS
+        from ai_models import HF_MODE, LINKED_MODEL_IDS, MODEL_SPECS, TRANSFORMERS_AVAILABLE
 
         print(f"  HF_MODE: {HF_MODE}")
         print(f"  Transformers available: {TRANSFORMERS_AVAILABLE}")

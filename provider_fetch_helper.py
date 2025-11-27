@@ -4,8 +4,9 @@ Provider Fetch Helper - Simplified for HuggingFace Spaces
 Direct HTTP calls with retry logic
 """
 
+from typing import Any, Dict, Optional
+
 import httpx
-from typing import Dict, Any, Optional
 
 
 class ProviderFetchHelper:

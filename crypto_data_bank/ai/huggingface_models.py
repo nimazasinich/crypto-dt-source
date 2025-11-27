@@ -5,12 +5,12 @@ HuggingFace Models Integration for AI Analysis
 """
 
 import asyncio
-from typing import List, Dict, Optional, Any
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 try:
-    from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 
     TRANSFORMERS_AVAILABLE = True
 except ImportError:

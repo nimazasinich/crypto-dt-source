@@ -14,7 +14,6 @@ sys.path.insert(0, str(project_root))
 
 import httpx
 
-
 BASE_URL = "http://localhost:8000"
 TIMEOUT = 30.0
 

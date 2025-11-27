@@ -1,36 +1,37 @@
 """HuggingFace Cryptocurrency Data Engine - Main Application"""
 
 from __future__ import annotations
-import time
+
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
 
-from core.config import settings, get_supported_symbols, get_supported_intervals
 from core.aggregator import get_aggregator
 from core.cache import cache, cache_key, get_or_set
+from core.config import get_supported_intervals, get_supported_symbols, settings
 from core.models import (
+    CacheInfo,
+    ErrorDetail,
+    ErrorResponse,
+    HealthResponse,
+    MarketOverviewResponse,
     OHLCVResponse,
     PricesResponse,
     SentimentResponse,
-    MarketOverviewResponse,
-    HealthResponse,
-    ErrorResponse,
-    ErrorDetail,
-    CacheInfo,
 )
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Import new REST API routers (no WebSockets)
 from routers.blockchain import router as blockchain_router
+from routers.hf_inference import router as hf_inference_router
 from routers.market import router as market_router
 from routers.news import router as news_router
-from routers.hf_inference import router as hf_inference_router
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 # Configure logging
 logging.basicConfig(

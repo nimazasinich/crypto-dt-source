@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import List, Dict, Any
+
 import os
 from functools import lru_cache
+from typing import Any, Dict, List
 
 ENABLE_SENTIMENT = os.getenv("ENABLE_SENTIMENT", "true").lower() in ("1", "true", "yes")
 SOCIAL_MODEL = os.getenv("SENTIMENT_SOCIAL_MODEL", "ElKulako/cryptobert")

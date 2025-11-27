@@ -4,12 +4,13 @@ OHLCV Data Verification Script
 Tests multiple cryptocurrency APIs to verify accurate and complete OHLCV data.
 """
 
-import requests
 import json
 import os
-from datetime import datetime, timezone
-from typing import Dict, List, Any, Optional
 import sys
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
+import requests
 
 
 class OHLCVVerifier:

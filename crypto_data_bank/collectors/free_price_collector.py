@@ -5,10 +5,11 @@ Free Price Collectors - NO API KEY REQUIRED
 """
 
 import asyncio
-import httpx
-from typing import List, Dict, Optional, Any
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import httpx
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

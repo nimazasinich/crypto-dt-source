@@ -3,11 +3,12 @@ SQLAlchemy Database Models
 Defines all database tables for the crypto API monitoring system
 """
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Enum
+import enum
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import enum
 
 Base = declarative_base()
 

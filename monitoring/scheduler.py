@@ -6,20 +6,21 @@ Implements scheduled tasks using APScheduler with full compliance tracking
 import asyncio
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Callable, Any, List
 from threading import Lock
+from typing import Any, Callable, Dict, List, Optional
 
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
+from apscheduler.triggers.interval import IntervalTrigger
+
+from config import config
+from database.db_manager import db_manager
 
 # Import required modules
 from monitoring.health_checker import HealthChecker
 from monitoring.rate_limiter import rate_limiter
-from database.db_manager import db_manager
 from utils.logger import setup_logger
-from config import config
 
 # Setup logger
 logger = setup_logger("scheduler", level="INFO")

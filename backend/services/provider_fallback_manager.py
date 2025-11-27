@@ -4,16 +4,17 @@ Manages fallback to external providers when HF cannot provide data
 Uses /mnt/data/api-config-complete.txt as authoritative source
 """
 
-import json
-import os
 import asyncio
 import hashlib
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime, timezone
-import aiohttp
+import json
+import os
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import aiohttp
 
 from ..enhanced_logger import logger
 

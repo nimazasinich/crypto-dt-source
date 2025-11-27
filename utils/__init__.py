@@ -36,10 +36,11 @@ def setup_logging():
     return setup_logger("crypto_aggregator", level="INFO")
 
 
+import os
+
 # Import utility functions from the standalone utils.py module
 # We need to access it via a different path since we're inside the utils package
 import sys
-import os
 
 # Add parent directory to path to import standalone utils module
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

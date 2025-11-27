@@ -5,11 +5,12 @@ Schedules and runs data collection from all available sources with configurable 
 
 import asyncio
 import json
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Optional, Any
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from utils.logger import setup_logger
+from typing import Any, Dict, List, Optional
+
 from collectors.master_collector import DataSourceCollector
+from utils.logger import setup_logger
 
 logger = setup_logger("comprehensive_scheduler")
 

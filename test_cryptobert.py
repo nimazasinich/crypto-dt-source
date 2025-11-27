@@ -4,17 +4,18 @@ Test script for CryptoBERT model integration
 Verifies that the ElKulako/CryptoBERT model is properly configured and accessible
 """
 
+import json
 import os
 import sys
-import json
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Ensure the token is set
 os.environ.setdefault("HF_TOKEN", "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")
 
+import ai_models
+
 # Import after setting environment variable
 import config
-import ai_models
 
 
 def print_section(title: str):

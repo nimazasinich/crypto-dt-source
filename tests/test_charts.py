@@ -3,9 +3,10 @@ Test suite for chart endpoints
 Validates rate limit history and freshness history endpoints
 """
 
+from datetime import datetime, timedelta
+
 import pytest
 import requests as R
-from datetime import datetime, timedelta
 
 # Base URL for API (adjust if running on different port/host)
 BASE = "http://localhost:7860"

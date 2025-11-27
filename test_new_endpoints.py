@@ -4,10 +4,11 @@ Test script for new model and gap-filling endpoints
 Tests with REAL API integrations (no mocks)
 """
 
-import requests
 import json
 import sys
 from datetime import datetime
+
+import requests
 
 # Base URL - adjust if needed
 BASE_URL = "http://localhost:7860"

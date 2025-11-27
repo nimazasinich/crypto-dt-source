@@ -3,13 +3,14 @@
 Improved Provider API Endpoint with intelligent categorization and validation
 """
 
+import json
+import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from typing import Dict, List, Any, Optional
-import json
-from pathlib import Path
-import logging
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

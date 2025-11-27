@@ -12,21 +12,22 @@ Main server for HuggingFace Space deployment
 ═══════════════════════════════════════════════════════════════
 """
 
-import os
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 
+from ai_models import initialize_models
 from api.hf_endpoints import router as hf_router
 from database.db_manager import db_manager
 from database.models import Base
-from ai_models import initialize_models
+from utils.logger import setup_logger
 from workers.market_data_worker import start_market_data_worker
 from workers.ohlc_data_worker import start_ohlc_data_worker
-from utils.logger import setup_logger
 
 logger = setup_logger("hf_server")
 

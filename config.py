@@ -2,7 +2,11 @@
 """Configuration module for Hugging Face models."""
 
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
+# API Request Configuration
+REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "30"))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
 
 HUGGINGFACE_MODELS: Dict[str, str] = {
     "sentiment_twitter": "cardiffnlp/twitter-roberta-base-sentiment-latest",

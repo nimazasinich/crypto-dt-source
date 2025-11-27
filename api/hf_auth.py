@@ -8,11 +8,12 @@ CRITICAL RULES:
 - NO bypass - authentication is REQUIRED
 """
 
-import os
 import logging
-from fastapi import Security, HTTPException, status, Header
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import os
 from typing import Optional
+
+from fastapi import Header, HTTPException, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 logger = logging.getLogger(__name__)
 

@@ -1,29 +1,30 @@
 """Data aggregator with multi-provider fallback"""
 
 from __future__ import annotations
-from typing import List, Optional
-from datetime import datetime
-import time
+
 import logging
-import sys
 import os
+import sys
+import time
+from datetime import datetime
+from typing import List, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from providers import BinanceProvider, CoinGeckoProvider, KrakenProvider, CoinCapProvider
+import httpx
+from core.cache import cache, cache_key, get_or_set
+from core.config import settings
 from core.models import (
     OHLCV,
-    Price,
-    SentimentData,
     FearGreedIndex,
+    MarketOverview,
     NewsSentiment,
     OverallSentiment,
-    MarketOverview,
+    Price,
     ProviderHealth,
+    SentimentData,
 )
-from core.config import settings
-from core.cache import cache, cache_key, get_or_set
-import httpx
+from providers import BinanceProvider, CoinCapProvider, CoinGeckoProvider, KrakenProvider
 
 logger = logging.getLogger(__name__)
 

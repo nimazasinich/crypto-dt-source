@@ -4,11 +4,12 @@ Direct API Test Suite
 Tests for direct model loading and external API integration
 """
 
-import pytest
 import asyncio
-from fastapi.testclient import TestClient
 import sys
 from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
 
 # Add project root to path
 project_root = Path(__file__).parent

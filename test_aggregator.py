@@ -3,10 +3,11 @@ Test script for the Crypto Resource Aggregator
 Tests all endpoints and resources to ensure they're working correctly
 """
 
-import requests
 import json
 import time
 from typing import Dict, List
+
+import requests
 
 # Configuration
 BASE_URL = "http://localhost:7860"

@@ -3,10 +3,10 @@
 Simple Rate Limiter for API Endpoints
 """
 
+import logging
 import time
 from collections import defaultdict
 from typing import Dict, Tuple
-import logging
 
 logger = logging.getLogger(__name__)
 

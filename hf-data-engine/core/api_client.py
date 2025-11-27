@@ -4,13 +4,13 @@ Implements the primary data fetching logic with provider fallback
 """
 
 import asyncio
-import httpx
 import logging
-from typing import Dict, Any, Optional, List, Tuple, Callable
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from core.fallback_config import get_fallback_config, ProviderConfig
+import httpx
+from core.fallback_config import ProviderConfig, get_fallback_config
 
 logger = logging.getLogger(__name__)
 

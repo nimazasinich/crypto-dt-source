@@ -5,11 +5,11 @@ FastAPI server that provides cryptocurrency data from real sources
 NO MOCK DATA - All endpoints return real data from live APIs
 """
 
+import logging
 import os
 import sys
-import logging
-from pathlib import Path
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

@@ -7,29 +7,29 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
+# Import core modules
+from core.api_client import close_api_client, get_api_client
+from core.fallback_config import get_fallback_config
+from core.normalizers import normalizer
 from fastapi import (
+    Body,
     FastAPI,
+    Header,
     HTTPException,
     Query,
     Request,
-    Header,
     WebSocket,
     WebSocketDisconnect,
-    Body,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
-# Import core modules
-from core.api_client import get_api_client, close_api_client
-from core.normalizers import normalizer
-from core.fallback_config import get_fallback_config
 from database.db_manager import DatabaseManager
 
 # Configure logging

@@ -3,13 +3,13 @@ Cache Manager with In-Memory and Optional Redis Support
 Provides caching layer for API responses
 """
 
-import json
 import hashlib
+import json
 import logging
-from typing import Any, Optional, Callable
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
 

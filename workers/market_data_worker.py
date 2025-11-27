@@ -10,11 +10,12 @@ CRITICAL RULES:
 """
 
 import asyncio
-import time
 import logging
 import os
+import time
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 import httpx
 
 from database.cache_queries import get_cache_queries

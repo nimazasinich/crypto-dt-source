@@ -5,10 +5,11 @@ Fetches data from Etherscan, BscScan, and TronScan
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from utils.api_client import get_client
-from utils.logger import setup_logger, log_api_request, log_error
+from typing import Any, Dict, List, Optional
+
 from config import config
+from utils.api_client import get_client
+from utils.logger import log_api_request, log_error, setup_logger
 
 logger = setup_logger("explorers_collector")
 

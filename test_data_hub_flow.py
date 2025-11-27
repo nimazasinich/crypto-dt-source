@@ -4,9 +4,9 @@ Test Data Hub Flow - Verify Complete Data Pipeline
 Tests whether data flows: External APIs → HuggingFace → Clients
 """
 
+import asyncio
 import os
 import sys
-import asyncio
 from pathlib import Path
 
 # Add workspace to path
@@ -19,7 +19,7 @@ print("=" * 80)
 # Test 1: Check if HuggingFace Dataset Upload exists
 print("\n📋 Test 1: Checking for HuggingFace Dataset Upload functionality...")
 try:
-    from huggingface_hub import HfApi, upload_file, create_repo
+    from huggingface_hub import HfApi, create_repo, upload_file
 
     print("✅ huggingface_hub library is available")
 
@@ -52,8 +52,8 @@ except ImportError as e:
 # Test 2: Check current data storage mechanism
 print("\n📋 Test 2: Checking current data storage mechanism...")
 try:
-    from database.db_manager import db_manager
     from database.cache_queries import get_cache_queries
+    from database.db_manager import db_manager
 
     print("✅ Database manager available")
 
@@ -149,8 +149,8 @@ print("\n📋 Test 6: Testing actual data flow...")
 async def test_data_flow():
     """Test the complete data flow"""
     try:
-        from workers.market_data_worker import MarketDataWorker
         from database.cache_queries import get_cache_queries
+        from workers.market_data_worker import MarketDataWorker
 
         print("   Testing market data worker...")
 

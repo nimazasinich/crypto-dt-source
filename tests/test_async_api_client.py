@@ -3,17 +3,17 @@ Unit tests for async API client
 Test async HTTP operations, retry logic, and error handling
 """
 
-import pytest
-import aiohttp
-from unittest.mock import AsyncMock, patch, MagicMock
 import asyncio
-
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import aiohttp
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils.async_api_client import AsyncAPIClient, safe_api_call, parallel_api_calls
+from utils.async_api_client import AsyncAPIClient, parallel_api_calls, safe_api_call
 
 
 @pytest.mark.asyncio

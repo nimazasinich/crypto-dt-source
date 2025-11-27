@@ -6,17 +6,19 @@ with real-time updates, persistence, and scheduling
 
 import asyncio
 import logging
+import os
+from contextlib import asynccontextmanager
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from contextlib import asynccontextmanager
-import uvicorn
-import os
+
+from backend.services.persistence_service import PersistenceService
+from backend.services.scheduler_service import SchedulerService
 
 # Import services
 from backend.services.unified_config_loader import UnifiedConfigLoader
-from backend.services.scheduler_service import SchedulerService
-from backend.services.persistence_service import PersistenceService
 from backend.services.websocket_service import WebSocketService
 
 # Import database manager
@@ -25,10 +27,12 @@ try:
 except ImportError:
     DatabaseManager = None
 
-# Import routers
-from backend.routers.integrated_api import router as integrated_router, set_services
 from backend.routers.advanced_api import router as advanced_router
 from backend.routers.hf_space_api import router as hf_space_router
+
+# Import routers
+from backend.routers.integrated_api import router as integrated_router
+from backend.routers.integrated_api import set_services
 
 # Setup logging
 logging.basicConfig(
@@ -200,7 +204,7 @@ except:
     logger.warning("⚠ Static files directory not found")
 
 # Serve HTML files
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
 
 @app.get("/", response_class=HTMLResponse)

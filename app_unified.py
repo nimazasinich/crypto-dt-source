@@ -5,16 +5,18 @@ FastAPI + Static UI + Unified Resource Loader
 Ready for Docker/HuggingFace Spaces deployment
 """
 
-import os
 import logging
+import os
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 # Import our unified API service router
-from unified_api_service import router as api_router, init_loader
+from unified_api_service import init_loader
+from unified_api_service import router as api_router
 
 # Setup logging
 logging.basicConfig(

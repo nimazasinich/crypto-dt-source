@@ -25,11 +25,11 @@ Complete implementation with authentication, real data endpoints, and background
 ═══════════════════════════════════════════════════════════════
 """
 
+import asyncio
+import logging
 import os
 import sys
 import time
-import asyncio
-import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -41,18 +41,19 @@ from fastapi.responses import JSONResponse
 # Add workspace to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-# Import database and workers
-from database.db_manager import db_manager
-from database.cache_queries import get_cache_queries
-from workers.market_data_worker import start_market_data_worker
-from workers.ohlc_data_worker import start_ohlc_data_worker
-from workers.comprehensive_data_worker import start_comprehensive_worker
 from ai_models import _registry
-from utils.logger import setup_logger
+from api.hf_data_hub_endpoints import router as hf_hub_router
 
 # Import HF endpoints routers
 from api.hf_endpoints import router as hf_router
-from api.hf_data_hub_endpoints import router as hf_hub_router
+from database.cache_queries import get_cache_queries
+
+# Import database and workers
+from database.db_manager import db_manager
+from utils.logger import setup_logger
+from workers.comprehensive_data_worker import start_comprehensive_worker
+from workers.market_data_worker import start_market_data_worker
+from workers.ohlc_data_worker import start_ohlc_data_worker
 
 # Setup logging
 logger = setup_logger("hf_space_api", level="INFO")

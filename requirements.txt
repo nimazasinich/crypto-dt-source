@@ -52,6 +52,8 @@ lxml==5.3.0
 python-dateutil>=2.9.0
 pytz>=2024.1
 tenacity>=9.0.0
+colorama>=0.4.6
+hypothesis>=6.0.0
 
 # ===== Optional: Acceleration =====
 # accelerate>=0.34.0  # Uncomment if using multi-GPU

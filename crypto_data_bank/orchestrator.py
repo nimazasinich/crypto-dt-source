@@ -5,21 +5,21 @@ Data Collection Orchestrator - Manages all collectors
 """
 
 import asyncio
-import sys
-import os
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
 import logging
+import os
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from crypto_data_bank.database import get_db
+from crypto_data_bank.ai.huggingface_models import get_analyzer
 from crypto_data_bank.collectors.free_price_collector import FreePriceCollector
 from crypto_data_bank.collectors.rss_news_collector import RSSNewsCollector
 from crypto_data_bank.collectors.sentiment_collector import SentimentCollector
-from crypto_data_bank.ai.huggingface_models import get_analyzer
+from crypto_data_bank.database import get_db
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"

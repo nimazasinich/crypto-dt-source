@@ -3,12 +3,13 @@ Crypto API Hub Router
 FastAPI router for the Crypto API Hub Dashboard endpoints
 """
 
+import logging
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from typing import Optional
-import logging
 
-from crypto_api_hub_backend import crypto_hub_service, APIRequest
+from crypto_api_hub_backend import APIRequest, crypto_hub_service
 
 logger = logging.getLogger(__name__)
 

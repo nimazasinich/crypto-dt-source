@@ -4,18 +4,20 @@ Real Data API Router - ZERO MOCK DATA
 All endpoints return REAL data from external APIs
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
-from typing import Optional, List, Dict, Any
-from datetime import datetime
-from pydantic import BaseModel
-import logging
 import json
+import logging
 import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Body, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+from backend.services.real_ai_models import ai_registry
 
 # Import real API clients
-from backend.services.real_api_clients import cmc_client, news_client, blockchain_client, hf_client
-from backend.services.real_ai_models import ai_registry
+from backend.services.real_api_clients import blockchain_client, cmc_client, hf_client, news_client
 from backend.services.real_websocket import ws_manager
 
 logger = logging.getLogger(__name__)

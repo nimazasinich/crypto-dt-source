@@ -11,9 +11,9 @@ This test verifies that:
 5. The complete data hub architecture is working
 """
 
+import asyncio
 import os
 import sys
-import asyncio
 import time
 from pathlib import Path
 
@@ -121,8 +121,8 @@ print("-" * 100)
 async def test_local_cache():
     """Test saving to local SQLite cache"""
     try:
-        from database.db_manager import db_manager
         from database.cache_queries import get_cache_queries
+        from database.db_manager import db_manager
         from workers.market_data_worker import fetch_coingecko_prices, save_market_data_to_cache
 
         # Initialize database
@@ -191,8 +191,9 @@ async def test_hf_upload():
             print("⚠️  Skipping HuggingFace upload test (no HF_TOKEN)")
             return None
 
-        from hf_dataset_uploader import get_dataset_uploader
         from datetime import datetime
+
+        from hf_dataset_uploader import get_dataset_uploader
 
         # Create sample data
         sample_market_data = [

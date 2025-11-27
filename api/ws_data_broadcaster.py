@@ -6,10 +6,10 @@ Broadcasts real-time cryptocurrency data from database to connected clients
 import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
+from backend.services.ws_service_manager import ServiceType, ws_manager
 from database.db_manager import db_manager
-from backend.services.ws_service_manager import ws_manager, ServiceType
 from utils.logger import setup_logger
 
 logger = setup_logger("ws_data_broadcaster")

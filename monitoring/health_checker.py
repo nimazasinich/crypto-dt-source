@@ -5,17 +5,18 @@ Implements comprehensive health checks with rate limiting, failure tracking, and
 
 import asyncio
 import time
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime
 from collections import defaultdict
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+
+from config import config
+from database import Database
+from monitor import HealthCheckResult, HealthStatus
+from monitoring.rate_limiter import rate_limiter
 
 # Import required modules
 from utils.api_client import APIClient
-from config import config
-from monitoring.rate_limiter import rate_limiter
-from utils.logger import setup_logger, log_api_request, log_error
-from monitor import HealthCheckResult, HealthStatus
-from database import Database
+from utils.logger import log_api_request, log_error, setup_logger
 
 # Setup logger
 logger = setup_logger("health_checker")

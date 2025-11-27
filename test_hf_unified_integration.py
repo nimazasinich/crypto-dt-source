@@ -12,8 +12,9 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from backend.services.hf_unified_client import get_hf_client
 import logging
+
+from backend.services.hf_unified_client import get_hf_client
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"

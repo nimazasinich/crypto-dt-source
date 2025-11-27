@@ -12,10 +12,11 @@ All endpoints return standardized JSON with {success, source, data} format.
 """
 
 from __future__ import annotations
-import logging
-from typing import Optional, List
-from fastapi import APIRouter, Query
 
+import logging
+from typing import List, Optional
+
+from fastapi import APIRouter, Query
 from providers.news_provider import NewsProvider
 
 # Configure logging

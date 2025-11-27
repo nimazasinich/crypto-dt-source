@@ -12,12 +12,13 @@ No WebSockets - pure REST API.
 """
 
 from __future__ import annotations
+
 import logging
 from typing import Optional
-from fastapi import APIRouter, Query, HTTPException
 
-from providers.etherscan_provider import EtherscanProvider
+from fastapi import APIRouter, HTTPException, Query
 from providers.bscscan_provider import BscscanProvider
+from providers.etherscan_provider import EtherscanProvider
 from providers.tronscan_provider import TronscanProvider
 
 # Configure logging

@@ -9,8 +9,8 @@ import time
 
 sys.path.insert(0, "/workspace")
 
-from database.db_manager import db_manager
 from database.cache_queries import get_cache_queries
+from database.db_manager import db_manager
 
 # Test 1: Check database has REAL data
 print("=" * 80)
@@ -82,8 +82,9 @@ print("TEST 3: Database Statistics")
 print("=" * 80)
 
 with db_manager.get_session() as session:
+    from sqlalchemy import distinct, func
+
     from database.models import CachedMarketData, CachedOHLC
-    from sqlalchemy import func, distinct
 
     # Count market data entries
     market_count = session.query(func.count(CachedMarketData.id)).scalar()

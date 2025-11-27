@@ -5,20 +5,22 @@ This module creates the unified API server with all service endpoints.
 Multi-page architecture with HTTP polling (no WebSocket).
 """
 
+import logging
+import time
+from datetime import datetime
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-import logging
-from datetime import datetime
-import time
+
+from backend.routers.crypto_api_hub_router import router as crypto_hub_router
+from backend.routers.direct_api import router as direct_api_router
+from backend.routers.real_data_api import router as real_data_router
 
 # Import routers
 from backend.routers.unified_service_api import router as service_router
-from backend.routers.real_data_api import router as real_data_router
-from backend.routers.direct_api import router as direct_api_router
-from backend.routers.crypto_api_hub_router import router as crypto_hub_router
 
 # Import rate limiter
 from utils.rate_limiter_simple import rate_limiter

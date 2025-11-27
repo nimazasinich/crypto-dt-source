@@ -6,16 +6,17 @@ Loads cryptocurrency datasets directly from Hugging Face
 
 import logging
 import os
-from typing import Dict, Any, Optional, List
 from datetime import datetime
-import pandas as pd
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 # Try to import datasets
 try:
-    from datasets import load_dataset, Dataset, DatasetDict
+    from datasets import Dataset, DatasetDict, load_dataset
 
     DATASETS_AVAILABLE = True
 except ImportError:

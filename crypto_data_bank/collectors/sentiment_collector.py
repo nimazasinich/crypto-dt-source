@@ -5,10 +5,11 @@ Free Market Sentiment Collectors - NO API KEY
 """
 
 import asyncio
-import httpx
-from typing import Dict, Optional
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Dict, Optional
+
+import httpx
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

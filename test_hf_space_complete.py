@@ -4,11 +4,12 @@ HF Space Complete API Test Script
 Tests all endpoints and fallback behavior
 """
 import asyncio
-import aiohttp
 import json
-from datetime import datetime
-from typing import Dict, Any
 import sys
+from datetime import datetime
+from typing import Any, Dict
+
+import aiohttp
 
 # Configuration
 BASE_URL = "http://localhost:8000"

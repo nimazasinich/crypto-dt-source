@@ -5,19 +5,21 @@ All endpoints return REAL data from external APIs
 NO MOCK DATA - NO FABRICATED DATA - NO STATIC TEST DATA
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body
-from fastapi.responses import JSONResponse
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
-from pydantic import BaseModel
 import logging
 import time
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+from backend.services.binance_client import binance_client
 
 # Import real API clients
 from backend.services.coingecko_client import coingecko_client
-from backend.services.binance_client import binance_client
-from backend.services.huggingface_inference_client import hf_inference_client
 from backend.services.crypto_news_client import crypto_news_client
+from backend.services.huggingface_inference_client import hf_inference_client
 
 logger = logging.getLogger(__name__)
 

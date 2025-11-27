@@ -5,7 +5,7 @@ Loads all API sources from all_apis_merged_2025.json
 
 import json
 import re
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 
 class APILoader:

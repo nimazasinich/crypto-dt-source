@@ -9,23 +9,24 @@ Hub کامل با منابع رایگان و مدل‌های Hugging Face
 2. FastAPI + HTML (در صورت تنظیم USE_FASTAPI_HTML=true)
 """
 
-import os
-import json
 import asyncio
+import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Any
+import os
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import gradio as gr
-import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
 import httpx
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Import backend services
 try:
+    from ai_models import MODEL_SPECS, ModelRegistry, get_model_info, registry_status
     from api_server_extended import app as fastapi_app
-    from ai_models import ModelRegistry, MODEL_SPECS, get_model_info, registry_status
 
     FASTAPI_AVAILABLE = True
 except ImportError as e:

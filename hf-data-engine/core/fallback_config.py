@@ -3,11 +3,11 @@ Fallback Configuration Loader
 Parses /mnt/data/api-config-complete.txt and extracts provider configurations
 """
 
-import re
 import logging
-from typing import Dict, List, Any, Optional
-from pathlib import Path
+import re
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

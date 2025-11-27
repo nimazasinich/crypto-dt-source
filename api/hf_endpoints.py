@@ -22,17 +22,18 @@ Provides endpoints for market data, sentiment analysis, and system health
 ═══════════════════════════════════════════════════════════════
 """
 
-import time
 import logging
+import time
 from datetime import datetime
-from typing import Optional, List
-from fastapi import APIRouter, Depends, Query, Body, HTTPException
+from typing import List, Optional
+
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import BaseModel
 
+from ai_models import _registry
 from api.hf_auth import verify_hf_token
 from database.cache_queries import get_cache_queries
 from database.db_manager import db_manager
-from ai_models import _registry
 from utils.logger import setup_logger
 
 logger = setup_logger("hf_endpoints")
@@ -376,8 +377,9 @@ async def health_check(auth: bool = Depends(verify_hf_token)):
 
         try:
             with db_manager.get_session() as session:
+                from sqlalchemy import distinct, func
+
                 from database.models import CachedMarketData, CachedOHLC
-                from sqlalchemy import func, distinct
 
                 # Count unique symbols in cache
                 cache_stats["market_data_count"] = (

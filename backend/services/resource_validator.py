@@ -5,9 +5,9 @@ Validates local_backend_routes and other resources for duplicates and consistenc
 
 import json
 import logging
-from typing import Dict, List, Any, Set, Tuple
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+from typing import Any, Dict, List, Set, Tuple
 
 logger = logging.getLogger(__name__)
 

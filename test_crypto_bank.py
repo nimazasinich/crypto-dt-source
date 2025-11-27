@@ -11,10 +11,10 @@ from pathlib import Path
 # Add to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+from crypto_data_bank.ai.huggingface_models import get_analyzer
 from crypto_data_bank.collectors.free_price_collector import FreePriceCollector
 from crypto_data_bank.collectors.rss_news_collector import RSSNewsCollector
 from crypto_data_bank.collectors.sentiment_collector import SentimentCollector
-from crypto_data_bank.ai.huggingface_models import get_analyzer
 from crypto_data_bank.database import get_db
 from crypto_data_bank.orchestrator import get_orchestrator
 

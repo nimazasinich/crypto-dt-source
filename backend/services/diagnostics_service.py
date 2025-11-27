@@ -5,15 +5,15 @@ Diagnostics & Auto-Repair Service
 """
 
 import asyncio
+import importlib.util
+import json
 import logging
 import os
 import subprocess
 import sys
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
-import json
-import importlib.util
 
 logger = logging.getLogger(__name__)
 
@@ -279,7 +279,7 @@ class DiagnosticsService:
         issues = []
 
         try:
-            from huggingface_hub import InferenceClient, HfApi
+            from huggingface_hub import HfApi, InferenceClient
 
             api = HfApi()
 
