@@ -18,6 +18,7 @@ import time
 from backend.routers.unified_service_api import router as service_router
 from backend.routers.real_data_api import router as real_data_router
 from backend.routers.direct_api import router as direct_api_router
+from backend.routers.crypto_api_hub_router import router as crypto_hub_router
 
 # Import rate limiter
 from utils.rate_limiter_simple import rate_limiter
@@ -87,6 +88,7 @@ async def rate_limit_middleware(request: Request, call_next):
 app.include_router(service_router)  # Main unified service
 app.include_router(real_data_router, prefix="/real")  # Existing real data endpoints
 app.include_router(direct_api_router)  # NEW: Direct API with external services and HF models
+app.include_router(crypto_hub_router)  # Crypto API Hub Dashboard API
 
 # ============================================================================
 # STATIC FILES
@@ -162,6 +164,11 @@ async def diagnostics_page():
 async def api_explorer_page():
     """API Explorer page"""
     return serve_page("api-explorer")
+
+@app.get("/crypto-api-hub", response_class=HTMLResponse)
+async def crypto_api_hub_page():
+    """Crypto API Hub Dashboard page"""
+    return serve_page("crypto-api-hub")
 
 # ============================================================================
 # API ENDPOINTS FOR FRONTEND
