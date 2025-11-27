@@ -1,14 +1,16 @@
 """
 Production Crypto API Monitor Server
 Complete implementation with ALL API sources and HuggingFace integration
+Full dashboard routing with static pages support
 """
 import asyncio
 import httpx
 import time
 from datetime import datetime, timedelta
-from fastapi import FastAPI, HTTPException
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from collections import defaultdict
@@ -16,7 +18,53 @@ from typing import Dict, List, Any
 import os
 
 # Import API loader
-from api_loader import api_loader
+try:
+    from api_loader import api_loader
+except ImportError:
+    # Fallback mock loader if api_loader not available
+    class MockApiLoader:
+        def get_all_apis(self):
+            return {}
+        keys = {}
+        cors_proxies = []
+        def add_custom_api(self, *args, **kwargs):
+            pass
+        def remove_api(self, name):
+            return False
+    api_loader = MockApiLoader()
+
+# Workspace paths
+WORKSPACE_ROOT = Path(__file__).parent
+STATIC_DIR = WORKSPACE_ROOT / "static"
+PAGES_DIR = STATIC_DIR / "pages"
+
+# Page routing configuration - maps URL paths to page directories
+PAGE_ROUTES = {
+    # Main dashboard routes
+    "/": "dashboard",
+    "/dashboard": "dashboard",
+    "/market": "market",
+    "/models": "models",
+    "/sentiment": "sentiment",
+    "/ai-analyst": "ai-analyst",
+    "/trading-assistant": "trading-assistant",
+    "/news": "news",
+    "/providers": "providers",
+    "/diagnostics": "diagnostics",
+    "/api-explorer": "api-explorer",
+    "/crypto-api-hub": "crypto-api-hub",
+    
+    # Dashboard sub-routes (all map to main dashboard)
+    "/dashboard/market": "market",
+    "/dashboard/models": "models",
+    "/dashboard/sentiment": "sentiment",
+    "/dashboard/ai-analyst": "ai-analyst",
+    "/dashboard/trading-assistant": "trading-assistant",
+    "/dashboard/news": "news",
+    "/dashboard/providers": "providers",
+    "/dashboard/diagnostics": "diagnostics",
+    "/dashboard/api-explorer": "api-explorer",
+}
 
 # Create FastAPI app
 app = FastAPI(
@@ -438,37 +486,240 @@ async def remove_custom_api(name: str):
         return {"success": True, "message": f"Removed {name}"}
     raise HTTPException(status_code=404, detail="API not found")
 
-# Serve static files
+# ==============================================================================
+# STATIC PAGE ROUTING
+# ==============================================================================
+
+def get_page_index(page_name: str) -> Path:
+    """Get the index.html path for a page"""
+    page_path = PAGES_DIR / page_name / "index.html"
+    return page_path if page_path.exists() else None
+
+# Mount static files first (for CSS, JS, assets)
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# ============================================================================
+# PAGE ROUTES - Dynamic routing for all pages in static/pages
+# ============================================================================
+
 @app.get("/")
 async def root():
-    return FileResponse("index.html")
+    """Serve the main dashboard"""
+    page_path = get_page_index("dashboard")
+    if page_path:
+        return FileResponse(str(page_path))
+    # Fallback to root index.html if dashboard not found
+    fallback = WORKSPACE_ROOT / "index.html"
+    if fallback.exists():
+        return FileResponse(str(fallback))
+    return {"error": "Dashboard not found", "hint": "Check static/pages/dashboard/index.html"}
+
+@app.get("/dashboard")
+async def dashboard_page():
+    """Serve the main dashboard"""
+    return await root()
+
+@app.get("/dashboard/{path:path}")
+async def dashboard_subpage(path: str):
+    """Handle all dashboard sub-routes like /dashboard/market, /dashboard/providers, etc."""
+    # Strip leading slash if any
+    path = path.strip("/")
+    
+    # Check if this is a direct page request
+    page_path = get_page_index(path)
+    if page_path:
+        return FileResponse(str(page_path))
+    
+    # Fallback to main dashboard for SPA-style routing
+    return await root()
+
+@app.get("/market")
+async def market_page():
+    """Serve the market page"""
+    page_path = get_page_index("market")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Market page not found"}
+
+@app.get("/models")
+async def models_page():
+    """Serve the AI models page"""
+    page_path = get_page_index("models")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Models page not found"}
+
+@app.get("/sentiment")
+async def sentiment_page():
+    """Serve the sentiment analysis page"""
+    page_path = get_page_index("sentiment")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Sentiment page not found"}
+
+@app.get("/ai-analyst")
+async def ai_analyst_page():
+    """Serve the AI analyst page"""
+    page_path = get_page_index("ai-analyst")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "AI Analyst page not found"}
+
+@app.get("/trading-assistant")
+async def trading_assistant_page():
+    """Serve the trading assistant page"""
+    page_path = get_page_index("trading-assistant")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Trading Assistant page not found"}
+
+@app.get("/news")
+async def news_page():
+    """Serve the news page"""
+    page_path = get_page_index("news")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "News page not found"}
+
+@app.get("/providers")
+async def providers_page():
+    """Serve the providers page"""
+    page_path = get_page_index("providers")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Providers page not found"}
+
+@app.get("/diagnostics")
+async def diagnostics_page():
+    """Serve the diagnostics page"""
+    page_path = get_page_index("diagnostics")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Diagnostics page not found"}
+
+@app.get("/api-explorer")
+async def api_explorer_page():
+    """Serve the API explorer page"""
+    page_path = get_page_index("api-explorer")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "API Explorer page not found"}
+
+@app.get("/crypto-api-hub")
+async def crypto_api_hub_page():
+    """Serve the Crypto API Hub page"""
+    page_path = get_page_index("crypto-api-hub")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Crypto API Hub page not found"}
+
+# ============================================================================
+# LEGACY HTML FILE ROUTES (for backward compatibility)
+# ============================================================================
 
 @app.get("/index.html")
-async def index():
-    return FileResponse("index.html")
+async def index_html():
+    """Legacy route - redirect to dashboard"""
+    return await root()
 
 @app.get("/dashboard.html")
-async def dashboard():
-    return FileResponse("dashboard.html")
+async def dashboard_html():
+    """Serve legacy dashboard.html if exists"""
+    legacy_path = WORKSPACE_ROOT / "dashboard.html"
+    if legacy_path.exists():
+        return FileResponse(str(legacy_path))
+    return await root()
 
 @app.get("/hf_console.html")
 async def hf_console():
-    return FileResponse("hf_console.html")
+    """Serve the HuggingFace console page"""
+    hf_path = WORKSPACE_ROOT / "hf_console.html"
+    if hf_path.exists():
+        return FileResponse(str(hf_path))
+    return {"error": "HF Console not found"}
 
 @app.get("/admin.html")
 async def admin():
-    return FileResponse("admin.html")
+    """Serve the admin page"""
+    admin_path = WORKSPACE_ROOT / "admin_improved.html"
+    if admin_path.exists():
+        return FileResponse(str(admin_path))
+    admin_path = WORKSPACE_ROOT / "admin_advanced.html"
+    if admin_path.exists():
+        return FileResponse(str(admin_path))
+    return {"error": "Admin page not found"}
+
+@app.get("/ai_tools.html")
+async def ai_tools():
+    """Serve the AI tools page"""
+    ai_tools_path = WORKSPACE_ROOT / "ai_tools.html"
+    if ai_tools_path.exists():
+        return FileResponse(str(ai_tools_path))
+    return {"error": "AI Tools page not found"}
+
+# ============================================================================
+# AVAILABLE PAGES ENDPOINT
+# ============================================================================
+
+@app.get("/api/pages")
+async def list_available_pages():
+    """List all available pages and their routes"""
+    pages = []
+    if PAGES_DIR.exists():
+        for page_dir in PAGES_DIR.iterdir():
+            if page_dir.is_dir():
+                index_file = page_dir / "index.html"
+                if index_file.exists():
+                    pages.append({
+                        "name": page_dir.name,
+                        "route": f"/{page_dir.name}",
+                        "dashboard_route": f"/dashboard/{page_dir.name}",
+                        "has_css": (page_dir / f"{page_dir.name}.css").exists(),
+                        "has_js": (page_dir / f"{page_dir.name}.js").exists(),
+                    })
+    
+    return {
+        "total_pages": len(pages),
+        "pages": pages,
+        "main_dashboard": "/dashboard",
+        "legacy_pages": [
+            {"name": "HF Console", "route": "/hf_console.html"},
+            {"name": "Admin", "route": "/admin.html"},
+            {"name": "AI Tools", "route": "/ai_tools.html"},
+        ]
+    }
 
 if __name__ == "__main__":
     print("=" * 70)
     print("🚀 Starting Production Crypto API Monitor")
     print("=" * 70)
     print("📍 Server: http://localhost:7860")
-    print("📄 Main Dashboard: http://localhost:7860/index.html")
-    print("📊 Simple Dashboard: http://localhost:7860/dashboard.html")
-    print("🤗 HF Console: http://localhost:7860/hf_console.html")
-    print("⚙️ Admin Panel: http://localhost:7860/admin.html")
-    print("📚 API Docs: http://localhost:7860/docs")
+    print()
+    print("📊 Dashboard Pages:")
+    print("   • /                    - Main Dashboard")
+    print("   • /dashboard           - Dashboard (alias)")
+    print("   • /market              - Market Data")
+    print("   • /models              - AI Models")
+    print("   • /sentiment           - Sentiment Analysis")
+    print("   • /ai-analyst          - AI Analyst")
+    print("   • /trading-assistant   - Trading Assistant")
+    print("   • /news                - News Feed")
+    print("   • /providers           - API Providers")
+    print("   • /diagnostics         - System Diagnostics")
+    print("   • /api-explorer        - API Explorer")
+    print("   • /crypto-api-hub      - Crypto API Hub")
+    print()
+    print("🔗 Dashboard Sub-routes (also supported):")
+    print("   • /dashboard/market, /dashboard/providers, etc.")
+    print()
+    print("📄 Legacy Pages:")
+    print("   • /hf_console.html     - HuggingFace Console")
+    print("   • /admin.html          - Admin Panel")
+    print("   • /ai_tools.html       - AI Tools")
+    print()
+    print("📚 API Documentation: http://localhost:7860/docs")
+    print("📋 Available Pages: http://localhost:7860/api/pages")
     print("=" * 70)
     print("🔄 Monitoring ALL configured APIs every 30 seconds...")
     print("=" * 70)

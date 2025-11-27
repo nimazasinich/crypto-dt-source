@@ -1,5 +1,6 @@
-"""Simple FastAPI server for testing HF integration"""
+"""Simple FastAPI server for testing HF integration and static pages"""
 import asyncio
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -8,6 +9,16 @@ import uvicorn
 
 # Create FastAPI app
 app = FastAPI(title="Crypto API Monitor - Simple", version="1.0.0")
+
+# Workspace paths
+WORKSPACE_ROOT = Path(__file__).parent
+STATIC_DIR = WORKSPACE_ROOT / "static"
+PAGES_DIR = STATIC_DIR / "pages"
+
+def get_page_index(page_name: str) -> Path:
+    """Get the index.html path for a page"""
+    page_path = PAGES_DIR / page_name / "index.html"
+    return page_path if page_path.exists() else None
 
 # CORS
 app.add_middleware(
@@ -45,18 +56,131 @@ async def health():
 async def api_health():
     return {"status": "healthy", "service": "crypto-api-monitor-api"}
 
-# Serve static files
+# Mount static files
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# ============================================================================
+# PAGE ROUTES
+# ============================================================================
+
 @app.get("/")
 async def root():
-    return FileResponse("index.html")
+    """Serve the main dashboard"""
+    page_path = get_page_index("dashboard")
+    if page_path:
+        return FileResponse(str(page_path))
+    fallback = WORKSPACE_ROOT / "index.html"
+    if fallback.exists():
+        return FileResponse(str(fallback))
+    return {"error": "Dashboard not found"}
 
+@app.get("/dashboard")
+async def dashboard_page():
+    return await root()
+
+@app.get("/dashboard/{path:path}")
+async def dashboard_subpage(path: str):
+    path = path.strip("/")
+    page_path = get_page_index(path)
+    if page_path:
+        return FileResponse(str(page_path))
+    return await root()
+
+@app.get("/market")
+async def market_page():
+    page_path = get_page_index("market")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Market page not found"}
+
+@app.get("/models")
+async def models_page():
+    page_path = get_page_index("models")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Models page not found"}
+
+@app.get("/sentiment")
+async def sentiment_page():
+    page_path = get_page_index("sentiment")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Sentiment page not found"}
+
+@app.get("/ai-analyst")
+async def ai_analyst_page():
+    page_path = get_page_index("ai-analyst")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "AI Analyst page not found"}
+
+@app.get("/trading-assistant")
+async def trading_assistant_page():
+    page_path = get_page_index("trading-assistant")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Trading Assistant page not found"}
+
+@app.get("/news")
+async def news_page():
+    page_path = get_page_index("news")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "News page not found"}
+
+@app.get("/providers")
+async def providers_page():
+    page_path = get_page_index("providers")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Providers page not found"}
+
+@app.get("/diagnostics")
+async def diagnostics_page():
+    page_path = get_page_index("diagnostics")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Diagnostics page not found"}
+
+@app.get("/api-explorer")
+async def api_explorer_page():
+    page_path = get_page_index("api-explorer")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "API Explorer page not found"}
+
+@app.get("/crypto-api-hub")
+async def crypto_api_hub_page():
+    page_path = get_page_index("crypto-api-hub")
+    if page_path:
+        return FileResponse(str(page_path))
+    return {"error": "Crypto API Hub page not found"}
+
+# Legacy routes
 @app.get("/index.html")
-async def index():
-    return FileResponse("index.html")
+async def index_html():
+    return await root()
 
 @app.get("/hf_console.html")
 async def hf_console():
-    return FileResponse("hf_console.html")
+    hf_path = WORKSPACE_ROOT / "hf_console.html"
+    if hf_path.exists():
+        return FileResponse(str(hf_path))
+    return {"error": "HF Console not found"}
+
+@app.get("/api/pages")
+async def list_pages():
+    """List all available pages"""
+    pages = []
+    if PAGES_DIR.exists():
+        for page_dir in PAGES_DIR.iterdir():
+            if page_dir.is_dir() and (page_dir / "index.html").exists():
+                pages.append({
+                    "name": page_dir.name,
+                    "route": f"/{page_dir.name}",
+                })
+    return {"total_pages": len(pages), "pages": pages}
 
 # Mock API endpoints for dashboard
 @app.get("/api/status")
