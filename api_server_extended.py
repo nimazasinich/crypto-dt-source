@@ -5,6 +5,7 @@ Complete Admin API with Real Data Only - NO MOCKS
 """
 
 import os
+import threading
 import asyncio
 import sqlite3
 import httpx
@@ -694,20 +695,8 @@ async def get_trading_pairs():
 # ===== HTML UI Endpoints =====
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """Serve main dashboard - prefers new multi-page architecture"""
-    # Try new multi-page dashboard first
-    new_dashboard = WORKSPACE_ROOT / "static" / "pages" / "dashboard" / "index.html"
-    if new_dashboard.exists():
-        content = new_dashboard.read_text(encoding="utf-8", errors="ignore")
-        return HTMLResponse(
-            content=content,
-            media_type="text/html",
-            headers={
-                "Content-Type": "text/html; charset=utf-8",
-                "X-Content-Type-Options": "nosniff"
-            }
-        )
-    # Fallback to legacy index.html
+    """Serve landing page first, then fall back to dashboard if missing"""
+    # Preferred entry point: custom index (e.g., loading splash)
     index_path = WORKSPACE_ROOT / "index.html"
     if index_path.exists():
         content = index_path.read_text(encoding="utf-8", errors="ignore")
@@ -719,6 +708,20 @@ async def root():
                 "X-Content-Type-Options": "nosniff"
             }
         )
+
+    # Fallback to multi-page dashboard when index.html is not provided
+    new_dashboard = WORKSPACE_ROOT / "static" / "pages" / "dashboard" / "index.html"
+    if new_dashboard.exists():
+        content = new_dashboard.read_text(encoding="utf-8", errors="ignore")
+        return HTMLResponse(
+            content=content,
+            media_type="text/html",
+            headers={
+                "Content-Type": "text/html; charset=utf-8",
+                "X-Content-Type-Options": "nosniff"
+            }
+        )
+
     return HTMLResponse(
         "<h1>Cryptocurrency Data & Analysis API</h1><p>See <a href='/docs'>/docs</a> for API documentation</p>",
         headers={"Content-Type": "text/html; charset=utf-8"}
