@@ -15,8 +15,8 @@ requests==2.32.3
 aiohttp==3.10.5
 
 # ===== Data Processing =====
-pandas==2.2.3
-numpy>=1.26.0,<2.0.0
+pandas>=2.0.0,<2.1.0  # 2.0.x is the last version supporting Python 3.8
+numpy>=1.24.0,<2.0.0  # Compatible with Python 3.8
 
 # ===== Gradio Dashboard =====
 gradio==4.44.0

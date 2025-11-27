@@ -14,7 +14,9 @@ class ProviderFetchHelper:
     def __init__(self):
         self.timeout = 15.0
 
-    async def fetch_url(self, url: str, params: Optional[Dict[str, Any]] = None, max_retries: int = 3) -> Dict[str, Any]:
+    async def fetch_url(
+        self, url: str, params: Optional[Dict[str, Any]] = None, max_retries: int = 3
+    ) -> Dict[str, Any]:
         """
         Fetch data from URL with retry logic
 
@@ -38,7 +40,7 @@ class ProviderFetchHelper:
                             "success": True,
                             "data": response.json(),
                             "error": None,
-                            "status_code": 200
+                            "status_code": 200,
                         }
                     else:
                         last_error = f"HTTP {response.status_code}"
@@ -50,12 +52,7 @@ class ProviderFetchHelper:
             except Exception as e:
                 last_error = str(e)
 
-        return {
-            "success": False,
-            "data": None,
-            "error": last_error,
-            "status_code": None
-        }
+        return {"success": False, "data": None, "error": last_error, "status_code": None}
 
     async def fetch_coingecko_price(self) -> Dict[str, Any]:
         """Fetch price data from CoinGecko"""
@@ -65,7 +62,7 @@ class ProviderFetchHelper:
             "vs_currencies": "usd",
             "include_market_cap": "true",
             "include_24hr_vol": "true",
-            "include_24hr_change": "true"
+            "include_24hr_change": "true",
         }
         return await self.fetch_url(url, params)
 

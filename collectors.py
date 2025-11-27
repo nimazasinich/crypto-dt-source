@@ -18,6 +18,7 @@ import re
 # Try to import optional dependencies
 try:
     import feedparser
+
     FEEDPARSER_AVAILABLE = True
 except ImportError:
     FEEDPARSER_AVAILABLE = False
@@ -25,6 +26,7 @@ except ImportError:
 
 try:
     from bs4 import BeautifulSoup
+
     BS4_AVAILABLE = True
 except ImportError:
     BS4_AVAILABLE = False
@@ -38,10 +40,7 @@ import database
 logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL),
     format=config.LOG_FORMAT,
-    handlers=[
-        logging.FileHandler(config.LOG_FILE),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler(config.LOG_FILE), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -56,6 +55,7 @@ _is_collecting = False
 # ==================== AI MODEL STUB FUNCTIONS ====================
 # These provide fallback functionality when ai_models.py is not available
 
+
 def analyze_sentiment(text: str) -> Dict[str, Any]:
     """
     Simple sentiment analysis based on keyword matching
@@ -68,22 +68,56 @@ def analyze_sentiment(text: str) -> Dict[str, Any]:
         Dict with 'score' and 'label'
     """
     if not text:
-        return {'score': 0.0, 'label': 'neutral'}
+        return {"score": 0.0, "label": "neutral"}
 
     text_lower = text.lower()
 
     # Positive keywords
     positive_words = [
-        'bullish', 'moon', 'rally', 'surge', 'gain', 'profit', 'up', 'green',
-        'buy', 'long', 'growth', 'rise', 'pump', 'ATH', 'breakthrough',
-        'adoption', 'positive', 'optimistic', 'upgrade', 'partnership'
+        "bullish",
+        "moon",
+        "rally",
+        "surge",
+        "gain",
+        "profit",
+        "up",
+        "green",
+        "buy",
+        "long",
+        "growth",
+        "rise",
+        "pump",
+        "ATH",
+        "breakthrough",
+        "adoption",
+        "positive",
+        "optimistic",
+        "upgrade",
+        "partnership",
     ]
 
     # Negative keywords
     negative_words = [
-        'bearish', 'crash', 'dump', 'drop', 'loss', 'down', 'red', 'sell',
-        'short', 'decline', 'fall', 'fear', 'scam', 'hack', 'vulnerability',
-        'negative', 'pessimistic', 'concern', 'warning', 'risk'
+        "bearish",
+        "crash",
+        "dump",
+        "drop",
+        "loss",
+        "down",
+        "red",
+        "sell",
+        "short",
+        "decline",
+        "fall",
+        "fear",
+        "scam",
+        "hack",
+        "vulnerability",
+        "negative",
+        "pessimistic",
+        "concern",
+        "warning",
+        "risk",
     ]
 
     # Count occurrences
@@ -94,23 +128,23 @@ def analyze_sentiment(text: str) -> Dict[str, Any]:
     total = positive_count + negative_count
     if total == 0:
         score = 0.0
-        label = 'neutral'
+        label = "neutral"
     else:
         score = (positive_count - negative_count) / total
 
         # Determine label
         if score <= -0.6:
-            label = 'very_negative'
+            label = "very_negative"
         elif score <= -0.2:
-            label = 'negative'
+            label = "negative"
         elif score <= 0.2:
-            label = 'neutral'
+            label = "neutral"
         elif score <= 0.6:
-            label = 'positive'
+            label = "positive"
         else:
-            label = 'very_positive'
+            label = "very_positive"
 
-    return {'score': score, 'label': label}
+    return {"score": score, "label": label}
 
 
 def summarize_text(text: str, max_length: int = 150) -> str:
@@ -128,14 +162,14 @@ def summarize_text(text: str, max_length: int = 150) -> str:
         return ""
 
     # Remove extra whitespace
-    text = ' '.join(text.split())
+    text = " ".join(text.split())
 
     # If already short enough, return as is
     if len(text) <= max_length:
         return text
 
     # Try to break at sentence boundary
-    sentences = re.split(r'[.!?]+', text)
+    sentences = re.split(r"[.!?]+", text)
     summary = ""
 
     for sentence in sentences:
@@ -150,7 +184,7 @@ def summarize_text(text: str, max_length: int = 150) -> str:
 
     # If no complete sentences fit, truncate
     if not summary:
-        summary = text[:max_length-3] + "..."
+        summary = text[: max_length - 3] + "..."
 
     return summary.strip()
 
@@ -158,6 +192,7 @@ def summarize_text(text: str, max_length: int = 150) -> str:
 # Try to import AI models if available
 try:
     import ai_models
+
     # Override stub functions with real AI models if available
     analyze_sentiment = ai_models.analyze_sentiment
     summarize_text = ai_models.summarize_text
@@ -167,6 +202,7 @@ except ImportError:
 
 
 # ==================== HELPER FUNCTIONS ====================
+
 
 def safe_api_call(url: str, timeout: int = 10, headers: Optional[Dict] = None) -> Optional[Dict]:
     """
@@ -181,7 +217,7 @@ def safe_api_call(url: str, timeout: int = 10, headers: Optional[Dict] = None) -
         Response JSON or None on failure
     """
     if headers is None:
-        headers = {'User-Agent': config.USER_AGENT}
+        headers = {"User-Agent": config.USER_AGENT}
 
     for attempt in range(config.MAX_RETRIES):
         try:
@@ -234,25 +270,40 @@ def extract_mentioned_coins(text: str) -> List[str]:
 
     # Check for common symbols
     common_symbols = {
-        'BTC': 'bitcoin', 'ETH': 'ethereum', 'BNB': 'binancecoin',
-        'XRP': 'ripple', 'ADA': 'cardano', 'SOL': 'solana',
-        'DOT': 'polkadot', 'DOGE': 'dogecoin', 'AVAX': 'avalanche-2',
-        'MATIC': 'polygon', 'LINK': 'chainlink', 'UNI': 'uniswap',
-        'LTC': 'litecoin', 'ATOM': 'cosmos', 'ALGO': 'algorand'
+        "BTC": "bitcoin",
+        "ETH": "ethereum",
+        "BNB": "binancecoin",
+        "XRP": "ripple",
+        "ADA": "cardano",
+        "SOL": "solana",
+        "DOT": "polkadot",
+        "DOGE": "dogecoin",
+        "AVAX": "avalanche-2",
+        "MATIC": "polygon",
+        "LINK": "chainlink",
+        "UNI": "uniswap",
+        "LTC": "litecoin",
+        "ATOM": "cosmos",
+        "ALGO": "algorand",
     }
 
     # Check coin symbols
     for symbol, coin_id in common_symbols.items():
         # Look for symbol as whole word or with $ prefix
-        pattern = r'\b' + symbol + r'\b|\$' + symbol + r'\b'
+        pattern = r"\b" + symbol + r"\b|\$" + symbol + r"\b"
         if re.search(pattern, text_upper):
             mentioned.append(symbol)
 
     # Check for full coin names (case insensitive)
     coin_names = {
-        'bitcoin': 'BTC', 'ethereum': 'ETH', 'binance': 'BNB',
-        'ripple': 'XRP', 'cardano': 'ADA', 'solana': 'SOL',
-        'polkadot': 'DOT', 'dogecoin': 'DOGE'
+        "bitcoin": "BTC",
+        "ethereum": "ETH",
+        "binance": "BNB",
+        "ripple": "XRP",
+        "cardano": "ADA",
+        "solana": "SOL",
+        "polkadot": "DOT",
+        "dogecoin": "DOGE",
     }
 
     text_lower = text.lower()
@@ -264,6 +315,7 @@ def extract_mentioned_coins(text: str) -> List[str]:
 
 
 # ==================== PRICE DATA COLLECTION ====================
+
 
 def collect_price_data() -> Tuple[bool, int]:
     """
@@ -278,16 +330,16 @@ def collect_price_data() -> Tuple[bool, int]:
         # Try CoinGecko first
         url = f"{config.COINGECKO_BASE_URL}{config.COINGECKO_ENDPOINTS['coins_markets']}"
         params = {
-            'vs_currency': 'usd',
-            'order': 'market_cap_desc',
-            'per_page': config.TOP_COINS_LIMIT,
-            'page': 1,
-            'sparkline': 'false',
-            'price_change_percentage': '1h,24h,7d'
+            "vs_currency": "usd",
+            "order": "market_cap_desc",
+            "per_page": config.TOP_COINS_LIMIT,
+            "page": 1,
+            "sparkline": "false",
+            "price_change_percentage": "1h,24h,7d",
         }
 
         # Add params to URL
-        param_str = '&'.join([f"{k}={v}" for k, v in params.items()])
+        param_str = "&".join([f"{k}={v}" for k, v in params.items()])
         full_url = f"{url}?{param_str}"
 
         data = safe_api_call(full_url, timeout=config.REQUEST_TIMEOUT)
@@ -300,7 +352,7 @@ def collect_price_data() -> Tuple[bool, int]:
         prices = []
         for item in data:
             try:
-                price = item.get('current_price', 0)
+                price = item.get("current_price", 0)
 
                 # Validate price
                 if not config.MIN_PRICE <= price <= config.MAX_PRICE:
@@ -308,21 +360,21 @@ def collect_price_data() -> Tuple[bool, int]:
                     continue
 
                 price_data = {
-                    'symbol': item.get('symbol', '').upper(),
-                    'name': item.get('name', ''),
-                    'price_usd': price,
-                    'volume_24h': item.get('total_volume', 0),
-                    'market_cap': item.get('market_cap', 0),
-                    'percent_change_1h': item.get('price_change_percentage_1h_in_currency'),
-                    'percent_change_24h': item.get('price_change_percentage_24h'),
-                    'percent_change_7d': item.get('price_change_percentage_7d'),
-                    'rank': item.get('market_cap_rank', 999)
+                    "symbol": item.get("symbol", "").upper(),
+                    "name": item.get("name", ""),
+                    "price_usd": price,
+                    "volume_24h": item.get("total_volume", 0),
+                    "market_cap": item.get("market_cap", 0),
+                    "percent_change_1h": item.get("price_change_percentage_1h_in_currency"),
+                    "percent_change_24h": item.get("price_change_percentage_24h"),
+                    "percent_change_7d": item.get("price_change_percentage_7d"),
+                    "rank": item.get("market_cap_rank", 999),
                 }
 
                 # Validate market cap and volume
-                if price_data['market_cap'] and price_data['market_cap'] < config.MIN_MARKET_CAP:
+                if price_data["market_cap"] and price_data["market_cap"] < config.MIN_MARKET_CAP:
                     continue
-                if price_data['volume_24h'] and price_data['volume_24h'] < config.MIN_VOLUME:
+                if price_data["volume_24h"] and price_data["volume_24h"] < config.MIN_VOLUME:
                     continue
 
                 prices.append(price_data)
@@ -356,26 +408,24 @@ def collect_price_data_coincap() -> Tuple[bool, int]:
 
     try:
         url = f"{config.COINCAP_BASE_URL}{config.COINCAP_ENDPOINTS['assets']}"
-        params = {
-            'limit': config.TOP_COINS_LIMIT
-        }
+        params = {"limit": config.TOP_COINS_LIMIT}
 
-        param_str = '&'.join([f"{k}={v}" for k, v in params.items()])
+        param_str = "&".join([f"{k}={v}" for k, v in params.items()])
         full_url = f"{url}?{param_str}"
 
         response = safe_api_call(full_url, timeout=config.REQUEST_TIMEOUT)
 
-        if response is None or 'data' not in response:
+        if response is None or "data" not in response:
             logger.error("CoinCap API failed")
             return False, 0
 
-        data = response['data']
+        data = response["data"]
 
         # Parse and validate data
         prices = []
         for idx, item in enumerate(data):
             try:
-                price = float(item.get('priceUsd', 0))
+                price = float(item.get("priceUsd", 0))
 
                 # Validate price
                 if not config.MIN_PRICE <= price <= config.MAX_PRICE:
@@ -383,21 +433,29 @@ def collect_price_data_coincap() -> Tuple[bool, int]:
                     continue
 
                 price_data = {
-                    'symbol': item.get('symbol', '').upper(),
-                    'name': item.get('name', ''),
-                    'price_usd': price,
-                    'volume_24h': float(item.get('volumeUsd24Hr', 0)) if item.get('volumeUsd24Hr') else None,
-                    'market_cap': float(item.get('marketCapUsd', 0)) if item.get('marketCapUsd') else None,
-                    'percent_change_1h': None,  # CoinCap doesn't provide 1h change
-                    'percent_change_24h': float(item.get('changePercent24Hr', 0)) if item.get('changePercent24Hr') else None,
-                    'percent_change_7d': None,  # CoinCap doesn't provide 7d change
-                    'rank': int(item.get('rank', idx + 1))
+                    "symbol": item.get("symbol", "").upper(),
+                    "name": item.get("name", ""),
+                    "price_usd": price,
+                    "volume_24h": (
+                        float(item.get("volumeUsd24Hr", 0)) if item.get("volumeUsd24Hr") else None
+                    ),
+                    "market_cap": (
+                        float(item.get("marketCapUsd", 0)) if item.get("marketCapUsd") else None
+                    ),
+                    "percent_change_1h": None,  # CoinCap doesn't provide 1h change
+                    "percent_change_24h": (
+                        float(item.get("changePercent24Hr", 0))
+                        if item.get("changePercent24Hr")
+                        else None
+                    ),
+                    "percent_change_7d": None,  # CoinCap doesn't provide 7d change
+                    "rank": int(item.get("rank", idx + 1)),
                 }
 
                 # Validate market cap and volume
-                if price_data['market_cap'] and price_data['market_cap'] < config.MIN_MARKET_CAP:
+                if price_data["market_cap"] and price_data["market_cap"] < config.MIN_MARKET_CAP:
                     continue
-                if price_data['volume_24h'] and price_data['volume_24h'] < config.MIN_VOLUME:
+                if price_data["volume_24h"] and price_data["volume_24h"] < config.MIN_VOLUME:
                     continue
 
                 prices.append(price_data)
@@ -421,6 +479,7 @@ def collect_price_data_coincap() -> Tuple[bool, int]:
 
 
 # ==================== NEWS DATA COLLECTION ====================
+
 
 def collect_news_data() -> int:
     """
@@ -457,8 +516,8 @@ def _collect_rss_feeds() -> int:
             for entry in feed.entries[:20]:  # Limit to 20 most recent per feed
                 try:
                     # Extract article data
-                    title = entry.get('title', '')
-                    url = entry.get('link', '')
+                    title = entry.get("title", "")
+                    url = entry.get("link", "")
 
                     # Skip if no URL
                     if not url:
@@ -466,17 +525,17 @@ def _collect_rss_feeds() -> int:
 
                     # Get published date
                     published_date = None
-                    if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                    if hasattr(entry, "published_parsed") and entry.published_parsed:
                         try:
                             published_date = datetime(*entry.published_parsed[:6]).isoformat()
                         except:
                             pass
 
                     # Get summary/description
-                    summary = entry.get('summary', '') or entry.get('description', '')
+                    summary = entry.get("summary", "") or entry.get("description", "")
                     if summary and BS4_AVAILABLE:
                         # Strip HTML tags
-                        soup = BeautifulSoup(summary, 'html.parser')
+                        soup = BeautifulSoup(summary, "html.parser")
                         summary = soup.get_text()
 
                     # Combine title and summary for analysis
@@ -493,14 +552,14 @@ def _collect_rss_feeds() -> int:
 
                     # Prepare news data
                     news_data = {
-                        'title': title,
-                        'summary': summary_text,
-                        'url': url,
-                        'source': source_name,
-                        'sentiment_score': sentiment_result['score'],
-                        'sentiment_label': sentiment_result['label'],
-                        'related_coins': related_coins,
-                        'published_date': published_date
+                        "title": title,
+                        "summary": summary_text,
+                        "url": url,
+                        "source": source_name,
+                        "sentiment_score": sentiment_result["score"],
+                        "sentiment_label": sentiment_result["label"],
+                        "related_coins": related_coins,
+                        "published_date": published_date,
                     }
 
                     # Save to database
@@ -528,27 +587,27 @@ def _collect_reddit_posts() -> int:
             logger.debug(f"Fetching Reddit posts from r/{subreddit_name}")
 
             # Reddit API requires .json extension
-            if not endpoint_url.endswith('.json'):
-                endpoint_url = endpoint_url.rstrip('/') + '.json'
+            if not endpoint_url.endswith(".json"):
+                endpoint_url = endpoint_url.rstrip("/") + ".json"
 
-            headers = {'User-Agent': config.USER_AGENT}
+            headers = {"User-Agent": config.USER_AGENT}
             data = safe_api_call(endpoint_url, headers=headers)
 
-            if not data or 'data' not in data or 'children' not in data['data']:
+            if not data or "data" not in data or "children" not in data["data"]:
                 logger.warning(f"Invalid response from Reddit: {subreddit_name}")
                 continue
 
-            posts = data['data']['children']
+            posts = data["data"]["children"]
 
             for post_data in posts[:15]:  # Limit to 15 posts per subreddit
                 try:
-                    post = post_data.get('data', {})
+                    post = post_data.get("data", {})
 
                     # Extract post data
-                    title = post.get('title', '')
-                    url = post.get('url', '')
+                    title = post.get("title", "")
+                    url = post.get("url", "")
                     permalink = f"https://reddit.com{post.get('permalink', '')}"
-                    selftext = post.get('selftext', '')
+                    selftext = post.get("selftext", "")
 
                     # Skip if no title
                     if not title:
@@ -558,7 +617,7 @@ def _collect_reddit_posts() -> int:
                     article_url = permalink
 
                     # Get timestamp
-                    created_utc = post.get('created_utc')
+                    created_utc = post.get("created_utc")
                     published_date = None
                     if created_utc:
                         try:
@@ -580,14 +639,14 @@ def _collect_reddit_posts() -> int:
 
                     # Prepare news data
                     news_data = {
-                        'title': title,
-                        'summary': summary_text,
-                        'url': article_url,
-                        'source': f"reddit_{subreddit_name}",
-                        'sentiment_score': sentiment_result['score'],
-                        'sentiment_label': sentiment_result['label'],
-                        'related_coins': related_coins,
-                        'published_date': published_date
+                        "title": title,
+                        "summary": summary_text,
+                        "url": article_url,
+                        "source": f"reddit_{subreddit_name}",
+                        "sentiment_score": sentiment_result["score"],
+                        "sentiment_label": sentiment_result["label"],
+                        "related_coins": related_coins,
+                        "published_date": published_date,
                     }
 
                     # Save to database
@@ -608,6 +667,7 @@ def _collect_reddit_posts() -> int:
 
 # ==================== SENTIMENT DATA COLLECTION ====================
 
+
 def collect_sentiment_data() -> Optional[Dict[str, Any]]:
     """
     Fetch Fear & Greed Index from Alternative.me
@@ -621,16 +681,16 @@ def collect_sentiment_data() -> Optional[Dict[str, Any]]:
         # Fetch Fear & Greed Index
         data = safe_api_call(config.ALTERNATIVE_ME_URL, timeout=config.REQUEST_TIMEOUT)
 
-        if data is None or 'data' not in data:
+        if data is None or "data" not in data:
             logger.error("Failed to fetch Fear & Greed Index")
             return None
 
         # Parse response
-        fng_data = data['data'][0] if data['data'] else {}
+        fng_data = data["data"][0] if data["data"] else {}
 
-        value = fng_data.get('value')
-        classification = fng_data.get('value_classification', 'Unknown')
-        timestamp = fng_data.get('timestamp')
+        value = fng_data.get("value")
+        classification = fng_data.get("value_classification", "Unknown")
+        timestamp = fng_data.get("timestamp")
 
         if value is None:
             logger.warning("No value in Fear & Greed response")
@@ -642,34 +702,34 @@ def collect_sentiment_data() -> Optional[Dict[str, Any]]:
 
         # Determine label
         if int(value) <= 25:
-            sentiment_label = 'extreme_fear'
+            sentiment_label = "extreme_fear"
         elif int(value) <= 45:
-            sentiment_label = 'fear'
+            sentiment_label = "fear"
         elif int(value) <= 55:
-            sentiment_label = 'neutral'
+            sentiment_label = "neutral"
         elif int(value) <= 75:
-            sentiment_label = 'greed'
+            sentiment_label = "greed"
         else:
-            sentiment_label = 'extreme_greed'
+            sentiment_label = "extreme_greed"
 
         sentiment_data = {
-            'value': int(value),
-            'classification': classification,
-            'sentiment_score': sentiment_score,
-            'sentiment_label': sentiment_label,
-            'timestamp': timestamp
+            "value": int(value),
+            "classification": classification,
+            "sentiment_score": sentiment_score,
+            "sentiment_label": sentiment_label,
+            "timestamp": timestamp,
         }
 
         # Save to news table as market-wide sentiment
         news_data = {
-            'title': f"Market Sentiment: {classification}",
-            'summary': f"Fear & Greed Index: {value}/100 - {classification}",
-            'url': config.ALTERNATIVE_ME_URL,
-            'source': 'alternative_me',
-            'sentiment_score': sentiment_score,
-            'sentiment_label': sentiment_label,
-            'related_coins': ['BTC', 'ETH'],  # Market-wide
-            'published_date': datetime.now().isoformat()
+            "title": f"Market Sentiment: {classification}",
+            "summary": f"Fear & Greed Index: {value}/100 - {classification}",
+            "url": config.ALTERNATIVE_ME_URL,
+            "source": "alternative_me",
+            "sentiment_score": sentiment_score,
+            "sentiment_label": sentiment_label,
+            "related_coins": ["BTC", "ETH"],  # Market-wide
+            "published_date": datetime.now().isoformat(),
         }
 
         db.save_news(news_data)
@@ -683,6 +743,7 @@ def collect_sentiment_data() -> Optional[Dict[str, Any]]:
 
 
 # ==================== SCHEDULING ====================
+
 
 def schedule_data_collection():
     """
@@ -708,8 +769,7 @@ def schedule_data_collection():
             # Reschedule
             if _is_collecting:
                 timer = threading.Timer(
-                    config.COLLECTION_INTERVALS['price_data'],
-                    run_price_collection
+                    config.COLLECTION_INTERVALS["price_data"], run_price_collection
                 )
                 timer.daemon = True
                 timer.start()
@@ -725,8 +785,7 @@ def schedule_data_collection():
             # Reschedule
             if _is_collecting:
                 timer = threading.Timer(
-                    config.COLLECTION_INTERVALS['news_data'],
-                    run_news_collection
+                    config.COLLECTION_INTERVALS["news_data"], run_news_collection
                 )
                 timer.daemon = True
                 timer.start()
@@ -742,8 +801,7 @@ def schedule_data_collection():
             # Reschedule
             if _is_collecting:
                 timer = threading.Timer(
-                    config.COLLECTION_INTERVALS['sentiment_data'],
-                    run_sentiment_collection
+                    config.COLLECTION_INTERVALS["sentiment_data"], run_sentiment_collection
                 )
                 timer.daemon = True
                 timer.start()
@@ -785,6 +843,7 @@ def stop_scheduled_collection():
 
 # ==================== ASYNC COLLECTION (BONUS) ====================
 
+
 async def collect_price_data_async() -> Tuple[bool, int]:
     """
     Async version of price data collection using aiohttp
@@ -797,12 +856,12 @@ async def collect_price_data_async() -> Tuple[bool, int]:
     try:
         url = f"{config.COINGECKO_BASE_URL}{config.COINGECKO_ENDPOINTS['coins_markets']}"
         params = {
-            'vs_currency': 'usd',
-            'order': 'market_cap_desc',
-            'per_page': config.TOP_COINS_LIMIT,
-            'page': 1,
-            'sparkline': 'false',
-            'price_change_percentage': '1h,24h,7d'
+            "vs_currency": "usd",
+            "order": "market_cap_desc",
+            "per_page": config.TOP_COINS_LIMIT,
+            "page": 1,
+            "sparkline": "false",
+            "price_change_percentage": "1h,24h,7d",
         }
 
         async with aiohttp.ClientSession() as session:
@@ -817,26 +876,26 @@ async def collect_price_data_async() -> Tuple[bool, int]:
         prices = []
         for item in data:
             try:
-                price = item.get('current_price', 0)
+                price = item.get("current_price", 0)
 
                 if not config.MIN_PRICE <= price <= config.MAX_PRICE:
                     continue
 
                 price_data = {
-                    'symbol': item.get('symbol', '').upper(),
-                    'name': item.get('name', ''),
-                    'price_usd': price,
-                    'volume_24h': item.get('total_volume', 0),
-                    'market_cap': item.get('market_cap', 0),
-                    'percent_change_1h': item.get('price_change_percentage_1h_in_currency'),
-                    'percent_change_24h': item.get('price_change_percentage_24h'),
-                    'percent_change_7d': item.get('price_change_percentage_7d'),
-                    'rank': item.get('market_cap_rank', 999)
+                    "symbol": item.get("symbol", "").upper(),
+                    "name": item.get("name", ""),
+                    "price_usd": price,
+                    "volume_24h": item.get("total_volume", 0),
+                    "market_cap": item.get("market_cap", 0),
+                    "percent_change_1h": item.get("price_change_percentage_1h_in_currency"),
+                    "percent_change_24h": item.get("price_change_percentage_24h"),
+                    "percent_change_7d": item.get("price_change_percentage_7d"),
+                    "rank": item.get("market_cap_rank", 999),
                 }
 
-                if price_data['market_cap'] and price_data['market_cap'] < config.MIN_MARKET_CAP:
+                if price_data["market_cap"] and price_data["market_cap"] < config.MIN_MARKET_CAP:
                     continue
-                if price_data['volume_24h'] and price_data['volume_24h'] < config.MIN_VOLUME:
+                if price_data["volume_24h"] and price_data["volume_24h"] < config.MIN_VOLUME:
                     continue
 
                 prices.append(price_data)

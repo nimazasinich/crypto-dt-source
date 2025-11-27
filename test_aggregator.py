@@ -12,11 +12,8 @@ from typing import Dict, List
 BASE_URL = "http://localhost:7860"
 
 # Test results
-test_results = {
-    "passed": 0,
-    "failed": 0,
-    "tests": []
-}
+test_results = {"passed": 0, "failed": 0, "tests": []}
+
 
 def log_test(name: str, passed: bool, message: str = ""):
     """Log a test result"""
@@ -25,16 +22,13 @@ def log_test(name: str, passed: bool, message: str = ""):
     if message:
         print(f"  → {message}")
 
-    test_results["tests"].append({
-        "name": name,
-        "passed": passed,
-        "message": message
-    })
+    test_results["tests"].append({"name": name, "passed": passed, "message": message})
 
     if passed:
         test_results["passed"] += 1
     else:
         test_results["failed"] += 1
+
 
 def test_health_check():
     """Test the health endpoint"""
@@ -42,8 +36,9 @@ def test_health_check():
         response = requests.get(f"{BASE_URL}/health", timeout=10)
         if response.status_code == 200:
             data = response.json()
-            log_test("Health Check", data.get("status") == "healthy",
-                    f"Status: {data.get('status')}")
+            log_test(
+                "Health Check", data.get("status") == "healthy", f"Status: {data.get('status')}"
+            )
             return True
         else:
             log_test("Health Check", False, f"HTTP {response.status_code}")
@@ -52,6 +47,7 @@ def test_health_check():
         log_test("Health Check", False, str(e))
         return False
 
+
 def test_root_endpoint():
     """Test the root endpoint"""
     try:
@@ -59,8 +55,7 @@ def test_root_endpoint():
         if response.status_code == 200:
             data = response.json()
             has_endpoints = "endpoints" in data
-            log_test("Root Endpoint", has_endpoints,
-                    f"Version: {data.get('version', 'Unknown')}")
+            log_test("Root Endpoint", has_endpoints, f"Version: {data.get('version', 'Unknown')}")
             return True
         else:
             log_test("Root Endpoint", False, f"HTTP {response.status_code}")
@@ -69,6 +64,7 @@ def test_root_endpoint():
         log_test("Root Endpoint", False, str(e))
         return False
 
+
 def test_list_resources():
     """Test listing all resources"""
     try:
@@ -76,8 +72,7 @@ def test_list_resources():
         if response.status_code == 200:
             data = response.json()
             total = data.get("total_categories", 0)
-            log_test("List Resources", total > 0,
-                    f"Found {total} categories")
+            log_test("List Resources", total > 0, f"Found {total} categories")
             return data
         else:
             log_test("List Resources", False, f"HTTP {response.status_code}")
@@ -86,6 +81,7 @@ def test_list_resources():
         log_test("List Resources", False, str(e))
         return None
 
+
 def test_get_category(category: str):
     """Test getting resources from a specific category"""
     try:
@@ -93,16 +89,15 @@ def test_get_category(category: str):
         if response.status_code == 200:
             data = response.json()
             count = data.get("count", 0)
-            log_test(f"Get Category: {category}", True,
-                    f"Found {count} resources")
+            log_test(f"Get Category: {category}", True, f"Found {count} resources")
             return data
         else:
-            log_test(f"Get Category: {category}", False,
-                    f"HTTP {response.status_code}")
+            log_test(f"Get Category: {category}", False, f"HTTP {response.status_code}")
             return None
     except Exception as e:
         log_test(f"Get Category: {category}", False, str(e))
         return None
+
 
 def test_query_coingecko():
     """Test querying CoinGecko for Bitcoin price"""
@@ -111,10 +106,7 @@ def test_query_coingecko():
             "resource_type": "market_data",
             "resource_name": "coingecko",
             "endpoint": "/simple/price",
-            "params": {
-                "ids": "bitcoin",
-                "vs_currencies": "usd"
-            }
+            "params": {"ids": "bitcoin", "vs_currencies": "usd"},
         }
 
         response = requests.post(f"{BASE_URL}/query", json=payload, timeout=30)
@@ -125,20 +117,20 @@ def test_query_coingecko():
 
             if success and data.get("data"):
                 btc_price = data["data"].get("bitcoin", {}).get("usd")
-                log_test("Query CoinGecko (Bitcoin Price)", True,
-                        f"BTC Price: ${btc_price:,.2f}")
+                log_test("Query CoinGecko (Bitcoin Price)", True, f"BTC Price: ${btc_price:,.2f}")
                 return True
             else:
-                log_test("Query CoinGecko (Bitcoin Price)", False,
-                        data.get("error", "Unknown error"))
+                log_test(
+                    "Query CoinGecko (Bitcoin Price)", False, data.get("error", "Unknown error")
+                )
                 return False
         else:
-            log_test("Query CoinGecko (Bitcoin Price)", False,
-                    f"HTTP {response.status_code}")
+            log_test("Query CoinGecko (Bitcoin Price)", False, f"HTTP {response.status_code}")
             return False
     except Exception as e:
         log_test("Query CoinGecko (Bitcoin Price)", False, str(e))
         return False
+
 
 def test_query_etherscan():
     """Test querying Etherscan for gas prices"""
@@ -146,10 +138,7 @@ def test_query_etherscan():
         payload = {
             "resource_type": "block_explorers",
             "resource_name": "etherscan",
-            "params": {
-                "module": "gastracker",
-                "action": "gasoracle"
-            }
+            "params": {"module": "gastracker", "action": "gasoracle"},
         }
 
         response = requests.post(f"{BASE_URL}/query", json=payload, timeout=30)
@@ -161,20 +150,18 @@ def test_query_etherscan():
             if success and data.get("data"):
                 result = data["data"].get("result", {})
                 safe_gas = result.get("SafeGasPrice", "N/A")
-                log_test("Query Etherscan (Gas Oracle)", True,
-                        f"Safe Gas Price: {safe_gas} Gwei")
+                log_test("Query Etherscan (Gas Oracle)", True, f"Safe Gas Price: {safe_gas} Gwei")
                 return True
             else:
-                log_test("Query Etherscan (Gas Oracle)", False,
-                        data.get("error", "Unknown error"))
+                log_test("Query Etherscan (Gas Oracle)", False, data.get("error", "Unknown error"))
                 return False
         else:
-            log_test("Query Etherscan (Gas Oracle)", False,
-                    f"HTTP {response.status_code}")
+            log_test("Query Etherscan (Gas Oracle)", False, f"HTTP {response.status_code}")
             return False
     except Exception as e:
         log_test("Query Etherscan (Gas Oracle)", False, str(e))
         return False
+
 
 def test_status_check():
     """Test getting status of all resources"""
@@ -188,8 +175,11 @@ def test_status_check():
             online = data.get("online", 0)
             offline = data.get("offline", 0)
 
-            log_test("Status Check (All Resources)", True,
-                    f"{online}/{total} resources online, {offline} offline")
+            log_test(
+                "Status Check (All Resources)",
+                True,
+                f"{online}/{total} resources online, {offline} offline",
+            )
 
             # Show details of offline resources
             if offline > 0:
@@ -200,12 +190,12 @@ def test_status_check():
 
             return True
         else:
-            log_test("Status Check (All Resources)", False,
-                    f"HTTP {response.status_code}")
+            log_test("Status Check (All Resources)", False, f"HTTP {response.status_code}")
             return False
     except Exception as e:
         log_test("Status Check (All Resources)", False, str(e))
         return False
+
 
 def test_history():
     """Test getting query history"""
@@ -224,6 +214,7 @@ def test_history():
         log_test("Query History", False, str(e))
         return False
 
+
 def test_history_stats():
     """Test getting history statistics"""
     try:
@@ -234,8 +225,11 @@ def test_history_stats():
             total_queries = data.get("total_queries", 0)
             success_rate = data.get("success_rate", 0)
 
-            log_test("History Statistics", True,
-                    f"{total_queries} total queries, {success_rate:.1f}% success rate")
+            log_test(
+                "History Statistics",
+                True,
+                f"{total_queries} total queries, {success_rate:.1f}% success rate",
+            )
 
             # Show most queried resources
             most_queried = data.get("most_queried_resources", [])
@@ -252,6 +246,7 @@ def test_history_stats():
         log_test("History Statistics", False, str(e))
         return False
 
+
 def test_multiple_coins():
     """Test querying multiple cryptocurrencies"""
     try:
@@ -259,10 +254,7 @@ def test_multiple_coins():
             "resource_type": "market_data",
             "resource_name": "coingecko",
             "endpoint": "/simple/price",
-            "params": {
-                "ids": "bitcoin,ethereum,tron",
-                "vs_currencies": "usd,eur"
-            }
+            "params": {"ids": "bitcoin,ethereum,tron", "vs_currencies": "usd,eur"},
         }
 
         response = requests.post(f"{BASE_URL}/query", json=payload, timeout=30)
@@ -273,13 +265,13 @@ def test_multiple_coins():
 
             if success and data.get("data"):
                 prices = data["data"]
-                message = ", ".join([f"{coin.upper()}: ${prices[coin]['usd']:,.2f}"
-                                    for coin in prices.keys()])
+                message = ", ".join(
+                    [f"{coin.upper()}: ${prices[coin]['usd']:,.2f}" for coin in prices.keys()]
+                )
                 log_test("Query Multiple Coins", True, message)
                 return True
             else:
-                log_test("Query Multiple Coins", False,
-                        data.get("error", "Unknown error"))
+                log_test("Query Multiple Coins", False, data.get("error", "Unknown error"))
                 return False
         else:
             log_test("Query Multiple Coins", False, f"HTTP {response.status_code}")
@@ -287,6 +279,7 @@ def test_multiple_coins():
     except Exception as e:
         log_test("Query Multiple Coins", False, str(e))
         return False
+
 
 def run_all_tests():
     """Run all test cases"""
@@ -356,6 +349,7 @@ def run_all_tests():
     with open("test_results.json", "w") as f:
         json.dump(test_results, f, indent=2)
     print("\nDetailed results saved to: test_results.json")
+
 
 if __name__ == "__main__":
     print("Starting Crypto Resource Aggregator tests...")

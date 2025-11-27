@@ -2,6 +2,7 @@
 WebSocket Service
 Handles real-time data updates to connected clients
 """
+
 import asyncio
 import json
 import logging
@@ -42,7 +43,9 @@ class ConnectionManager:
         self.active_connections[client_id] = websocket
         self.connection_metadata[client_id] = metadata or {}
 
-        logger.info(f"Client {client_id} connected. Total connections: {len(self.active_connections)}")
+        logger.info(
+            f"Client {client_id} connected. Total connections: {len(self.active_connections)}"
+        )
 
     def disconnect(self, client_id: str):
         """
@@ -64,7 +67,9 @@ class ConnectionManager:
         if client_id in self.connection_metadata:
             del self.connection_metadata[client_id]
 
-        logger.info(f"Client {client_id} disconnected. Total connections: {len(self.active_connections)}")
+        logger.info(
+            f"Client {client_id} disconnected. Total connections: {len(self.active_connections)}"
+        )
 
     def subscribe(self, client_id: str, api_id: str):
         """
@@ -106,7 +111,7 @@ class ConnectionManager:
         Args:
             client_id: Client identifier
         """
-        self.client_subscriptions[client_id].add('*')
+        self.client_subscriptions[client_id].add("*")
         logger.debug(f"Client {client_id} subscribed to all updates")
 
     async def send_personal_message(self, message: Dict[str, Any], client_id: str):
@@ -139,7 +144,7 @@ class ConnectionManager:
 
             # Also include clients subscribed to all updates
             target_clients = target_clients.union(
-                {cid for cid, subs in self.client_subscriptions.items() if '*' in subs}
+                {cid for cid, subs in self.client_subscriptions.items() if "*" in subs}
             )
         else:
             # Broadcast to all connected clients
@@ -161,7 +166,9 @@ class ConnectionManager:
         for client_id in disconnected_clients:
             self.disconnect(client_id)
 
-    async def broadcast_api_update(self, api_id: str, data: Dict[str, Any], metadata: Optional[Dict] = None):
+    async def broadcast_api_update(
+        self, api_id: str, data: Dict[str, Any], metadata: Optional[Dict] = None
+    ):
         """
         Broadcast an API data update
 
@@ -171,11 +178,11 @@ class ConnectionManager:
             metadata: Optional metadata about the update
         """
         message = {
-            'type': 'api_update',
-            'api_id': api_id,
-            'data': data,
-            'metadata': metadata or {},
-            'timestamp': datetime.now().isoformat()
+            "type": "api_update",
+            "api_id": api_id,
+            "data": data,
+            "metadata": metadata or {},
+            "timestamp": datetime.now().isoformat(),
         }
 
         await self.broadcast(message, api_id)
@@ -188,9 +195,9 @@ class ConnectionManager:
             status: Status data
         """
         message = {
-            'type': 'status_update',
-            'status': status,
-            'timestamp': datetime.now().isoformat()
+            "type": "status_update",
+            "status": status,
+            "timestamp": datetime.now().isoformat(),
         }
 
         await self.broadcast(message)
@@ -203,9 +210,9 @@ class ConnectionManager:
             schedule_info: Schedule information
         """
         message = {
-            'type': 'schedule_update',
-            'schedule': schedule_info,
-            'timestamp': datetime.now().isoformat()
+            "type": "schedule_update",
+            "schedule": schedule_info,
+            "timestamp": datetime.now().isoformat(),
         }
 
         await self.broadcast(message)
@@ -218,16 +225,16 @@ class ConnectionManager:
             Statistics about connections and subscriptions
         """
         return {
-            'total_connections': len(self.active_connections),
-            'total_subscriptions': sum(len(subs) for subs in self.subscriptions.values()),
-            'apis_with_subscribers': len(self.subscriptions),
-            'clients': {
+            "total_connections": len(self.active_connections),
+            "total_subscriptions": sum(len(subs) for subs in self.subscriptions.values()),
+            "apis_with_subscribers": len(self.subscriptions),
+            "clients": {
                 client_id: {
-                    'subscriptions': list(self.client_subscriptions.get(client_id, set())),
-                    'metadata': self.connection_metadata.get(client_id, {})
+                    "subscriptions": list(self.client_subscriptions.get(client_id, set())),
+                    "metadata": self.connection_metadata.get(client_id, {}),
                 }
                 for client_id in self.active_connections.keys()
-            }
+            },
         }
 
 
@@ -250,7 +257,9 @@ class WebSocketService:
         # For now, we'll use a different approach where scheduler calls websocket service
         pass
 
-    async def handle_client_message(self, websocket: WebSocket, client_id: str, message: Dict[str, Any]):
+    async def handle_client_message(
+        self, websocket: WebSocket, client_id: str, message: Dict[str, Any]
+    ):
         """
         Handle incoming messages from clients
 
@@ -260,111 +269,103 @@ class WebSocketService:
             message: Message from client
         """
         try:
-            message_type = message.get('type')
+            message_type = message.get("type")
 
-            if message_type == 'subscribe':
+            if message_type == "subscribe":
                 # Subscribe to specific API
-                api_id = message.get('api_id')
+                api_id = message.get("api_id")
                 if api_id:
                     self.connection_manager.subscribe(client_id, api_id)
-                    await self.connection_manager.send_personal_message({
-                        'type': 'subscribed',
-                        'api_id': api_id,
-                        'status': 'success'
-                    }, client_id)
+                    await self.connection_manager.send_personal_message(
+                        {"type": "subscribed", "api_id": api_id, "status": "success"}, client_id
+                    )
 
-            elif message_type == 'subscribe_all':
+            elif message_type == "subscribe_all":
                 # Subscribe to all updates
                 self.connection_manager.subscribe_all(client_id)
-                await self.connection_manager.send_personal_message({
-                    'type': 'subscribed',
-                    'api_id': '*',
-                    'status': 'success'
-                }, client_id)
+                await self.connection_manager.send_personal_message(
+                    {"type": "subscribed", "api_id": "*", "status": "success"}, client_id
+                )
 
-            elif message_type == 'unsubscribe':
+            elif message_type == "unsubscribe":
                 # Unsubscribe from specific API
-                api_id = message.get('api_id')
+                api_id = message.get("api_id")
                 if api_id:
                     self.connection_manager.unsubscribe(client_id, api_id)
-                    await self.connection_manager.send_personal_message({
-                        'type': 'unsubscribed',
-                        'api_id': api_id,
-                        'status': 'success'
-                    }, client_id)
+                    await self.connection_manager.send_personal_message(
+                        {"type": "unsubscribed", "api_id": api_id, "status": "success"}, client_id
+                    )
 
-            elif message_type == 'get_data':
+            elif message_type == "get_data":
                 # Request current cached data
-                api_id = message.get('api_id')
+                api_id = message.get("api_id")
                 if api_id and self.persistence_service:
                     data = self.persistence_service.get_cached_data(api_id)
-                    await self.connection_manager.send_personal_message({
-                        'type': 'data_response',
-                        'api_id': api_id,
-                        'data': data
-                    }, client_id)
+                    await self.connection_manager.send_personal_message(
+                        {"type": "data_response", "api_id": api_id, "data": data}, client_id
+                    )
 
-            elif message_type == 'get_all_data':
+            elif message_type == "get_all_data":
                 # Request all cached data
                 if self.persistence_service:
                     data = self.persistence_service.get_all_cached_data()
-                    await self.connection_manager.send_personal_message({
-                        'type': 'data_response',
-                        'data': data
-                    }, client_id)
+                    await self.connection_manager.send_personal_message(
+                        {"type": "data_response", "data": data}, client_id
+                    )
 
-            elif message_type == 'get_schedule':
+            elif message_type == "get_schedule":
                 # Request schedule information
                 if self.scheduler_service:
                     schedules = self.scheduler_service.get_all_task_statuses()
-                    await self.connection_manager.send_personal_message({
-                        'type': 'schedule_response',
-                        'schedules': schedules
-                    }, client_id)
+                    await self.connection_manager.send_personal_message(
+                        {"type": "schedule_response", "schedules": schedules}, client_id
+                    )
 
-            elif message_type == 'update_schedule':
+            elif message_type == "update_schedule":
                 # Update schedule for an API
-                api_id = message.get('api_id')
-                interval = message.get('interval')
-                enabled = message.get('enabled')
+                api_id = message.get("api_id")
+                interval = message.get("interval")
+                enabled = message.get("enabled")
 
                 if api_id and self.scheduler_service:
                     self.scheduler_service.update_task_schedule(api_id, interval, enabled)
-                    await self.connection_manager.send_personal_message({
-                        'type': 'schedule_updated',
-                        'api_id': api_id,
-                        'status': 'success'
-                    }, client_id)
+                    await self.connection_manager.send_personal_message(
+                        {"type": "schedule_updated", "api_id": api_id, "status": "success"},
+                        client_id,
+                    )
 
-            elif message_type == 'force_update':
+            elif message_type == "force_update":
                 # Force immediate update for an API
-                api_id = message.get('api_id')
+                api_id = message.get("api_id")
                 if api_id and self.scheduler_service:
                     success = await self.scheduler_service.force_update(api_id)
-                    await self.connection_manager.send_personal_message({
-                        'type': 'update_result',
-                        'api_id': api_id,
-                        'status': 'success' if success else 'failed'
-                    }, client_id)
+                    await self.connection_manager.send_personal_message(
+                        {
+                            "type": "update_result",
+                            "api_id": api_id,
+                            "status": "success" if success else "failed",
+                        },
+                        client_id,
+                    )
 
-            elif message_type == 'ping':
+            elif message_type == "ping":
                 # Heartbeat
-                await self.connection_manager.send_personal_message({
-                    'type': 'pong',
-                    'timestamp': datetime.now().isoformat()
-                }, client_id)
+                await self.connection_manager.send_personal_message(
+                    {"type": "pong", "timestamp": datetime.now().isoformat()}, client_id
+                )
 
             else:
                 logger.warning(f"Unknown message type from {client_id}: {message_type}")
 
         except Exception as e:
             logger.error(f"Error handling client message: {e}")
-            await self.connection_manager.send_personal_message({
-                'type': 'error',
-                'message': str(e)
-            }, client_id)
+            await self.connection_manager.send_personal_message(
+                {"type": "error", "message": str(e)}, client_id
+            )
 
-    async def notify_data_update(self, api_id: str, data: Dict[str, Any], metadata: Optional[Dict] = None):
+    async def notify_data_update(
+        self, api_id: str, data: Dict[str, Any], metadata: Optional[Dict] = None
+    ):
         """
         Notify clients about data updates
 

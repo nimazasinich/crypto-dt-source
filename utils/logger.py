@@ -23,24 +23,24 @@ class JSONFormatter(logging.Formatter):
         }
 
         # Add extra fields if present
-        if hasattr(record, 'provider'):
-            log_data['provider'] = record.provider
-        if hasattr(record, 'endpoint'):
-            log_data['endpoint'] = record.endpoint
-        if hasattr(record, 'duration'):
-            log_data['duration_ms'] = record.duration
-        if hasattr(record, 'status'):
-            log_data['status'] = record.status
-        if hasattr(record, 'http_code'):
-            log_data['http_code'] = record.http_code
+        if hasattr(record, "provider"):
+            log_data["provider"] = record.provider
+        if hasattr(record, "endpoint"):
+            log_data["endpoint"] = record.endpoint
+        if hasattr(record, "duration"):
+            log_data["duration_ms"] = record.duration
+        if hasattr(record, "status"):
+            log_data["status"] = record.status
+        if hasattr(record, "http_code"):
+            log_data["http_code"] = record.http_code
 
         # Add exception info if present
         if record.exc_info:
-            log_data['exception'] = self.formatException(record.exc_info)
+            log_data["exception"] = self.formatException(record.exc_info)
 
         # Add stack trace if present
         if record.stack_info:
-            log_data['stack_trace'] = self.formatStack(record.stack_info)
+            log_data["stack_trace"] = self.formatStack(record.stack_info)
 
         return json.dumps(log_data)
 
@@ -88,7 +88,7 @@ def log_api_request(
     duration_ms: float,
     status: str,
     http_code: Optional[int] = None,
-    level: str = "INFO"
+    level: str = "INFO",
 ):
     """
     Log an API request with structured data
@@ -105,14 +105,14 @@ def log_api_request(
     log_level = getattr(logging, level.upper())
 
     extra = {
-        'provider': provider,
-        'endpoint': endpoint,
-        'duration': duration_ms,
-        'status': status,
+        "provider": provider,
+        "endpoint": endpoint,
+        "duration": duration_ms,
+        "status": status,
     }
 
     if http_code:
-        extra['http_code'] = http_code
+        extra["http_code"] = http_code
 
     message = f"{provider} - {endpoint} - {status} - {duration_ms}ms"
 
@@ -125,7 +125,7 @@ def log_error(
     error_type: str,
     error_message: str,
     endpoint: Optional[str] = None,
-    exc_info: bool = False
+    exc_info: bool = False,
 ):
     """
     Log an error with structured data
@@ -139,12 +139,12 @@ def log_error(
         exc_info: Include exception info
     """
     extra = {
-        'provider': provider,
-        'error_type': error_type,
+        "provider": provider,
+        "error_type": error_type,
     }
 
     if endpoint:
-        extra['endpoint'] = endpoint
+        extra["endpoint"] = endpoint
 
     message = f"{provider} - {error_type}: {error_message}"
 

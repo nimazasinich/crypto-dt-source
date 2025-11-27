@@ -38,7 +38,7 @@ class DataBroadcaster:
             self.broadcast_news(),
             self.broadcast_sentiment(),
             self.broadcast_whales(),
-            self.broadcast_gas_prices()
+            self.broadcast_gas_prices(),
         ]
 
         try:
@@ -69,10 +69,12 @@ class DataBroadcaster:
                             "prices": {p.symbol: p.price_usd for p in prices},
                             "volumes": {p.symbol: p.volume_24h for p in prices if p.volume_24h},
                             "market_caps": {p.symbol: p.market_cap for p in prices if p.market_cap},
-                            "price_changes": {p.symbol: p.price_change_24h for p in prices if p.price_change_24h}
+                            "price_changes": {
+                                p.symbol: p.price_change_24h for p in prices if p.price_change_24h
+                            },
                         },
                         "count": len(prices),
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.utcnow().isoformat(),
                     }
 
                     # Broadcast to subscribed clients
@@ -107,13 +109,13 @@ class DataBroadcaster:
                                     "source": article.source,
                                     "url": article.url,
                                     "published_at": article.published_at.isoformat(),
-                                    "sentiment": article.sentiment
+                                    "sentiment": article.sentiment,
                                 }
                                 for article in news[:5]  # Only send 5 latest
                             ]
                         },
                         "count": len(news[:5]),
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.utcnow().isoformat(),
                     }
 
                     await ws_manager.broadcast_to_service(ServiceType.NEWS, data)
@@ -143,13 +145,15 @@ class DataBroadcaster:
                             "classification": sentiment.classification,
                             "metric_name": sentiment.metric_name,
                             "source": sentiment.source,
-                            "timestamp": sentiment.timestamp.isoformat()
+                            "timestamp": sentiment.timestamp.isoformat(),
                         },
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.utcnow().isoformat(),
                     }
 
                     await ws_manager.broadcast_to_service(ServiceType.SENTIMENT, data)
-                    logger.info(f"Broadcasted sentiment: {sentiment.value} ({sentiment.classification})")
+                    logger.info(
+                        f"Broadcasted sentiment: {sentiment.value} ({sentiment.classification})"
+                    )
 
             except Exception as e:
                 logger.error(f"Error broadcasting sentiment: {e}", exc_info=True)
@@ -178,13 +182,13 @@ class DataBroadcaster:
                                     "amount_usd": tx.amount_usd,
                                     "from_address": tx.from_address[:20] + "...",
                                     "to_address": tx.to_address[:20] + "...",
-                                    "timestamp": tx.timestamp.isoformat()
+                                    "timestamp": tx.timestamp.isoformat(),
                                 }
                                 for tx in whales
                             ]
                         },
                         "count": len(whales),
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.utcnow().isoformat(),
                     }
 
                     await ws_manager.broadcast_to_service(ServiceType.WHALE_TRACKING, data)
@@ -207,7 +211,7 @@ class DataBroadcaster:
                     data = {
                         "type": "gas_prices",
                         "data": gas_prices,
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.utcnow().isoformat(),
                     }
 
                     # Broadcast to RPC_NODES service type (gas prices are blockchain-related)

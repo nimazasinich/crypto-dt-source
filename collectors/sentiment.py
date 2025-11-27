@@ -67,15 +67,12 @@ async def get_fear_greed_index() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "staleness_minutes": None,
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
         # Build request URL
         url = f"{provider_config.endpoint_url}{endpoint}"
-        params = {
-            "limit": "1",  # Get only the latest index
-            "format": "json"
-        }
+        params = {"limit": "1", "format": "json"}  # Get only the latest index
 
         # Make request
         response = await client.get(url, params=params, timeout=provider_config.timeout_ms // 1000)
@@ -87,7 +84,7 @@ async def get_fear_greed_index() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -101,7 +98,7 @@ async def get_fear_greed_index() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -117,8 +114,7 @@ async def get_fear_greed_index() -> Dict[str, Any]:
                     try:
                         # Alternative.me returns Unix timestamp
                         data_timestamp = datetime.fromtimestamp(
-                            int(index_data["timestamp"]),
-                            tz=timezone.utc
+                            int(index_data["timestamp"]), tz=timezone.utc
                         )
                     except:
                         pass
@@ -138,7 +134,9 @@ async def get_fear_greed_index() -> Dict[str, Any]:
 
         logger.info(
             f"{provider} - {endpoint} - Fear & Greed Index: {index_value} ({index_classification}), "
-            f"staleness: {staleness:.2f}m" if staleness else "staleness: N/A"
+            f"staleness: {staleness:.2f}m"
+            if staleness
+            else "staleness: N/A"
         )
 
         return {
@@ -152,7 +150,7 @@ async def get_fear_greed_index() -> Dict[str, Any]:
             "error": None,
             "response_time_ms": response.get("response_time_ms", 0),
             "index_value": index_value,
-            "index_classification": index_classification
+            "index_classification": index_classification,
         }
 
     except Exception as e:
@@ -166,7 +164,7 @@ async def get_fear_greed_index() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -183,32 +181,33 @@ async def collect_sentiment_data() -> List[Dict[str, Any]]:
     logger.info("Starting sentiment data collection from all sources")
 
     # Run all collectors concurrently
-    results = await asyncio.gather(
-        get_fear_greed_index(),
-        return_exceptions=True
-    )
+    results = await asyncio.gather(get_fear_greed_index(), return_exceptions=True)
 
     # Process results
     processed_results = []
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"Collector failed with exception: {str(result)}")
-            processed_results.append({
-                "provider": "Unknown",
-                "category": "sentiment",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "staleness_minutes": None,
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed_results.append(
+                {
+                    "provider": "Unknown",
+                    "category": "sentiment",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "staleness_minutes": None,
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed_results.append(result)
 
     # Log summary
     successful = sum(1 for r in processed_results if r.get("success", False))
-    logger.info(f"Sentiment data collection complete: {successful}/{len(processed_results)} successful")
+    logger.info(
+        f"Sentiment data collection complete: {successful}/{len(processed_results)} successful"
+    )
 
     return processed_results
 
@@ -250,7 +249,7 @@ class SentimentCollector:
             "trending_topics": [],
             "by_source": {},
             "social_trends": [],
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         for result in results:
@@ -261,10 +260,12 @@ class SentimentCollector:
                 if provider == "Alternative.me" and "data" in result["data"]:
                     index_data = result["data"]["data"][0] if result["data"]["data"] else {}
                     aggregated["sentiment_score"] = int(index_data.get("value", 0))
-                    aggregated["overall_sentiment"] = index_data.get("value_classification", "neutral")
+                    aggregated["overall_sentiment"] = index_data.get(
+                        "value_classification", "neutral"
+                    )
                     aggregated["by_source"][provider] = {
                         "value": aggregated["sentiment_score"],
-                        "classification": aggregated["overall_sentiment"]
+                        "classification": aggregated["overall_sentiment"],
                     }
 
         return aggregated
@@ -272,6 +273,7 @@ class SentimentCollector:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         results = await collect_sentiment_data()
 
@@ -280,10 +282,12 @@ if __name__ == "__main__":
             print(f"\nProvider: {result['provider']}")
             print(f"Success: {result['success']}")
             print(f"Staleness: {result.get('staleness_minutes', 'N/A')} minutes")
-            if result['success']:
+            if result["success"]:
                 print(f"Response Time: {result.get('response_time_ms', 0):.2f}ms")
-                if result.get('index_value'):
-                    print(f"Fear & Greed Index: {result['index_value']} ({result['index_classification']})")
+                if result.get("index_value"):
+                    print(
+                        f"Fear & Greed Index: {result['index_value']} ({result['index_classification']})"
+                    )
             else:
                 print(f"Error: {result.get('error', 'Unknown')}")
 

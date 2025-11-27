@@ -61,7 +61,7 @@ async def get_etherscan_gas_price() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "staleness_minutes": None,
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
         # Check if API key is available
@@ -76,16 +76,12 @@ async def get_etherscan_gas_price() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": "missing_api_key"
+                "error_type": "missing_api_key",
             }
 
         # Build request URL
         url = provider_config.endpoint_url
-        params = {
-            "module": "gastracker",
-            "action": "gasoracle",
-            "apikey": provider_config.api_key
-        }
+        params = {"module": "gastracker", "action": "gasoracle", "apikey": provider_config.api_key}
 
         # Make request
         response = await client.get(url, params=params, timeout=provider_config.timeout_ms // 1000)
@@ -97,7 +93,7 @@ async def get_etherscan_gas_price() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -111,7 +107,7 @@ async def get_etherscan_gas_price() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -135,7 +131,7 @@ async def get_etherscan_gas_price() -> Dict[str, Any]:
                     "staleness_minutes": None,
                     "success": False,
                     "error": error_msg,
-                    "error_type": "api_error"
+                    "error_type": "api_error",
                 }
 
         logger.info(f"{provider} - {endpoint} - Gas price retrieved, staleness: {staleness:.2f}m")
@@ -149,7 +145,7 @@ async def get_etherscan_gas_price() -> Dict[str, Any]:
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -163,7 +159,7 @@ async def get_etherscan_gas_price() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -194,7 +190,7 @@ async def get_bscscan_bnb_price() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "staleness_minutes": None,
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
         # Check if API key is available
@@ -209,16 +205,12 @@ async def get_bscscan_bnb_price() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": "missing_api_key"
+                "error_type": "missing_api_key",
             }
 
         # Build request URL
         url = provider_config.endpoint_url
-        params = {
-            "module": "stats",
-            "action": "bnbprice",
-            "apikey": provider_config.api_key
-        }
+        params = {"module": "stats", "action": "bnbprice", "apikey": provider_config.api_key}
 
         # Make request
         response = await client.get(url, params=params, timeout=provider_config.timeout_ms // 1000)
@@ -230,7 +222,7 @@ async def get_bscscan_bnb_price() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -244,7 +236,7 @@ async def get_bscscan_bnb_price() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -268,7 +260,7 @@ async def get_bscscan_bnb_price() -> Dict[str, Any]:
                     "staleness_minutes": None,
                     "success": False,
                     "error": error_msg,
-                    "error_type": "api_error"
+                    "error_type": "api_error",
                 }
 
             # Extract timestamp if available
@@ -276,8 +268,7 @@ async def get_bscscan_bnb_price() -> Dict[str, Any]:
                 if "ethusd_timestamp" in data["result"]:
                     try:
                         data_timestamp = datetime.fromtimestamp(
-                            int(data["result"]["ethusd_timestamp"]),
-                            tz=timezone.utc
+                            int(data["result"]["ethusd_timestamp"]), tz=timezone.utc
                         )
                         staleness = calculate_staleness_minutes(data_timestamp)
                     except:
@@ -294,7 +285,7 @@ async def get_bscscan_bnb_price() -> Dict[str, Any]:
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -308,7 +299,7 @@ async def get_bscscan_bnb_price() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -339,7 +330,7 @@ async def get_tronscan_stats() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "staleness_minutes": None,
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
         # Build request URL
@@ -352,9 +343,7 @@ async def get_tronscan_stats() -> Dict[str, Any]:
 
         # Make request
         response = await client.get(
-            url,
-            headers=headers if headers else None,
-            timeout=provider_config.timeout_ms // 1000
+            url, headers=headers if headers else None, timeout=provider_config.timeout_ms // 1000
         )
 
         # Log request
@@ -364,7 +353,7 @@ async def get_tronscan_stats() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -378,7 +367,7 @@ async def get_tronscan_stats() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -394,14 +383,15 @@ async def get_tronscan_stats() -> Dict[str, Any]:
             if "timestamp" in data:
                 try:
                     data_timestamp = datetime.fromtimestamp(
-                        int(data["timestamp"]) / 1000,  # TronScan uses milliseconds
-                        tz=timezone.utc
+                        int(data["timestamp"]) / 1000, tz=timezone.utc  # TronScan uses milliseconds
                     )
                     staleness = calculate_staleness_minutes(data_timestamp)
                 except:
                     pass
 
-        logger.info(f"{provider} - {endpoint} - Network stats retrieved, staleness: {staleness:.2f}m")
+        logger.info(
+            f"{provider} - {endpoint} - Network stats retrieved, staleness: {staleness:.2f}m"
+        )
 
         return {
             "provider": provider,
@@ -412,7 +402,7 @@ async def get_tronscan_stats() -> Dict[str, Any]:
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -426,7 +416,7 @@ async def get_tronscan_stats() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -444,7 +434,7 @@ async def collect_explorer_data() -> List[Dict[str, Any]]:
         get_etherscan_gas_price(),
         get_bscscan_bnb_price(),
         get_tronscan_stats(),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     # Process results
@@ -452,22 +442,26 @@ async def collect_explorer_data() -> List[Dict[str, Any]]:
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"Collector failed with exception: {str(result)}")
-            processed_results.append({
-                "provider": "Unknown",
-                "category": "blockchain_explorers",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "staleness_minutes": None,
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed_results.append(
+                {
+                    "provider": "Unknown",
+                    "category": "blockchain_explorers",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "staleness_minutes": None,
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed_results.append(result)
 
     # Log summary
     successful = sum(1 for r in processed_results if r.get("success", False))
-    logger.info(f"Explorer data collection complete: {successful}/{len(processed_results)} successful")
+    logger.info(
+        f"Explorer data collection complete: {successful}/{len(processed_results)} successful"
+    )
 
     return processed_results
 
@@ -506,7 +500,7 @@ class ExplorerDataCollector:
             "transactions_count": None,
             "gas_prices": {},
             "sources": [],
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         for result in results:
@@ -523,7 +517,7 @@ class ExplorerDataCollector:
                         aggregated["gas_prices"]["ethereum"] = {
                             "safe": gas_data.get("SafeGasPrice"),
                             "propose": gas_data.get("ProposeGasPrice"),
-                            "fast": gas_data.get("FastGasPrice")
+                            "fast": gas_data.get("FastGasPrice"),
                         }
                     elif provider == "BscScan":
                         aggregated["gas_prices"]["bsc"] = gas_data.get("result")
@@ -539,6 +533,7 @@ class ExplorerDataCollector:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         results = await collect_explorer_data()
 
@@ -547,7 +542,7 @@ if __name__ == "__main__":
             print(f"\nProvider: {result['provider']}")
             print(f"Success: {result['success']}")
             print(f"Staleness: {result.get('staleness_minutes', 'N/A')} minutes")
-            if result['success']:
+            if result["success"]:
                 print(f"Response Time: {result.get('response_time_ms', 0):.2f}ms")
             else:
                 print(f"Error: {result.get('error', 'Unknown')}")

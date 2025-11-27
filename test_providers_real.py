@@ -12,17 +12,13 @@ from datetime import datetime
 
 async def test_binance_direct():
     """Test Binance API directly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🧪 Testing Binance Provider")
-    print("="*60)
+    print("=" * 60)
 
     try:
         url = "https://api.binance.com/api/v3/klines"
-        params = {
-            "symbol": "BTCUSDT",
-            "interval": "1h",
-            "limit": 5
-        }
+        params = {"symbol": "BTCUSDT", "interval": "1h", "limit": 5}
 
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.get(url, params=params)
@@ -44,9 +40,9 @@ async def test_binance_direct():
 
 async def test_coingecko_direct():
     """Test CoinGecko API directly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🧪 Testing CoinGecko Provider")
-    print("="*60)
+    print("=" * 60)
 
     try:
         url = "https://api.coingecko.com/api/v3/simple/price"
@@ -54,7 +50,7 @@ async def test_coingecko_direct():
             "ids": "bitcoin,ethereum,solana",
             "vs_currencies": "usd",
             "include_24hr_change": "true",
-            "include_24hr_vol": "true"
+            "include_24hr_vol": "true",
         }
 
         async with httpx.AsyncClient(timeout=15) as client:
@@ -78,15 +74,13 @@ async def test_coingecko_direct():
 
 async def test_kraken_direct():
     """Test Kraken API directly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🧪 Testing Kraken Provider")
-    print("="*60)
+    print("=" * 60)
 
     try:
         url = "https://api.kraken.com/0/public/Ticker"
-        params = {
-            "pair": "XXBTZUSD"
-        }
+        params = {"pair": "XXBTZUSD"}
 
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.get(url, params=params)
@@ -118,15 +112,13 @@ async def test_kraken_direct():
 
 async def test_coincap_direct():
     """Test CoinCap API directly"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🧪 Testing CoinCap Provider")
-    print("="*60)
+    print("=" * 60)
 
     try:
         url = "https://api.coincap.io/v2/assets"
-        params = {
-            "limit": 3
-        }
+        params = {"limit": 3}
 
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.get(url, params=params)
@@ -150,9 +142,9 @@ async def test_coincap_direct():
 
 async def test_fear_greed_index():
     """Test Fear & Greed Index"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🧪 Testing Fear & Greed Index")
-    print("="*60)
+    print("=" * 60)
 
     try:
         url = "https://api.alternative.me/fng/"
@@ -179,9 +171,9 @@ async def test_fear_greed_index():
 
 async def test_hf_data_engine():
     """Test HF Data Engine if running"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🧪 Testing HF Data Engine")
-    print("="*60)
+    print("=" * 60)
 
     try:
         base_url = "http://localhost:8000"
@@ -200,8 +192,7 @@ async def test_hf_data_engine():
                 # Test prices endpoint
                 try:
                     prices_response = await client.get(
-                        f"{base_url}/api/prices",
-                        params={"symbols": "BTC,ETH"}
+                        f"{base_url}/api/prices", params={"symbols": "BTC,ETH"}
                     )
                     if prices_response.status_code == 200:
                         prices_data = prices_response.json()
@@ -223,9 +214,9 @@ async def test_hf_data_engine():
 
 async def test_fastapi_backend():
     """Test main FastAPI backend"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🧪 Testing FastAPI Backend")
-    print("="*60)
+    print("=" * 60)
 
     try:
         base_url = "http://localhost:7860"
@@ -259,10 +250,10 @@ async def test_fastapi_backend():
 
 async def main():
     """Run all tests"""
-    print("\n" + "🚀"*30)
+    print("\n" + "🚀" * 30)
     print("تست واقعی همه پرووایدرها")
     print("REAL PROVIDER TESTING")
-    print("🚀"*30)
+    print("🚀" * 30)
 
     results = {}
 
@@ -289,9 +280,9 @@ async def main():
     results["FastAPI Backend"] = await test_fastapi_backend()
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 TEST SUMMARY / خلاصه تست")
-    print("="*60)
+    print("=" * 60)
 
     working = 0
     failed = 0
@@ -306,11 +297,11 @@ async def main():
         else:
             failed += 1
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"✅ Working: {working}/{len(results)}")
     print(f"❌ Failed: {failed}/{len(results)}")
     print(f"📊 Success Rate: {(working/len(results)*100):.1f}%")
-    print("="*60)
+    print("=" * 60)
 
     # Recommendations
     print("\n💡 توصیه‌ها / RECOMMENDATIONS:")
@@ -327,8 +318,9 @@ async def main():
         print("⚠️  FastAPI Backend is not running. Start it with:")
         print("   python app.py")
 
-    external_working = sum(1 for k, v in results.items()
-                          if k not in ["HF Data Engine", "FastAPI Backend"] and v[0])
+    external_working = sum(
+        1 for k, v in results.items() if k not in ["HF Data Engine", "FastAPI Backend"] and v[0]
+    )
 
     if external_working >= 3:
         print(f"✅ {external_working} external APIs working - Good coverage!")

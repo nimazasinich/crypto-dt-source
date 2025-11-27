@@ -1,8 +1,10 @@
 """Binance provider implementation"""
+
 from __future__ import annotations
 from typing import List
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from core.base_provider import BaseProvider
@@ -24,11 +26,7 @@ class BinanceProvider(BaseProvider):
     }
 
     def __init__(self):
-        super().__init__(
-            name="binance",
-            base_url="https://api.binance.com",
-            timeout=10
-        )
+        super().__init__(name="binance", base_url="https://api.binance.com", timeout=10)
 
     def _normalize_symbol(self, symbol: str) -> str:
         """Normalize symbol to Binance format (BTCUSDT)"""
@@ -46,7 +44,7 @@ class BinanceProvider(BaseProvider):
         params = {
             "symbol": normalized_symbol,
             "interval": binance_interval,
-            "limit": min(limit, 1000)  # Binance max is 1000
+            "limit": min(limit, 1000),  # Binance max is 1000
         }
 
         data = await self._make_request(url, params)
@@ -55,14 +53,16 @@ class BinanceProvider(BaseProvider):
         # [timestamp, open, high, low, close, volume, closeTime, ...]
         ohlcv_list = []
         for candle in data:
-            ohlcv_list.append(OHLCV(
-                timestamp=int(candle[0]),
-                open=float(candle[1]),
-                high=float(candle[2]),
-                low=float(candle[3]),
-                close=float(candle[4]),
-                volume=float(candle[5])
-            ))
+            ohlcv_list.append(
+                OHLCV(
+                    timestamp=int(candle[0]),
+                    open=float(candle[1]),
+                    high=float(candle[2]),
+                    low=float(candle[3]),
+                    close=float(candle[4]),
+                    volume=float(candle[5]),
+                )
+            )
 
         return ohlcv_list
 
@@ -80,14 +80,16 @@ class BinanceProvider(BaseProvider):
                 # Extract base symbol (remove USDT)
                 base_symbol = ticker["symbol"].replace("USDT", "")
 
-                prices.append(Price(
-                    symbol=base_symbol,
-                    name=base_symbol,  # Binance doesn't provide name
-                    price=float(ticker["lastPrice"]),
-                    priceUsd=float(ticker["lastPrice"]),
-                    change24h=float(ticker["priceChangePercent"]),
-                    volume24h=float(ticker["quoteVolume"]),
-                    lastUpdate=ticker.get("closeTime", 0)
-                ))
+                prices.append(
+                    Price(
+                        symbol=base_symbol,
+                        name=base_symbol,  # Binance doesn't provide name
+                        price=float(ticker["lastPrice"]),
+                        priceUsd=float(ticker["lastPrice"]),
+                        change24h=float(ticker["priceChangePercent"]),
+                        volume24h=float(ticker["quoteVolume"]),
+                        lastUpdate=ticker.get("closeTime", 0),
+                    )
+                )
 
         return prices

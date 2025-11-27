@@ -32,7 +32,7 @@ from database.models import (
     WhaleTransaction,
     SentimentMetric,
     GasPrice,
-    BlockchainStat
+    BlockchainStat,
 )
 from database.data_access import DataAccessMixin
 from utils.logger import setup_logger
@@ -62,7 +62,7 @@ class DatabaseManager(DataAccessMixin):
         self.engine = create_engine(
             db_url,
             echo=False,  # Set to True for SQL debugging
-            connect_args={"check_same_thread": False}  # SQLite specific
+            connect_args={"check_same_thread": False},  # SQLite specific
         )
 
         # Create session factory
@@ -70,7 +70,7 @@ class DatabaseManager(DataAccessMixin):
             autocommit=False,
             autoflush=False,
             bind=self.engine,
-            expire_on_commit=False  # Allow access to attributes after commit
+            expire_on_commit=False,  # Allow access to attributes after commit
         )
 
         logger.info(f"Database manager initialized with database: {self.db_path}")
@@ -148,7 +148,7 @@ class DatabaseManager(DataAccessMixin):
         rate_limit_type: Optional[str] = None,
         rate_limit_value: Optional[int] = None,
         timeout_ms: int = 10000,
-        priority_tier: int = 3
+        priority_tier: int = 3,
     ) -> Optional[Provider]:
         """
         Create a new provider
@@ -178,7 +178,7 @@ class DatabaseManager(DataAccessMixin):
                     rate_limit_type=rate_limit_type,
                     rate_limit_value=rate_limit_value,
                     timeout_ms=timeout_ms,
-                    priority_tier=priority_tier
+                    priority_tier=priority_tier,
                 )
                 session.add(provider)
                 session.commit()
@@ -192,7 +192,9 @@ class DatabaseManager(DataAccessMixin):
             logger.error(f"Failed to create provider {name}: {str(e)}", exc_info=True)
             return None
 
-    def get_provider(self, provider_id: Optional[int] = None, name: Optional[str] = None) -> Optional[Provider]:
+    def get_provider(
+        self, provider_id: Optional[int] = None, name: Optional[str] = None
+    ) -> Optional[Provider]:
         """
         Get a provider by ID or name
 
@@ -220,7 +222,9 @@ class DatabaseManager(DataAccessMixin):
             logger.error(f"Failed to get provider: {str(e)}", exc_info=True)
             return None
 
-    def get_all_providers(self, category: Optional[str] = None, enabled_only: bool = False) -> List[Provider]:
+    def get_all_providers(
+        self, category: Optional[str] = None, enabled_only: bool = False
+    ) -> List[Provider]:
         """
         Get all providers with optional filtering
 
@@ -322,7 +326,7 @@ class DatabaseManager(DataAccessMixin):
         error_type: Optional[str] = None,
         error_message: Optional[str] = None,
         retry_count: int = 0,
-        retry_result: Optional[str] = None
+        retry_result: Optional[str] = None,
     ) -> Optional[ConnectionAttempt]:
         """
         Save a connection attempt log
@@ -352,7 +356,7 @@ class DatabaseManager(DataAccessMixin):
                     error_type=error_type,
                     error_message=error_message,
                     retry_count=retry_count,
-                    retry_result=retry_result
+                    retry_result=retry_result,
                 )
                 session.add(attempt)
                 session.commit()
@@ -367,7 +371,7 @@ class DatabaseManager(DataAccessMixin):
         provider_id: Optional[int] = None,
         status: Optional[str] = None,
         hours: int = 24,
-        limit: int = 1000
+        limit: int = 1000,
     ) -> List[ConnectionAttempt]:
         """
         Get connection attempts with filtering
@@ -420,7 +424,7 @@ class DatabaseManager(DataAccessMixin):
         payload_size_bytes: int = 0,
         data_quality_score: float = 1.0,
         on_schedule: bool = True,
-        skip_reason: Optional[str] = None
+        skip_reason: Optional[str] = None,
     ) -> Optional[DataCollection]:
         """
         Save a data collection record
@@ -454,7 +458,7 @@ class DatabaseManager(DataAccessMixin):
                     payload_size_bytes=payload_size_bytes,
                     data_quality_score=data_quality_score,
                     on_schedule=on_schedule,
-                    skip_reason=skip_reason
+                    skip_reason=skip_reason,
                 )
                 session.add(collection)
                 session.commit()
@@ -469,7 +473,7 @@ class DatabaseManager(DataAccessMixin):
         provider_id: Optional[int] = None,
         category: Optional[str] = None,
         hours: int = 24,
-        limit: int = 1000
+        limit: int = 1000,
     ) -> List[DataCollection]:
         """
         Get data collections with filtering
@@ -496,7 +500,9 @@ class DatabaseManager(DataAccessMixin):
                 if category:
                     query = query.filter(DataCollection.category == category)
 
-                collections = query.order_by(desc(DataCollection.actual_fetch_time)).limit(limit).all()
+                collections = (
+                    query.order_by(desc(DataCollection.actual_fetch_time)).limit(limit).all()
+                )
 
                 for collection in collections:
                     session.refresh(collection)
@@ -516,7 +522,7 @@ class DatabaseManager(DataAccessMixin):
         limit_type: str,
         limit_value: int,
         current_usage: int,
-        reset_time: datetime
+        reset_time: datetime,
     ) -> Optional[RateLimitUsage]:
         """
         Save rate limit usage record
@@ -541,7 +547,7 @@ class DatabaseManager(DataAccessMixin):
                     limit_value=limit_value,
                     current_usage=current_usage,
                     percentage=percentage,
-                    reset_time=reset_time
+                    reset_time=reset_time,
                 )
                 session.add(usage)
                 session.commit()
@@ -556,7 +562,7 @@ class DatabaseManager(DataAccessMixin):
         provider_id: Optional[int] = None,
         hours: int = 24,
         high_usage_only: bool = False,
-        threshold: float = 80.0
+        threshold: float = 80.0,
     ) -> List[RateLimitUsage]:
         """
         Get rate limit usage records
@@ -602,7 +608,7 @@ class DatabaseManager(DataAccessMixin):
         provider_id: int,
         schedule_interval: str,
         enabled: bool = True,
-        next_run: Optional[datetime] = None
+        next_run: Optional[datetime] = None,
     ) -> Optional[ScheduleConfig]:
         """
         Create schedule configuration for a provider
@@ -622,7 +628,7 @@ class DatabaseManager(DataAccessMixin):
                     provider_id=provider_id,
                     schedule_interval=schedule_interval,
                     enabled=enabled,
-                    next_run=next_run
+                    next_run=next_run,
                 )
                 session.add(config)
                 session.commit()
@@ -648,9 +654,11 @@ class DatabaseManager(DataAccessMixin):
         """
         try:
             with self.get_session() as session:
-                config = session.query(ScheduleConfig).filter(
-                    ScheduleConfig.provider_id == provider_id
-                ).first()
+                config = (
+                    session.query(ScheduleConfig)
+                    .filter(ScheduleConfig.provider_id == provider_id)
+                    .first()
+                )
 
                 if config:
                     session.refresh(config)
@@ -672,9 +680,11 @@ class DatabaseManager(DataAccessMixin):
         """
         try:
             with self.get_session() as session:
-                config = session.query(ScheduleConfig).filter(
-                    ScheduleConfig.provider_id == provider_id
-                ).first()
+                config = (
+                    session.query(ScheduleConfig)
+                    .filter(ScheduleConfig.provider_id == provider_id)
+                    .first()
+                )
 
                 if not config:
                     logger.warning(f"Schedule config not found for provider {provider_id}")
@@ -729,7 +739,7 @@ class DatabaseManager(DataAccessMixin):
         actual_time: Optional[datetime] = None,
         delay_seconds: Optional[int] = None,
         on_time: bool = True,
-        skip_reason: Optional[str] = None
+        skip_reason: Optional[str] = None,
     ) -> Optional[ScheduleCompliance]:
         """
         Save schedule compliance record
@@ -753,7 +763,7 @@ class DatabaseManager(DataAccessMixin):
                     actual_time=actual_time,
                     delay_seconds=delay_seconds,
                     on_time=on_time,
-                    skip_reason=skip_reason
+                    skip_reason=skip_reason,
                 )
                 session.add(compliance)
                 session.commit()
@@ -764,10 +774,7 @@ class DatabaseManager(DataAccessMixin):
             return None
 
     def get_schedule_compliance(
-        self,
-        provider_id: Optional[int] = None,
-        hours: int = 24,
-        late_only: bool = False
+        self, provider_id: Optional[int] = None, hours: int = 24, late_only: bool = False
     ) -> List[ScheduleCompliance]:
         """
         Get schedule compliance records
@@ -816,7 +823,7 @@ class DatabaseManager(DataAccessMixin):
         http_status: Optional[int] = None,
         retry_attempted: bool = False,
         retry_result: Optional[str] = None,
-        remediation_applied: Optional[str] = None
+        remediation_applied: Optional[str] = None,
     ) -> Optional[FailureLog]:
         """
         Save failure log record
@@ -844,7 +851,7 @@ class DatabaseManager(DataAccessMixin):
                     http_status=http_status,
                     retry_attempted=retry_attempted,
                     retry_result=retry_result,
-                    remediation_applied=remediation_applied
+                    remediation_applied=remediation_applied,
                 )
                 session.add(failure)
                 session.commit()
@@ -859,7 +866,7 @@ class DatabaseManager(DataAccessMixin):
         provider_id: Optional[int] = None,
         error_type: Optional[str] = None,
         hours: int = 24,
-        limit: int = 1000
+        limit: int = 1000,
     ) -> List[FailureLog]:
         """
         Get failure logs with filtering
@@ -876,9 +883,7 @@ class DatabaseManager(DataAccessMixin):
         try:
             with self.get_session() as session:
                 cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-                query = session.query(FailureLog).filter(
-                    FailureLog.timestamp >= cutoff_time
-                )
+                query = session.query(FailureLog).filter(FailureLog.timestamp >= cutoff_time)
 
                 if provider_id:
                     query = query.filter(FailureLog.provider_id == provider_id)
@@ -901,11 +906,7 @@ class DatabaseManager(DataAccessMixin):
     # ============================================================================
 
     def create_alert(
-        self,
-        provider_id: int,
-        alert_type: str,
-        message: str,
-        severity: str = "medium"
+        self, provider_id: int, alert_type: str, message: str, severity: str = "medium"
     ) -> Optional[Alert]:
         """
         Create an alert
@@ -925,7 +926,7 @@ class DatabaseManager(DataAccessMixin):
                     provider_id=provider_id,
                     alert_type=alert_type,
                     message=message,
-                    severity=severity
+                    severity=severity,
                 )
                 session.add(alert)
                 session.commit()
@@ -942,7 +943,7 @@ class DatabaseManager(DataAccessMixin):
         alert_type: Optional[str] = None,
         severity: Optional[str] = None,
         acknowledged: Optional[bool] = None,
-        hours: int = 24
+        hours: int = 24,
     ) -> List[Alert]:
         """
         Get alerts with filtering
@@ -960,9 +961,7 @@ class DatabaseManager(DataAccessMixin):
         try:
             with self.get_session() as session:
                 cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-                query = session.query(Alert).filter(
-                    Alert.timestamp >= cutoff_time
-                )
+                query = session.query(Alert).filter(Alert.timestamp >= cutoff_time)
 
                 if provider_id:
                     query = query.filter(Alert.provider_id == provider_id)
@@ -1025,7 +1024,7 @@ class DatabaseManager(DataAccessMixin):
         avg_response_time_ms: float,
         total_requests_hour: int,
         total_failures_hour: int,
-        system_health: str = "healthy"
+        system_health: str = "healthy",
     ) -> Optional[SystemMetrics]:
         """
         Save system metrics snapshot
@@ -1053,7 +1052,7 @@ class DatabaseManager(DataAccessMixin):
                     avg_response_time_ms=avg_response_time_ms,
                     total_requests_hour=total_requests_hour,
                     total_failures_hour=total_failures_hour,
-                    system_health=system_health
+                    system_health=system_health,
                 )
                 session.add(metrics)
                 session.commit()
@@ -1077,9 +1076,13 @@ class DatabaseManager(DataAccessMixin):
         try:
             with self.get_session() as session:
                 cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-                metrics = session.query(SystemMetrics).filter(
-                    SystemMetrics.timestamp >= cutoff_time
-                ).order_by(desc(SystemMetrics.timestamp)).limit(limit).all()
+                metrics = (
+                    session.query(SystemMetrics)
+                    .filter(SystemMetrics.timestamp >= cutoff_time)
+                    .order_by(desc(SystemMetrics.timestamp))
+                    .limit(limit)
+                    .all()
+                )
 
                 for metric in metrics:
                     session.refresh(metric)
@@ -1098,9 +1101,9 @@ class DatabaseManager(DataAccessMixin):
         """
         try:
             with self.get_session() as session:
-                metrics = session.query(SystemMetrics).order_by(
-                    desc(SystemMetrics.timestamp)
-                ).first()
+                metrics = (
+                    session.query(SystemMetrics).order_by(desc(SystemMetrics.timestamp)).first()
+                )
 
                 if metrics:
                     session.refresh(metrics)
@@ -1134,35 +1137,54 @@ class DatabaseManager(DataAccessMixin):
                     return {}
 
                 # Connection attempt stats
-                connection_stats = session.query(
-                    func.count(ConnectionAttempt.id).label('total_attempts'),
-                    func.sum(func.case((ConnectionAttempt.status == 'success', 1), else_=0)).label('successful'),
-                    func.sum(func.case((ConnectionAttempt.status == 'failed', 1), else_=0)).label('failed'),
-                    func.sum(func.case((ConnectionAttempt.status == 'timeout', 1), else_=0)).label('timeout'),
-                    func.sum(func.case((ConnectionAttempt.status == 'rate_limited', 1), else_=0)).label('rate_limited'),
-                    func.avg(ConnectionAttempt.response_time_ms).label('avg_response_time')
-                ).filter(
-                    ConnectionAttempt.provider_id == provider_id,
-                    ConnectionAttempt.timestamp >= cutoff_time
-                ).first()
+                connection_stats = (
+                    session.query(
+                        func.count(ConnectionAttempt.id).label("total_attempts"),
+                        func.sum(
+                            func.case((ConnectionAttempt.status == "success", 1), else_=0)
+                        ).label("successful"),
+                        func.sum(
+                            func.case((ConnectionAttempt.status == "failed", 1), else_=0)
+                        ).label("failed"),
+                        func.sum(
+                            func.case((ConnectionAttempt.status == "timeout", 1), else_=0)
+                        ).label("timeout"),
+                        func.sum(
+                            func.case((ConnectionAttempt.status == "rate_limited", 1), else_=0)
+                        ).label("rate_limited"),
+                        func.avg(ConnectionAttempt.response_time_ms).label("avg_response_time"),
+                    )
+                    .filter(
+                        ConnectionAttempt.provider_id == provider_id,
+                        ConnectionAttempt.timestamp >= cutoff_time,
+                    )
+                    .first()
+                )
 
                 # Data collection stats
-                collection_stats = session.query(
-                    func.count(DataCollection.id).label('total_collections'),
-                    func.sum(DataCollection.record_count).label('total_records'),
-                    func.sum(DataCollection.payload_size_bytes).label('total_bytes'),
-                    func.avg(DataCollection.data_quality_score).label('avg_quality'),
-                    func.avg(DataCollection.staleness_minutes).label('avg_staleness')
-                ).filter(
-                    DataCollection.provider_id == provider_id,
-                    DataCollection.actual_fetch_time >= cutoff_time
-                ).first()
+                collection_stats = (
+                    session.query(
+                        func.count(DataCollection.id).label("total_collections"),
+                        func.sum(DataCollection.record_count).label("total_records"),
+                        func.sum(DataCollection.payload_size_bytes).label("total_bytes"),
+                        func.avg(DataCollection.data_quality_score).label("avg_quality"),
+                        func.avg(DataCollection.staleness_minutes).label("avg_staleness"),
+                    )
+                    .filter(
+                        DataCollection.provider_id == provider_id,
+                        DataCollection.actual_fetch_time >= cutoff_time,
+                    )
+                    .first()
+                )
 
                 # Failure stats
-                failure_count = session.query(func.count(FailureLog.id)).filter(
-                    FailureLog.provider_id == provider_id,
-                    FailureLog.timestamp >= cutoff_time
-                ).scalar()
+                failure_count = (
+                    session.query(func.count(FailureLog.id))
+                    .filter(
+                        FailureLog.provider_id == provider_id, FailureLog.timestamp >= cutoff_time
+                    )
+                    .scalar()
+                )
 
                 # Calculate success rate
                 total_attempts = connection_stats.total_attempts or 0
@@ -1170,26 +1192,26 @@ class DatabaseManager(DataAccessMixin):
                 success_rate = (successful / total_attempts * 100) if total_attempts > 0 else 0
 
                 return {
-                    'provider_name': provider.name,
-                    'provider_id': provider_id,
-                    'time_window_hours': hours,
-                    'connection_stats': {
-                        'total_attempts': total_attempts,
-                        'successful': successful,
-                        'failed': connection_stats.failed or 0,
-                        'timeout': connection_stats.timeout or 0,
-                        'rate_limited': connection_stats.rate_limited or 0,
-                        'success_rate': round(success_rate, 2),
-                        'avg_response_time_ms': round(connection_stats.avg_response_time or 0, 2)
+                    "provider_name": provider.name,
+                    "provider_id": provider_id,
+                    "time_window_hours": hours,
+                    "connection_stats": {
+                        "total_attempts": total_attempts,
+                        "successful": successful,
+                        "failed": connection_stats.failed or 0,
+                        "timeout": connection_stats.timeout or 0,
+                        "rate_limited": connection_stats.rate_limited or 0,
+                        "success_rate": round(success_rate, 2),
+                        "avg_response_time_ms": round(connection_stats.avg_response_time or 0, 2),
                     },
-                    'data_collection_stats': {
-                        'total_collections': collection_stats.total_collections or 0,
-                        'total_records': collection_stats.total_records or 0,
-                        'total_bytes': collection_stats.total_bytes or 0,
-                        'avg_quality_score': round(collection_stats.avg_quality or 0, 2),
-                        'avg_staleness_minutes': round(collection_stats.avg_staleness or 0, 2)
+                    "data_collection_stats": {
+                        "total_collections": collection_stats.total_collections or 0,
+                        "total_records": collection_stats.total_records or 0,
+                        "total_bytes": collection_stats.total_bytes or 0,
+                        "avg_quality_score": round(collection_stats.avg_quality or 0, 2),
+                        "avg_staleness_minutes": round(collection_stats.avg_staleness or 0, 2),
                     },
-                    'failure_count': failure_count or 0
+                    "failure_count": failure_count or 0,
                 }
         except SQLAlchemyError as e:
             logger.error(f"Failed to get provider stats: {str(e)}", exc_info=True)
@@ -1210,61 +1232,66 @@ class DatabaseManager(DataAccessMixin):
                 cutoff_time = datetime.utcnow() - timedelta(hours=hours)
 
                 # Failures by error type
-                error_type_stats = session.query(
-                    FailureLog.error_type,
-                    func.count(FailureLog.id).label('count')
-                ).filter(
-                    FailureLog.timestamp >= cutoff_time
-                ).group_by(FailureLog.error_type).all()
+                error_type_stats = (
+                    session.query(FailureLog.error_type, func.count(FailureLog.id).label("count"))
+                    .filter(FailureLog.timestamp >= cutoff_time)
+                    .group_by(FailureLog.error_type)
+                    .all()
+                )
 
                 # Failures by provider
-                provider_stats = session.query(
-                    Provider.name,
-                    func.count(FailureLog.id).label('count')
-                ).join(
-                    FailureLog, Provider.id == FailureLog.provider_id
-                ).filter(
-                    FailureLog.timestamp >= cutoff_time
-                ).group_by(Provider.name).order_by(desc('count')).limit(10).all()
+                provider_stats = (
+                    session.query(Provider.name, func.count(FailureLog.id).label("count"))
+                    .join(FailureLog, Provider.id == FailureLog.provider_id)
+                    .filter(FailureLog.timestamp >= cutoff_time)
+                    .group_by(Provider.name)
+                    .order_by(desc("count"))
+                    .limit(10)
+                    .all()
+                )
 
                 # Retry statistics
-                retry_stats = session.query(
-                    func.sum(func.case((FailureLog.retry_attempted == True, 1), else_=0)).label('total_retries'),
-                    func.sum(func.case((FailureLog.retry_result == 'success', 1), else_=0)).label('successful_retries')
-                ).filter(
-                    FailureLog.timestamp >= cutoff_time
-                ).first()
+                retry_stats = (
+                    session.query(
+                        func.sum(func.case((FailureLog.retry_attempted == True, 1), else_=0)).label(
+                            "total_retries"
+                        ),
+                        func.sum(
+                            func.case((FailureLog.retry_result == "success", 1), else_=0)
+                        ).label("successful_retries"),
+                    )
+                    .filter(FailureLog.timestamp >= cutoff_time)
+                    .first()
+                )
 
                 total_retries = retry_stats.total_retries or 0
                 successful_retries = retry_stats.successful_retries or 0
-                retry_success_rate = (successful_retries / total_retries * 100) if total_retries > 0 else 0
+                retry_success_rate = (
+                    (successful_retries / total_retries * 100) if total_retries > 0 else 0
+                )
 
                 return {
-                    'time_window_hours': hours,
-                    'failures_by_error_type': [
-                        {'error_type': stat.error_type, 'count': stat.count}
+                    "time_window_hours": hours,
+                    "failures_by_error_type": [
+                        {"error_type": stat.error_type, "count": stat.count}
                         for stat in error_type_stats
                     ],
-                    'top_failing_providers': [
-                        {'provider': stat.name, 'failure_count': stat.count}
+                    "top_failing_providers": [
+                        {"provider": stat.name, "failure_count": stat.count}
                         for stat in provider_stats
                     ],
-                    'retry_statistics': {
-                        'total_retries': total_retries,
-                        'successful_retries': successful_retries,
-                        'retry_success_rate': round(retry_success_rate, 2)
-                    }
+                    "retry_statistics": {
+                        "total_retries": total_retries,
+                        "successful_retries": successful_retries,
+                        "retry_success_rate": round(retry_success_rate, 2),
+                    },
                 }
         except SQLAlchemyError as e:
             logger.error(f"Failed to get failure analysis: {str(e)}", exc_info=True)
             return {}
 
     def get_recent_logs(
-        self,
-        log_type: str,
-        provider_id: Optional[int] = None,
-        hours: int = 1,
-        limit: int = 100
+        self, log_type: str, provider_id: Optional[int] = None, hours: int = 1, limit: int = 100
     ) -> List[Dict[str, Any]]:
         """
         Get recent logs of specified type with filtering
@@ -1281,69 +1308,73 @@ class DatabaseManager(DataAccessMixin):
         try:
             cutoff_time = datetime.utcnow() - timedelta(hours=hours)
 
-            if log_type == 'connection':
-                attempts = self.get_connection_attempts(provider_id=provider_id, hours=hours, limit=limit)
+            if log_type == "connection":
+                attempts = self.get_connection_attempts(
+                    provider_id=provider_id, hours=hours, limit=limit
+                )
                 return [
                     {
-                        'id': a.id,
-                        'timestamp': a.timestamp.isoformat(),
-                        'provider_id': a.provider_id,
-                        'endpoint': a.endpoint,
-                        'status': a.status,
-                        'response_time_ms': a.response_time_ms,
-                        'http_status_code': a.http_status_code,
-                        'error_type': a.error_type,
-                        'error_message': a.error_message
+                        "id": a.id,
+                        "timestamp": a.timestamp.isoformat(),
+                        "provider_id": a.provider_id,
+                        "endpoint": a.endpoint,
+                        "status": a.status,
+                        "response_time_ms": a.response_time_ms,
+                        "http_status_code": a.http_status_code,
+                        "error_type": a.error_type,
+                        "error_message": a.error_message,
                     }
                     for a in attempts
                 ]
 
-            elif log_type == 'failure':
+            elif log_type == "failure":
                 failures = self.get_failure_logs(provider_id=provider_id, hours=hours, limit=limit)
                 return [
                     {
-                        'id': f.id,
-                        'timestamp': f.timestamp.isoformat(),
-                        'provider_id': f.provider_id,
-                        'endpoint': f.endpoint,
-                        'error_type': f.error_type,
-                        'error_message': f.error_message,
-                        'http_status': f.http_status,
-                        'retry_attempted': f.retry_attempted,
-                        'retry_result': f.retry_result
+                        "id": f.id,
+                        "timestamp": f.timestamp.isoformat(),
+                        "provider_id": f.provider_id,
+                        "endpoint": f.endpoint,
+                        "error_type": f.error_type,
+                        "error_message": f.error_message,
+                        "http_status": f.http_status,
+                        "retry_attempted": f.retry_attempted,
+                        "retry_result": f.retry_result,
                     }
                     for f in failures
                 ]
 
-            elif log_type == 'collection':
-                collections = self.get_data_collections(provider_id=provider_id, hours=hours, limit=limit)
+            elif log_type == "collection":
+                collections = self.get_data_collections(
+                    provider_id=provider_id, hours=hours, limit=limit
+                )
                 return [
                     {
-                        'id': c.id,
-                        'provider_id': c.provider_id,
-                        'category': c.category,
-                        'scheduled_time': c.scheduled_time.isoformat(),
-                        'actual_fetch_time': c.actual_fetch_time.isoformat(),
-                        'record_count': c.record_count,
-                        'payload_size_bytes': c.payload_size_bytes,
-                        'data_quality_score': c.data_quality_score,
-                        'on_schedule': c.on_schedule
+                        "id": c.id,
+                        "provider_id": c.provider_id,
+                        "category": c.category,
+                        "scheduled_time": c.scheduled_time.isoformat(),
+                        "actual_fetch_time": c.actual_fetch_time.isoformat(),
+                        "record_count": c.record_count,
+                        "payload_size_bytes": c.payload_size_bytes,
+                        "data_quality_score": c.data_quality_score,
+                        "on_schedule": c.on_schedule,
                     }
                     for c in collections
                 ]
 
-            elif log_type == 'rate_limit':
+            elif log_type == "rate_limit":
                 usage = self.get_rate_limit_usage(provider_id=provider_id, hours=hours)
                 return [
                     {
-                        'id': u.id,
-                        'timestamp': u.timestamp.isoformat(),
-                        'provider_id': u.provider_id,
-                        'limit_type': u.limit_type,
-                        'limit_value': u.limit_value,
-                        'current_usage': u.current_usage,
-                        'percentage': u.percentage,
-                        'reset_time': u.reset_time.isoformat()
+                        "id": u.id,
+                        "timestamp": u.timestamp.isoformat(),
+                        "provider_id": u.provider_id,
+                        "limit_type": u.limit_type,
+                        "limit_value": u.limit_value,
+                        "current_usage": u.current_usage,
+                        "percentage": u.percentage,
+                        "reset_time": u.reset_time.isoformat(),
                     }
                     for u in usage[:limit]
                 ]
@@ -1372,49 +1403,58 @@ class DatabaseManager(DataAccessMixin):
                 deleted_counts = {}
 
                 # Clean connection attempts
-                deleted = session.query(ConnectionAttempt).filter(
-                    ConnectionAttempt.timestamp < cutoff_time
-                ).delete()
-                deleted_counts['connection_attempts'] = deleted
+                deleted = (
+                    session.query(ConnectionAttempt)
+                    .filter(ConnectionAttempt.timestamp < cutoff_time)
+                    .delete()
+                )
+                deleted_counts["connection_attempts"] = deleted
 
                 # Clean data collections
-                deleted = session.query(DataCollection).filter(
-                    DataCollection.actual_fetch_time < cutoff_time
-                ).delete()
-                deleted_counts['data_collections'] = deleted
+                deleted = (
+                    session.query(DataCollection)
+                    .filter(DataCollection.actual_fetch_time < cutoff_time)
+                    .delete()
+                )
+                deleted_counts["data_collections"] = deleted
 
                 # Clean rate limit usage
-                deleted = session.query(RateLimitUsage).filter(
-                    RateLimitUsage.timestamp < cutoff_time
-                ).delete()
-                deleted_counts['rate_limit_usage'] = deleted
+                deleted = (
+                    session.query(RateLimitUsage)
+                    .filter(RateLimitUsage.timestamp < cutoff_time)
+                    .delete()
+                )
+                deleted_counts["rate_limit_usage"] = deleted
 
                 # Clean schedule compliance
-                deleted = session.query(ScheduleCompliance).filter(
-                    ScheduleCompliance.timestamp < cutoff_time
-                ).delete()
-                deleted_counts['schedule_compliance'] = deleted
+                deleted = (
+                    session.query(ScheduleCompliance)
+                    .filter(ScheduleCompliance.timestamp < cutoff_time)
+                    .delete()
+                )
+                deleted_counts["schedule_compliance"] = deleted
 
                 # Clean failure logs
-                deleted = session.query(FailureLog).filter(
-                    FailureLog.timestamp < cutoff_time
-                ).delete()
-                deleted_counts['failure_logs'] = deleted
+                deleted = (
+                    session.query(FailureLog).filter(FailureLog.timestamp < cutoff_time).delete()
+                )
+                deleted_counts["failure_logs"] = deleted
 
                 # Clean acknowledged alerts
-                deleted = session.query(Alert).filter(
-                    and_(
-                        Alert.timestamp < cutoff_time,
-                        Alert.acknowledged == True
-                    )
-                ).delete()
-                deleted_counts['alerts'] = deleted
+                deleted = (
+                    session.query(Alert)
+                    .filter(and_(Alert.timestamp < cutoff_time, Alert.acknowledged == True))
+                    .delete()
+                )
+                deleted_counts["alerts"] = deleted
 
                 # Clean system metrics
-                deleted = session.query(SystemMetrics).filter(
-                    SystemMetrics.timestamp < cutoff_time
-                ).delete()
-                deleted_counts['system_metrics'] = deleted
+                deleted = (
+                    session.query(SystemMetrics)
+                    .filter(SystemMetrics.timestamp < cutoff_time)
+                    .delete()
+                )
+                deleted_counts["system_metrics"] = deleted
 
                 session.commit()
 
@@ -1436,22 +1476,26 @@ class DatabaseManager(DataAccessMixin):
         try:
             with self.get_session() as session:
                 stats = {
-                    'providers': session.query(func.count(Provider.id)).scalar(),
-                    'connection_attempts': session.query(func.count(ConnectionAttempt.id)).scalar(),
-                    'data_collections': session.query(func.count(DataCollection.id)).scalar(),
-                    'rate_limit_usage': session.query(func.count(RateLimitUsage.id)).scalar(),
-                    'schedule_configs': session.query(func.count(ScheduleConfig.id)).scalar(),
-                    'schedule_compliance': session.query(func.count(ScheduleCompliance.id)).scalar(),
-                    'failure_logs': session.query(func.count(FailureLog.id)).scalar(),
-                    'alerts': session.query(func.count(Alert.id)).scalar(),
-                    'system_metrics': session.query(func.count(SystemMetrics.id)).scalar(),
+                    "providers": session.query(func.count(Provider.id)).scalar(),
+                    "connection_attempts": session.query(func.count(ConnectionAttempt.id)).scalar(),
+                    "data_collections": session.query(func.count(DataCollection.id)).scalar(),
+                    "rate_limit_usage": session.query(func.count(RateLimitUsage.id)).scalar(),
+                    "schedule_configs": session.query(func.count(ScheduleConfig.id)).scalar(),
+                    "schedule_compliance": session.query(
+                        func.count(ScheduleCompliance.id)
+                    ).scalar(),
+                    "failure_logs": session.query(func.count(FailureLog.id)).scalar(),
+                    "alerts": session.query(func.count(Alert.id)).scalar(),
+                    "system_metrics": session.query(func.count(SystemMetrics.id)).scalar(),
                 }
 
                 # Get database file size if it exists
                 if os.path.exists(self.db_path):
-                    stats['database_size_mb'] = round(os.path.getsize(self.db_path) / (1024 * 1024), 2)
+                    stats["database_size_mb"] = round(
+                        os.path.getsize(self.db_path) / (1024 * 1024), 2
+                    )
                 else:
-                    stats['database_size_mb'] = 0
+                    stats["database_size_mb"] = 0
 
                 return stats
         except SQLAlchemyError as e:
@@ -1474,18 +1518,18 @@ class DatabaseManager(DataAccessMixin):
                 stats = self.get_database_stats()
 
                 return {
-                    'status': 'healthy' if result == 1 else 'unhealthy',
-                    'database_path': self.db_path,
-                    'database_exists': os.path.exists(self.db_path),
-                    'stats': stats,
-                    'timestamp': datetime.utcnow().isoformat()
+                    "status": "healthy" if result == 1 else "unhealthy",
+                    "database_path": self.db_path,
+                    "database_exists": os.path.exists(self.db_path),
+                    "stats": stats,
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Health check failed: {str(e)}", exc_info=True)
             return {
-                'status': 'unhealthy',
-                'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
 
@@ -1500,6 +1544,7 @@ db_manager = DatabaseManager()
 # ============================================================================
 # Convenience Functions
 # ============================================================================
+
 
 def init_db(db_path: str = "data/api_monitor.db") -> DatabaseManager:
     """
@@ -1534,6 +1579,6 @@ if __name__ == "__main__":
     stats = manager.get_database_stats()
     print(f"\nDatabase Statistics:")
     for table, count in stats.items():
-        if table != 'database_size_mb':
+        if table != "database_size_mb":
             print(f"  {table}: {count}")
     print(f"  Database Size: {stats.get('database_size_mb', 0)} MB")

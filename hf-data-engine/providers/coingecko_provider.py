@@ -1,9 +1,11 @@
 """CoinGecko provider implementation"""
+
 from __future__ import annotations
 from typing import List
 from datetime import datetime
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from core.base_provider import BaseProvider
@@ -32,11 +34,7 @@ class CoinGeckoProvider(BaseProvider):
     }
 
     def __init__(self, api_key: str = None):
-        super().__init__(
-            name="coingecko",
-            base_url="https://api.coingecko.com/api/v3",
-            timeout=15
-        )
+        super().__init__(name="coingecko", base_url="https://api.coingecko.com/api/v3", timeout=15)
         self.api_key = api_key
 
     def _get_coin_id(self, symbol: str) -> str:
@@ -62,10 +60,7 @@ class CoinGeckoProvider(BaseProvider):
         days = days_map.get(interval, 7)
 
         url = f"{self.base_url}/coins/{coin_id}/ohlc"
-        params = {
-            "vs_currency": "usd",
-            "days": days
-        }
+        params = {"vs_currency": "usd", "days": days}
 
         if self.api_key:
             params["x_cg_pro_api_key"] = self.api_key
@@ -75,14 +70,16 @@ class CoinGeckoProvider(BaseProvider):
         # Parse CoinGecko OHLC format: [timestamp, open, high, low, close]
         ohlcv_list = []
         for candle in data[:limit]:  # Limit results
-            ohlcv_list.append(OHLCV(
-                timestamp=int(candle[0]),
-                open=float(candle[1]),
-                high=float(candle[2]),
-                low=float(candle[3]),
-                close=float(candle[4]),
-                volume=0.0  # CoinGecko OHLC doesn't include volume
-            ))
+            ohlcv_list.append(
+                OHLCV(
+                    timestamp=int(candle[0]),
+                    open=float(candle[1]),
+                    high=float(candle[2]),
+                    low=float(candle[3]),
+                    close=float(candle[4]),
+                    volume=0.0,  # CoinGecko OHLC doesn't include volume
+                )
+            )
 
         return ohlcv_list
 
@@ -97,7 +94,7 @@ class CoinGeckoProvider(BaseProvider):
             "vs_currencies": "usd",
             "include_24hr_change": "true",
             "include_24hr_vol": "true",
-            "include_market_cap": "true"
+            "include_market_cap": "true",
         }
 
         if self.api_key:
@@ -109,20 +106,21 @@ class CoinGeckoProvider(BaseProvider):
         for coin_id, coin_data in data.items():
             # Find original symbol
             symbol = next(
-                (s for s, cid in self.SYMBOL_MAP.items() if cid == coin_id),
-                coin_id.upper()
+                (s for s, cid in self.SYMBOL_MAP.items() if cid == coin_id), coin_id.upper()
             )
 
-            prices.append(Price(
-                symbol=symbol,
-                name=coin_id.replace("-", " ").title(),
-                price=coin_data.get("usd", 0),
-                priceUsd=coin_data.get("usd", 0),
-                change24h=coin_data.get("usd_24h_change"),
-                volume24h=coin_data.get("usd_24h_vol"),
-                marketCap=coin_data.get("usd_market_cap"),
-                lastUpdate=datetime.now().isoformat()
-            ))
+            prices.append(
+                Price(
+                    symbol=symbol,
+                    name=coin_id.replace("-", " ").title(),
+                    price=coin_data.get("usd", 0),
+                    priceUsd=coin_data.get("usd", 0),
+                    change24h=coin_data.get("usd_24h_change"),
+                    volume24h=coin_data.get("usd_24h_vol"),
+                    marketCap=coin_data.get("usd_market_cap"),
+                    lastUpdate=datetime.now().isoformat(),
+                )
+            )
 
         return prices
 

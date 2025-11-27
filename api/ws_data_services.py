@@ -30,6 +30,7 @@ router = APIRouter()
 # Data Collection Service Handlers
 # ============================================================================
 
+
 class DataCollectionStreamers:
     """Handles data streaming for all collection services"""
 
@@ -58,7 +59,7 @@ class DataCollectionStreamers:
                     "market_caps": data.get("market_caps", {}),
                     "price_changes": data.get("price_changes", {}),
                     "source": data.get("source", "unknown"),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming market data: {e}")
@@ -74,7 +75,7 @@ class DataCollectionStreamers:
                     "bids": data["order_book"].get("bids", []),
                     "asks": data["order_book"].get("asks", []),
                     "spread": data["order_book"].get("spread"),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming order books: {e}")
@@ -95,7 +96,7 @@ class DataCollectionStreamers:
                     "difficulty": data.get("difficulty"),
                     "mempool_size": data.get("mempool_size"),
                     "transactions_count": data.get("transactions_count"),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming explorer data: {e}")
@@ -108,7 +109,7 @@ class DataCollectionStreamers:
             if data and "recent_transactions" in data:
                 return {
                     "transactions": data["recent_transactions"],
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming transactions: {e}")
@@ -127,7 +128,7 @@ class DataCollectionStreamers:
                     "articles": data["articles"][:10],  # Latest 10 articles
                     "sources": data.get("sources", []),
                     "categories": data.get("categories", []),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming news: {e}")
@@ -140,7 +141,7 @@ class DataCollectionStreamers:
             if data and "breaking" in data:
                 return {
                     "breaking_news": data["breaking"],
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming breaking news: {e}")
@@ -161,7 +162,7 @@ class DataCollectionStreamers:
                     "social_volume": data.get("social_volume"),
                     "trending_topics": data.get("trending_topics", []),
                     "sentiment_by_source": data.get("by_source", {}),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming sentiment: {e}")
@@ -172,10 +173,7 @@ class DataCollectionStreamers:
         try:
             data = await self.sentiment_collector.collect()
             if data and "social_trends" in data:
-                return {
-                    "trends": data["social_trends"],
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"trends": data["social_trends"], "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming social trends: {e}")
             return None
@@ -194,7 +192,7 @@ class DataCollectionStreamers:
                     "whale_wallets": data.get("whale_wallets", []),
                     "total_volume": data.get("total_volume"),
                     "alert_threshold": data.get("alert_threshold"),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming whale activity: {e}")
@@ -205,10 +203,7 @@ class DataCollectionStreamers:
         try:
             data = await self.whale_collector.collect()
             if data and "alerts" in data:
-                return {
-                    "alerts": data["alerts"],
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"alerts": data["alerts"], "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming whale alerts: {e}")
             return None
@@ -227,7 +222,7 @@ class DataCollectionStreamers:
                     "active_nodes": data.get("active_nodes"),
                     "total_nodes": data.get("total_nodes"),
                     "average_latency": data.get("average_latency"),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming RPC status: {e}")
@@ -241,7 +236,7 @@ class DataCollectionStreamers:
                 return {
                     "events": data["events"],
                     "block_number": data.get("block_number"),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming blockchain events: {e}")
@@ -262,7 +257,7 @@ class DataCollectionStreamers:
                     "total_fees": data.get("total_fees"),
                     "gas_price": data.get("gas_price"),
                     "network_utilization": data.get("network_utilization"),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming on-chain metrics: {e}")
@@ -275,7 +270,7 @@ class DataCollectionStreamers:
             if data and "contract_events" in data:
                 return {
                     "events": data["contract_events"],
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming contract events: {e}")
@@ -290,59 +285,66 @@ data_streamers = DataCollectionStreamers()
 # Background Streaming Tasks
 # ============================================================================
 
+
 async def start_data_collection_streams():
     """Start all data collection stream tasks"""
     logger.info("Starting data collection WebSocket streams")
 
     tasks = [
         # Market Data
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.MARKET_DATA,
-            data_streamers.stream_market_data,
-            interval=5.0  # 5 second updates
-        )),
-
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.MARKET_DATA,
+                data_streamers.stream_market_data,
+                interval=5.0,  # 5 second updates
+            )
+        ),
         # Explorer Data
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.EXPLORERS,
-            data_streamers.stream_explorer_data,
-            interval=10.0  # 10 second updates
-        )),
-
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.EXPLORERS,
+                data_streamers.stream_explorer_data,
+                interval=10.0,  # 10 second updates
+            )
+        ),
         # News
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.NEWS,
-            data_streamers.stream_news,
-            interval=60.0  # 1 minute updates
-        )),
-
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.NEWS, data_streamers.stream_news, interval=60.0  # 1 minute updates
+            )
+        ),
         # Sentiment
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.SENTIMENT,
-            data_streamers.stream_sentiment,
-            interval=30.0  # 30 second updates
-        )),
-
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.SENTIMENT,
+                data_streamers.stream_sentiment,
+                interval=30.0,  # 30 second updates
+            )
+        ),
         # Whale Tracking
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.WHALE_TRACKING,
-            data_streamers.stream_whale_activity,
-            interval=15.0  # 15 second updates
-        )),
-
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.WHALE_TRACKING,
+                data_streamers.stream_whale_activity,
+                interval=15.0,  # 15 second updates
+            )
+        ),
         # RPC Nodes
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.RPC_NODES,
-            data_streamers.stream_rpc_status,
-            interval=20.0  # 20 second updates
-        )),
-
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.RPC_NODES,
+                data_streamers.stream_rpc_status,
+                interval=20.0,  # 20 second updates
+            )
+        ),
         # On-Chain Analytics
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.ONCHAIN,
-            data_streamers.stream_onchain_metrics,
-            interval=30.0  # 30 second updates
-        )),
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.ONCHAIN,
+                data_streamers.stream_onchain_metrics,
+                interval=30.0,  # 30 second updates
+            )
+        ),
     ]
 
     await asyncio.gather(*tasks, return_exceptions=True)
@@ -351,6 +353,7 @@ async def start_data_collection_streams():
 # ============================================================================
 # WebSocket Endpoints
 # ============================================================================
+
 
 @router.websocket("/ws/data")
 async def websocket_data_endpoint(websocket: WebSocket):

@@ -1,4 +1,5 @@
 """Data models for the HuggingFace Crypto Data Engine"""
+
 from __future__ import annotations
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -7,6 +8,7 @@ from datetime import datetime
 
 class OHLCV(BaseModel):
     """OHLCV candlestick data model"""
+
     timestamp: int = Field(..., description="Unix timestamp in milliseconds")
     open: float = Field(..., description="Opening price")
     high: float = Field(..., description="Highest price")
@@ -17,6 +19,7 @@ class OHLCV(BaseModel):
 
 class OHLCVResponse(BaseModel):
     """Response model for OHLCV endpoint"""
+
     success: bool = True
     data: List[OHLCV]
     symbol: str
@@ -28,6 +31,7 @@ class OHLCVResponse(BaseModel):
 
 class Price(BaseModel):
     """Price data model"""
+
     symbol: str
     name: str
     price: float
@@ -43,6 +47,7 @@ class Price(BaseModel):
 
 class PricesResponse(BaseModel):
     """Response model for prices endpoint"""
+
     success: bool = True
     data: List[Price]
     timestamp: int
@@ -51,6 +56,7 @@ class PricesResponse(BaseModel):
 
 class FearGreedIndex(BaseModel):
     """Fear & Greed Index model"""
+
     value: int = Field(..., ge=0, le=100)
     classification: str
     timestamp: str
@@ -58,6 +64,7 @@ class FearGreedIndex(BaseModel):
 
 class NewsSentiment(BaseModel):
     """News sentiment aggregation"""
+
     bullish: int = 0
     bearish: int = 0
     neutral: int = 0
@@ -66,6 +73,7 @@ class NewsSentiment(BaseModel):
 
 class OverallSentiment(BaseModel):
     """Overall sentiment score"""
+
     sentiment: str  # "bullish", "bearish", "neutral"
     score: int = Field(..., ge=0, le=100)
     confidence: float = Field(..., ge=0, le=1)
@@ -73,6 +81,7 @@ class OverallSentiment(BaseModel):
 
 class SentimentData(BaseModel):
     """Sentiment data model"""
+
     fearGreed: FearGreedIndex
     news: NewsSentiment
     overall: OverallSentiment
@@ -80,6 +89,7 @@ class SentimentData(BaseModel):
 
 class SentimentResponse(BaseModel):
     """Response model for sentiment endpoint"""
+
     success: bool = True
     data: SentimentData
     timestamp: int
@@ -87,6 +97,7 @@ class SentimentResponse(BaseModel):
 
 class MarketOverview(BaseModel):
     """Market overview data model"""
+
     totalMarketCap: float
     totalVolume24h: float
     btcDominance: float
@@ -99,6 +110,7 @@ class MarketOverview(BaseModel):
 
 class MarketOverviewResponse(BaseModel):
     """Response model for market overview endpoint"""
+
     success: bool = True
     data: MarketOverview
     timestamp: int
@@ -106,6 +118,7 @@ class MarketOverviewResponse(BaseModel):
 
 class ProviderHealth(BaseModel):
     """Provider health status"""
+
     name: str
     status: str  # "online", "offline", "degraded"
     latency: Optional[int] = None  # milliseconds
@@ -115,12 +128,14 @@ class ProviderHealth(BaseModel):
 
 class CacheInfo(BaseModel):
     """Cache statistics"""
+
     size: int
     hitRate: float
 
 
 class HealthResponse(BaseModel):
     """Response model for health endpoint"""
+
     status: str  # "healthy", "degraded", "unhealthy"
     uptime: int  # seconds
     version: str
@@ -130,6 +145,7 @@ class HealthResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model"""
+
     success: bool = False
     error: ErrorDetail
     timestamp: int
@@ -137,6 +153,7 @@ class ErrorResponse(BaseModel):
 
 class ErrorDetail(BaseModel):
     """Error detail"""
+
     code: str
     message: str
     details: Optional[dict] = None

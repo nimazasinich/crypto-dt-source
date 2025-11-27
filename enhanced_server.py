@@ -3,6 +3,7 @@ Enhanced Production Server
 Integrates all services for comprehensive crypto data tracking
 with real-time updates, persistence, and scheduling
 """
+
 import asyncio
 import logging
 from fastapi import FastAPI
@@ -31,8 +32,7 @@ from backend.routers.hf_space_api import router as hf_space_router
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -74,16 +74,12 @@ async def lifespan(app: FastAPI):
 
         # Initialize scheduler service
         logger.info("⏰ Initializing scheduler service...")
-        scheduler_service = SchedulerService(
-            config_loader=config_loader,
-            db_manager=db_manager
-        )
+        scheduler_service = SchedulerService(config_loader=config_loader, db_manager=db_manager)
 
         # Initialize WebSocket service
         logger.info("🔌 Initializing WebSocket service...")
         websocket_service = WebSocketService(
-            scheduler_service=scheduler_service,
-            persistence_service=persistence_service
+            scheduler_service=scheduler_service, persistence_service=persistence_service
         )
         logger.info("✓ WebSocket service ready")
 
@@ -95,18 +91,14 @@ async def lifespan(app: FastAPI):
         def data_update_callback(api_id: str, data: dict):
             """Callback for data updates from scheduler"""
             # Save to persistence
-            asyncio.create_task(persistence_service.save_api_data(
-                api_id,
-                data,
-                metadata={'source': 'scheduler'}
-            ))
+            asyncio.create_task(
+                persistence_service.save_api_data(api_id, data, metadata={"source": "scheduler"})
+            )
 
             # Notify WebSocket clients
-            asyncio.create_task(websocket_service.notify_data_update(
-                api_id,
-                data,
-                metadata={'source': 'scheduler'}
-            ))
+            asyncio.create_task(
+                websocket_service.notify_data_update(api_id, data, metadata={"source": "scheduler"})
+            )
 
         # Register callback with scheduler (for each API)
         for api_id in config_loader.apis.keys():
@@ -184,7 +176,7 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # CORS middleware
@@ -217,7 +209,8 @@ async def root():
     if os.path.exists("index.html"):
         return FileResponse("index.html")
     else:
-        return HTMLResponse("""
+        return HTMLResponse(
+            """
         <html>
             <head>
                 <title>Enhanced Crypto Data Tracker</title>
@@ -266,7 +259,8 @@ async def root():
                 </div>
             </body>
         </html>
-        """)
+        """
+        )
 
 
 @app.get("/dashboard.html", response_class=HTMLResponse)
@@ -313,5 +307,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         reload=False,  # Disable reload for production
-        log_level="info"
+        log_level="info",
     )

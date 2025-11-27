@@ -21,7 +21,7 @@ class FreePriceCollector:
         self.timeout = httpx.Timeout(15.0)
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
     async def collect_from_coincap(self, symbols: Optional[List[str]] = None) -> List[Dict]:
@@ -42,21 +42,23 @@ class FreePriceCollector:
 
                     results = []
                     for asset in assets:
-                        if symbols and asset['symbol'].upper() not in [s.upper() for s in symbols]:
+                        if symbols and asset["symbol"].upper() not in [s.upper() for s in symbols]:
                             continue
 
-                        results.append({
-                            "symbol": asset['symbol'],
-                            "name": asset['name'],
-                            "price": float(asset['priceUsd']),
-                            "priceUsd": float(asset['priceUsd']),
-                            "change24h": float(asset.get('changePercent24Hr', 0)),
-                            "volume24h": float(asset.get('volumeUsd24Hr', 0)),
-                            "marketCap": float(asset.get('marketCapUsd', 0)),
-                            "rank": int(asset.get('rank', 0)),
-                            "source": "coincap.io",
-                            "timestamp": datetime.now().isoformat()
-                        })
+                        results.append(
+                            {
+                                "symbol": asset["symbol"],
+                                "name": asset["name"],
+                                "price": float(asset["priceUsd"]),
+                                "priceUsd": float(asset["priceUsd"]),
+                                "change24h": float(asset.get("changePercent24Hr", 0)),
+                                "volume24h": float(asset.get("volumeUsd24Hr", 0)),
+                                "marketCap": float(asset.get("marketCapUsd", 0)),
+                                "rank": int(asset.get("rank", 0)),
+                                "source": "coincap.io",
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                        )
 
                     logger.info(f"✅ CoinCap: Collected {len(results)} prices")
                     return results
@@ -85,7 +87,7 @@ class FreePriceCollector:
                 "DOGE": "dogecoin",
                 "MATIC": "matic-network",
                 "DOT": "polkadot",
-                "AVAX": "avalanche-2"
+                "AVAX": "avalanche-2",
             }
 
             # Get coin IDs
@@ -102,7 +104,7 @@ class FreePriceCollector:
                 "vs_currencies": "usd",
                 "include_24hr_change": "true",
                 "include_24hr_vol": "true",
-                "include_market_cap": "true"
+                "include_market_cap": "true",
             }
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -117,17 +119,19 @@ class FreePriceCollector:
                     for coin_id, coin_data in data.items():
                         symbol = id_to_symbol.get(coin_id, coin_id.upper())
 
-                        results.append({
-                            "symbol": symbol,
-                            "name": coin_id.replace("-", " ").title(),
-                            "price": coin_data.get('usd', 0),
-                            "priceUsd": coin_data.get('usd', 0),
-                            "change24h": coin_data.get('usd_24h_change', 0),
-                            "volume24h": coin_data.get('usd_24h_vol', 0),
-                            "marketCap": coin_data.get('usd_market_cap', 0),
-                            "source": "coingecko.com",
-                            "timestamp": datetime.now().isoformat()
-                        })
+                        results.append(
+                            {
+                                "symbol": symbol,
+                                "name": coin_id.replace("-", " ").title(),
+                                "price": coin_data.get("usd", 0),
+                                "priceUsd": coin_data.get("usd", 0),
+                                "change24h": coin_data.get("usd_24h_change", 0),
+                                "volume24h": coin_data.get("usd_24h_vol", 0),
+                                "marketCap": coin_data.get("usd_market_cap", 0),
+                                "source": "coingecko.com",
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                        )
 
                     logger.info(f"✅ CoinGecko: Collected {len(results)} prices")
                     return results
@@ -156,30 +160,32 @@ class FreePriceCollector:
 
                     results = []
                     for ticker in data:
-                        symbol = ticker['symbol']
+                        symbol = ticker["symbol"]
 
                         # Filter for USDT pairs only
-                        if not symbol.endswith('USDT'):
+                        if not symbol.endswith("USDT"):
                             continue
 
-                        base_symbol = symbol.replace('USDT', '')
+                        base_symbol = symbol.replace("USDT", "")
 
                         # Filter by requested symbols
                         if symbols and base_symbol not in [s.upper() for s in symbols]:
                             continue
 
-                        results.append({
-                            "symbol": base_symbol,
-                            "name": base_symbol,
-                            "price": float(ticker['lastPrice']),
-                            "priceUsd": float(ticker['lastPrice']),
-                            "change24h": float(ticker['priceChangePercent']),
-                            "volume24h": float(ticker['quoteVolume']),
-                            "high24h": float(ticker['highPrice']),
-                            "low24h": float(ticker['lowPrice']),
-                            "source": "binance.com",
-                            "timestamp": datetime.now().isoformat()
-                        })
+                        results.append(
+                            {
+                                "symbol": base_symbol,
+                                "name": base_symbol,
+                                "price": float(ticker["lastPrice"]),
+                                "priceUsd": float(ticker["lastPrice"]),
+                                "change24h": float(ticker["priceChangePercent"]),
+                                "volume24h": float(ticker["quoteVolume"]),
+                                "high24h": float(ticker["highPrice"]),
+                                "low24h": float(ticker["lowPrice"]),
+                                "source": "binance.com",
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                        )
 
                     logger.info(f"✅ Binance Public: Collected {len(results)} prices")
                     return results[:100]  # Limit to top 100
@@ -208,11 +214,11 @@ class FreePriceCollector:
                 if response.status_code == 200:
                     data = response.json()
 
-                    if data.get('error') and data['error']:
+                    if data.get("error") and data["error"]:
                         logger.warning(f"⚠️ Kraken API error: {data['error']}")
                         return []
 
-                    result_data = data.get('result', {})
+                    result_data = data.get("result", {})
                     results = []
 
                     # Map Kraken pairs to standard symbols
@@ -221,7 +227,7 @@ class FreePriceCollector:
                         "XETHZUSD": "ETH",
                         "SOLUSD": "SOL",
                         "ADAUSD": "ADA",
-                        "DOTUSD": "DOT"
+                        "DOTUSD": "DOT",
                     }
 
                     for pair_name, ticker in result_data.items():
@@ -238,20 +244,22 @@ class FreePriceCollector:
                         if symbols and symbol not in [s.upper() for s in symbols]:
                             continue
 
-                        last_price = float(ticker['c'][0])
-                        volume_24h = float(ticker['v'][1])
+                        last_price = float(ticker["c"][0])
+                        volume_24h = float(ticker["v"][1])
 
-                        results.append({
-                            "symbol": symbol,
-                            "name": symbol,
-                            "price": last_price,
-                            "priceUsd": last_price,
-                            "volume24h": volume_24h,
-                            "high24h": float(ticker['h'][1]),
-                            "low24h": float(ticker['l'][1]),
-                            "source": "kraken.com",
-                            "timestamp": datetime.now().isoformat()
-                        })
+                        results.append(
+                            {
+                                "symbol": symbol,
+                                "name": symbol,
+                                "price": last_price,
+                                "priceUsd": last_price,
+                                "volume24h": volume_24h,
+                                "high24h": float(ticker["h"][1]),
+                                "low24h": float(ticker["l"][1]),
+                                "source": "kraken.com",
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                        )
 
                     logger.info(f"✅ Kraken Public: Collected {len(results)} prices")
                     return results
@@ -275,10 +283,7 @@ class FreePriceCollector:
             fsyms = ",".join([s.upper() for s in symbols])
 
             url = "https://min-api.cryptocompare.com/data/pricemultifull"
-            params = {
-                "fsyms": fsyms,
-                "tsyms": "USD"
-            }
+            params = {"fsyms": fsyms, "tsyms": "USD"}
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.get(url, params=params, headers=self.headers)
@@ -293,19 +298,21 @@ class FreePriceCollector:
                     for symbol, currency_data in data["RAW"].items():
                         usd_data = currency_data.get("USD", {})
 
-                        results.append({
-                            "symbol": symbol,
-                            "name": symbol,
-                            "price": usd_data.get("PRICE", 0),
-                            "priceUsd": usd_data.get("PRICE", 0),
-                            "change24h": usd_data.get("CHANGEPCT24HOUR", 0),
-                            "volume24h": usd_data.get("VOLUME24HOURTO", 0),
-                            "marketCap": usd_data.get("MKTCAP", 0),
-                            "high24h": usd_data.get("HIGH24HOUR", 0),
-                            "low24h": usd_data.get("LOW24HOUR", 0),
-                            "source": "cryptocompare.com",
-                            "timestamp": datetime.now().isoformat()
-                        })
+                        results.append(
+                            {
+                                "symbol": symbol,
+                                "name": symbol,
+                                "price": usd_data.get("PRICE", 0),
+                                "priceUsd": usd_data.get("PRICE", 0),
+                                "change24h": usd_data.get("CHANGEPCT24HOUR", 0),
+                                "volume24h": usd_data.get("VOLUME24HOURTO", 0),
+                                "marketCap": usd_data.get("MKTCAP", 0),
+                                "high24h": usd_data.get("HIGH24HOUR", 0),
+                                "low24h": usd_data.get("LOW24HOUR", 0),
+                                "source": "cryptocompare.com",
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                        )
 
                     logger.info(f"✅ CryptoCompare: Collected {len(results)} prices")
                     return results
@@ -317,7 +324,9 @@ class FreePriceCollector:
             logger.error(f"❌ CryptoCompare error: {e}")
             return []
 
-    async def collect_all_free_sources(self, symbols: Optional[List[str]] = None) -> Dict[str, List[Dict]]:
+    async def collect_all_free_sources(
+        self, symbols: Optional[List[str]] = None
+    ) -> Dict[str, List[Dict]]:
         """
         جمع‌آوری از همه منابع رایگان به صورت همزمان
         Collect from ALL free sources simultaneously
@@ -351,16 +360,14 @@ class FreePriceCollector:
 
         for source_name, prices in all_sources.items():
             for price_data in prices:
-                symbol = price_data['symbol']
+                symbol = price_data["symbol"]
 
                 if symbol not in symbol_prices:
                     symbol_prices[symbol] = []
 
-                symbol_prices[symbol].append({
-                    "source": source_name,
-                    "price": price_data.get('price', 0),
-                    "data": price_data
-                })
+                symbol_prices[symbol].append(
+                    {"source": source_name, "price": price_data.get("price", 0), "data": price_data}
+                )
 
         # Calculate aggregated prices
         aggregated = []
@@ -368,7 +375,7 @@ class FreePriceCollector:
             if not price_list:
                 continue
 
-            prices = [p['price'] for p in price_list if p['price'] > 0]
+            prices = [p["price"] for p in price_list if p["price"] > 0]
             if not prices:
                 continue
 
@@ -377,12 +384,12 @@ class FreePriceCollector:
             median_price = sorted_prices[len(sorted_prices) // 2]
 
             # Get most complete data entry
-            best_data = max(price_list, key=lambda x: len(x['data']))['data']
-            best_data['price'] = median_price
-            best_data['priceUsd'] = median_price
-            best_data['sources_count'] = len(price_list)
-            best_data['sources'] = [p['source'] for p in price_list]
-            best_data['aggregated'] = True
+            best_data = max(price_list, key=lambda x: len(x["data"]))["data"]
+            best_data["price"] = median_price
+            best_data["priceUsd"] = median_price
+            best_data["sources_count"] = len(price_list)
+            best_data["sources"] = [p["source"] for p in price_list]
+            best_data["aggregated"] = True
 
             aggregated.append(best_data)
 
@@ -394,9 +401,9 @@ async def main():
     """Test the free collectors"""
     collector = FreePriceCollector()
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 Testing FREE Price Collectors (No API Keys)")
-    print("="*70)
+    print("=" * 70)
 
     # Test individual sources
     symbols = ["BTC", "ETH", "SOL"]
@@ -422,9 +429,9 @@ async def main():
     print(f"   Got {len(cryptocompare_data)} prices from CryptoCompare")
 
     # Test all sources at once
-    print("\n\n" + "="*70)
+    print("\n\n" + "=" * 70)
     print("🚀 Testing ALL Sources Simultaneously")
-    print("="*70)
+    print("=" * 70)
 
     all_data = await collector.collect_all_free_sources(symbols)
 
@@ -434,15 +441,17 @@ async def main():
         print(f"   {source}: {len(data)} prices")
 
     # Test aggregation
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("📊 Testing Price Aggregation")
-    print("="*70)
+    print("=" * 70)
 
     aggregated = collector.aggregate_prices(all_data)
     print(f"\n✅ Aggregated to {len(aggregated)} unique symbols")
 
     for price in aggregated[:5]:
-        print(f"   {price['symbol']}: ${price['price']:,.2f} (from {price['sources_count']} sources)")
+        print(
+            f"   {price['symbol']}: ${price['price']:,.2f} (from {price['sources_count']} sources)"
+        )
 
 
 if __name__ == "__main__":

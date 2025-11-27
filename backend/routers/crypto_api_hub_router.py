@@ -12,10 +12,7 @@ from crypto_api_hub_backend import crypto_hub_service, APIRequest
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(
-    prefix="/api/crypto-hub",
-    tags=["Crypto API Hub"]
-)
+router = APIRouter(prefix="/api/crypto-hub", tags=["Crypto API Hub"])
 
 
 @router.get("/services")
@@ -70,20 +67,13 @@ async def proxy_request(request: APIRequest):
     """
     try:
         result = await crypto_hub_service.test_endpoint(
-            url=request.url,
-            method=request.method,
-            headers=request.headers,
-            body=request.body
+            url=request.url, method=request.method, headers=request.headers, body=request.body
         )
         return JSONResponse(content=result)
     except Exception as e:
         logger.error(f"Error proxying request to {request.url}: {e}")
         return JSONResponse(
-            status_code=500,
-            content={
-                "error": "Proxy request failed",
-                "details": str(e)
-            }
+            status_code=500, content={"error": "Proxy request failed", "details": str(e)}
         )
 
 
@@ -120,11 +110,7 @@ async def validate_service(service_name: str):
 
 
 @router.get("/test-endpoint")
-async def test_endpoint(
-    url: str,
-    method: str = "GET",
-    headers: Optional[str] = None
-):
+async def test_endpoint(url: str, method: str = "GET", headers: Optional[str] = None):
     """
     Test a single endpoint
 
@@ -132,22 +118,17 @@ async def test_endpoint(
     """
     try:
         import json
+
         headers_dict = json.loads(headers) if headers else None
 
         result = await crypto_hub_service.test_endpoint(
-            url=url,
-            method=method,
-            headers=headers_dict
+            url=url, method=method, headers=headers_dict
         )
         return JSONResponse(content=result)
     except Exception as e:
         logger.error(f"Error testing endpoint {url}: {e}")
         return JSONResponse(
-            status_code=500,
-            content={
-                "error": "Endpoint test failed",
-                "details": str(e)
-            }
+            status_code=500, content={"error": "Endpoint test failed", "details": str(e)}
         )
 
 

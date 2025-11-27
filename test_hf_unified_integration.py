@@ -16,33 +16,29 @@ from backend.services.hf_unified_client import get_hf_client
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 async def test_market_prices():
     """Test 1: Market Prices"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 TEST 1: Market Prices")
-    print("="*70)
+    print("=" * 70)
 
     client = get_hf_client()
 
     try:
-        result = await client.get_market_prices(
-            symbols=["BTC", "ETH", "BNB"],
-            limit=10
-        )
+        result = await client.get_market_prices(symbols=["BTC", "ETH", "BNB"], limit=10)
 
         print(f"✅ Success: {result.get('success')}")
         print(f"📊 Data count: {len(result.get('data', []))}")
         print(f"🔖 Source: {result.get('source')}")
         print(f"⏰ Timestamp: {result.get('timestamp')}")
 
-        if result.get('data'):
-            sample = result['data'][0]
+        if result.get("data"):
+            sample = result["data"][0]
             print(f"\n📈 Sample data:")
             print(f"   Symbol: {sample.get('symbol')}")
             print(f"   Price: ${sample.get('price'):,.2f}")
@@ -56,25 +52,21 @@ async def test_market_prices():
 
 async def test_market_history():
     """Test 2: OHLCV History"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 TEST 2: OHLCV History")
-    print("="*70)
+    print("=" * 70)
 
     client = get_hf_client()
 
     try:
-        result = await client.get_market_history(
-            symbol="BTCUSDT",
-            timeframe="1h",
-            limit=24
-        )
+        result = await client.get_market_history(symbol="BTCUSDT", timeframe="1h", limit=24)
 
         print(f"✅ Success: {result.get('success')}")
         print(f"📊 Candles count: {len(result.get('data', []))}")
         print(f"🔖 Source: {result.get('source')}")
 
-        if result.get('data'):
-            sample = result['data'][0]
+        if result.get("data"):
+            sample = result["data"][0]
             print(f"\n🕯️ Sample candle:")
             print(f"   Timestamp: {sample.get('timestamp')}")
             print(f"   Open: ${sample.get('open'):,.2f}")
@@ -91,16 +83,16 @@ async def test_market_history():
 
 async def test_sentiment_analysis():
     """Test 3: Sentiment Analysis"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 TEST 3: Sentiment Analysis")
-    print("="*70)
+    print("=" * 70)
 
     client = get_hf_client()
 
     test_texts = [
         "Bitcoin is rising! Great news for crypto investors!",
         "Market crash incoming. Be careful with your investments.",
-        "Ethereum network upgrade completed successfully."
+        "Ethereum network upgrade completed successfully.",
     ]
 
     results = []
@@ -108,10 +100,10 @@ async def test_sentiment_analysis():
         try:
             result = await client.analyze_sentiment(text)
 
-            if result.get('success'):
-                data = result.get('data', {})
-                sentiment = data.get('sentiment', 'unknown')
-                confidence = data.get('confidence', 0)
+            if result.get("success"):
+                data = result.get("data", {})
+                sentiment = data.get("sentiment", "unknown")
+                confidence = data.get("confidence", 0)
 
                 print(f"\n📝 Text: {text[:50]}...")
                 print(f"   Sentiment: {sentiment}")
@@ -131,16 +123,16 @@ async def test_sentiment_analysis():
 
 async def test_news():
     """Test 4: News"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 TEST 4: News")
-    print("="*70)
+    print("=" * 70)
 
     client = get_hf_client()
 
     try:
         result = await client.get_news(limit=5)
 
-        articles = result.get('articles', [])
+        articles = result.get("articles", [])
         print(f"📰 Articles count: {len(articles)}")
 
         if articles:
@@ -158,9 +150,9 @@ async def test_news():
 
 async def test_blockchain_gas():
     """Test 5: Blockchain Gas Prices"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 TEST 5: Blockchain Gas Prices")
-    print("="*70)
+    print("=" * 70)
 
     client = get_hf_client()
 
@@ -173,10 +165,12 @@ async def test_blockchain_gas():
 
             print(f"\n⛓️ Chain: {chain}")
 
-            gas_prices = result.get('gas_prices', {})
+            gas_prices = result.get("gas_prices", {})
             if gas_prices:
                 print(f"   Fast: {gas_prices.get('fast', 0):.2f} {gas_prices.get('unit', 'gwei')}")
-                print(f"   Standard: {gas_prices.get('standard', 0):.2f} {gas_prices.get('unit', 'gwei')}")
+                print(
+                    f"   Standard: {gas_prices.get('standard', 0):.2f} {gas_prices.get('unit', 'gwei')}"
+                )
                 print(f"   Slow: {gas_prices.get('slow', 0):.2f} {gas_prices.get('unit', 'gwei')}")
 
             results.append(True)
@@ -189,9 +183,9 @@ async def test_blockchain_gas():
 
 async def test_health_check():
     """Test 6: Health Check"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 TEST 6: Health Check")
-    print("="*70)
+    print("=" * 70)
 
     client = get_hf_client()
 
@@ -201,18 +195,18 @@ async def test_health_check():
         print(f"✅ Status: {result.get('status')}")
         print(f"🗄️ Database: {result.get('database')}")
 
-        cache = result.get('cache', {})
+        cache = result.get("cache", {})
         print(f"📦 Cache:")
         print(f"   Market data symbols: {cache.get('market_data_count', 0)}")
         print(f"   OHLC candles: {cache.get('ohlc_count', 0)}")
 
-        ai_models = result.get('ai_models', {})
+        ai_models = result.get("ai_models", {})
         print(f"🤖 AI Models:")
         print(f"   Loaded: {ai_models.get('loaded', 0)}")
         print(f"   Failed: {ai_models.get('failed', 0)}")
         print(f"   Total: {ai_models.get('total', 0)}")
 
-        return result.get('success', False)
+        return result.get("success", False)
     except Exception as e:
         print(f"❌ FAILED: {e}")
         return False
@@ -220,9 +214,9 @@ async def test_health_check():
 
 async def main():
     """Run all tests"""
-    print("\n" + "🚀"*35)
+    print("\n" + "🚀" * 35)
     print("🔬 HuggingFace Unified Integration Test Suite")
-    print("🚀"*35)
+    print("🚀" * 35)
 
     tests = [
         ("Market Prices", test_market_prices),
@@ -244,9 +238,9 @@ async def main():
             results[test_name] = False
 
     # Summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("📊 TEST SUMMARY")
-    print("="*70)
+    print("=" * 70)
 
     passed = sum(1 for v in results.values() if v)
     total = len(results)

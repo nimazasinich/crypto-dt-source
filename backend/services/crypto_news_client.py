@@ -22,47 +22,47 @@ class CryptoNewsClient:
     Real Cryptocurrency News API Client
     Aggregates news from multiple real sources
     """
-    
+
     def __init__(self):
         # NewsAPI
         self.newsapi_key = os.getenv("NEWSAPI_KEY", "")
         self.newsapi_url = "https://newsapi.org/v2"
-        
+
         # CryptoPanic
         self.cryptopanic_token = os.getenv("CRYPTOPANIC_TOKEN", "")
         self.cryptopanic_url = "https://cryptopanic.com/api/v1"
-        
+
         # RSS Feeds
         self.rss_feeds = {
             "coindesk": "https://www.coindesk.com/arc/outboundfeeds/rss/",
             "cointelegraph": "https://cointelegraph.com/rss",
-            "bitcoinmagazine": "https://bitcoinmagazine.com/.rss/full/"
+            "bitcoinmagazine": "https://bitcoinmagazine.com/.rss/full/",
         }
-        
+
         self.timeout = 15.0
-    
+
     async def get_latest_news(self, limit: int = 20) -> List[Dict[str, Any]]:
         """
         Get REAL latest cryptocurrency news
         Tries multiple sources with fallback
-        
+
         Returns:
             List of real news articles
         """
         articles = []
-        
+
         # Try NewsAPI first (if API key available)
         if self.newsapi_key:
             try:
                 newsapi_articles = await self._fetch_from_newsapi(limit=limit)
                 articles.extend(newsapi_articles)
-                
+
                 if len(articles) >= limit:
                     logger.info(f"✅ NewsAPI: Fetched {len(articles)} real articles")
                     return articles[:limit]
             except Exception as e:
                 logger.warning(f"⚠️ NewsAPI failed: {e}")
-        
+
         # Try CryptoPanic (if token available)
         if self.cryptopanic_token and len(articles) < limit:
             try:
@@ -70,40 +70,32 @@ class CryptoNewsClient:
                     limit=limit - len(articles)
                 )
                 articles.extend(cryptopanic_articles)
-                
+
                 if len(articles) >= limit:
-                    logger.info(
-                        f"✅ CryptoPanic: Fetched {len(articles)} real articles"
-                    )
+                    logger.info(f"✅ CryptoPanic: Fetched {len(articles)} real articles")
                     return articles[:limit]
             except Exception as e:
                 logger.warning(f"⚠️ CryptoPanic failed: {e}")
-        
+
         # Fallback to RSS feeds
         if len(articles) < limit:
             try:
-                rss_articles = await self._fetch_from_rss_feeds(
-                    limit=limit - len(articles)
-                )
+                rss_articles = await self._fetch_from_rss_feeds(limit=limit - len(articles))
                 articles.extend(rss_articles)
-                
+
                 logger.info(f"✅ RSS Feeds: Fetched {len(articles)} real articles")
             except Exception as e:
                 logger.warning(f"⚠️ RSS feeds failed: {e}")
-        
+
         # If still no articles, raise error
         if len(articles) == 0:
-            raise HTTPException(
-                status_code=503,
-                detail="All news sources temporarily unavailable"
-            )
-        
+            raise HTTPException(status_code=503, detail="All news sources temporarily unavailable")
+
         logger.info(
-            f"✅ Successfully fetched {len(articles)} real news articles "
-            f"from multiple sources"
+            f"✅ Successfully fetched {len(articles)} real news articles " f"from multiple sources"
         )
         return articles[:limit]
-    
+
     async def _fetch_from_newsapi(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Fetch REAL news from NewsAPI"""
         try:
@@ -115,41 +107,41 @@ class CryptoNewsClient:
                         "apiKey": self.newsapi_key,
                         "language": "en",
                         "sortBy": "publishedAt",
-                        "pageSize": min(limit, 100)
-                    }
+                        "pageSize": min(limit, 100),
+                    },
                 )
                 response.raise_for_status()
                 data = response.json()
-                
+
                 articles = []
                 for article in data.get("articles", []):
                     # Parse timestamp
                     published_at = article.get("publishedAt", "")
                     try:
-                        dt = datetime.fromisoformat(
-                            published_at.replace("Z", "+00:00")
-                        )
+                        dt = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
                         timestamp = int(dt.timestamp() * 1000)
                     except:
                         timestamp = int(datetime.utcnow().timestamp() * 1000)
-                    
-                    articles.append({
-                        "title": article.get("title", ""),
-                        "description": article.get("description", ""),
-                        "url": article.get("url", ""),
-                        "source": article.get("source", {}).get("name", "NewsAPI"),
-                        "timestamp": timestamp,
-                        "author": article.get("author"),
-                        "imageUrl": article.get("urlToImage")
-                    })
-                
+
+                    articles.append(
+                        {
+                            "title": article.get("title", ""),
+                            "description": article.get("description", ""),
+                            "url": article.get("url", ""),
+                            "source": article.get("source", {}).get("name", "NewsAPI"),
+                            "timestamp": timestamp,
+                            "author": article.get("author"),
+                            "imageUrl": article.get("urlToImage"),
+                        }
+                    )
+
                 logger.info(f"✅ NewsAPI: Fetched {len(articles)} articles")
                 return articles
-        
+
         except Exception as e:
             logger.error(f"❌ NewsAPI failed: {e}")
             raise
-    
+
     async def _fetch_from_cryptopanic(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Fetch REAL news from CryptoPanic"""
         try:
@@ -159,48 +151,50 @@ class CryptoNewsClient:
                     params={
                         "auth_token": self.cryptopanic_token,
                         "public": "true",
-                        "filter": "hot"
-                    }
+                        "filter": "hot",
+                    },
                 )
                 response.raise_for_status()
                 data = response.json()
-                
+
                 articles = []
                 for post in data.get("results", [])[:limit]:
                     # Parse timestamp
                     created_at = post.get("created_at", "")
                     try:
-                        dt = datetime.fromisoformat(
-                            created_at.replace("Z", "+00:00")
-                        )
+                        dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                         timestamp = int(dt.timestamp() * 1000)
                     except:
                         timestamp = int(datetime.utcnow().timestamp() * 1000)
-                    
-                    articles.append({
-                        "title": post.get("title", ""),
-                        "description": post.get("title", ""),  # CryptoPanic doesn't have description
-                        "url": post.get("url", ""),
-                        "source": post.get("source", {}).get("title", "CryptoPanic"),
-                        "timestamp": timestamp
-                    })
-                
+
+                    articles.append(
+                        {
+                            "title": post.get("title", ""),
+                            "description": post.get(
+                                "title", ""
+                            ),  # CryptoPanic doesn't have description
+                            "url": post.get("url", ""),
+                            "source": post.get("source", {}).get("title", "CryptoPanic"),
+                            "timestamp": timestamp,
+                        }
+                    )
+
                 logger.info(f"✅ CryptoPanic: Fetched {len(articles)} articles")
                 return articles
-        
+
         except Exception as e:
             logger.error(f"❌ CryptoPanic failed: {e}")
             raise
-    
+
     async def _fetch_from_rss_feeds(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Fetch REAL news from RSS feeds"""
         articles = []
-        
+
         for source_name, feed_url in self.rss_feeds.items():
             try:
                 # Parse RSS feed
                 feed = feedparser.parse(feed_url)
-                
+
                 for entry in feed.entries[:limit]:
                     # Parse timestamp
                     try:
@@ -210,30 +204,30 @@ class CryptoNewsClient:
                             dt = datetime(*entry.updated_parsed[:6])
                         else:
                             dt = datetime.utcnow()
-                        
+
                         timestamp = int(dt.timestamp() * 1000)
                     except:
                         timestamp = int(datetime.utcnow().timestamp() * 1000)
-                    
-                    articles.append({
-                        "title": entry.get("title", ""),
-                        "description": entry.get("summary", "")[:200],
-                        "url": entry.get("link", ""),
-                        "source": source_name.title(),
-                        "timestamp": timestamp
-                    })
-                
-                logger.info(
-                    f"✅ RSS ({source_name}): Fetched {len(feed.entries)} articles"
-                )
-                
+
+                    articles.append(
+                        {
+                            "title": entry.get("title", ""),
+                            "description": entry.get("summary", "")[:200],
+                            "url": entry.get("link", ""),
+                            "source": source_name.title(),
+                            "timestamp": timestamp,
+                        }
+                    )
+
+                logger.info(f"✅ RSS ({source_name}): Fetched {len(feed.entries)} articles")
+
                 if len(articles) >= limit:
                     break
-            
+
             except Exception as e:
                 logger.warning(f"⚠️ RSS feed {source_name} failed: {e}")
                 continue
-        
+
         return articles[:limit]
 
 

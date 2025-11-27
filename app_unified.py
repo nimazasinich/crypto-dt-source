@@ -18,8 +18,7 @@ from unified_api_service import router as api_router, init_loader
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ STATIC_DIR.mkdir(exist_ok=True)
 app = FastAPI(
     title="Crypto Intelligence Hub - Unified",
     description="AI-Powered Cryptocurrency Data Collection & Analysis Center",
-    version="2.0.0"
+    version="2.0.0",
 )
 
 # CORS configuration
@@ -86,7 +85,7 @@ async def serve_index():
         "status": "running",
         "api_docs": "/docs",
         "api_base": "/api",
-        "note": "index.html not found - serving API only"
+        "note": "index.html not found - serving API only",
     }
 
 
@@ -115,12 +114,7 @@ async def serve_admin():
 @app.get("/health")
 async def health_check():
     """Health check for the entire application"""
-    return {
-        "status": "healthy",
-        "app": "unified",
-        "version": "2.0.0",
-        "api_available": True
-    }
+    return {"status": "healthy", "app": "unified", "version": "2.0.0", "api_available": True}
 
 
 @app.get("/info")
@@ -141,7 +135,7 @@ async def app_info():
             "HuggingFace AI Models",
             "Static UI (index.html, ai_tools.html)",
             "FastAPI Backend",
-            "Docker Ready"
+            "Docker Ready",
         ],
         "endpoints": {
             "main": "/",
@@ -152,9 +146,9 @@ async def app_info():
             "api_market": "/api/market/price/{symbol}",
             "api_news": "/api/news",
             "api_sentiment": "/api/sentiment/fear-greed",
-            "api_health": "/api/health"
+            "api_health": "/api/health",
         },
-        "data_source": "crypto_resources_unified_2025-11-11.json"
+        "data_source": "crypto_resources_unified_2025-11-11.json",
     }
 
 
@@ -163,9 +157,4 @@ if __name__ == "__main__":
 
     logger.info(f"🚀 Starting server on {HOST}:{PORT}")
 
-    uvicorn.run(
-        app,
-        host=HOST,
-        port=PORT,
-        log_level="info"
-    )
+    uvicorn.run(app, host=HOST, port=PORT, log_level="info")

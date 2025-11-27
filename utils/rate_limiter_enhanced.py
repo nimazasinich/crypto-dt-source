@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RateLimitConfig:
     """Rate limit configuration"""
+
     requests_per_minute: int = 30
     requests_per_hour: int = 1000
     burst_size: int = 10  # Allow burst requests
@@ -57,10 +58,7 @@ class TokenBucket:
             elapsed = now - self.last_update
 
             # Add tokens based on elapsed time
-            self.tokens = min(
-                self.capacity,
-                self.tokens + elapsed * self.rate
-            )
+            self.tokens = min(self.capacity, self.tokens + elapsed * self.rate)
             self.last_update = now
 
             # Try to consume
@@ -193,7 +191,10 @@ class RateLimiter:
 
             # Check minute limit
             if not self.minute_limiters[client_id].allow_request():
-                return False, f"Rate limit: {self.config.requests_per_minute} requests/minute exceeded"
+                return (
+                    False,
+                    f"Rate limit: {self.config.requests_per_minute} requests/minute exceeded",
+                )
 
             # Check hour limit
             if not self.hour_limiters[client_id].allow_request():
@@ -204,16 +205,14 @@ class RateLimiter:
     def _create_limiters(self, client_id: str):
         """Create limiters for new client"""
         self.minute_limiters[client_id] = SlidingWindowCounter(
-            window_seconds=60,
-            max_requests=self.config.requests_per_minute
+            window_seconds=60, max_requests=self.config.requests_per_minute
         )
         self.hour_limiters[client_id] = SlidingWindowCounter(
-            window_seconds=3600,
-            max_requests=self.config.requests_per_hour
+            window_seconds=3600, max_requests=self.config.requests_per_hour
         )
         self.burst_limiters[client_id] = TokenBucket(
             rate=self.config.requests_per_minute / 60.0,  # per second
-            capacity=self.config.burst_size
+            capacity=self.config.burst_size,
         )
 
     def get_limits_info(self, client_id: str) -> Dict[str, any]:
@@ -229,16 +228,16 @@ class RateLimiter:
         with self.lock:
             if client_id not in self.minute_limiters:
                 return {
-                    'minute_remaining': self.config.requests_per_minute,
-                    'hour_remaining': self.config.requests_per_hour,
-                    'burst_available': self.config.burst_size
+                    "minute_remaining": self.config.requests_per_minute,
+                    "hour_remaining": self.config.requests_per_hour,
+                    "burst_available": self.config.burst_size,
                 }
 
             return {
-                'minute_remaining': self.minute_limiters[client_id].get_remaining(),
-                'hour_remaining': self.hour_limiters[client_id].get_remaining(),
-                'minute_limit': self.config.requests_per_minute,
-                'hour_limit': self.config.requests_per_hour
+                "minute_remaining": self.minute_limiters[client_id].get_remaining(),
+                "hour_remaining": self.hour_limiters[client_id].get_remaining(),
+                "minute_limit": self.config.requests_per_minute,
+                "hour_limit": self.config.requests_per_hour,
             }
 
     def reset_client(self, client_id: str):
@@ -258,9 +257,7 @@ global_rate_limiter = RateLimiter()
 
 
 def rate_limit(
-    requests_per_minute: int = 30,
-    requests_per_hour: int = 1000,
-    get_client_id=lambda: "default"
+    requests_per_minute: int = 30, requests_per_hour: int = 1000, get_client_id=lambda: "default"
 ):
     """
     Decorator for rate limiting endpoints
@@ -276,8 +273,7 @@ def rate_limit(
             ...
     """
     config = RateLimitConfig(
-        requests_per_minute=requests_per_minute,
-        requests_per_hour=requests_per_hour
+        requests_per_minute=requests_per_minute, requests_per_hour=requests_per_hour
     )
     limiter = RateLimiter(config)
 

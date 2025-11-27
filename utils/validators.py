@@ -10,7 +10,7 @@ import re
 def validate_date(date_str: str) -> Optional[datetime]:
     """Validate and parse date string"""
     try:
-        return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
     except:
         return None
 
@@ -29,7 +29,7 @@ def validate_category(category: str) -> bool:
         "blockchain_explorers",
         "news",
         "sentiment",
-        "onchain_analytics"
+        "onchain_analytics",
     ]
     return category in valid_categories
 
@@ -37,10 +37,12 @@ def validate_category(category: str) -> bool:
 def validate_url(url: str) -> bool:
     """Validate URL format"""
     url_pattern = re.compile(
-        r'^https?://'  # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
-        r'localhost|'  # localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-        r'(?::\d+)?'  # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        r"^https?://"  # http:// or https://
+        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+        r"localhost|"  # localhost...
+        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+        r"(?::\d+)?"  # optional port
+        r"(?:/?|[/?]\S+)$",
+        re.IGNORECASE,
+    )
     return url_pattern.match(url) is not None

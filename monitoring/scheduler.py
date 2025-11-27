@@ -51,8 +51,7 @@ class TaskScheduler:
 
         # Register event listeners
         self.scheduler.add_listener(
-            self._job_executed_listener,
-            EVENT_JOB_EXECUTED | EVENT_JOB_ERROR
+            self._job_executed_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR
         )
 
         logger.info("TaskScheduler initialized")
@@ -67,10 +66,7 @@ class TaskScheduler:
         job_id = event.job_id
 
         if event.exception:
-            logger.error(
-                f"Job {job_id} raised an exception: {event.exception}",
-                exc_info=True
-            )
+            logger.error(f"Job {job_id} raised an exception: {event.exception}", exc_info=True)
         else:
             logger.debug(f"Job {job_id} executed successfully")
 
@@ -80,7 +76,7 @@ class TaskScheduler:
         expected_time: datetime,
         actual_time: datetime,
         success: bool = True,
-        skip_reason: Optional[str] = None
+        skip_reason: Optional[str] = None,
     ):
         """
         Record schedule compliance metrics
@@ -117,13 +113,7 @@ class TaskScheduler:
         except Exception as e:
             logger.error(f"Failed to record compliance for {task_name}: {e}")
 
-    def _wrap_task(
-        self,
-        task_name: str,
-        task_func: Callable,
-        *args,
-        **kwargs
-    ):
+    def _wrap_task(self, task_name: str, task_func: Callable, *args, **kwargs):
         """
         Wrapper for scheduled tasks to add logging and compliance tracking
 
@@ -150,16 +140,14 @@ class TaskScheduler:
             end_time = datetime.utcnow()
             duration_ms = (end_time - start_time).total_seconds() * 1000
 
-            logger.info(
-                f"Completed task: {task_name} in {duration_ms:.2f}ms"
-            )
+            logger.info(f"Completed task: {task_name} in {duration_ms:.2f}ms")
 
             # Record compliance
             self._record_compliance(
                 task_name=task_name,
                 expected_time=expected_time,
                 actual_time=start_time,
-                success=True
+                success=True,
             )
 
             return result
@@ -168,10 +156,7 @@ class TaskScheduler:
             end_time = datetime.utcnow()
             duration_ms = (end_time - start_time).total_seconds() * 1000
 
-            logger.error(
-                f"Task {task_name} failed after {duration_ms:.2f}ms: {e}",
-                exc_info=True
-            )
+            logger.error(f"Task {task_name} failed after {duration_ms:.2f}ms: {e}", exc_info=True)
 
             # Record compliance with error
             self._record_compliance(
@@ -179,7 +164,7 @@ class TaskScheduler:
                 expected_time=expected_time,
                 actual_time=start_time,
                 success=False,
-                skip_reason=f"Error: {str(e)[:200]}"
+                skip_reason=f"Error: {str(e)[:200]}",
             )
 
             # Don't re-raise - we want scheduler to continue
@@ -232,7 +217,7 @@ class TaskScheduler:
 
         try:
             # Get market data providers
-            providers = config.get_providers_by_category('market_data')
+            providers = config.get_providers_by_category("market_data")
 
             logger.info(f"Collecting market data from {len(providers)} providers")
 
@@ -252,7 +237,7 @@ class TaskScheduler:
 
         try:
             # Get blockchain explorer providers
-            providers = config.get_providers_by_category('blockchain_explorers')
+            providers = config.get_providers_by_category("blockchain_explorers")
 
             logger.info(f"Collecting explorer data from {len(providers)} providers")
 
@@ -271,7 +256,7 @@ class TaskScheduler:
 
         try:
             # Get news providers
-            providers = config.get_providers_by_category('news')
+            providers = config.get_providers_by_category("news")
 
             logger.info(f"Collecting news from {len(providers)} providers")
 
@@ -290,7 +275,7 @@ class TaskScheduler:
 
         try:
             # Get sentiment providers
-            providers = config.get_providers_by_category('sentiment')
+            providers = config.get_providers_by_category("sentiment")
 
             logger.info(f"Collecting sentiment data from {len(providers)} providers")
 
@@ -323,10 +308,10 @@ class TaskScheduler:
                             # Save rate limit usage
                             db_manager.save_rate_limit_usage(
                                 provider_id=db_provider.id,
-                                limit_type=status_data['limit_type'],
-                                limit_value=status_data['limit_value'],
-                                current_usage=status_data['current_usage'],
-                                reset_time=datetime.fromisoformat(status_data['reset_time'])
+                                limit_type=status_data["limit_type"],
+                                limit_value=status_data["limit_value"],
+                                current_usage=status_data["current_usage"],
+                                reset_time=datetime.fromisoformat(status_data["reset_time"]),
                             )
 
                             logger.debug(
@@ -363,8 +348,7 @@ class TaskScheduler:
 
             total_requests = len(connection_attempts)
             total_failures = sum(
-                1 for attempt in connection_attempts
-                if attempt.status in ['failed', 'timeout']
+                1 for attempt in connection_attempts if attempt.status in ["failed", "timeout"]
             )
 
             # Get latest health check results per provider
@@ -373,22 +357,18 @@ class TaskScheduler:
                 if attempt.provider_id not in provider_latest_status:
                     provider_latest_status[attempt.provider_id] = attempt
 
-                    if attempt.status == 'success':
+                    if attempt.status == "success":
                         online_count += 1
                         if attempt.response_time_ms:
                             total_response_time += attempt.response_time_ms
                             response_count += 1
-                    elif attempt.status == 'timeout':
+                    elif attempt.status == "timeout":
                         offline_count += 1
                     else:
                         degraded_count += 1
 
             # Calculate average response time
-            avg_response_time = (
-                total_response_time / response_count
-                if response_count > 0
-                else 0
-            )
+            avg_response_time = total_response_time / response_count if response_count > 0 else 0
 
             # Determine system health
             online_percentage = (online_count / total_providers * 100) if total_providers > 0 else 0
@@ -409,7 +389,7 @@ class TaskScheduler:
                 avg_response_time_ms=avg_response_time,
                 total_requests_hour=total_requests,
                 total_failures_hour=total_failures,
-                system_health=system_health
+                system_health=system_health,
             )
 
             logger.info(
@@ -434,9 +414,7 @@ class TaskScheduler:
 
             total_deleted = sum(deleted_counts.values())
 
-            logger.info(
-                f"Database cleanup completed - Deleted {total_deleted} old records"
-            )
+            logger.info(f"Database cleanup completed - Deleted {total_deleted} old records")
 
             # Log details
             for table, count in deleted_counts.items():
@@ -465,98 +443,100 @@ class TaskScheduler:
             now = datetime.utcnow()
 
             # Schedule health checks - every 5 minutes
-            self.expected_run_times['health_checks'] = now
+            self.expected_run_times["health_checks"] = now
             self.scheduler.add_job(
-                func=lambda: self._wrap_task('health_checks', self._health_check_task),
+                func=lambda: self._wrap_task("health_checks", self._health_check_task),
                 trigger=IntervalTrigger(minutes=5),
-                id='health_checks',
-                name='Health Checks (Staggered)',
+                id="health_checks",
+                name="Health Checks (Staggered)",
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
             )
             logger.info("Scheduled: Health checks every 5 minutes")
 
             # Schedule market data collection - every 1 minute
-            self.expected_run_times['market_data'] = now
+            self.expected_run_times["market_data"] = now
             self.scheduler.add_job(
-                func=lambda: self._wrap_task('market_data', self._market_data_collection_task),
+                func=lambda: self._wrap_task("market_data", self._market_data_collection_task),
                 trigger=IntervalTrigger(minutes=1),
-                id='market_data',
-                name='Market Data Collection',
+                id="market_data",
+                name="Market Data Collection",
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
             )
             logger.info("Scheduled: Market data collection every 1 minute")
 
             # Schedule explorer data collection - every 5 minutes
-            self.expected_run_times['explorer_data'] = now
+            self.expected_run_times["explorer_data"] = now
             self.scheduler.add_job(
-                func=lambda: self._wrap_task('explorer_data', self._explorer_data_collection_task),
+                func=lambda: self._wrap_task("explorer_data", self._explorer_data_collection_task),
                 trigger=IntervalTrigger(minutes=5),
-                id='explorer_data',
-                name='Explorer Data Collection',
+                id="explorer_data",
+                name="Explorer Data Collection",
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
             )
             logger.info("Scheduled: Explorer data collection every 5 minutes")
 
             # Schedule news collection - every 10 minutes
-            self.expected_run_times['news_collection'] = now
+            self.expected_run_times["news_collection"] = now
             self.scheduler.add_job(
-                func=lambda: self._wrap_task('news_collection', self._news_collection_task),
+                func=lambda: self._wrap_task("news_collection", self._news_collection_task),
                 trigger=IntervalTrigger(minutes=10),
-                id='news_collection',
-                name='News Collection',
+                id="news_collection",
+                name="News Collection",
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
             )
             logger.info("Scheduled: News collection every 10 minutes")
 
             # Schedule sentiment collection - every 15 minutes
-            self.expected_run_times['sentiment_collection'] = now
+            self.expected_run_times["sentiment_collection"] = now
             self.scheduler.add_job(
-                func=lambda: self._wrap_task('sentiment_collection', self._sentiment_collection_task),
+                func=lambda: self._wrap_task(
+                    "sentiment_collection", self._sentiment_collection_task
+                ),
                 trigger=IntervalTrigger(minutes=15),
-                id='sentiment_collection',
-                name='Sentiment Collection',
+                id="sentiment_collection",
+                name="Sentiment Collection",
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
             )
             logger.info("Scheduled: Sentiment collection every 15 minutes")
 
             # Schedule rate limit snapshot - every 1 minute
-            self.expected_run_times['rate_limit_snapshot'] = now
+            self.expected_run_times["rate_limit_snapshot"] = now
             self.scheduler.add_job(
-                func=lambda: self._wrap_task('rate_limit_snapshot', self._rate_limit_snapshot_task),
+                func=lambda: self._wrap_task("rate_limit_snapshot", self._rate_limit_snapshot_task),
                 trigger=IntervalTrigger(minutes=1),
-                id='rate_limit_snapshot',
-                name='Rate Limit Snapshot',
+                id="rate_limit_snapshot",
+                name="Rate Limit Snapshot",
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
             )
             logger.info("Scheduled: Rate limit snapshot every 1 minute")
 
             # Schedule metrics aggregation - every 5 minutes
-            self.expected_run_times['metrics_aggregation'] = now
+            self.expected_run_times["metrics_aggregation"] = now
             self.scheduler.add_job(
-                func=lambda: self._wrap_task('metrics_aggregation', self._metrics_aggregation_task),
+                func=lambda: self._wrap_task("metrics_aggregation", self._metrics_aggregation_task),
                 trigger=IntervalTrigger(minutes=5),
-                id='metrics_aggregation',
-                name='Metrics Aggregation',
+                id="metrics_aggregation",
+                name="Metrics Aggregation",
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
             )
             logger.info("Scheduled: Metrics aggregation every 5 minutes")
 
             # Schedule database cleanup - daily at 3 AM
-            self.expected_run_times['database_cleanup'] = now.replace(hour=3, minute=0, second=0)
+            self.expected_run_times["database_cleanup"] = now.replace(hour=3, minute=0, second=0)
             self.scheduler.add_job(
-                func=lambda: self._wrap_task('database_cleanup', self._database_cleanup_task),
+                func=lambda: self._wrap_task("database_cleanup", self._database_cleanup_task),
                 trigger=CronTrigger(hour=3, minute=0),
-                id='database_cleanup',
-                name='Database Cleanup (Daily 3 AM)',
+                id="database_cleanup",
+                name="Database Cleanup (Daily 3 AM)",
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
             )
             logger.info("Scheduled: Database cleanup daily at 3 AM")
 
@@ -604,8 +584,8 @@ class TaskScheduler:
         job_id: str,
         job_name: str,
         job_func: Callable,
-        trigger_type: str = 'interval',
-        **trigger_kwargs
+        trigger_type: str = "interval",
+        **trigger_kwargs,
     ) -> bool:
         """
         Add a custom scheduled job
@@ -635,9 +615,9 @@ class TaskScheduler:
         """
         try:
             # Create trigger
-            if trigger_type == 'interval':
+            if trigger_type == "interval":
                 trigger = IntervalTrigger(**trigger_kwargs)
-            elif trigger_type == 'cron':
+            elif trigger_type == "cron":
                 trigger = CronTrigger(**trigger_kwargs)
             else:
                 logger.error(f"Unknown trigger type: {trigger_type}")
@@ -650,7 +630,7 @@ class TaskScheduler:
                 id=job_id,
                 name=job_name,
                 replace_existing=True,
-                max_instances=1
+                max_instances=1,
             )
 
             # Set expected run time
@@ -731,26 +711,28 @@ class TaskScheduler:
                     return {}
 
                 return {
-                    'id': job.id,
-                    'name': job.name,
-                    'next_run': job.next_run_time.isoformat() if job.next_run_time else None,
-                    'trigger': str(job.trigger)
+                    "id": job.id,
+                    "name": job.name,
+                    "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
+                    "trigger": str(job.trigger),
                 }
             else:
                 # Get all jobs
                 jobs = self.scheduler.get_jobs()
                 return {
-                    'total_jobs': len(jobs),
-                    'is_running': self._is_running,
-                    'jobs': [
+                    "total_jobs": len(jobs),
+                    "is_running": self._is_running,
+                    "jobs": [
                         {
-                            'id': job.id,
-                            'name': job.name,
-                            'next_run': job.next_run_time.isoformat() if job.next_run_time else None,
-                            'trigger': str(job.trigger)
+                            "id": job.id,
+                            "name": job.name,
+                            "next_run": (
+                                job.next_run_time.isoformat() if job.next_run_time else None
+                            ),
+                            "trigger": str(job.trigger),
                         }
                         for job in jobs
-                    ]
+                    ],
                 }
 
         except Exception as e:
@@ -778,6 +760,7 @@ task_scheduler = TaskScheduler()
 # ============================================================================
 # Convenience Functions
 # ============================================================================
+
 
 def start_scheduler():
     """Start the global task scheduler"""
@@ -810,13 +793,14 @@ if __name__ == "__main__":
 
         # Keep the main thread alive
         import time
+
         while True:
             time.sleep(60)
 
             # Print status every minute
             status = scheduler.get_job_status()
             print(f"\n[{datetime.utcnow().isoformat()}] Active jobs: {status['total_jobs']}")
-            for job in status.get('jobs', []):
+            for job in status.get("jobs", []):
                 print(f"  - {job['name']}: Next run at {job['next_run']}")
 
     except KeyboardInterrupt:

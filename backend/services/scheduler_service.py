@@ -2,6 +2,7 @@
 Enhanced Scheduler Service
 Manages periodic and real-time data updates with persistence
 """
+
 import asyncio
 import logging
 from typing import Dict, Any, List, Optional, Callable
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ScheduleTask:
     """Represents a scheduled task"""
+
     api_id: str
     name: str
     category: str
@@ -57,12 +59,12 @@ class SchedulerService:
 
             task = ScheduleTask(
                 api_id=api_id,
-                name=api.get('name', api_id),
-                category=api.get('category', 'unknown'),
-                interval=schedule.get('interval', 300),
-                update_type=api.get('update_type', 'periodic'),
-                enabled=schedule.get('enabled', True),
-                next_update=datetime.now()
+                name=api.get("name", api_id),
+                category=api.get("category", "unknown"),
+                interval=schedule.get("interval", 300),
+                update_type=api.get("update_type", "periodic"),
+                enabled=schedule.get("enabled", True),
+                next_update=datetime.now(),
             )
 
             self.tasks[api_id] = task
@@ -120,8 +122,7 @@ class SchedulerService:
 
                     # Process tasks concurrently
                     await asyncio.gather(
-                        *[self._execute_task(task) for task in due_tasks],
-                        return_exceptions=True
+                        *[self._execute_task(task) for task in due_tasks], return_exceptions=True
                     )
 
                 # Sleep for a short interval
@@ -142,7 +143,7 @@ class SchedulerService:
             if not task.enabled:
                 continue
 
-            if task.update_type == 'realtime':
+            if task.update_type == "realtime":
                 continue  # Real-time tasks handled separately
 
             if task.next_update is None or now >= task.next_update:
@@ -164,16 +165,16 @@ class SchedulerService:
             # Update task status
             task.last_update = datetime.now()
             task.next_update = task.last_update + timedelta(seconds=task.interval)
-            task.last_status = 'success'
+            task.last_status = "success"
             task.last_data = data
             task.success_count += 1
             task.error_count = 0  # Reset error count on success
 
             # Cache data
             self.data_cache[task.api_id] = {
-                'data': data,
-                'timestamp': datetime.now(),
-                'task': task.name
+                "data": data,
+                "timestamp": datetime.now(),
+                "task": task.name,
             }
 
             # Save to database if available
@@ -190,7 +191,7 @@ class SchedulerService:
 
         except Exception as e:
             logger.error(f"✗ Failed to update {task.name}: {e}")
-            task.last_status = 'failed'
+            task.last_status = "failed"
             task.error_count += 1
 
             # Increase interval on repeated failures
@@ -200,8 +201,8 @@ class SchedulerService:
 
     async def _fetch_api_data(self, api: Dict[str, Any]) -> Dict[str, Any]:
         """Fetch data from an API"""
-        base_url = api.get('base_url', '')
-        auth = api.get('auth', {})
+        base_url = api.get("base_url", "")
+        auth = api.get("auth", {})
 
         # Build request URL
         url = base_url
@@ -210,41 +211,43 @@ class SchedulerService:
         headers = {}
         params = {}
 
-        auth_type = auth.get('type', 'none')
+        auth_type = auth.get("type", "none")
 
-        if auth_type == 'apiKey' or auth_type == 'apiKeyHeader':
-            key = auth.get('key')
-            header_name = auth.get('header_name', 'X-API-Key')
+        if auth_type == "apiKey" or auth_type == "apiKeyHeader":
+            key = auth.get("key")
+            header_name = auth.get("header_name", "X-API-Key")
             if key:
                 headers[header_name] = key
 
-        elif auth_type == 'apiKeyQuery':
-            key = auth.get('key')
-            param_name = auth.get('param_name', 'apikey')
+        elif auth_type == "apiKeyQuery":
+            key = auth.get("key")
+            param_name = auth.get("param_name", "apikey")
             if key:
                 params[param_name] = key
 
-        elif auth_type == 'apiKeyPath':
-            key = auth.get('key')
-            param_name = auth.get('param_name', 'API_KEY')
+        elif auth_type == "apiKeyPath":
+            key = auth.get("key")
+            param_name = auth.get("param_name", "API_KEY")
             if key:
-                url = url.replace(f'{{{param_name}}}', key)
+                url = url.replace(f"{{{param_name}}}", key)
 
         # Make request
         timeout = httpx.Timeout(10.0)
 
         async with httpx.AsyncClient(timeout=timeout) as client:
             # Handle different endpoints
-            endpoints = api.get('endpoints')
+            endpoints = api.get("endpoints")
 
-            if isinstance(endpoints, dict) and 'health' in endpoints:
-                url = endpoints['health']
+            if isinstance(endpoints, dict) and "health" in endpoints:
+                url = endpoints["health"]
             elif isinstance(endpoints, str):
                 url = endpoints
 
             # Add query params
             if params:
-                url = f"{url}{'&' if '?' in url else '?'}" + '&'.join(f"{k}={v}" for k, v in params.items())
+                url = f"{url}{'&' if '?' in url else '?'}" + "&".join(
+                    f"{k}={v}" for k, v in params.items()
+                )
 
             response = await client.get(url, headers=headers)
             response.raise_for_status()
@@ -259,10 +262,7 @@ class SchedulerService:
         try:
             # Save using database manager
             await self.db_manager.save_collection_data(
-                api_id=task.api_id,
-                category=task.category,
-                data=data,
-                timestamp=datetime.now()
+                api_id=task.api_id, category=task.category, data=data, timestamp=datetime.now()
             )
         except Exception as e:
             logger.error(f"Error saving to database: {e}")
@@ -318,15 +318,15 @@ class SchedulerService:
     async def _handle_realtime_data(self, task: ScheduleTask, data: Dict[str, Any]):
         """Handle incoming real-time data"""
         task.last_update = datetime.now()
-        task.last_status = 'success'
+        task.last_status = "success"
         task.last_data = data
         task.success_count += 1
 
         # Cache data
         self.data_cache[task.api_id] = {
-            'data': data,
-            'timestamp': datetime.now(),
-            'task': task.name
+            "data": data,
+            "timestamp": datetime.now(),
+            "task": task.name,
         }
 
         # Save to database
@@ -368,25 +368,22 @@ class SchedulerService:
             return None
 
         return {
-            'api_id': task.api_id,
-            'name': task.name,
-            'category': task.category,
-            'interval': task.interval,
-            'update_type': task.update_type,
-            'enabled': task.enabled,
-            'last_update': task.last_update.isoformat() if task.last_update else None,
-            'next_update': task.next_update.isoformat() if task.next_update else None,
-            'last_status': task.last_status,
-            'success_count': task.success_count,
-            'error_count': task.error_count
+            "api_id": task.api_id,
+            "name": task.name,
+            "category": task.category,
+            "interval": task.interval,
+            "update_type": task.update_type,
+            "enabled": task.enabled,
+            "last_update": task.last_update.isoformat() if task.last_update else None,
+            "next_update": task.next_update.isoformat() if task.next_update else None,
+            "last_status": task.last_status,
+            "success_count": task.success_count,
+            "error_count": task.error_count,
         }
 
     def get_all_task_statuses(self) -> Dict[str, Any]:
         """Get status of all tasks"""
-        return {
-            api_id: self.get_task_status(api_id)
-            for api_id in self.tasks.keys()
-        }
+        return {api_id: self.get_task_status(api_id) for api_id in self.tasks.keys()}
 
     def get_cached_data(self, api_id: str) -> Optional[Dict[str, Any]]:
         """Get cached data for an API"""
@@ -407,38 +404,38 @@ class SchedulerService:
         logger.info(f"Forcing update for {task.name}")
         await self._execute_task(task)
 
-        return task.last_status == 'success'
+        return task.last_status == "success"
 
     def export_schedules(self, filepath: str):
         """Export schedules to JSON"""
         schedules_data = {
             api_id: {
-                'name': task.name,
-                'category': task.category,
-                'interval': task.interval,
-                'update_type': task.update_type,
-                'enabled': task.enabled,
-                'last_update': task.last_update.isoformat() if task.last_update else None,
-                'success_count': task.success_count,
-                'error_count': task.error_count
+                "name": task.name,
+                "category": task.category,
+                "interval": task.interval,
+                "update_type": task.update_type,
+                "enabled": task.enabled,
+                "last_update": task.last_update.isoformat() if task.last_update else None,
+                "success_count": task.success_count,
+                "error_count": task.error_count,
             }
             for api_id, task in self.tasks.items()
         }
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(schedules_data, f, indent=2)
 
         logger.info(f"Exported schedules to {filepath}")
 
     def import_schedules(self, filepath: str):
         """Import schedules from JSON"""
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             schedules_data = json.load(f)
 
         for api_id, schedule_data in schedules_data.items():
             if api_id in self.tasks:
                 task = self.tasks[api_id]
-                task.interval = schedule_data.get('interval', task.interval)
-                task.enabled = schedule_data.get('enabled', task.enabled)
+                task.interval = schedule_data.get("interval", task.interval)
+                task.enabled = schedule_data.get("enabled", task.enabled)
 
         logger.info(f"Imported schedules from {filepath}")

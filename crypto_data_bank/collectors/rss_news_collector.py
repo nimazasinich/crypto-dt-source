@@ -24,7 +24,7 @@ class RSSNewsCollector:
         self.timeout = httpx.Timeout(20.0)
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Accept": "application/xml, text/xml, application/rss+xml"
+            "Accept": "application/xml, text/xml, application/rss+xml",
         }
 
         # Free RSS feeds - NO API KEY NEEDED
@@ -46,11 +46,11 @@ class RSSNewsCollector:
             return ""
 
         # Remove HTML tags
-        soup = BeautifulSoup(html_text, 'html.parser')
+        soup = BeautifulSoup(html_text, "html.parser")
         text = soup.get_text()
 
         # Clean up whitespace
-        text = re.sub(r'\s+', ' ', text).strip()
+        text = re.sub(r"\s+", " ", text).strip()
 
         return text
 
@@ -64,27 +64,42 @@ class RSSNewsCollector:
 
         # Common crypto symbols
         crypto_symbols = [
-            "BTC", "BITCOIN",
-            "ETH", "ETHEREUM",
-            "SOL", "SOLANA",
-            "BNB", "BINANCE",
-            "XRP", "RIPPLE",
-            "ADA", "CARDANO",
-            "DOGE", "DOGECOIN",
-            "MATIC", "POLYGON",
-            "DOT", "POLKADOT",
-            "AVAX", "AVALANCHE",
-            "LINK", "CHAINLINK",
-            "UNI", "UNISWAP",
-            "ATOM", "COSMOS",
-            "LTC", "LITECOIN",
-            "BCH", "BITCOIN CASH"
+            "BTC",
+            "BITCOIN",
+            "ETH",
+            "ETHEREUM",
+            "SOL",
+            "SOLANA",
+            "BNB",
+            "BINANCE",
+            "XRP",
+            "RIPPLE",
+            "ADA",
+            "CARDANO",
+            "DOGE",
+            "DOGECOIN",
+            "MATIC",
+            "POLYGON",
+            "DOT",
+            "POLKADOT",
+            "AVAX",
+            "AVALANCHE",
+            "LINK",
+            "CHAINLINK",
+            "UNI",
+            "UNISWAP",
+            "ATOM",
+            "COSMOS",
+            "LTC",
+            "LITECOIN",
+            "BCH",
+            "BITCOIN CASH",
         ]
 
         for symbol in crypto_symbols:
             if symbol in text_upper:
                 # Add the short symbol form
-                short_symbol = symbol.split()[0] if ' ' in symbol else symbol
+                short_symbol = symbol.split()[0] if " " in symbol else symbol
                 if short_symbol not in coins and len(short_symbol) <= 5:
                     coins.append(short_symbol)
 
@@ -111,34 +126,36 @@ class RSSNewsCollector:
                 for entry in feed.entries[:20]:  # Limit to 20 most recent
                     # Extract published date
                     published_at = None
-                    if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                    if hasattr(entry, "published_parsed") and entry.published_parsed:
                         published_at = datetime(*entry.published_parsed[:6])
-                    elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
+                    elif hasattr(entry, "updated_parsed") and entry.updated_parsed:
                         published_at = datetime(*entry.updated_parsed[:6])
                     else:
                         published_at = datetime.now()
 
                     # Get description
                     description = ""
-                    if hasattr(entry, 'summary'):
+                    if hasattr(entry, "summary"):
                         description = self.clean_html(entry.summary)
-                    elif hasattr(entry, 'description'):
+                    elif hasattr(entry, "description"):
                         description = self.clean_html(entry.description)
 
                     # Combine title and description for coin extraction
                     full_text = f"{entry.title} {description}"
                     coins = self.extract_coins_from_text(full_text)
 
-                    news_items.append({
-                        "title": entry.title,
-                        "description": description[:500],  # Limit description length
-                        "url": entry.link,
-                        "source": source_name,
-                        "published_at": published_at.isoformat(),
-                        "coins": coins,
-                        "category": "news",
-                        "timestamp": datetime.now().isoformat()
-                    })
+                    news_items.append(
+                        {
+                            "title": entry.title,
+                            "description": description[:500],  # Limit description length
+                            "url": entry.link,
+                            "source": source_name,
+                            "published_at": published_at.isoformat(),
+                            "coins": coins,
+                            "category": "news",
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
 
                 logger.info(f"✅ {source_name}: Collected {len(news_items)} news items")
                 return news_items
@@ -149,59 +166,35 @@ class RSSNewsCollector:
 
     async def collect_from_cointelegraph(self) -> List[Dict]:
         """CoinTelegraph RSS Feed"""
-        return await self.fetch_rss_feed(
-            self.rss_feeds["cointelegraph"],
-            "CoinTelegraph"
-        )
+        return await self.fetch_rss_feed(self.rss_feeds["cointelegraph"], "CoinTelegraph")
 
     async def collect_from_coindesk(self) -> List[Dict]:
         """CoinDesk RSS Feed"""
-        return await self.fetch_rss_feed(
-            self.rss_feeds["coindesk"],
-            "CoinDesk"
-        )
+        return await self.fetch_rss_feed(self.rss_feeds["coindesk"], "CoinDesk")
 
     async def collect_from_bitcoinmagazine(self) -> List[Dict]:
         """Bitcoin Magazine RSS Feed"""
-        return await self.fetch_rss_feed(
-            self.rss_feeds["bitcoinmagazine"],
-            "Bitcoin Magazine"
-        )
+        return await self.fetch_rss_feed(self.rss_feeds["bitcoinmagazine"], "Bitcoin Magazine")
 
     async def collect_from_decrypt(self) -> List[Dict]:
         """Decrypt RSS Feed"""
-        return await self.fetch_rss_feed(
-            self.rss_feeds["decrypt"],
-            "Decrypt"
-        )
+        return await self.fetch_rss_feed(self.rss_feeds["decrypt"], "Decrypt")
 
     async def collect_from_theblock(self) -> List[Dict]:
         """The Block RSS Feed"""
-        return await self.fetch_rss_feed(
-            self.rss_feeds["theblock"],
-            "The Block"
-        )
+        return await self.fetch_rss_feed(self.rss_feeds["theblock"], "The Block")
 
     async def collect_from_cryptopotato(self) -> List[Dict]:
         """CryptoPotato RSS Feed"""
-        return await self.fetch_rss_feed(
-            self.rss_feeds["cryptopotato"],
-            "CryptoPotato"
-        )
+        return await self.fetch_rss_feed(self.rss_feeds["cryptopotato"], "CryptoPotato")
 
     async def collect_from_newsbtc(self) -> List[Dict]:
         """NewsBTC RSS Feed"""
-        return await self.fetch_rss_feed(
-            self.rss_feeds["newsbtc"],
-            "NewsBTC"
-        )
+        return await self.fetch_rss_feed(self.rss_feeds["newsbtc"], "NewsBTC")
 
     async def collect_from_bitcoinist(self) -> List[Dict]:
         """Bitcoinist RSS Feed"""
-        return await self.fetch_rss_feed(
-            self.rss_feeds["bitcoinist"],
-            "Bitcoinist"
-        )
+        return await self.fetch_rss_feed(self.rss_feeds["bitcoinist"], "Bitcoinist")
 
     async def collect_all_rss_feeds(self) -> Dict[str, List[Dict]]:
         """
@@ -244,17 +237,14 @@ class RSSNewsCollector:
 
         for source, news_list in all_news.items():
             for news_item in news_list:
-                url = news_item['url']
+                url = news_item["url"]
 
                 if url not in seen_urls:
                     seen_urls.add(url)
                     unique_news.append(news_item)
 
         # Sort by published date (most recent first)
-        unique_news.sort(
-            key=lambda x: x.get('published_at', ''),
-            reverse=True
-        )
+        unique_news.sort(key=lambda x: x.get("published_at", ""), reverse=True)
 
         logger.info(f"📰 Deduplicated to {len(unique_news)} unique news items")
         return unique_news
@@ -264,8 +254,9 @@ class RSSNewsCollector:
         coins_upper = [c.upper() for c in coins]
 
         filtered = [
-            item for item in news
-            if any(coin.upper() in coins_upper for coin in item.get('coins', []))
+            item
+            for item in news
+            if any(coin.upper() in coins_upper for coin in item.get("coins", []))
         ]
 
         return filtered
@@ -278,17 +269,13 @@ class RSSNewsCollector:
         coin_counts = {}
 
         for item in news:
-            for coin in item.get('coins', []):
+            for coin in item.get("coins", []):
                 coin_counts[coin] = coin_counts.get(coin, 0) + 1
 
         # Sort by count
         trending = [
             {"coin": coin, "mentions": count}
-            for coin, count in sorted(
-                coin_counts.items(),
-                key=lambda x: x[1],
-                reverse=True
-            )
+            for coin, count in sorted(coin_counts.items(), key=lambda x: x[1], reverse=True)
         ]
 
         return trending[:20]  # Top 20
@@ -298,9 +285,9 @@ async def main():
     """Test the RSS collectors"""
     collector = RSSNewsCollector()
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 Testing FREE RSS News Collectors")
-    print("="*70)
+    print("=" * 70)
 
     # Test individual feeds
     print("\n1️⃣ Testing CoinTelegraph RSS...")
@@ -320,9 +307,9 @@ async def main():
     print(f"   Got {len(bm_news)} news items")
 
     # Test all feeds at once
-    print("\n\n" + "="*70)
+    print("\n\n" + "=" * 70)
     print("🚀 Testing ALL RSS Feeds Simultaneously")
-    print("="*70)
+    print("=" * 70)
 
     all_news = await collector.collect_all_rss_feeds()
 
@@ -332,9 +319,9 @@ async def main():
         print(f"   {source}: {len(news)} items")
 
     # Test deduplication
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🔄 Testing Deduplication")
-    print("="*70)
+    print("=" * 70)
 
     unique_news = collector.deduplicate_news(all_news)
     print(f"\n✅ Deduplicated to {len(unique_news)} unique items")
@@ -345,13 +332,13 @@ async def main():
         print(f"\n{i}. {news['title']}")
         print(f"   Source: {news['source']}")
         print(f"   Published: {news['published_at']}")
-        if news.get('coins'):
+        if news.get("coins"):
             print(f"   Coins: {', '.join(news['coins'])}")
 
     # Test trending coins
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🔥 Trending Coins (Most Mentioned)")
-    print("="*70)
+    print("=" * 70)
 
     trending = collector.get_trending_coins(unique_news)
     print(f"\n✅ Top 10 Trending Coins:")

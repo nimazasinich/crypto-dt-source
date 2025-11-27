@@ -1,4 +1,5 @@
 """Data aggregator with multi-provider fallback"""
+
 from __future__ import annotations
 from typing import List, Optional
 from datetime import datetime
@@ -6,12 +7,19 @@ import time
 import logging
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from providers import BinanceProvider, CoinGeckoProvider, KrakenProvider, CoinCapProvider
 from core.models import (
-    OHLCV, Price, SentimentData, FearGreedIndex, NewsSentiment,
-    OverallSentiment, MarketOverview, ProviderHealth
+    OHLCV,
+    Price,
+    SentimentData,
+    FearGreedIndex,
+    NewsSentiment,
+    OverallSentiment,
+    MarketOverview,
+    ProviderHealth,
 )
 from core.config import settings
 from core.cache import cache, cache_key, get_or_set
@@ -46,10 +54,7 @@ class DataAggregator:
             await provider.close()
 
     async def fetch_ohlcv(
-        self,
-        symbol: str,
-        interval: str = "1h",
-        limit: int = 100
+        self, symbol: str, interval: str = "1h", limit: int = 100
     ) -> tuple[List[OHLCV], str]:
         """Fetch OHLCV data with provider fallback"""
 
@@ -120,7 +125,7 @@ class DataAggregator:
                     return FearGreedIndex(
                         value=int(fng_data["value"]),
                         classification=fng_data["value_classification"],
-                        timestamp=datetime.now().isoformat()
+                        timestamp=datetime.now().isoformat(),
                     )
 
         except Exception as e:
@@ -128,9 +133,7 @@ class DataAggregator:
 
         # Return neutral value on failure
         return FearGreedIndex(
-            value=50,
-            classification="Neutral",
-            timestamp=datetime.now().isoformat()
+            value=50, classification="Neutral", timestamp=datetime.now().isoformat()
         )
 
     async def fetch_sentiment(self) -> SentimentData:
@@ -157,11 +160,7 @@ class DataAggregator:
         return SentimentData(
             fearGreed=fear_greed,
             news=NewsSentiment(total=0),
-            overall=OverallSentiment(
-                sentiment=sentiment,
-                score=score,
-                confidence=0.8
-            )
+            overall=OverallSentiment(sentiment=sentiment, score=score, confidence=0.8),
         )
 
     async def fetch_market_overview(self) -> MarketOverview:
@@ -174,18 +173,14 @@ class DataAggregator:
                 totalVolume24h=market_data.get("total_volume", {}).get("usd", 0),
                 btcDominance=market_data.get("market_cap_percentage", {}).get("btc", 0),
                 ethDominance=market_data.get("market_cap_percentage", {}).get("eth", 0),
-                activeCoins=market_data.get("active_cryptocurrencies", 0)
+                activeCoins=market_data.get("active_cryptocurrencies", 0),
             )
 
         except Exception as e:
             logger.error(f"Failed to fetch market overview: {e}")
             # Return empty data on failure
             return MarketOverview(
-                totalMarketCap=0,
-                totalVolume24h=0,
-                btcDominance=0,
-                ethDominance=0,
-                activeCoins=0
+                totalMarketCap=0, totalVolume24h=0, btcDominance=0, ethDominance=0, activeCoins=0
             )
 
     async def get_all_provider_health(self) -> List[ProviderHealth]:

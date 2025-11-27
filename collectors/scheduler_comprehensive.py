@@ -42,41 +42,23 @@ class ComprehensiveScheduler:
         """
         default_config = {
             "schedules": {
-                "market_data": {
-                    "interval_seconds": 60,  # Every 1 minute
-                    "enabled": True
-                },
-                "blockchain": {
-                    "interval_seconds": 300,  # Every 5 minutes
-                    "enabled": True
-                },
-                "news": {
-                    "interval_seconds": 600,  # Every 10 minutes
-                    "enabled": True
-                },
-                "sentiment": {
-                    "interval_seconds": 1800,  # Every 30 minutes
-                    "enabled": True
-                },
-                "whale_tracking": {
-                    "interval_seconds": 300,  # Every 5 minutes
-                    "enabled": True
-                },
-                "full_collection": {
-                    "interval_seconds": 3600,  # Every 1 hour
-                    "enabled": True
-                }
+                "market_data": {"interval_seconds": 60, "enabled": True},  # Every 1 minute
+                "blockchain": {"interval_seconds": 300, "enabled": True},  # Every 5 minutes
+                "news": {"interval_seconds": 600, "enabled": True},  # Every 10 minutes
+                "sentiment": {"interval_seconds": 1800, "enabled": True},  # Every 30 minutes
+                "whale_tracking": {"interval_seconds": 300, "enabled": True},  # Every 5 minutes
+                "full_collection": {"interval_seconds": 3600, "enabled": True},  # Every 1 hour
             },
             "max_retries": 3,
             "retry_delay_seconds": 5,
             "persist_results": True,
-            "results_directory": "data/collections"
+            "results_directory": "data/collections",
         }
 
         config_path = Path(self.config_file)
         if config_path.exists():
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     loaded_config = json.load(f)
                     # Merge with defaults
                     default_config.update(loaded_config)
@@ -92,7 +74,7 @@ class ComprehensiveScheduler:
             config_path = Path(self.config_file)
             config_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 json.dump(self.config, f, indent=2)
 
             logger.info(f"Saved scheduler config to {config_path}")
@@ -117,7 +99,7 @@ class ComprehensiveScheduler:
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = results_dir / f"{category}_{timestamp}.json"
 
-            with open(filename, 'w') as f:
+            with open(filename, "w") as f:
                 json.dump(results, f, indent=2, default=str)
 
             logger.info(f"Saved {category} results to {filename}")
@@ -273,11 +255,7 @@ class ComprehensiveScheduler:
             Dict with scheduler status information
         """
         now = datetime.now(timezone.utc)
-        status = {
-            "running": self.running,
-            "current_time": now.isoformat(),
-            "schedules": {}
-        }
+        status = {"running": self.running, "current_time": now.isoformat(), "schedules": {}}
 
         for category, schedule in self.config.get("schedules", {}).items():
             last_run = self.last_run_times.get(category)
@@ -297,12 +275,14 @@ class ComprehensiveScheduler:
                 "last_run": last_run.isoformat() if last_run else None,
                 "next_run": next_run.isoformat() if next_run else None,
                 "seconds_until_next": round(time_until_next, 2) if time_until_next else None,
-                "should_run_now": self.should_run(category)
+                "should_run_now": self.should_run(category),
             }
 
         return status
 
-    def update_schedule(self, category: str, interval_seconds: Optional[int] = None, enabled: Optional[bool] = None):
+    def update_schedule(
+        self, category: str, interval_seconds: Optional[int] = None, enabled: Optional[bool] = None
+    ):
         """
         Update schedule for a category
 
@@ -328,6 +308,7 @@ class ComprehensiveScheduler:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         scheduler = ComprehensiveScheduler()
 
@@ -342,10 +323,10 @@ if __name__ == "__main__":
         print("\nSchedules:")
         print("-" * 80)
 
-        for category, sched in status['schedules'].items():
-            enabled = "✓" if sched['enabled'] else "✗"
-            interval = sched['interval_seconds']
-            next_run = sched.get('seconds_until_next', 'N/A')
+        for category, sched in status["schedules"].items():
+            enabled = "✓" if sched["enabled"] else "✗"
+            interval = sched["interval_seconds"]
+            next_run = sched.get("seconds_until_next", "N/A")
 
             print(f"{enabled} {category:20} | Interval: {interval:6}s | Next in: {next_run}")
 
@@ -357,7 +338,7 @@ if __name__ == "__main__":
 
         if results:
             print(f"\nCollected {len(results)} market data sources")
-            successful = sum(1 for r in results if r.get('success', False))
+            successful = sum(1 for r in results if r.get("success", False))
             print(f"Successful: {successful}/{len(results)}")
 
         print("\n" + "=" * 80)

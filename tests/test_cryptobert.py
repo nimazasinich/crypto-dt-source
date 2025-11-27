@@ -20,14 +20,18 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.mark.skipif(not registry_status()["transformers_available"], reason="transformers not available")
+@pytest.mark.skipif(
+    not registry_status()["transformers_available"], reason="transformers not available"
+)
 def test_crypto_sentiment_structure() -> None:
     result = analyze_crypto_sentiment("Bitcoin continues its bullish momentum")
     assert "label" in result
     assert "score" in result
 
 
-@pytest.mark.skipif(not registry_status()["transformers_available"], reason="transformers not available")
+@pytest.mark.skipif(
+    not registry_status()["transformers_available"], reason="transformers not available"
+)
 def test_multi_model_sentiments() -> None:
     financial = analyze_financial_sentiment("Equities rallied on strong earnings")
     social = analyze_social_sentiment("The community on twitter is excited about ETH")
@@ -35,7 +39,9 @@ def test_multi_model_sentiments() -> None:
     assert "label" in social
 
 
-@pytest.mark.skipif(not registry_status()["transformers_available"], reason="transformers not available")
+@pytest.mark.skipif(
+    not registry_status()["transformers_available"], reason="transformers not available"
+)
 def test_market_text_router() -> None:
     response = analyze_market_text("Summarize Bitcoin market sentiment today")
     assert "summary" in response

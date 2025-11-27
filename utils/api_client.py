@@ -15,16 +15,19 @@ logger = setup_logger("api_client")
 
 class APIClientError(Exception):
     """Base exception for API client errors"""
+
     pass
 
 
 class TimeoutError(APIClientError):
     """Timeout exception"""
+
     pass
 
 
 class RateLimitError(APIClientError):
     """Rate limit exception"""
+
     def __init__(self, message: str, retry_after: Optional[int] = None):
         super().__init__(message)
         self.retry_after = retry_after
@@ -32,11 +35,13 @@ class RateLimitError(APIClientError):
 
 class AuthenticationError(APIClientError):
     """Authentication exception"""
+
     pass
 
 
 class ServerError(APIClientError):
     """Server error exception"""
+
     pass
 
 
@@ -50,7 +55,7 @@ class APIClient:
         default_timeout: int = 10,
         max_connections: int = 100,
         retry_attempts: int = 3,
-        retry_delay: float = 1.0
+        retry_delay: float = 1.0,
     ):
         """
         Initialize API client
@@ -70,10 +75,7 @@ class APIClient:
         self._connector = None
 
         # Default headers
-        self.default_headers = {
-            "User-Agent": "CryptoAPIMonitor/1.0",
-            "Accept": "application/json"
-        }
+        self.default_headers = {"User-Agent": "CryptoAPIMonitor/1.0", "Accept": "application/json"}
 
     @property
     def connector(self):
@@ -83,7 +85,7 @@ class APIClient:
                 limit=self.max_connections,
                 limit_per_host=10,
                 ttl_dns_cache=300,
-                enable_cleanup_closed=True
+                enable_cleanup_closed=True,
             )
         return self._connector
 
@@ -94,7 +96,7 @@ class APIClient:
         headers: Optional[Dict] = None,
         params: Optional[Dict] = None,
         timeout: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> Tuple[int, Any, float, Optional[str]]:
         """
         Make HTTP request with error handling
@@ -114,8 +116,7 @@ class APIClient:
 
         try:
             async with aiohttp.ClientSession(
-                connector=self.connector,
-                timeout=timeout_config
+                connector=self.connector, timeout=timeout_config
             ) as session:
                 async with session.request(
                     method,
@@ -123,7 +124,7 @@ class APIClient:
                     headers=merged_headers,
                     params=params,
                     ssl=True,  # Enable SSL verification
-                    **kwargs
+                    **kwargs,
                 ) as response:
                     response_time_ms = (time.time() - start_time) * 1000
                     status_code = response.status
@@ -160,7 +161,7 @@ class APIClient:
         params: Optional[Dict] = None,
         timeout: Optional[int] = None,
         retry: bool = True,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Make HTTP request with retry logic
@@ -196,7 +197,7 @@ class APIClient:
                     "response_time_ms": response_time_ms,
                     "error_type": None,
                     "error_message": None,
-                    "retry_count": attempt - 1
+                    "retry_count": attempt - 1,
                 }
 
             # Rate limit - extract Retry-After header
@@ -214,7 +215,7 @@ class APIClient:
                         "error_type": "rate_limit",
                         "error_message": f"Rate limit exceeded. Retry after {retry_after}s",
                         "retry_count": attempt - 1,
-                        "retry_after": retry_after
+                        "retry_after": retry_after,
                     }
 
                 # Wait and retry
@@ -230,7 +231,7 @@ class APIClient:
                     "response_time_ms": response_time_ms,
                     "error_type": "authentication",
                     "error_message": f"Authentication failed: HTTP {status_code}",
-                    "retry_count": attempt - 1
+                    "retry_count": attempt - 1,
                 }
 
             # Server error - retry with exponential backoff
@@ -245,7 +246,7 @@ class APIClient:
                         "response_time_ms": response_time_ms,
                         "error_type": "server_error",
                         "error_message": f"Server error: HTTP {status_code}",
-                        "retry_count": attempt - 1
+                        "retry_count": attempt - 1,
                     }
 
                 # Exponential backoff: 1min, 2min, 4min
@@ -265,7 +266,7 @@ class APIClient:
                         "response_time_ms": response_time_ms,
                         "error_type": "timeout",
                         "error_message": error_message,
-                        "retry_count": attempt - 1
+                        "retry_count": attempt - 1,
                     }
 
                 # Increase timeout by 50%
@@ -282,7 +283,7 @@ class APIClient:
                     "response_time_ms": response_time_ms,
                     "error_type": "network_error" if status_code == 0 else "http_error",
                     "error_message": error_message or f"HTTP {status_code}",
-                    "retry_count": attempt - 1
+                    "retry_count": attempt - 1,
                 }
 
         # All retries exhausted
@@ -293,7 +294,7 @@ class APIClient:
             "response_time_ms": 0,
             "error_type": last_error or "unknown",
             "error_message": "All retry attempts exhausted",
-            "retry_count": self.retry_attempts
+            "retry_count": self.retry_attempts,
         }
 
     async def get(self, url: str, **kwargs) -> Dict[str, Any]:

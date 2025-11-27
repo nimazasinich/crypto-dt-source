@@ -10,8 +10,12 @@ from threading import Lock
 from sqlalchemy.orm import Session
 
 from database.models import (
-    SourcePool, PoolMember, RotationHistory, RotationState,
-    Provider, RateLimitUsage
+    SourcePool,
+    PoolMember,
+    RotationHistory,
+    RotationState,
+    Provider,
+    RateLimitUsage,
 )
 from monitoring.rate_limiter import rate_limiter
 from utils.logger import setup_logger
@@ -40,7 +44,7 @@ class SourcePoolManager:
         name: str,
         category: str,
         description: Optional[str] = None,
-        rotation_strategy: str = "round_robin"
+        rotation_strategy: str = "round_robin",
     ) -> SourcePool:
         """
         Create a new source pool
@@ -60,18 +64,14 @@ class SourcePoolManager:
                 category=category,
                 description=description,
                 rotation_strategy=rotation_strategy,
-                enabled=True
+                enabled=True,
             )
             self.db.add(pool)
             self.db.commit()
             self.db.refresh(pool)
 
             # Create rotation state
-            state = RotationState(
-                pool_id=pool.id,
-                current_provider_id=None,
-                rotation_count=0
-            )
+            state = RotationState(pool_id=pool.id, current_provider_id=None, rotation_count=0)
             self.db.add(state)
             self.db.commit()
 
@@ -79,11 +79,7 @@ class SourcePoolManager:
             return pool
 
     def add_to_pool(
-        self,
-        pool_id: int,
-        provider_id: int,
-        priority: int = 1,
-        weight: int = 1
+        self, pool_id: int, provider_id: int, priority: int = 1, weight: int = 1
     ) -> PoolMember:
         """
         Add a provider to a pool
@@ -106,7 +102,7 @@ class SourcePoolManager:
                 enabled=True,
                 use_count=0,
                 success_count=0,
-                failure_count=0
+                failure_count=0,
             )
             self.db.add(member)
             self.db.commit()
@@ -116,9 +112,7 @@ class SourcePoolManager:
             return member
 
     def get_next_provider(
-        self,
-        pool_id: int,
-        exclude_rate_limited: bool = True
+        self, pool_id: int, exclude_rate_limited: bool = True
     ) -> Optional[Provider]:
         """
         Get next provider from pool based on rotation strategy
@@ -167,10 +161,7 @@ class SourcePoolManager:
                 available_members = members
 
             # Select provider based on strategy
-            selected_member = self._select_by_strategy(
-                pool.rotation_strategy,
-                available_members
-            )
+            selected_member = self._select_by_strategy(pool.rotation_strategy, available_members)
 
             if not selected_member:
                 return None
@@ -188,7 +179,7 @@ class SourcePoolManager:
                     pool_id=pool_id,
                     from_provider_id=old_provider_id,
                     to_provider_id=selected_member.provider_id,
-                    reason="rotation"
+                    reason="rotation",
                 )
 
             # Update state
@@ -209,11 +200,7 @@ class SourcePoolManager:
             )
             return provider
 
-    def _select_by_strategy(
-        self,
-        strategy: str,
-        members: List[PoolMember]
-    ) -> Optional[PoolMember]:
+    def _select_by_strategy(self, strategy: str, members: List[PoolMember]) -> Optional[PoolMember]:
         """
         Select a pool member based on rotation strategy
 
@@ -253,7 +240,7 @@ class SourcePoolManager:
         from_provider_id: Optional[int],
         to_provider_id: int,
         reason: str,
-        notes: Optional[str] = None
+        notes: Optional[str] = None,
     ):
         """
         Record a rotation event
@@ -271,16 +258,13 @@ class SourcePoolManager:
             to_provider_id=to_provider_id,
             rotation_reason=reason,
             success=True,
-            notes=notes
+            notes=notes,
         )
         self.db.add(rotation)
         self.db.commit()
 
     def failover(
-        self,
-        pool_id: int,
-        failed_provider_id: int,
-        reason: str = "failure"
+        self, pool_id: int, failed_provider_id: int, reason: str = "failure"
     ) -> Optional[Provider]:
         """
         Perform failover from a failed provider
@@ -326,10 +310,7 @@ class SourcePoolManager:
                 return None
 
             # Select next provider
-            selected_member = self._select_by_strategy(
-                pool.rotation_strategy,
-                members
-            )
+            selected_member = self._select_by_strategy(pool.rotation_strategy, members)
 
             if not selected_member:
                 return None
@@ -340,7 +321,7 @@ class SourcePoolManager:
                 from_provider_id=failed_provider_id,
                 to_provider_id=selected_member.provider_id,
                 reason=reason,
-                notes=f"Automatic failover from provider {failed_provider_id}"
+                notes=f"Automatic failover from provider {failed_provider_id}",
             )
 
             # Update rotation state
@@ -422,7 +403,7 @@ class SourcePoolManager:
                     current_provider = {
                         "id": provider.id,
                         "name": provider.name,
-                        "status": "active"
+                        "status": "active",
                     }
 
             # Get all members with stats
@@ -439,29 +420,31 @@ class SourcePoolManager:
                 rate_limit_info = None
                 if rate_status:
                     rate_limit_info = {
-                        "usage": rate_status['current_usage'],
-                        "limit": rate_status['limit_value'],
-                        "percentage": rate_status['percentage'],
-                        "status": rate_status['status']
+                        "usage": rate_status["current_usage"],
+                        "limit": rate_status["limit_value"],
+                        "percentage": rate_status["percentage"],
+                        "status": rate_status["status"],
                     }
 
                 success_rate = 0
                 if member.use_count > 0:
                     success_rate = (member.success_count / member.use_count) * 100
 
-                members.append({
-                    "provider_id": provider.id,
-                    "provider_name": provider.name,
-                    "priority": member.priority,
-                    "weight": member.weight,
-                    "enabled": member.enabled,
-                    "use_count": member.use_count,
-                    "success_count": member.success_count,
-                    "failure_count": member.failure_count,
-                    "success_rate": round(success_rate, 2),
-                    "last_used": member.last_used.isoformat() if member.last_used else None,
-                    "rate_limit": rate_limit_info
-                })
+                members.append(
+                    {
+                        "provider_id": provider.id,
+                        "provider_name": provider.name,
+                        "priority": member.priority,
+                        "weight": member.weight,
+                        "enabled": member.enabled,
+                        "use_count": member.use_count,
+                        "success_count": member.success_count,
+                        "failure_count": member.failure_count,
+                        "success_rate": round(success_rate, 2),
+                        "last_used": member.last_used.isoformat() if member.last_used else None,
+                        "rate_limit": rate_limit_info,
+                    }
+                )
 
             # Get recent rotations
             recent_rotations = (
@@ -482,13 +465,15 @@ class SourcePoolManager:
                 to_prov = self.db.query(Provider).get(rotation.to_provider_id)
                 to_provider = to_prov.name if to_prov else None
 
-                rotation_list.append({
-                    "timestamp": rotation.timestamp.isoformat(),
-                    "from_provider": from_provider,
-                    "to_provider": to_provider,
-                    "reason": rotation.rotation_reason,
-                    "success": rotation.success
-                })
+                rotation_list.append(
+                    {
+                        "timestamp": rotation.timestamp.isoformat(),
+                        "from_provider": from_provider,
+                        "to_provider": to_provider,
+                        "reason": rotation.rotation_reason,
+                        "success": rotation.success,
+                    }
+                )
 
             return {
                 "pool_id": pool.id,
@@ -499,9 +484,11 @@ class SourcePoolManager:
                 "enabled": pool.enabled,
                 "current_provider": current_provider,
                 "total_rotations": state.rotation_count if state else 0,
-                "last_rotation": state.last_rotation.isoformat() if state and state.last_rotation else None,
+                "last_rotation": (
+                    state.last_rotation.isoformat() if state and state.last_rotation else None
+                ),
                 "members": members,
-                "recent_rotations": rotation_list
+                "recent_rotations": rotation_list,
             }
 
     def get_all_pools_status(self) -> List[Dict[str, Any]]:
@@ -512,8 +499,4 @@ class SourcePoolManager:
             List of pool status dictionaries
         """
         pools = self.db.query(SourcePool).all()
-        return [
-            self.get_pool_status(pool.id)
-            for pool in pools
-            if self.get_pool_status(pool.id)
-        ]
+        return [self.get_pool_status(pool.id) for pool in pools if self.get_pool_status(pool.id)]

@@ -13,6 +13,7 @@ from functools import wraps
 
 try:
     import jwt
+
     JWT_AVAILABLE = True
 except ImportError:
     JWT_AVAILABLE = False
@@ -21,10 +22,10 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # Configuration
-SECRET_KEY = os.getenv('SECRET_KEY', secrets.token_urlsafe(32))
+SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', '60'))
-ENABLE_AUTH = os.getenv('ENABLE_AUTH', 'false').lower() == 'true'
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+ENABLE_AUTH = os.getenv("ENABLE_AUTH", "false").lower() == "true"
 
 
 class AuthManager:
@@ -41,23 +42,23 @@ class AuthManager:
     def _load_credentials(self):
         """Load credentials from environment variables"""
         # Load default admin user
-        admin_user = os.getenv('ADMIN_USERNAME', 'admin')
-        admin_pass = os.getenv('ADMIN_PASSWORD')
+        admin_user = os.getenv("ADMIN_USERNAME", "admin")
+        admin_pass = os.getenv("ADMIN_PASSWORD")
 
         if admin_pass:
             self.users_db[admin_user] = self._hash_password(admin_pass)
             logger.info(f"Loaded admin user: {admin_user}")
 
         # Load API keys from environment
-        api_keys_str = os.getenv('API_KEYS', '')
+        api_keys_str = os.getenv("API_KEYS", "")
         if api_keys_str:
-            for key in api_keys_str.split(','):
+            for key in api_keys_str.split(","):
                 key = key.strip()
                 if key:
                     self.api_keys_db[key] = {
-                        'created_at': datetime.utcnow(),
-                        'name': 'env_key',
-                        'active': True
+                        "created_at": datetime.utcnow(),
+                        "name": "env_key",
+                        "active": True,
                     }
             logger.info(f"Loaded {len(self.api_keys_db)} API keys")
 
@@ -83,11 +84,7 @@ class AuthManager:
         hashed = self._hash_password(password)
         return secrets.compare_digest(self.users_db[username], hashed)
 
-    def create_access_token(
-        self,
-        username: str,
-        expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_access_token(self, username: str, expires_delta: Optional[timedelta] = None) -> str:
         """
         Create JWT access token
 
@@ -105,11 +102,7 @@ class AuthManager:
             expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
         expire = datetime.utcnow() + expires_delta
-        payload = {
-            'sub': username,
-            'exp': expire,
-            'iat': datetime.utcnow()
-        }
+        payload = {"sub": username, "exp": expire, "iat": datetime.utcnow()}
 
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
         return token
@@ -129,7 +122,7 @@ class AuthManager:
 
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            username: str = payload.get('sub')
+            username: str = payload.get("sub")
             return username
         except jwt.ExpiredSignatureError:
             logger.warning("Token expired")
@@ -152,7 +145,7 @@ class AuthManager:
             return False
 
         key_data = self.api_keys_db[api_key]
-        return key_data.get('active', False)
+        return key_data.get("active", False)
 
     def create_api_key(self, name: str) -> str:
         """
@@ -166,10 +159,10 @@ class AuthManager:
         """
         api_key = secrets.token_urlsafe(32)
         self.api_keys_db[api_key] = {
-            'created_at': datetime.utcnow(),
-            'name': name,
-            'active': True,
-            'usage_count': 0
+            "created_at": datetime.utcnow(),
+            "name": name,
+            "active": True,
+            "usage_count": 0,
         }
         logger.info(f"Created API key: {name}")
         return api_key
@@ -185,7 +178,7 @@ class AuthManager:
             True if revoked, False if not found
         """
         if api_key in self.api_keys_db:
-            self.api_keys_db[api_key]['active'] = False
+            self.api_keys_db[api_key]["active"] = False
             logger.info(f"Revoked API key: {self.api_keys_db[api_key]['name']}")
             return True
         return False
@@ -193,8 +186,9 @@ class AuthManager:
     def track_usage(self, api_key: str):
         """Track API key usage"""
         if api_key in self.api_keys_db:
-            self.api_keys_db[api_key]['usage_count'] = \
-                self.api_keys_db[api_key].get('usage_count', 0) + 1
+            self.api_keys_db[api_key]["usage_count"] = (
+                self.api_keys_db[api_key].get("usage_count", 0) + 1
+            )
 
 
 # Global auth manager instance
@@ -209,6 +203,7 @@ def require_auth(func):
     Decorator to require authentication for endpoints
     Checks for JWT token in Authorization header or API key in X-API-Key header
     """
+
     @wraps(func)
     async def wrapper(*args, **kwargs):
         if not ENABLE_AUTH:
@@ -230,6 +225,7 @@ def require_auth(func):
 
 def require_api_key(func):
     """Decorator to require API key authentication"""
+
     @wraps(func)
     async def wrapper(*args, **kwargs):
         if not ENABLE_AUTH:
@@ -265,10 +261,7 @@ def authenticate_user(username: str, password: str) -> Optional[str]:
     return None
 
 
-def verify_request_auth(
-    authorization: Optional[str] = None,
-    api_key: Optional[str] = None
-) -> bool:
+def verify_request_auth(authorization: Optional[str] = None, api_key: Optional[str] = None) -> bool:
     """
     Verify request authentication
 
@@ -288,8 +281,8 @@ def verify_request_auth(
         return True
 
     # Check JWT token
-    if authorization and authorization.startswith('Bearer '):
-        token = authorization.split(' ')[1]
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
         username = auth_manager.verify_token(token)
         if username:
             return True

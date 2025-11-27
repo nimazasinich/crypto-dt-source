@@ -89,12 +89,16 @@ class AutoDiscoveryService:
             return
 
         if InferenceClient is None:
-            logger.warning("huggingface-hub package not available. Auto discovery will use fallback heuristics.")
+            logger.warning(
+                "huggingface-hub package not available. Auto discovery will use fallback heuristics."
+            )
         else:
             hf_token = os.getenv("HF_API_TOKEN")
             try:
                 self._hf_client = InferenceClient(model=self.hf_model, token=hf_token)
-                logger.info("Auto discovery Hugging Face client initialized with model %s", self.hf_model)
+                logger.info(
+                    "Auto discovery Hugging Face client initialized with model %s", self.hf_model
+                )
             except Exception as exc:  # pragma: no cover - فقط برای شرایط عدم اتصال
                 logger.error("Failed to initialize Hugging Face client: %s", exc)
                 self._hf_client = None
@@ -106,7 +110,9 @@ class AutoDiscoveryService:
         if self._running_task and not self._running_task.done():
             return
         self._running_task = asyncio.create_task(self._run_periodic_loop())
-        logger.info("Auto discovery service started with interval %s seconds", self.interval_seconds)
+        logger.info(
+            "Auto discovery service started with interval %s seconds", self.interval_seconds
+        )
 
     async def stop(self):
         """توقف سرویس."""
@@ -310,8 +316,7 @@ class AutoDiscoveryService:
             "requires_auth (boolean), description (short string), source_url (string). "
             "Do not invent APIs. Ignore SDKs, articles, or paid-only services. "
             "If no valid candidate exists, return an empty JSON array.\n\n"
-            "Context:\n"
-            + "\n".join(context_lines)
+            "Context:\n" + "\n".join(context_lines)
         )
 
     def _parse_model_response(self, response: str) -> List[Dict[str, Any]]:
@@ -418,4 +423,3 @@ class AutoDiscoveryService:
             return "unknown_provider"
         cleaned = re.sub(r"[^a-zA-Z0-9]+", "_", raw_value).strip("_").lower()
         return cleaned or "unknown_provider"
-

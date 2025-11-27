@@ -43,8 +43,14 @@ from sqlalchemy.orm import sessionmaker
 from backend.services.hf_unified_client import get_hf_client
 from backend.services.real_websocket import ws_manager
 from database.models import (
-    Base, CachedMarketData, CachedOHLC, WhaleTransaction,
-    NewsArticle, SentimentMetric, GasPrice, BlockchainStat
+    Base,
+    CachedMarketData,
+    CachedOHLC,
+    WhaleTransaction,
+    NewsArticle,
+    SentimentMetric,
+    GasPrice,
+    BlockchainStat,
 )
 import logging
 
@@ -58,27 +64,30 @@ Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 router = APIRouter(
-    tags=["Unified Service API"],
-    prefix=""  # No prefix, will be added at main level
+    tags=["Unified Service API"], prefix=""  # No prefix, will be added at main level
 )
 
 # ============================================================================
 # Pydantic Models
 # ============================================================================
 
+
 class RateRequest(BaseModel):
     """Single rate request"""
+
     pair: str  # BTC/USDT
     convert: Optional[str] = None  # USD
 
 
 class BatchRateRequest(BaseModel):
     """Batch rate request"""
+
     pairs: List[str]  # ["BTC/USDT", "ETH/USDT"]
 
 
 class SentimentRequest(BaseModel):
     """Sentiment analysis request"""
+
     text: Optional[str] = None
     symbol: Optional[str] = None
     mode: str = "crypto"
@@ -86,6 +95,7 @@ class SentimentRequest(BaseModel):
 
 class EconAnalysisRequest(BaseModel):
     """Economic analysis request"""
+
     currency: str
     period: str = "1M"
     context: str = "macro, inflow, rates"
@@ -93,6 +103,7 @@ class EconAnalysisRequest(BaseModel):
 
 class GenericQueryRequest(BaseModel):
     """Generic query request"""
+
     type: str  # rate|history|sentiment|econ|whales|onchain|pair
     payload: Dict[str, Any]
     options: Optional[Dict[str, Any]] = {"prefer_hf": True, "persist": True}
@@ -101,6 +112,7 @@ class GenericQueryRequest(BaseModel):
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
 
 def get_db():
     """Get database session"""
@@ -114,18 +126,18 @@ def get_db():
 async def get_provider_config():
     """Load provider configuration"""
     config_path = "/workspace/providers_config_ultimate.json"
-    
+
     # First try /mnt/data/api-config-complete.txt
     alt_path = "/mnt/data/api-config-complete.txt"
     if os.path.exists(alt_path):
-        with open(alt_path, 'r') as f:
+        with open(alt_path, "r") as f:
             return json.load(f)
-    
+
     # Fallback to local config
     if os.path.exists(config_path):
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             return json.load(f)
-    
+
     return {"providers": {}}
 
 
@@ -134,24 +146,24 @@ def build_meta(
     cache_ttl_seconds: int = 30,
     confidence: Optional[float] = None,
     attempted: Optional[List[str]] = None,
-    error: Optional[str] = None
+    error: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Build standard meta object"""
     meta = {
         "source": source,
         "generated_at": datetime.utcnow().isoformat() + "Z",
-        "cache_ttl_seconds": cache_ttl_seconds
+        "cache_ttl_seconds": cache_ttl_seconds,
     }
-    
+
     if confidence is not None:
         meta["confidence"] = confidence
-    
+
     if attempted:
         meta["attempted"] = attempted
-    
+
     if error:
         meta["error"] = error
-    
+
     return meta
 
 
@@ -160,7 +172,7 @@ async def persist_to_db(db: Session, data_type: str, data: Any, meta: Dict[str, 
     try:
         stored_at = datetime.utcnow()
         stored_from = meta.get("source", "unknown")
-        
+
         if data_type == "rate":
             # Save to CachedMarketData
             if isinstance(data, dict):
@@ -168,10 +180,10 @@ async def persist_to_db(db: Session, data_type: str, data: Any, meta: Dict[str, 
                     symbol=data.get("pair", "").split("/")[0],
                     price=data.get("price", 0),
                     provider=stored_from,
-                    fetched_at=stored_at
+                    fetched_at=stored_at,
                 )
                 db.add(market_data)
-        
+
         elif data_type == "sentiment":
             # Save to SentimentMetric
             if isinstance(data, dict):
@@ -179,10 +191,10 @@ async def persist_to_db(db: Session, data_type: str, data: Any, meta: Dict[str, 
                     metric_name="sentiment_analysis",
                     value=data.get("score", 0),
                     classification=data.get("label", "neutral"),
-                    source=stored_from
+                    source=stored_from,
                 )
                 db.add(sentiment)
-        
+
         elif data_type == "whale":
             # Save to WhaleTransaction
             if isinstance(data, list):
@@ -194,14 +206,16 @@ async def persist_to_db(db: Session, data_type: str, data: Any, meta: Dict[str, 
                         to_address=tx.get("to", ""),
                         amount=tx.get("amount", 0),
                         amount_usd=tx.get("amount_usd", 0),
-                        timestamp=datetime.fromisoformat(tx.get("ts", datetime.utcnow().isoformat())),
-                        source=stored_from
+                        timestamp=datetime.fromisoformat(
+                            tx.get("ts", datetime.utcnow().isoformat())
+                        ),
+                        source=stored_from,
                     )
                     db.add(whale_tx)
-        
+
         db.commit()
         logger.info(f"✅ Persisted {data_type} data to DB from {stored_from}")
-    
+
     except Exception as e:
         logger.error(f"❌ Failed to persist {data_type} data: {e}")
         db.rollback()
@@ -211,7 +225,7 @@ async def try_hf_first(endpoint: str, params: Optional[Dict] = None) -> Optional
     """Try HuggingFace Space first"""
     try:
         hf_client = get_hf_client()
-        
+
         # Map endpoint to HF client method
         if endpoint == "rate":
             symbol = params.get("pair", "BTC/USDT").replace("/", "")
@@ -224,23 +238,23 @@ async def try_hf_first(endpoint: str, params: Optional[Dict] = None) -> Optional
             result = await hf_client.get_whale_transactions(
                 limit=params.get("limit", 50),
                 chain=params.get("chain"),
-                min_amount_usd=params.get("min_amount_usd", 100000)
+                min_amount_usd=params.get("min_amount_usd", 100000),
             )
         elif endpoint == "history":
             result = await hf_client.get_market_history(
                 symbol=params.get("symbol", "BTC"),
                 timeframe=params.get("interval", "1h"),
-                limit=params.get("limit", 200)
+                limit=params.get("limit", 200),
             )
         else:
             return None
-        
+
         if result and result.get("success"):
             return result
-    
+
     except Exception as e:
         logger.warning(f"HF Space not available for {endpoint}: {e}")
-    
+
     return None
 
 
@@ -250,19 +264,15 @@ async def try_ws_exception(endpoint: str, params: Optional[Dict] = None) -> Opti
         # Only for real-time data
         if endpoint in ["rate", "market", "whales"]:
             # Send request through WebSocket
-            message = {
-                "action": "get",
-                "endpoint": endpoint,
-                "params": params
-            }
-            
+            message = {"action": "get", "endpoint": endpoint, "params": params}
+
             # This is a simplified version
             # In production, you'd wait for response through WS
             return None
-    
+
     except Exception as e:
         logger.warning(f"WebSocket not available for {endpoint}: {e}")
-    
+
     return None
 
 
@@ -270,40 +280,40 @@ async def try_fallback_providers(endpoint: str, params: Optional[Dict] = None) -
     """Try external fallback providers"""
     config = await get_provider_config()
     providers = config.get("providers", {})
-    
+
     attempted = []
-    
+
     for provider_id, provider_config in providers.items():
         if provider_config.get("category") != get_endpoint_category(endpoint):
             continue
-        
+
         attempted.append(provider_config.get("base_url", provider_id))
-        
+
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 # Build URL based on provider and endpoint
                 url = build_provider_url(provider_config, endpoint, params)
                 headers = build_provider_headers(provider_config)
-                
+
                 response = await client.get(url, headers=headers)
-                
+
                 if response.status_code == 200:
                     data = response.json()
-                    
+
                     # Normalize response based on provider
                     normalized = normalize_provider_response(provider_id, endpoint, data)
-                    
+
                     if normalized:
                         return {
                             "data": normalized,
                             "source": provider_config.get("base_url", provider_id),
-                            "attempted": attempted
+                            "attempted": attempted,
                         }
-        
+
         except Exception as e:
             logger.warning(f"Provider {provider_id} failed: {e}")
             continue
-    
+
     return {"attempted": attempted, "error": "All providers failed"}
 
 
@@ -317,7 +327,7 @@ def get_endpoint_category(endpoint: str) -> str:
         "sentiment": "sentiment",
         "whales": "onchain_analytics",
         "onchain": "blockchain_explorers",
-        "news": "news"
+        "news": "news",
     }
     return mapping.get(endpoint, "market_data")
 
@@ -326,39 +336,39 @@ def build_provider_url(provider: Dict, endpoint: str, params: Dict) -> str:
     """Build URL for provider"""
     base_url = provider.get("base_url", "")
     endpoints = provider.get("endpoints", {})
-    
+
     # Map our endpoint to provider endpoint
     endpoint_mapping = {
         "rate": "simple_price",
         "market": "coins_markets",
-        "history": "market_chart"
+        "history": "market_chart",
     }
-    
+
     provider_endpoint = endpoints.get(endpoint_mapping.get(endpoint, ""), "")
-    
+
     # Build full URL
     url = f"{base_url}{provider_endpoint}"
-    
+
     # Replace placeholders
     if params:
         for key, value in params.items():
             url = url.replace(f"{{{key}}}", str(value))
-    
+
     return url
 
 
 def build_provider_headers(provider: Dict) -> Dict:
     """Build headers for provider request"""
     headers = {"Content-Type": "application/json"}
-    
+
     if provider.get("requires_auth"):
         auth_type = provider.get("auth_type", "header")
         auth_header = provider.get("auth_header", "Authorization")
         api_keys = provider.get("api_keys", [])
-        
+
         if api_keys and auth_type == "header":
             headers[auth_header] = api_keys[0]
-    
+
     return headers
 
 
@@ -372,9 +382,9 @@ def normalize_provider_response(provider_id: str, endpoint: str, data: Any) -> A
                 return {
                     "pair": f"{coin_id.upper()}/USD",
                     "price": prices.get("usd", 0),
-                    "ts": datetime.utcnow().isoformat()
+                    "ts": datetime.utcnow().isoformat(),
                 }
-    
+
     return data
 
 
@@ -382,76 +392,76 @@ def normalize_provider_response(provider_id: str, endpoint: str, data: Any) -> A
 # API Endpoints
 # ============================================================================
 
+
 @router.get("/api/service/rate")
 async def get_single_rate(
     pair: str = Query(..., description="Currency pair e.g. BTC/USDT"),
-    convert: Optional[str] = Query(None, description="Optional conversion currency")
+    convert: Optional[str] = Query(None, description="Optional conversion currency"),
 ):
     """
     Get current exchange rate for a single currency pair
-    
+
     Resolution order:
     1. HuggingFace Space (HTTP)
     2. WebSocket (for real-time only)
     3. External providers (CoinGecko, Binance, etc.)
     """
     attempted = []
-    
+
     try:
         # 1. Try HF first
         attempted.append("hf")
         hf_result = await try_hf_first("rate", {"pair": pair, "convert": convert})
-        
+
         if hf_result:
             data = {
                 "pair": pair,
                 "price": hf_result.get("data", [{}])[0].get("price", 0),
                 "quote": pair.split("/")[1] if "/" in pair else "USDT",
-                "ts": datetime.utcnow().isoformat() + "Z"
+                "ts": datetime.utcnow().isoformat() + "Z",
             }
-            
+
             # Persist to DB
             db = next(get_db())
             await persist_to_db(db, "rate", data, {"source": "hf"})
-            
-            return {
-                "data": data,
-                "meta": build_meta("hf", cache_ttl_seconds=10)
-            }
-        
+
+            return {"data": data, "meta": build_meta("hf", cache_ttl_seconds=10)}
+
         # 2. Try WebSocket
         attempted.append("hf-ws")
         ws_result = await try_ws_exception("rate", {"pair": pair})
-        
+
         if ws_result:
             return {
                 "data": ws_result,
-                "meta": build_meta("hf-ws", cache_ttl_seconds=5, attempted=attempted)
+                "meta": build_meta("hf-ws", cache_ttl_seconds=5, attempted=attempted),
             }
-        
+
         # 3. Try fallback providers
         fallback_result = await try_fallback_providers("rate", {"pair": pair})
-        
+
         if fallback_result and not fallback_result.get("error"):
             attempted.extend(fallback_result.get("attempted", []))
-            
+
             # Persist to DB
             db = next(get_db())
-            await persist_to_db(db, "rate", fallback_result["data"], {"source": fallback_result["source"]})
-            
+            await persist_to_db(
+                db, "rate", fallback_result["data"], {"source": fallback_result["source"]}
+            )
+
             return {
                 "data": fallback_result["data"],
-                "meta": build_meta(fallback_result["source"], attempted=attempted)
+                "meta": build_meta(fallback_result["source"], attempted=attempted),
             }
-        
+
         # All failed
         attempted.extend(fallback_result.get("attempted", []))
-        
+
         return {
             "data": None,
-            "meta": build_meta("none", attempted=attempted, error="DATA_NOT_AVAILABLE")
+            "meta": build_meta("none", attempted=attempted, error="DATA_NOT_AVAILABLE"),
         }
-    
+
     except Exception as e:
         logger.error(f"Error in get_single_rate: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -464,7 +474,7 @@ async def get_batch_rates(
     """Get current rates for multiple pairs"""
     pair_list = pairs.split(",")
     results = []
-    
+
     for pair in pair_list:
         try:
             result = await get_single_rate(pair=pair.strip())
@@ -472,11 +482,8 @@ async def get_batch_rates(
                 results.append(result["data"])
         except:
             continue
-    
-    return {
-        "data": results,
-        "meta": build_meta("mixed", cache_ttl_seconds=10)
-    }
+
+    return {"data": results, "meta": build_meta("mixed", cache_ttl_seconds=10)}
 
 
 @router.get("/api/service/pair/{pair}")
@@ -489,42 +496,43 @@ async def get_pair_metadata(
     """
     # Normalize pair format
     normalized_pair = pair.replace("-", "/")
-    
+
     try:
         # Always try HF first for pair metadata
         hf_result = await try_hf_first("pair", {"pair": normalized_pair})
-        
+
         if hf_result:
-            base, quote = normalized_pair.split("/") if "/" in normalized_pair else (normalized_pair, "USDT")
-            
+            base, quote = (
+                normalized_pair.split("/") if "/" in normalized_pair else (normalized_pair, "USDT")
+            )
+
             data = {
                 "pair": normalized_pair,
                 "base": base,
                 "quote": quote,
                 "tick_size": 0.01,
                 "min_qty": 0.0001,
-                "lot_size": 0.0001
+                "lot_size": 0.0001,
             }
-            
-            return {
-                "data": data,
-                "meta": build_meta("hf")
-            }
-        
+
+            return {"data": data, "meta": build_meta("hf")}
+
         # Fallback with attempted tracking
         attempted = ["hf"]
         fallback_result = await try_fallback_providers("pair", {"pair": normalized_pair})
-        
+
         if fallback_result and not fallback_result.get("error"):
             attempted.extend(fallback_result.get("attempted", []))
             return {
                 "data": fallback_result["data"],
-                "meta": build_meta(fallback_result["source"], attempted=attempted)
+                "meta": build_meta(fallback_result["source"], attempted=attempted),
             }
-        
+
         # Default response if all fail
-        base, quote = normalized_pair.split("/") if "/" in normalized_pair else (normalized_pair, "USDT")
-        
+        base, quote = (
+            normalized_pair.split("/") if "/" in normalized_pair else (normalized_pair, "USDT")
+        )
+
         return {
             "data": {
                 "pair": normalized_pair,
@@ -532,11 +540,11 @@ async def get_pair_metadata(
                 "quote": quote,
                 "tick_size": 0.01,
                 "min_qty": 0.0001,
-                "lot_size": 0.0001
+                "lot_size": 0.0001,
             },
-            "meta": build_meta("default", attempted=attempted)
+            "meta": build_meta("default", attempted=attempted),
         }
-    
+
     except Exception as e:
         logger.error(f"Error in get_pair_metadata: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -546,46 +554,43 @@ async def get_pair_metadata(
 async def analyze_sentiment(
     text: Optional[str] = Query(None, description="Text to analyze"),
     symbol: Optional[str] = Query(None, description="Symbol to analyze"),
-    mode: str = Query("crypto", description="Analysis mode: news|social|crypto")
+    mode: str = Query("crypto", description="Analysis mode: news|social|crypto"),
 ):
     """Sentiment analysis for text or symbol"""
     if not text and not symbol:
         raise HTTPException(status_code=400, detail="Either text or symbol required")
-    
+
     analysis_text = text or f"Analysis for {symbol} cryptocurrency"
-    
+
     try:
         # Try HF first
         hf_result = await try_hf_first("sentiment", {"text": analysis_text, "mode": mode})
-        
+
         if hf_result:
             data = {
                 "score": hf_result.get("data", {}).get("score", 0),
                 "label": hf_result.get("data", {}).get("label", "neutral"),
-                "summary": f"Sentiment analysis indicates {hf_result.get('data', {}).get('label', 'neutral')} outlook"
+                "summary": f"Sentiment analysis indicates {hf_result.get('data', {}).get('label', 'neutral')} outlook",
             }
-            
+
             # Persist to DB
             db = next(get_db())
             await persist_to_db(db, "sentiment", data, {"source": "hf"})
-            
+
             confidence = hf_result.get("data", {}).get("confidence", 0.7)
-            
-            return {
-                "data": data,
-                "meta": build_meta("hf-model", confidence=confidence)
-            }
-        
+
+            return {"data": data, "meta": build_meta("hf-model", confidence=confidence)}
+
         # Fallback
         return {
             "data": {
                 "score": 0.5,
                 "label": "neutral",
-                "summary": "Unable to perform sentiment analysis"
+                "summary": "Unable to perform sentiment analysis",
             },
-            "meta": build_meta("none", attempted=["hf"], error="ANALYSIS_UNAVAILABLE")
+            "meta": build_meta("none", attempted=["hf"], error="ANALYSIS_UNAVAILABLE"),
         }
-    
+
     except Exception as e:
         logger.error(f"Error in analyze_sentiment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -609,18 +614,18 @@ async def economic_analysis(request: EconAnalysisRequest):
         
         Recommendation: Monitor closely with cautious optimism
         """
-        
+
         return {
             "data": {
                 "currency": request.currency,
                 "period": request.period,
                 "analysis": analysis,
                 "score": 0.72,
-                "confidence": 0.85
+                "confidence": 0.85,
             },
-            "meta": build_meta("hf-model", confidence=0.85)
+            "meta": build_meta("hf-model", confidence=0.85),
         }
-    
+
     except Exception as e:
         logger.error(f"Error in economic_analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -630,55 +635,44 @@ async def economic_analysis(request: EconAnalysisRequest):
 async def get_historical_data(
     symbol: str = Query(..., description="Symbol e.g. BTC"),
     interval: int = Query(60, description="Interval in minutes"),
-    limit: int = Query(200, description="Number of candles")
+    limit: int = Query(200, description="Number of candles"),
 ):
     """Get historical OHLC data"""
     try:
         # Convert interval to string format
-        interval_map = {
-            1: "1m", 5: "5m", 15: "15m", 60: "1h",
-            240: "4h", 1440: "1d"
-        }
+        interval_map = {1: "1m", 5: "5m", 15: "15m", 60: "1h", 240: "4h", 1440: "1d"}
         interval_str = interval_map.get(interval, "1h")
-        
+
         # Try HF first
-        hf_result = await try_hf_first("history", {
-            "symbol": symbol,
-            "interval": interval_str,
-            "limit": limit
-        })
-        
+        hf_result = await try_hf_first(
+            "history", {"symbol": symbol, "interval": interval_str, "limit": limit}
+        )
+
         if hf_result:
             items = []
             for candle in hf_result.get("data", [])[:limit]:
-                items.append({
-                    "ts": candle.get("timestamp"),
-                    "open": candle.get("open"),
-                    "high": candle.get("high"),
-                    "low": candle.get("low"),
-                    "close": candle.get("close"),
-                    "volume": candle.get("volume")
-                })
-            
+                items.append(
+                    {
+                        "ts": candle.get("timestamp"),
+                        "open": candle.get("open"),
+                        "high": candle.get("high"),
+                        "low": candle.get("low"),
+                        "close": candle.get("close"),
+                        "volume": candle.get("volume"),
+                    }
+                )
+
             return {
-                "data": {
-                    "symbol": symbol,
-                    "interval": interval,
-                    "items": items
-                },
-                "meta": build_meta("hf", cache_ttl_seconds=60)
+                "data": {"symbol": symbol, "interval": interval, "items": items},
+                "meta": build_meta("hf", cache_ttl_seconds=60),
             }
-        
+
         # Fallback
         return {
-            "data": {
-                "symbol": symbol,
-                "interval": interval,
-                "items": []
-            },
-            "meta": build_meta("none", attempted=["hf"], error="NO_HISTORICAL_DATA")
+            "data": {"symbol": symbol, "interval": interval, "items": []},
+            "meta": build_meta("none", attempted=["hf"], error="NO_HISTORICAL_DATA"),
         }
-    
+
     except Exception as e:
         logger.error(f"Error in get_historical_data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -690,22 +684,26 @@ async def get_market_status():
     try:
         # Try HF first
         hf_result = await try_hf_first("market", {})
-        
+
         if hf_result:
             items = hf_result.get("data", [])[:10]
-            
+
             # Calculate aggregates
             total_market_cap = sum(item.get("market_cap", 0) for item in items)
             btc_dominance = 0
-            
+
             for item in items:
                 if item.get("symbol") == "BTC":
-                    btc_dominance = (item.get("market_cap", 0) / total_market_cap * 100) if total_market_cap > 0 else 0
+                    btc_dominance = (
+                        (item.get("market_cap", 0) / total_market_cap * 100)
+                        if total_market_cap > 0
+                        else 0
+                    )
                     break
-            
+
             top_gainers = sorted(items, key=lambda x: x.get("change_24h", 0), reverse=True)[:3]
             top_losers = sorted(items, key=lambda x: x.get("change_24h", 0))[:3]
-            
+
             return {
                 "data": {
                     "total_market_cap": total_market_cap,
@@ -713,58 +711,55 @@ async def get_market_status():
                     "top_gainers": top_gainers,
                     "top_losers": top_losers,
                     "active_cryptos": len(items),
-                    "timestamp": datetime.utcnow().isoformat() + "Z"
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
                 },
-                "meta": build_meta("hf", cache_ttl_seconds=30)
+                "meta": build_meta("hf", cache_ttl_seconds=30),
             }
-        
+
         # Fallback
         return {
             "data": None,
-            "meta": build_meta("none", attempted=["hf"], error="MARKET_DATA_UNAVAILABLE")
+            "meta": build_meta("none", attempted=["hf"], error="MARKET_DATA_UNAVAILABLE"),
         }
-    
+
     except Exception as e:
         logger.error(f"Error in get_market_status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/api/service/top")
-async def get_top_coins(
-    n: int = Query(10, description="Number of coins (10 or 50)")
-):
+async def get_top_coins(n: int = Query(10, description="Number of coins (10 or 50)")):
     """Get top N coins by market cap"""
     if n not in [10, 50]:
         n = 10
-    
+
     try:
         # Try HF first
         hf_result = await try_hf_first("market", {"limit": n})
-        
+
         if hf_result:
             items = []
             for i, coin in enumerate(hf_result.get("data", [])[:n], 1):
-                items.append({
-                    "rank": i,
-                    "symbol": coin.get("symbol"),
-                    "name": coin.get("name"),
-                    "price": coin.get("price"),
-                    "market_cap": coin.get("market_cap"),
-                    "change_24h": coin.get("change_24h"),
-                    "volume_24h": coin.get("volume_24h")
-                })
-            
-            return {
-                "data": items,
-                "meta": build_meta("hf", cache_ttl_seconds=60)
-            }
-        
+                items.append(
+                    {
+                        "rank": i,
+                        "symbol": coin.get("symbol"),
+                        "name": coin.get("name"),
+                        "price": coin.get("price"),
+                        "market_cap": coin.get("market_cap"),
+                        "change_24h": coin.get("change_24h"),
+                        "volume_24h": coin.get("volume_24h"),
+                    }
+                )
+
+            return {"data": items, "meta": build_meta("hf", cache_ttl_seconds=60)}
+
         # Fallback
         return {
             "data": [],
-            "meta": build_meta("none", attempted=["hf"], error="DATA_NOT_AVAILABLE")
+            "meta": build_meta("none", attempted=["hf"], error="DATA_NOT_AVAILABLE"),
         }
-    
+
     except Exception as e:
         logger.error(f"Error in get_top_coins: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -774,45 +769,39 @@ async def get_top_coins(
 async def get_whale_movements(
     chain: str = Query("ethereum", description="Blockchain network"),
     min_amount_usd: float = Query(100000, description="Minimum amount in USD"),
-    limit: int = Query(50, description="Number of transactions")
+    limit: int = Query(50, description="Number of transactions"),
 ):
     """Get whale transactions"""
     try:
         # Try HF first
-        hf_result = await try_hf_first("whales", {
-            "chain": chain,
-            "min_amount_usd": min_amount_usd,
-            "limit": limit
-        })
-        
+        hf_result = await try_hf_first(
+            "whales", {"chain": chain, "min_amount_usd": min_amount_usd, "limit": limit}
+        )
+
         if hf_result:
             transactions = []
             for tx in hf_result.get("data", [])[:limit]:
-                transactions.append({
-                    "tx_hash": tx.get("hash"),
-                    "from": tx.get("from"),
-                    "to": tx.get("to"),
-                    "amount_usd": tx.get("amount_usd"),
-                    "token": tx.get("token"),
-                    "block": tx.get("block"),
-                    "ts": tx.get("timestamp")
-                })
-            
+                transactions.append(
+                    {
+                        "tx_hash": tx.get("hash"),
+                        "from": tx.get("from"),
+                        "to": tx.get("to"),
+                        "amount_usd": tx.get("amount_usd"),
+                        "token": tx.get("token"),
+                        "block": tx.get("block"),
+                        "ts": tx.get("timestamp"),
+                    }
+                )
+
             # Persist to DB
             db = next(get_db())
             await persist_to_db(db, "whale", transactions, {"source": "hf"})
-            
-            return {
-                "data": transactions,
-                "meta": build_meta("hf", cache_ttl_seconds=60)
-            }
-        
+
+            return {"data": transactions, "meta": build_meta("hf", cache_ttl_seconds=60)}
+
         # Fallback
-        return {
-            "data": [],
-            "meta": build_meta("none", attempted=["hf"], error="NO_WHALE_DATA")
-        }
-    
+        return {"data": [], "meta": build_meta("none", attempted=["hf"], error="NO_WHALE_DATA")}
+
     except Exception as e:
         logger.error(f"Error in get_whale_movements: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -822,7 +811,7 @@ async def get_whale_movements(
 async def get_onchain_data(
     address: str = Query(..., description="Wallet address"),
     chain: str = Query("ethereum", description="Blockchain network"),
-    limit: int = Query(50, description="Number of transactions")
+    limit: int = Query(50, description="Number of transactions"),
 ):
     """Get on-chain data for address"""
     try:
@@ -834,11 +823,11 @@ async def get_onchain_data(
                 "balance": 0,
                 "token_balances": [],
                 "recent_transactions": [],
-                "total_transactions": 0
+                "total_transactions": 0,
             },
-            "meta": build_meta("etherscan", cache_ttl_seconds=60)
+            "meta": build_meta("etherscan", cache_ttl_seconds=60),
         }
-    
+
     except Exception as e:
         logger.error(f"Error in get_onchain_data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -853,60 +842,57 @@ async def generic_query(request: GenericQueryRequest):
     try:
         query_type = request.type
         payload = request.payload
-        
+
         if query_type == "rate":
             result = await get_single_rate(
-                pair=payload.get("pair", "BTC/USDT"),
-                convert=payload.get("convert")
+                pair=payload.get("pair", "BTC/USDT"), convert=payload.get("convert")
             )
-        
+
         elif query_type == "history":
             result = await get_historical_data(
                 symbol=payload.get("symbol", "BTC"),
                 interval=payload.get("interval", 60),
-                limit=payload.get("limit", 200)
+                limit=payload.get("limit", 200),
             )
-        
+
         elif query_type == "sentiment":
             result = await analyze_sentiment(
                 text=payload.get("text"),
                 symbol=payload.get("symbol"),
-                mode=payload.get("mode", "crypto")
+                mode=payload.get("mode", "crypto"),
             )
-        
+
         elif query_type == "whales":
             result = await get_whale_movements(
                 chain=payload.get("chain", "ethereum"),
                 min_amount_usd=payload.get("min_amount_usd", 100000),
-                limit=payload.get("limit", 50)
+                limit=payload.get("limit", 50),
             )
-        
+
         elif query_type == "onchain":
             result = await get_onchain_data(
                 address=payload.get("address"),
                 chain=payload.get("chain", "ethereum"),
-                limit=payload.get("limit", 50)
+                limit=payload.get("limit", 50),
             )
-        
+
         elif query_type == "pair":
-            result = await get_pair_metadata(
-                pair=payload.get("pair", "BTC/USDT")
-            )
-        
+            result = await get_pair_metadata(pair=payload.get("pair", "BTC/USDT"))
+
         elif query_type == "econ":
             result = await economic_analysis(
                 EconAnalysisRequest(
                     currency=payload.get("currency", "BTC"),
                     period=payload.get("period", "1M"),
-                    context=payload.get("context", "macro")
+                    context=payload.get("context", "macro"),
                 )
             )
-        
+
         else:
             raise HTTPException(status_code=400, detail=f"Unknown query type: {query_type}")
-        
+
         return result
-    
+
     except Exception as e:
         logger.error(f"Error in generic_query: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -916,11 +902,12 @@ async def generic_query(request: GenericQueryRequest):
 # WebSocket Endpoint
 # ============================================================================
 
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for real-time subscriptions
-    
+
     Subscribe format:
     {
         "action": "subscribe",
@@ -929,24 +916,26 @@ async def websocket_endpoint(websocket: WebSocket):
     }
     """
     await ws_manager.connect(websocket)
-    
+
     try:
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
-            
+
             if message.get("action") == "subscribe":
                 service = message.get("service")
                 symbols = message.get("symbols", [])
-                
+
                 # Subscribe to channels
-                await websocket.send_json({
-                    "type": "subscribed",
-                    "service": service,
-                    "symbols": symbols,
-                    "timestamp": datetime.utcnow().isoformat() + "Z"
-                })
-                
+                await websocket.send_json(
+                    {
+                        "type": "subscribed",
+                        "service": service,
+                        "symbols": symbols,
+                        "timestamp": datetime.utcnow().isoformat() + "Z",
+                    }
+                )
+
                 # Start sending updates
                 while True:
                     # Get real-time data
@@ -958,19 +947,19 @@ async def websocket_endpoint(websocket: WebSocket):
                             "symbol": symbol,
                             "data": {
                                 "price": 50000 + (hash(symbol) % 10000),
-                                "change": (hash(symbol) % 10) - 5
+                                "change": (hash(symbol) % 10) - 5,
                             },
-                            "timestamp": datetime.utcnow().isoformat() + "Z"
+                            "timestamp": datetime.utcnow().isoformat() + "Z",
                         }
-                        
+
                         await websocket.send_json(update)
-                        
+
                         # Persist to DB
                         db = next(get_db())
                         await persist_to_db(db, "rate", update["data"], {"source": "hf-ws"})
-                    
+
                     await asyncio.sleep(5)  # Update every 5 seconds
-    
+
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
     except Exception as e:

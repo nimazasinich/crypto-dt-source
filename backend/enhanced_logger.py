@@ -37,22 +37,21 @@ class ProviderHealthLogger:
 
         # Custom formatter with colors (if terminal supports it)
         console_formatter = ColoredFormatter(
-            '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
         console_handler.setFormatter(console_formatter)
 
         # File handler for all logs
-        file_handler = logging.FileHandler('data/logs/app.log')
+        file_handler = logging.FileHandler("data/logs/app.log")
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(
-            '%(asctime)s | %(levelname)-8s | %(name)s | %(funcName)s:%(lineno)d | %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "%(asctime)s | %(levelname)-8s | %(name)s | %(funcName)s:%(lineno)d | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
         file_handler.setFormatter(file_formatter)
 
         # Error file handler
-        error_handler = logging.FileHandler('data/logs/errors.log')
+        error_handler = logging.FileHandler("data/logs/errors.log")
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(file_formatter)
 
@@ -69,7 +68,7 @@ class ProviderHealthLogger:
         response_time_ms: Optional[float] = None,
         status_code: Optional[int] = None,
         error_message: Optional[str] = None,
-        used_proxy: bool = False
+        used_proxy: bool = False,
     ):
         """Log a provider API request with full context"""
 
@@ -81,7 +80,7 @@ class ProviderHealthLogger:
             "response_time_ms": response_time_ms,
             "status_code": status_code,
             "error_message": error_message,
-            "used_proxy": used_proxy
+            "used_proxy": used_proxy,
         }
 
         # Log to console
@@ -90,22 +89,16 @@ class ProviderHealthLogger:
                 f"✓ {provider_name} | {endpoint} | {response_time_ms:.0f}ms | HTTP {status_code}"
             )
         elif status == "error":
-            self.logger.error(
-                f"✗ {provider_name} | {endpoint} | {error_message}"
-            )
+            self.logger.error(f"✗ {provider_name} | {endpoint} | {error_message}")
         elif status == "timeout":
-            self.logger.warning(
-                f"⏱ {provider_name} | {endpoint} | Timeout"
-            )
+            self.logger.warning(f"⏱ {provider_name} | {endpoint} | Timeout")
         elif status == "proxy_fallback":
-            self.logger.info(
-                f"🌐 {provider_name} | {endpoint} | Switched to proxy"
-            )
+            self.logger.info(f"🌐 {provider_name} | {endpoint} | Switched to proxy")
 
         # Append to JSONL health log
         try:
-            with open(self.health_log_path, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(log_entry) + '\n')
+            with open(self.health_log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_entry) + "\n")
         except Exception as e:
             self.logger.error(f"Failed to write health log: {e}")
 
@@ -116,7 +109,7 @@ class ProviderHealthLogger:
         provider: Optional[str] = None,
         endpoint: Optional[str] = None,
         traceback: Optional[str] = None,
-        **extra
+        **extra,
     ):
         """Log an error with classification"""
 
@@ -127,7 +120,7 @@ class ProviderHealthLogger:
             "provider": provider,
             "endpoint": endpoint,
             "traceback": traceback,
-            **extra
+            **extra,
         }
 
         # Log to console
@@ -138,8 +131,8 @@ class ProviderHealthLogger:
 
         # Append to JSONL error log
         try:
-            with open(self.error_log_path, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(error_entry) + '\n')
+            with open(self.error_log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(error_entry) + "\n")
         except Exception as e:
             self.logger.error(f"Failed to write error log: {e}")
 
@@ -168,7 +161,7 @@ class ProviderHealthLogger:
         errors = []
         try:
             if self.error_log_path.exists():
-                with open(self.error_log_path, 'r', encoding='utf-8') as f:
+                with open(self.error_log_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
                     for line in lines[-limit:]:
                         try:
@@ -190,7 +183,7 @@ class ProviderHealthLogger:
             "failed_requests": 0,
             "avg_response_time": 0,
             "proxy_requests": 0,
-            "errors": []
+            "errors": [],
         }
 
         try:
@@ -198,7 +191,7 @@ class ProviderHealthLogger:
                 cutoff_time = datetime.now() - timedelta(hours=hours)
                 response_times = []
 
-                with open(self.health_log_path, 'r', encoding='utf-8') as f:
+                with open(self.health_log_path, "r", encoding="utf-8") as f:
                     for line in f:
                         try:
                             entry = json.loads(line)
@@ -219,10 +212,12 @@ class ProviderHealthLogger:
                             else:
                                 stats["failed_requests"] += 1
                                 if entry.get("error_message"):
-                                    stats["errors"].append({
-                                        "timestamp": entry["timestamp"],
-                                        "message": entry["error_message"]
-                                    })
+                                    stats["errors"].append(
+                                        {
+                                            "timestamp": entry["timestamp"],
+                                            "message": entry["error_message"],
+                                        }
+                                    )
 
                             if entry.get("used_proxy"):
                                 stats["proxy_requests"] += 1
@@ -243,21 +238,19 @@ class ColoredFormatter(logging.Formatter):
     """Custom formatter with colors for terminal output"""
 
     COLORS = {
-        'DEBUG': '\033[36m',    # Cyan
-        'INFO': '\033[32m',     # Green
-        'WARNING': '\033[33m',  # Yellow
-        'ERROR': '\033[31m',    # Red
-        'CRITICAL': '\033[35m', # Magenta
-        'RESET': '\033[0m'      # Reset
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
+        "CRITICAL": "\033[35m",  # Magenta
+        "RESET": "\033[0m",  # Reset
     }
 
     def format(self, record):
         # Add color to level name
         if record.levelname in self.COLORS:
             record.levelname = (
-                f"{self.COLORS[record.levelname]}"
-                f"{record.levelname}"
-                f"{self.COLORS['RESET']}"
+                f"{self.COLORS[record.levelname]}" f"{record.levelname}" f"{self.COLORS['RESET']}"
             )
 
         return super().format(record)

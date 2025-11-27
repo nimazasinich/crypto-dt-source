@@ -49,23 +49,25 @@ class BackgroundScheduler:
                 if result.status.value == "offline":
                     # Check if provider is Tier 1
                     resources = self.monitor.config.get_all_resources()
-                    resource = next((r for r in resources if r.get('name') == result.provider_name), None)
+                    resource = next(
+                        (r for r in resources if r.get("name") == result.provider_name), None
+                    )
 
-                    if resource and resource.get('tier', 3) == 1:
+                    if resource and resource.get("tier", 3) == 1:
                         # Create incident for Tier 1 outage
                         self.database.create_incident(
                             provider_name=result.provider_name,
                             category=result.category,
                             incident_type="service_offline",
                             description=f"Tier 1 provider offline: {result.error_message}",
-                            severity="high"
+                            severity="high",
                         )
 
                         # Create alert
                         self.database.create_alert(
                             provider_name=result.provider_name,
                             alert_type="tier1_offline",
-                            message=f"Critical: Tier 1 provider {result.provider_name} is offline"
+                            message=f"Critical: Tier 1 provider {result.provider_name} is offline",
                         )
 
             logger.info(f"Health check completed. Checked {len(results)} providers.")
@@ -87,9 +89,9 @@ class BackgroundScheduler:
                 self.scheduler.add_job(
                     func=self._run_health_check,
                     trigger=IntervalTrigger(minutes=self.interval_minutes),
-                    id='health_check_job',
-                    name='API Health Check',
-                    replace_existing=True
+                    id="health_check_job",
+                    name="API Health Check",
+                    replace_existing=True,
                 )
 
                 self.scheduler.start()
@@ -116,8 +118,7 @@ class BackgroundScheduler:
         if self._running:
             # Reschedule the job
             self.scheduler.reschedule_job(
-                job_id='health_check_job',
-                trigger=IntervalTrigger(minutes=interval_minutes)
+                job_id="health_check_job", trigger=IntervalTrigger(minutes=interval_minutes)
             )
             logger.info(f"Scheduler interval updated to {interval_minutes} minutes.")
 

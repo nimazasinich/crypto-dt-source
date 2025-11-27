@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Create engine
 engine = create_engine(
     config.DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in config.DATABASE_URL else {}
+    connect_args={"check_same_thread": False} if "sqlite" in config.DATABASE_URL else {},
 )
 
 # Create session factory
@@ -39,12 +39,16 @@ def init_database():
                         category=provider_config.category,
                         endpoint_url=provider_config.endpoint_url,
                         requires_key=provider_config.requires_key,
-                        api_key_masked=mask_api_key(provider_config.api_key) if provider_config.api_key else None,
+                        api_key_masked=(
+                            mask_api_key(provider_config.api_key)
+                            if provider_config.api_key
+                            else None
+                        ),
                         rate_limit_type=provider_config.rate_limit_type,
                         rate_limit_value=provider_config.rate_limit_value,
                         timeout_ms=provider_config.timeout_ms,
                         priority_tier=provider_config.priority_tier,
-                        status=ProviderStatusEnum.UNKNOWN
+                        status=ProviderStatusEnum.UNKNOWN,
                     )
                     db.add(provider)
 

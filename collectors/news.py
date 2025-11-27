@@ -46,8 +46,8 @@ def parse_iso_timestamp(timestamp_str: str) -> Optional[datetime]:
     """
     try:
         # Handle various ISO formats
-        if timestamp_str.endswith('Z'):
-            timestamp_str = timestamp_str.replace('Z', '+00:00')
+        if timestamp_str.endswith("Z"):
+            timestamp_str = timestamp_str.replace("Z", "+00:00")
         return datetime.fromisoformat(timestamp_str)
     except:
         return None
@@ -80,7 +80,7 @@ async def get_cryptopanic_posts() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "staleness_minutes": None,
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
         # Build request URL
@@ -89,7 +89,7 @@ async def get_cryptopanic_posts() -> Dict[str, Any]:
             "auth_token": "free",  # CryptoPanic offers free tier
             "public": "true",
             "kind": "news",  # Get news posts
-            "filter": "rising"  # Get rising news
+            "filter": "rising",  # Get rising news
         }
 
         # Make request
@@ -102,7 +102,7 @@ async def get_cryptopanic_posts() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -116,7 +116,7 @@ async def get_cryptopanic_posts() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -141,7 +141,9 @@ async def get_cryptopanic_posts() -> Dict[str, Any]:
 
         logger.info(
             f"{provider} - {endpoint} - Retrieved {post_count} posts, "
-            f"staleness: {staleness:.2f}m" if staleness else "staleness: N/A"
+            f"staleness: {staleness:.2f}m"
+            if staleness
+            else "staleness: N/A"
         )
 
         return {
@@ -154,7 +156,7 @@ async def get_cryptopanic_posts() -> Dict[str, Any]:
             "success": True,
             "error": None,
             "response_time_ms": response.get("response_time_ms", 0),
-            "post_count": post_count
+            "post_count": post_count,
         }
 
     except Exception as e:
@@ -168,7 +170,7 @@ async def get_cryptopanic_posts() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -199,7 +201,7 @@ async def get_newsapi_headlines() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "staleness_minutes": None,
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
         # Check if API key is available
@@ -214,7 +216,7 @@ async def get_newsapi_headlines() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": "missing_api_key"
+                "error_type": "missing_api_key",
             }
 
         # Build request URL
@@ -223,7 +225,7 @@ async def get_newsapi_headlines() -> Dict[str, Any]:
             "apikey": provider_config.api_key,
             "q": "cryptocurrency OR bitcoin OR ethereum",
             "language": "en",
-            "category": "business,technology"
+            "category": "business,technology",
         }
 
         # Make request
@@ -236,7 +238,7 @@ async def get_newsapi_headlines() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -250,7 +252,7 @@ async def get_newsapi_headlines() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -265,7 +267,9 @@ async def get_newsapi_headlines() -> Dict[str, Any]:
                 first_article = results[0]
                 if isinstance(first_article, dict):
                     # Try different timestamp fields
-                    timestamp_field = first_article.get("pubDate") or first_article.get("publishedAt")
+                    timestamp_field = first_article.get("pubDate") or first_article.get(
+                        "publishedAt"
+                    )
                     if timestamp_field:
                         data_timestamp = parse_iso_timestamp(timestamp_field)
 
@@ -278,7 +282,9 @@ async def get_newsapi_headlines() -> Dict[str, Any]:
 
         logger.info(
             f"{provider} - {endpoint} - Retrieved {article_count} articles, "
-            f"staleness: {staleness:.2f}m" if staleness else "staleness: N/A"
+            f"staleness: {staleness:.2f}m"
+            if staleness
+            else "staleness: N/A"
         )
 
         return {
@@ -291,7 +297,7 @@ async def get_newsapi_headlines() -> Dict[str, Any]:
             "success": True,
             "error": None,
             "response_time_ms": response.get("response_time_ms", 0),
-            "article_count": article_count
+            "article_count": article_count,
         }
 
     except Exception as e:
@@ -305,7 +311,7 @@ async def get_newsapi_headlines() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -320,9 +326,7 @@ async def collect_news_data() -> List[Dict[str, Any]]:
 
     # Run all collectors concurrently
     results = await asyncio.gather(
-        get_cryptopanic_posts(),
-        get_newsapi_headlines(),
-        return_exceptions=True
+        get_cryptopanic_posts(), get_newsapi_headlines(), return_exceptions=True
     )
 
     # Process results
@@ -330,16 +334,18 @@ async def collect_news_data() -> List[Dict[str, Any]]:
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"Collector failed with exception: {str(result)}")
-            processed_results.append({
-                "provider": "Unknown",
-                "category": "news",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "staleness_minutes": None,
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed_results.append(
+                {
+                    "provider": "Unknown",
+                    "category": "news",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "staleness_minutes": None,
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed_results.append(result)
 
@@ -347,7 +353,8 @@ async def collect_news_data() -> List[Dict[str, Any]]:
     successful = sum(1 for r in processed_results if r.get("success", False))
     total_items = sum(
         r.get("post_count", 0) + r.get("article_count", 0)
-        for r in processed_results if r.get("success", False)
+        for r in processed_results
+        if r.get("success", False)
     )
 
     logger.info(
@@ -393,7 +400,7 @@ class NewsCollector:
             "sources": [],
             "categories": [],
             "breaking": [],
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         for result in results:
@@ -406,31 +413,36 @@ class NewsCollector:
                 # Parse CryptoPanic posts
                 if provider == "CryptoPanic" and "results" in data:
                     for post in data["results"][:10]:  # Take top 10
-                        aggregated["articles"].append({
-                            "title": post.get("title"),
-                            "url": post.get("url"),
-                            "source": post.get("source", {}).get("title"),
-                            "published_at": post.get("published_at"),
-                            "kind": post.get("kind"),
-                            "votes": post.get("votes", {})
-                        })
+                        aggregated["articles"].append(
+                            {
+                                "title": post.get("title"),
+                                "url": post.get("url"),
+                                "source": post.get("source", {}).get("title"),
+                                "published_at": post.get("published_at"),
+                                "kind": post.get("kind"),
+                                "votes": post.get("votes", {}),
+                            }
+                        )
 
                 # Parse NewsAPI articles
                 elif provider == "NewsAPI" and "articles" in data:
                     for article in data["articles"][:10]:  # Take top 10
-                        aggregated["articles"].append({
-                            "title": article.get("title"),
-                            "url": article.get("url"),
-                            "source": article.get("source", {}).get("name"),
-                            "published_at": article.get("publishedAt"),
-                            "description": article.get("description")
-                        })
+                        aggregated["articles"].append(
+                            {
+                                "title": article.get("title"),
+                                "url": article.get("url"),
+                                "source": article.get("source", {}).get("name"),
+                                "published_at": article.get("publishedAt"),
+                                "description": article.get("description"),
+                            }
+                        )
 
         return aggregated
 
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         results = await collect_news_data()
 
@@ -439,7 +451,7 @@ if __name__ == "__main__":
             print(f"\nProvider: {result['provider']}")
             print(f"Success: {result['success']}")
             print(f"Staleness: {result.get('staleness_minutes', 'N/A')} minutes")
-            if result['success']:
+            if result["success"]:
                 print(f"Response Time: {result.get('response_time_ms', 0):.2f}ms")
                 print(f"Items: {result.get('post_count', 0) + result.get('article_count', 0)}")
             else:

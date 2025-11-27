@@ -94,7 +94,7 @@ async def get_the_graph_data() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -108,7 +108,7 @@ async def get_the_graph_data() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -132,10 +132,10 @@ async def get_the_graph_data() -> Dict[str, Any]:
                             "pair": f"{pool.get('token0', {}).get('symbol', '?')}/{pool.get('token1', {}).get('symbol', '?')}",
                             "tvl_usd": float(pool.get("totalValueLockedUSD", 0)),
                             "volume_usd": float(pool.get("volumeUSD", 0)),
-                            "tx_count": int(pool.get("txCount", 0))
+                            "tx_count": int(pool.get("txCount", 0)),
                         }
                         for pool in pools
-                    ]
+                    ],
                 }
 
         data_timestamp = datetime.now(timezone.utc)
@@ -143,7 +143,8 @@ async def get_the_graph_data() -> Dict[str, Any]:
 
         logger.info(
             f"{provider} - {endpoint} - TVL: ${graph_data.get('total_tvl_usd', 0):,.0f}"
-            if graph_data else f"{provider} - {endpoint} - No data"
+            if graph_data
+            else f"{provider} - {endpoint} - No data"
         )
 
         return {
@@ -155,7 +156,7 @@ async def get_the_graph_data() -> Dict[str, Any]:
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -169,7 +170,7 @@ async def get_the_graph_data() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -198,9 +199,7 @@ async def get_blockchair_data() -> Dict[str, Any]:
 
         # Make concurrent requests
         btc_response, eth_response = await asyncio.gather(
-            client.get(btc_url, timeout=10),
-            client.get(eth_url, timeout=10),
-            return_exceptions=True
+            client.get(btc_url, timeout=10), client.get(eth_url, timeout=10), return_exceptions=True
         )
 
         # Log requests
@@ -211,7 +210,7 @@ async def get_blockchair_data() -> Dict[str, Any]:
                 f"{endpoint}/bitcoin",
                 btc_response.get("response_time_ms", 0),
                 "success" if btc_response["success"] else "error",
-                btc_response.get("status_code")
+                btc_response.get("status_code"),
             )
 
         if not isinstance(eth_response, Exception):
@@ -221,7 +220,7 @@ async def get_blockchair_data() -> Dict[str, Any]:
                 f"{endpoint}/ethereum",
                 eth_response.get("response_time_ms", 0),
                 "success" if eth_response["success"] else "error",
-                eth_response.get("status_code")
+                eth_response.get("status_code"),
             )
 
         # Process Bitcoin data
@@ -237,7 +236,7 @@ async def get_blockchair_data() -> Dict[str, Any]:
                     "hashrate_24h": btc_stats.get("hashrate_24h"),
                     "difficulty": btc_stats.get("difficulty"),
                     "mempool_size": btc_stats.get("mempool_size"),
-                    "mempool_transactions": btc_stats.get("mempool_transactions")
+                    "mempool_transactions": btc_stats.get("mempool_transactions"),
                 }
 
         # Process Ethereum data
@@ -252,13 +251,10 @@ async def get_blockchair_data() -> Dict[str, Any]:
                     "market_price_usd": eth_stats.get("market_price_usd"),
                     "hashrate_24h": eth_stats.get("hashrate_24h"),
                     "difficulty": eth_stats.get("difficulty"),
-                    "mempool_size": eth_stats.get("mempool_tps")
+                    "mempool_size": eth_stats.get("mempool_tps"),
                 }
 
-        blockchair_data = {
-            "bitcoin": btc_data,
-            "ethereum": eth_data
-        }
+        blockchair_data = {"bitcoin": btc_data, "ethereum": eth_data}
 
         data_timestamp = datetime.now(timezone.utc)
         staleness = calculate_staleness_minutes(data_timestamp)
@@ -277,7 +273,11 @@ async def get_blockchair_data() -> Dict[str, Any]:
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "response_time_ms": (btc_response.get("response_time_ms", 0) if not isinstance(btc_response, Exception) else 0)
+            "response_time_ms": (
+                btc_response.get("response_time_ms", 0)
+                if not isinstance(btc_response, Exception)
+                else 0
+            ),
         }
 
     except Exception as e:
@@ -291,7 +291,7 @@ async def get_blockchair_data() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -334,9 +334,9 @@ async def get_glassnode_metrics() -> Dict[str, Any]:
                 "Realized Cap",
                 "MVRV Ratio",
                 "Supply in Profit",
-                "Long/Short Term Holder Supply"
+                "Long/Short Term Holder Supply",
             ],
-            "note": "Requires Glassnode API key for access"
+            "note": "Requires Glassnode API key for access",
         }
 
         data_timestamp = datetime.now(timezone.utc)
@@ -353,7 +353,7 @@ async def get_glassnode_metrics() -> Dict[str, Any]:
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
     except Exception as e:
@@ -367,7 +367,7 @@ async def get_glassnode_metrics() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -387,10 +387,7 @@ async def collect_onchain_data() -> List[Dict[str, Any]]:
 
     # Run all collectors concurrently
     results = await asyncio.gather(
-        get_the_graph_data(),
-        get_blockchair_data(),
-        get_glassnode_metrics(),
-        return_exceptions=True
+        get_the_graph_data(), get_blockchair_data(), get_glassnode_metrics(), return_exceptions=True
     )
 
     # Process results
@@ -398,16 +395,18 @@ async def collect_onchain_data() -> List[Dict[str, Any]]:
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"Collector failed with exception: {str(result)}")
-            processed_results.append({
-                "provider": "Unknown",
-                "category": "onchain_analytics",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "staleness_minutes": None,
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed_results.append(
+                {
+                    "provider": "Unknown",
+                    "category": "onchain_analytics",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "staleness_minutes": None,
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed_results.append(result)
 
@@ -456,7 +455,7 @@ class OnChainCollector:
             "gas_price": None,
             "network_utilization": None,
             "contract_events": [],
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         for result in results:
@@ -477,6 +476,7 @@ class OnChainCollector:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         results = await collect_onchain_data()
 
@@ -488,21 +488,21 @@ if __name__ == "__main__":
             print(f"\nProvider: {result['provider']}")
             print(f"Success: {result['success']}")
             print(f"Is Placeholder: {result.get('is_placeholder', False)}")
-            if result['success']:
-                data = result.get('data', {})
+            if result["success"]:
+                data = result.get("data", {})
                 if isinstance(data, dict):
                     print(f"Status: {data.get('status', 'N/A')}")
                     print(f"Message: {data.get('message', 'N/A')}")
-                    if 'planned_features' in data:
+                    if "planned_features" in data:
                         print(f"Planned Features: {len(data['planned_features'])}")
             else:
                 print(f"Error: {result.get('error', 'Unknown')}")
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("To implement these collectors:")
         print("1. The Graph: Add GraphQL queries for specific subgraphs")
         print("2. Blockchair: Add API key and implement endpoint calls")
         print("3. Glassnode: Add API key and implement metrics fetching")
-        print("="*50)
+        print("=" * 50)
 
     asyncio.run(main())

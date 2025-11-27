@@ -12,6 +12,7 @@ from pathlib import Path
 
 # Import modules to test
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from database import db_manager
@@ -21,7 +22,7 @@ from database.migrations import MigrationManager, auto_migrate
 @pytest.fixture
 def temp_db():
     """Create temporary database for testing"""
-    fd, path = tempfile.mkstemp(suffix='.db')
+    fd, path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
 
     yield path
@@ -35,6 +36,7 @@ def temp_db():
 def db_instance(temp_db):
     """Create database instance for testing"""
     from database import CryptoDatabase
+
     db = CryptoDatabase(temp_db)
     return db
 
@@ -45,6 +47,7 @@ class TestDatabaseInitialization:
     def test_database_creation(self, temp_db):
         """Test that database file is created"""
         from database import CryptoDatabase
+
         db = CryptoDatabase(temp_db)
 
         assert os.path.exists(temp_db)
@@ -55,15 +58,17 @@ class TestDatabaseInitialization:
         conn = sqlite3.connect(db_instance.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT name FROM sqlite_master
             WHERE type='table'
-        """)
+        """
+        )
 
         tables = {row[0] for row in cursor.fetchall()}
         conn.close()
 
-        required_tables = {'prices', 'news', 'market_analysis', 'user_queries'}
+        required_tables = {"prices", "news", "market_analysis", "user_queries"}
         assert required_tables.issubset(tables)
 
     def test_indices_created(self, db_instance):
@@ -71,10 +76,12 @@ class TestDatabaseInitialization:
         conn = sqlite3.connect(db_instance.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT name FROM sqlite_master
             WHERE type='index'
-        """)
+        """
+        )
 
         indices = {row[0] for row in cursor.fetchall()}
         conn.close()
@@ -89,15 +96,15 @@ class TestPriceOperations:
     def test_save_price(self, db_instance):
         """Test saving price data"""
         price_data = {
-            'symbol': 'BTC',
-            'name': 'Bitcoin',
-            'price_usd': 50000.0,
-            'volume_24h': 1000000000,
-            'market_cap': 950000000000,
-            'percent_change_1h': 0.5,
-            'percent_change_24h': 2.3,
-            'percent_change_7d': -1.2,
-            'rank': 1
+            "symbol": "BTC",
+            "name": "Bitcoin",
+            "price_usd": 50000.0,
+            "volume_24h": 1000000000,
+            "market_cap": 950000000000,
+            "percent_change_1h": 0.5,
+            "percent_change_24h": 2.3,
+            "percent_change_7d": -1.2,
+            "rank": 1,
         }
 
         result = db_instance.save_price(price_data)
@@ -108,38 +115,38 @@ class TestPriceOperations:
         # Insert test data
         for i in range(10):
             price_data = {
-                'symbol': f'TEST{i}',
-                'name': f'Test Coin {i}',
-                'price_usd': 100.0 * (i + 1),
-                'volume_24h': 1000000,
-                'market_cap': 10000000,
-                'rank': i + 1
+                "symbol": f"TEST{i}",
+                "name": f"Test Coin {i}",
+                "price_usd": 100.0 * (i + 1),
+                "volume_24h": 1000000,
+                "market_cap": 10000000,
+                "rank": i + 1,
             }
             db_instance.save_price(price_data)
 
         prices = db_instance.get_latest_prices(limit=5)
 
         assert len(prices) == 5
-        assert prices[0]['rank'] == 1
+        assert prices[0]["rank"] == 1
 
     def test_get_historical_prices(self, db_instance):
         """Test retrieving historical prices"""
         # Insert test data
         for i in range(5):
             price_data = {
-                'symbol': 'BTC',
-                'name': 'Bitcoin',
-                'price_usd': 50000.0 + (i * 100),
-                'volume_24h': 1000000000,
-                'market_cap': 950000000000,
-                'rank': 1
+                "symbol": "BTC",
+                "name": "Bitcoin",
+                "price_usd": 50000.0 + (i * 100),
+                "volume_24h": 1000000000,
+                "market_cap": 950000000000,
+                "rank": 1,
             }
             db_instance.save_price(price_data)
 
-        prices = db_instance.get_historical_prices('BTC', days=7)
+        prices = db_instance.get_historical_prices("BTC", days=7)
 
         assert len(prices) > 0
-        assert all(p['symbol'] == 'BTC' for p in prices)
+        assert all(p["symbol"] == "BTC" for p in prices)
 
 
 class TestNewsOperations:
@@ -148,12 +155,12 @@ class TestNewsOperations:
     def test_save_news(self, db_instance):
         """Test saving news article"""
         news_data = {
-            'title': 'Test Article',
-            'summary': 'This is a test summary',
-            'url': 'https://example.com/test',
-            'source': 'Test Source',
-            'sentiment_score': 0.8,
-            'sentiment_label': 'positive'
+            "title": "Test Article",
+            "summary": "This is a test summary",
+            "url": "https://example.com/test",
+            "source": "Test Source",
+            "sentiment_score": 0.8,
+            "sentiment_label": "positive",
         }
 
         result = db_instance.save_news(news_data)
@@ -162,10 +169,10 @@ class TestNewsOperations:
     def test_duplicate_news_url(self, db_instance):
         """Test that duplicate URLs are rejected"""
         news_data = {
-            'title': 'Test Article',
-            'summary': 'Summary',
-            'url': 'https://example.com/unique',
-            'source': 'Test'
+            "title": "Test Article",
+            "summary": "Summary",
+            "url": "https://example.com/unique",
+            "source": "Test",
         }
 
         # First insert should succeed
@@ -179,17 +186,17 @@ class TestNewsOperations:
         # Insert test news
         for i in range(10):
             news_data = {
-                'title': f'Article {i}',
-                'summary': f'Summary {i}',
-                'url': f'https://example.com/article{i}',
-                'source': 'Test Source'
+                "title": f"Article {i}",
+                "summary": f"Summary {i}",
+                "url": f"https://example.com/article{i}",
+                "source": "Test Source",
             }
             db_instance.save_news(news_data)
 
         news = db_instance.get_latest_news(limit=5)
 
         assert len(news) == 5
-        assert all('title' in n for n in news)
+        assert all("title" in n for n in news)
 
 
 class TestAnalysisOperations:
@@ -198,13 +205,13 @@ class TestAnalysisOperations:
     def test_save_analysis(self, db_instance):
         """Test saving market analysis"""
         analysis_data = {
-            'symbol': 'BTC',
-            'timeframe': '24h',
-            'trend': 'bullish',
-            'support_level': 45000.0,
-            'resistance_level': 55000.0,
-            'prediction': 'Price likely to increase',
-            'confidence': 0.75
+            "symbol": "BTC",
+            "timeframe": "24h",
+            "trend": "bullish",
+            "support_level": 45000.0,
+            "resistance_level": 55000.0,
+            "prediction": "Price likely to increase",
+            "confidence": 0.75,
         }
 
         result = db_instance.save_analysis(analysis_data)
@@ -213,19 +220,14 @@ class TestAnalysisOperations:
     def test_get_latest_analysis(self, db_instance):
         """Test retrieving latest analysis"""
         # Insert test analysis
-        analysis_data = {
-            'symbol': 'BTC',
-            'timeframe': '24h',
-            'trend': 'bullish',
-            'confidence': 0.8
-        }
+        analysis_data = {"symbol": "BTC", "timeframe": "24h", "trend": "bullish", "confidence": 0.8}
         db_instance.save_analysis(analysis_data)
 
-        analysis = db_instance.get_latest_analysis('BTC')
+        analysis = db_instance.get_latest_analysis("BTC")
 
         assert analysis is not None
-        assert analysis['symbol'] == 'BTC'
-        assert analysis['trend'] == 'bullish'
+        assert analysis["symbol"] == "BTC"
+        assert analysis["trend"] == "bullish"
 
 
 class TestMigrations:
@@ -274,10 +276,10 @@ class TestDataValidation:
         """Test price data validation"""
         # Invalid price (negative)
         invalid_price = {
-            'symbol': 'BTC',
-            'name': 'Bitcoin',
-            'price_usd': -100.0,  # Invalid
-            'rank': 1
+            "symbol": "BTC",
+            "name": "Bitcoin",
+            "price_usd": -100.0,  # Invalid
+            "rank": 1,
         }
 
         # Should handle gracefully (depending on implementation)
@@ -287,7 +289,7 @@ class TestDataValidation:
         """Test that required fields are enforced"""
         # Missing required field
         incomplete_price = {
-            'symbol': 'BTC'
+            "symbol": "BTC"
             # Missing name, price_usd, etc.
         }
 
@@ -303,10 +305,10 @@ class TestConcurrency:
 
         def write_price(i):
             price_data = {
-                'symbol': f'TEST{i}',
-                'name': f'Test {i}',
-                'price_usd': float(i),
-                'rank': i
+                "symbol": f"TEST{i}",
+                "name": f"Test {i}",
+                "price_usd": float(i),
+                "rank": i,
             }
             db_instance.save_price(price_data)
 
@@ -323,5 +325,5 @@ class TestConcurrency:
         assert len(prices) == 10
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

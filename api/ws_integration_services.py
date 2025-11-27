@@ -26,6 +26,7 @@ router = APIRouter()
 # Integration Service Handlers
 # ============================================================================
 
+
 class IntegrationStreamers:
     """Handles data streaming for integration services"""
 
@@ -67,7 +68,7 @@ class IntegrationStreamers:
                     "available_models": status.get("available_models", []),
                     "available_datasets": status.get("available_datasets", []),
                     "last_refresh": status.get("last_refresh"),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming HF registry status: {e}")
@@ -87,7 +88,7 @@ class IntegrationStreamers:
                     "failed_requests": usage.get("failed_requests", 0),
                     "average_latency": usage.get("average_latency"),
                     "model_usage": usage.get("model_usage", {}),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming HF model usage: {e}")
@@ -102,10 +103,7 @@ class IntegrationStreamers:
             # This would stream sentiment results as they're processed
             results = self.hf_client.get_recent_results()
             if results:
-                return {
-                    "sentiment_results": results,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"sentiment_results": results, "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming sentiment results: {e}")
             return None
@@ -118,10 +116,7 @@ class IntegrationStreamers:
         try:
             events = self.hf_registry.get_recent_events()
             if events:
-                return {
-                    "model_events": events,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"model_events": events, "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming model events: {e}")
             return None
@@ -144,7 +139,7 @@ class IntegrationStreamers:
                     "storage_size": status.get("storage_size"),
                     "last_save": status.get("last_save"),
                     "active_writers": status.get("active_writers", 0),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming persistence status: {e}")
@@ -158,10 +153,7 @@ class IntegrationStreamers:
         try:
             events = self.persistence_service.get_recent_saves()
             if events:
-                return {
-                    "save_events": events,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"save_events": events, "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming save events: {e}")
             return None
@@ -174,10 +166,7 @@ class IntegrationStreamers:
         try:
             progress = self.persistence_service.get_export_progress()
             if progress:
-                return {
-                    "export_operations": progress,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"export_operations": progress, "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming export progress: {e}")
             return None
@@ -190,10 +179,7 @@ class IntegrationStreamers:
         try:
             backups = self.persistence_service.get_recent_backups()
             if backups:
-                return {
-                    "backup_events": backups,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"backup_events": backups, "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming backup events: {e}")
             return None
@@ -207,24 +193,28 @@ integration_streamers = IntegrationStreamers()
 # Background Streaming Tasks
 # ============================================================================
 
+
 async def start_integration_streams():
     """Start all integration stream tasks"""
     logger.info("Starting integration WebSocket streams")
 
     tasks = [
         # HuggingFace Registry
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.HUGGINGFACE,
-            integration_streamers.stream_hf_registry_status,
-            interval=60.0  # 1 minute updates
-        )),
-
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.HUGGINGFACE,
+                integration_streamers.stream_hf_registry_status,
+                interval=60.0,  # 1 minute updates
+            )
+        ),
         # Persistence Service
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.PERSISTENCE,
-            integration_streamers.stream_persistence_status,
-            interval=30.0  # 30 second updates
-        )),
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.PERSISTENCE,
+                integration_streamers.stream_persistence_status,
+                interval=30.0,  # 30 second updates
+            )
+        ),
     ]
 
     await asyncio.gather(*tasks, return_exceptions=True)
@@ -233,6 +223,7 @@ async def start_integration_streams():
 # ============================================================================
 # WebSocket Endpoints
 # ============================================================================
+
 
 @router.websocket("/ws/integration")
 async def websocket_integration_endpoint(websocket: WebSocket):

@@ -9,7 +9,9 @@ from typing import Optional
 BASE_URL = "http://localhost:8000"
 
 
-async def test_endpoint(client: httpx.AsyncClient, name: str, url: str, params: Optional[dict] = None) -> bool:
+async def test_endpoint(
+    client: httpx.AsyncClient, name: str, url: str, params: Optional[dict] = None
+) -> bool:
     """Test a single endpoint"""
     print(f"\n{'='*60}")
     print(f"Testing: {name}")
@@ -43,78 +45,54 @@ async def main():
     async with httpx.AsyncClient(base_url=BASE_URL) as client:
 
         # Test 1: Root endpoint
-        results.append(await test_endpoint(
-            client,
-            "Root Endpoint",
-            "/"
-        ))
+        results.append(await test_endpoint(client, "Root Endpoint", "/"))
 
         # Test 2: Health check
-        results.append(await test_endpoint(
-            client,
-            "Health Check",
-            "/api/health"
-        ))
+        results.append(await test_endpoint(client, "Health Check", "/api/health"))
 
         # Test 3: OHLCV - BTC 1h
-        results.append(await test_endpoint(
-            client,
-            "OHLCV Data (BTC 1h)",
-            "/api/ohlcv",
-            {"symbol": "BTC", "interval": "1h", "limit": 10}
-        ))
+        results.append(
+            await test_endpoint(
+                client,
+                "OHLCV Data (BTC 1h)",
+                "/api/ohlcv",
+                {"symbol": "BTC", "interval": "1h", "limit": 10},
+            )
+        )
 
         # Test 4: OHLCV - ETH 5m
-        results.append(await test_endpoint(
-            client,
-            "OHLCV Data (ETH 5m)",
-            "/api/ohlcv",
-            {"symbol": "ETH", "interval": "5m", "limit": 20}
-        ))
+        results.append(
+            await test_endpoint(
+                client,
+                "OHLCV Data (ETH 5m)",
+                "/api/ohlcv",
+                {"symbol": "ETH", "interval": "5m", "limit": 20},
+            )
+        )
 
         # Test 5: Prices - Single symbol
-        results.append(await test_endpoint(
-            client,
-            "Prices (BTC)",
-            "/api/prices",
-            {"symbols": "BTC"}
-        ))
+        results.append(
+            await test_endpoint(client, "Prices (BTC)", "/api/prices", {"symbols": "BTC"})
+        )
 
         # Test 6: Prices - Multiple symbols
-        results.append(await test_endpoint(
-            client,
-            "Prices (BTC, ETH, SOL)",
-            "/api/prices",
-            {"symbols": "BTC,ETH,SOL"}
-        ))
+        results.append(
+            await test_endpoint(
+                client, "Prices (BTC, ETH, SOL)", "/api/prices", {"symbols": "BTC,ETH,SOL"}
+            )
+        )
 
         # Test 7: Prices - All symbols
-        results.append(await test_endpoint(
-            client,
-            "Prices (All Symbols)",
-            "/api/prices"
-        ))
+        results.append(await test_endpoint(client, "Prices (All Symbols)", "/api/prices"))
 
         # Test 8: Sentiment
-        results.append(await test_endpoint(
-            client,
-            "Market Sentiment",
-            "/api/sentiment"
-        ))
+        results.append(await test_endpoint(client, "Market Sentiment", "/api/sentiment"))
 
         # Test 9: Market Overview
-        results.append(await test_endpoint(
-            client,
-            "Market Overview",
-            "/api/market/overview"
-        ))
+        results.append(await test_endpoint(client, "Market Overview", "/api/market/overview"))
 
         # Test 10: Cache Stats
-        results.append(await test_endpoint(
-            client,
-            "Cache Statistics",
-            "/api/cache/stats"
-        ))
+        results.append(await test_endpoint(client, "Cache Statistics", "/api/cache/stats"))
 
     # Summary
     print(f"\n{'='*60}")

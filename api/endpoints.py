@@ -26,19 +26,23 @@ router = APIRouter(prefix="/api", tags=["monitoring"])
 # Pydantic Models for Request/Response Validation
 # ============================================================================
 
+
 class TriggerCheckRequest(BaseModel):
     """Request model for triggering immediate health check"""
+
     provider: str = Field(..., description="Provider name to check")
 
 
 class TestKeyRequest(BaseModel):
     """Request model for testing API key"""
+
     provider: str = Field(..., description="Provider name to test")
 
 
 # ============================================================================
 # GET /api/status - System Overview
 # ============================================================================
+
 
 @router.get("/status")
 async def get_system_status():
@@ -60,7 +64,7 @@ async def get_system_status():
                 "offline": latest_metrics.offline_count,
                 "avg_response_time_ms": round(latest_metrics.avg_response_time_ms, 2),
                 "last_update": latest_metrics.timestamp.isoformat(),
-                "system_health": latest_metrics.system_health
+                "system_health": latest_metrics.system_health,
             }
 
         # Fallback: Calculate from providers if no metrics available
@@ -72,14 +76,16 @@ async def get_system_status():
 
         for provider in providers:
             attempts = db_manager.get_connection_attempts(
-                provider_id=provider.id,
-                hours=1,
-                limit=10
+                provider_id=provider.id, hours=1, limit=10
             )
 
             if attempts:
                 recent = attempts[0]
-                if recent.status == "success" and recent.response_time_ms and recent.response_time_ms < 2000:
+                if (
+                    recent.status == "success"
+                    and recent.response_time_ms
+                    and recent.response_time_ms < 2000
+                ):
                     status_counts["online"] += 1
                     response_times.append(recent.response_time_ms)
                 elif recent.status == "success":
@@ -111,7 +117,7 @@ async def get_system_status():
             "offline": status_counts["offline"],
             "avg_response_time_ms": round(avg_response_time, 2),
             "last_update": datetime.utcnow().isoformat(),
-            "system_health": system_health
+            "system_health": system_health,
         }
 
     except Exception as e:
@@ -122,6 +128,7 @@ async def get_system_status():
 # ============================================================================
 # GET /api/categories - Category Statistics
 # ============================================================================
+
 
 @router.get("/categories")
 async def get_categories():
@@ -150,9 +157,7 @@ async def get_categories():
             for provider in providers:
                 # Get recent attempts
                 attempts = db_manager.get_connection_attempts(
-                    provider_id=provider.id,
-                    hours=1,
-                    limit=5
+                    provider_id=provider.id, hours=1, limit=5
                 )
 
                 if attempts:
@@ -163,7 +168,11 @@ async def get_categories():
                         last_updated = recent.timestamp
 
                     # Count online sources
-                    if recent.status == "success" and recent.response_time_ms and recent.response_time_ms < 2000:
+                    if (
+                        recent.status == "success"
+                        and recent.response_time_ms
+                        and recent.response_time_ms < 2000
+                    ):
                         online_sources += 1
                         response_times.append(recent.response_time_ms)
 
@@ -173,7 +182,9 @@ async def get_categories():
 
             # Calculate metrics
             online_ratio = round(online_sources / total_sources, 2) if total_sources > 0 else 0
-            avg_response_time = round(sum(response_times) / len(response_times), 2) if response_times else 0
+            avg_response_time = (
+                round(sum(response_times) / len(response_times), 2) if response_times else 0
+            )
 
             # Determine status
             if online_ratio >= 0.9:
@@ -183,16 +194,18 @@ async def get_categories():
             else:
                 status = "critical"
 
-            category_stats.append({
-                "name": category,
-                "total_sources": total_sources,
-                "online_sources": online_sources,
-                "online_ratio": online_ratio,
-                "avg_response_time_ms": avg_response_time,
-                "rate_limited_count": rate_limited_count,
-                "last_updated": last_updated.isoformat() if last_updated else None,
-                "status": status
-            })
+            category_stats.append(
+                {
+                    "name": category,
+                    "total_sources": total_sources,
+                    "online_sources": online_sources,
+                    "online_ratio": online_ratio,
+                    "avg_response_time_ms": avg_response_time,
+                    "rate_limited_count": rate_limited_count,
+                    "last_updated": last_updated.isoformat() if last_updated else None,
+                    "status": status,
+                }
+            )
 
         return category_stats
 
@@ -205,11 +218,12 @@ async def get_categories():
 # GET /api/providers - Provider List with Filters
 # ============================================================================
 
+
 @router.get("/providers")
 async def get_providers(
     category: Optional[str] = Query(None, description="Filter by category"),
     status: Optional[str] = Query(None, description="Filter by status (online/degraded/offline)"),
-    search: Optional[str] = Query(None, description="Search by provider name")
+    search: Optional[str] = Query(None, description="Search by provider name"),
 ):
     """
     Get list of providers with optional filtering
@@ -235,9 +249,7 @@ async def get_providers(
 
             # Get recent connection attempts
             attempts = db_manager.get_connection_attempts(
-                provider_id=provider.id,
-                hours=1,
-                limit=10
+                provider_id=provider.id, hours=1, limit=10
             )
 
             # Determine provider status
@@ -275,17 +287,19 @@ async def get_providers(
             # Get schedule config
             schedule_config = db_manager.get_schedule_config(provider.id)
 
-            result.append({
-                "id": provider.id,
-                "name": provider.name,
-                "category": provider.category,
-                "status": provider_status,
-                "response_time_ms": response_time_ms,
-                "rate_limit": rate_limit,
-                "last_fetch": last_fetch.isoformat() if last_fetch else None,
-                "has_key": provider.requires_key,
-                "endpoints": provider.endpoint_url
-            })
+            result.append(
+                {
+                    "id": provider.id,
+                    "name": provider.name,
+                    "category": provider.category,
+                    "status": provider_status,
+                    "response_time_ms": response_time_ms,
+                    "rate_limit": rate_limit,
+                    "last_fetch": last_fetch.isoformat() if last_fetch else None,
+                    "has_key": provider.requires_key,
+                    "endpoints": provider.endpoint_url,
+                }
+            )
 
         return result
 
@@ -298,6 +312,7 @@ async def get_providers(
 # GET /api/logs - Query Logs with Pagination
 # ============================================================================
 
+
 @router.get("/logs")
 async def get_logs(
     from_time: Optional[str] = Query(None, alias="from", description="Start time (ISO format)"),
@@ -305,7 +320,7 @@ async def get_logs(
     provider: Optional[str] = Query(None, description="Filter by provider name"),
     status: Optional[str] = Query(None, description="Filter by status"),
     page: int = Query(1, ge=1, description="Page number"),
-    per_page: int = Query(50, ge=1, le=500, description="Items per page")
+    per_page: int = Query(50, ge=1, le=500, description="Items per page"),
 ):
     """
     Get connection attempt logs with filtering and pagination
@@ -324,12 +339,12 @@ async def get_logs(
     try:
         # Calculate time range
         if from_time:
-            from_dt = datetime.fromisoformat(from_time.replace('Z', '+00:00'))
+            from_dt = datetime.fromisoformat(from_time.replace("Z", "+00:00"))
         else:
             from_dt = datetime.utcnow() - timedelta(hours=24)
 
         if to_time:
-            to_dt = datetime.fromisoformat(to_time.replace('Z', '+00:00'))
+            to_dt = datetime.fromisoformat(to_time.replace("Z", "+00:00"))
         else:
             to_dt = datetime.utcnow()
 
@@ -347,14 +362,11 @@ async def get_logs(
             provider_id=provider_id,
             status=status,
             hours=int(hours) + 1,
-            limit=10000  # Large limit to get all
+            limit=10000,  # Large limit to get all
         )
 
         # Filter by time range
-        filtered_logs = [
-            log for log in all_logs
-            if from_dt <= log.timestamp <= to_dt
-        ]
+        filtered_logs = [log for log in all_logs if from_dt <= log.timestamp <= to_dt]
 
         # Calculate pagination
         total = len(filtered_logs)
@@ -372,19 +384,21 @@ async def get_logs(
             prov = db_manager.get_provider(provider_id=log.provider_id)
             provider_name = prov.name if prov else "Unknown"
 
-            logs.append({
-                "id": log.id,
-                "timestamp": log.timestamp.isoformat(),
-                "provider": provider_name,
-                "endpoint": log.endpoint,
-                "status": log.status,
-                "response_time_ms": log.response_time_ms,
-                "http_status_code": log.http_status_code,
-                "error_type": log.error_type,
-                "error_message": log.error_message,
-                "retry_count": log.retry_count,
-                "retry_result": log.retry_result
-            })
+            logs.append(
+                {
+                    "id": log.id,
+                    "timestamp": log.timestamp.isoformat(),
+                    "provider": provider_name,
+                    "endpoint": log.endpoint,
+                    "status": log.status,
+                    "response_time_ms": log.response_time_ms,
+                    "http_status_code": log.http_status_code,
+                    "error_type": log.error_type,
+                    "error_message": log.error_message,
+                    "retry_count": log.retry_count,
+                    "retry_result": log.retry_result,
+                }
+            )
 
         return {
             "logs": logs,
@@ -394,8 +408,8 @@ async def get_logs(
                 "total": total,
                 "total_pages": total_pages,
                 "has_next": page < total_pages,
-                "has_prev": page > 1
-            }
+                "has_prev": page > 1,
+            },
         }
 
     except Exception as e:
@@ -406,6 +420,7 @@ async def get_logs(
 # ============================================================================
 # GET /api/schedule - Schedule Status
 # ============================================================================
+
 
 @router.get("/schedule")
 async def get_schedule():
@@ -428,12 +443,13 @@ async def get_schedule():
 
             # Calculate on-time percentage
             total_runs = config.on_time_count + config.late_count
-            on_time_percentage = round((config.on_time_count / total_runs * 100), 1) if total_runs > 0 else 100.0
+            on_time_percentage = (
+                round((config.on_time_count / total_runs * 100), 1) if total_runs > 0 else 100.0
+            )
 
             # Get today's runs
             compliance_today = db_manager.get_schedule_compliance(
-                provider_id=config.provider_id,
-                hours=24
+                provider_id=config.provider_id, hours=24
             )
 
             total_runs_today = len(compliance_today)
@@ -450,18 +466,20 @@ async def get_schedule():
             else:
                 status = "behind_schedule"
 
-            schedule_list.append({
-                "provider": provider.name,
-                "category": provider.category,
-                "schedule": config.schedule_interval,
-                "last_run": config.last_run.isoformat() if config.last_run else None,
-                "next_run": config.next_run.isoformat() if config.next_run else None,
-                "on_time_percentage": on_time_percentage,
-                "status": status,
-                "total_runs_today": total_runs_today,
-                "successful_runs": successful_runs,
-                "skipped_runs": skipped_runs
-            })
+            schedule_list.append(
+                {
+                    "provider": provider.name,
+                    "category": provider.category,
+                    "schedule": config.schedule_interval,
+                    "last_run": config.last_run.isoformat() if config.last_run else None,
+                    "next_run": config.next_run.isoformat() if config.next_run else None,
+                    "on_time_percentage": on_time_percentage,
+                    "status": status,
+                    "total_runs_today": total_runs_today,
+                    "successful_runs": successful_runs,
+                    "skipped_runs": skipped_runs,
+                }
+            )
 
         return schedule_list
 
@@ -473,6 +491,7 @@ async def get_schedule():
 # ============================================================================
 # POST /api/schedule/trigger - Trigger Immediate Check
 # ============================================================================
+
 
 @router.post("/schedule/trigger")
 async def trigger_check(request: TriggerCheckRequest):
@@ -497,7 +516,9 @@ async def trigger_check(request: TriggerCheckRequest):
         await checker.close()
 
         if not result:
-            raise HTTPException(status_code=500, detail=f"Health check failed for {request.provider}")
+            raise HTTPException(
+                status_code=500, detail=f"Health check failed for {request.provider}"
+            )
 
         return {
             "provider": result.provider_name,
@@ -505,7 +526,7 @@ async def trigger_check(request: TriggerCheckRequest):
             "response_time_ms": result.response_time,
             "timestamp": datetime.fromtimestamp(result.timestamp).isoformat(),
             "error_message": result.error_message,
-            "triggered_at": datetime.utcnow().isoformat()
+            "triggered_at": datetime.utcnow().isoformat(),
         }
 
     except HTTPException:
@@ -518,6 +539,7 @@ async def trigger_check(request: TriggerCheckRequest):
 # ============================================================================
 # GET /api/freshness - Data Freshness
 # ============================================================================
+
 
 @router.get("/freshness")
 async def get_freshness():
@@ -534,9 +556,7 @@ async def get_freshness():
         for provider in providers:
             # Get most recent data collection
             collections = db_manager.get_data_collections(
-                provider_id=provider.id,
-                hours=24,
-                limit=1
+                provider_id=provider.id, hours=24, limit=1
             )
 
             if not collections:
@@ -565,15 +585,19 @@ async def get_freshness():
             else:
                 status = "expired"
 
-            freshness_list.append({
-                "provider": provider.name,
-                "category": provider.category,
-                "fetch_time": collection.actual_fetch_time.isoformat(),
-                "data_timestamp": collection.data_timestamp.isoformat() if collection.data_timestamp else None,
-                "staleness_minutes": round(fetch_age_minutes, 2),
-                "ttl_minutes": ttl_minutes,
-                "status": status
-            })
+            freshness_list.append(
+                {
+                    "provider": provider.name,
+                    "category": provider.category,
+                    "fetch_time": collection.actual_fetch_time.isoformat(),
+                    "data_timestamp": (
+                        collection.data_timestamp.isoformat() if collection.data_timestamp else None
+                    ),
+                    "staleness_minutes": round(fetch_age_minutes, 2),
+                    "ttl_minutes": ttl_minutes,
+                    "status": status,
+                }
+            )
 
         return freshness_list
 
@@ -585,6 +609,7 @@ async def get_freshness():
 # ============================================================================
 # GET /api/failures - Failure Analysis
 # ============================================================================
+
 
 @router.get("/failures")
 async def get_failures():
@@ -604,48 +629,56 @@ async def get_failures():
         recent_list = []
         for failure in recent_failures:
             provider = db_manager.get_provider(provider_id=failure.provider_id)
-            recent_list.append({
-                "timestamp": failure.timestamp.isoformat(),
-                "provider": provider.name if provider else "Unknown",
-                "error_type": failure.error_type,
-                "error_message": failure.error_message,
-                "http_status": failure.http_status,
-                "retry_attempted": failure.retry_attempted,
-                "retry_result": failure.retry_result
-            })
+            recent_list.append(
+                {
+                    "timestamp": failure.timestamp.isoformat(),
+                    "provider": provider.name if provider else "Unknown",
+                    "error_type": failure.error_type,
+                    "error_message": failure.error_message,
+                    "http_status": failure.http_status,
+                    "retry_attempted": failure.retry_attempted,
+                    "retry_result": failure.retry_result,
+                }
+            )
 
         # Generate remediation suggestions
         remediation_suggestions = []
 
-        error_type_distribution = analysis.get('failures_by_error_type', [])
+        error_type_distribution = analysis.get("failures_by_error_type", [])
         for error_stat in error_type_distribution:
-            error_type = error_stat['error_type']
-            count = error_stat['count']
+            error_type = error_stat["error_type"]
+            count = error_stat["count"]
 
-            if error_type == 'timeout' and count > 5:
-                remediation_suggestions.append({
-                    "issue": "High timeout rate",
-                    "suggestion": "Increase timeout values or check network connectivity",
-                    "priority": "high"
-                })
-            elif error_type == 'rate_limit' and count > 3:
-                remediation_suggestions.append({
-                    "issue": "Rate limit errors",
-                    "suggestion": "Implement request throttling or add additional API keys",
-                    "priority": "medium"
-                })
-            elif error_type == 'auth_error' and count > 0:
-                remediation_suggestions.append({
-                    "issue": "Authentication failures",
-                    "suggestion": "Verify API keys are valid and not expired",
-                    "priority": "critical"
-                })
+            if error_type == "timeout" and count > 5:
+                remediation_suggestions.append(
+                    {
+                        "issue": "High timeout rate",
+                        "suggestion": "Increase timeout values or check network connectivity",
+                        "priority": "high",
+                    }
+                )
+            elif error_type == "rate_limit" and count > 3:
+                remediation_suggestions.append(
+                    {
+                        "issue": "Rate limit errors",
+                        "suggestion": "Implement request throttling or add additional API keys",
+                        "priority": "medium",
+                    }
+                )
+            elif error_type == "auth_error" and count > 0:
+                remediation_suggestions.append(
+                    {
+                        "issue": "Authentication failures",
+                        "suggestion": "Verify API keys are valid and not expired",
+                        "priority": "critical",
+                    }
+                )
 
         return {
             "error_type_distribution": error_type_distribution,
-            "top_failing_providers": analysis.get('top_failing_providers', []),
+            "top_failing_providers": analysis.get("top_failing_providers", []),
             "recent_failures": recent_list,
-            "remediation_suggestions": remediation_suggestions
+            "remediation_suggestions": remediation_suggestions,
         }
 
     except Exception as e:
@@ -656,6 +689,7 @@ async def get_failures():
 # ============================================================================
 # GET /api/rate-limits - Rate Limit Status
 # ============================================================================
+
 
 @router.get("/rate-limits")
 async def get_rate_limits():
@@ -672,33 +706,41 @@ async def get_rate_limits():
 
         for provider_name, status_info in statuses.items():
             if status_info:
-                rate_limit_list.append({
-                    "provider": status_info['provider'],
-                    "limit_type": status_info['limit_type'],
-                    "limit_value": status_info['limit_value'],
-                    "current_usage": status_info['current_usage'],
-                    "percentage": status_info['percentage'],
-                    "reset_time": status_info['reset_time'],
-                    "reset_in_seconds": status_info['reset_in_seconds'],
-                    "status": status_info['status']
-                })
+                rate_limit_list.append(
+                    {
+                        "provider": status_info["provider"],
+                        "limit_type": status_info["limit_type"],
+                        "limit_value": status_info["limit_value"],
+                        "current_usage": status_info["current_usage"],
+                        "percentage": status_info["percentage"],
+                        "reset_time": status_info["reset_time"],
+                        "reset_in_seconds": status_info["reset_in_seconds"],
+                        "status": status_info["status"],
+                    }
+                )
 
         # Add providers with configured limits but no tracking yet
         providers = db_manager.get_all_providers()
-        tracked_providers = {rl['provider'] for rl in rate_limit_list}
+        tracked_providers = {rl["provider"] for rl in rate_limit_list}
 
         for provider in providers:
-            if provider.name not in tracked_providers and provider.rate_limit_type and provider.rate_limit_value:
-                rate_limit_list.append({
-                    "provider": provider.name,
-                    "limit_type": provider.rate_limit_type,
-                    "limit_value": provider.rate_limit_value,
-                    "current_usage": 0,
-                    "percentage": 0.0,
-                    "reset_time": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
-                    "reset_in_seconds": 3600,
-                    "status": "ok"
-                })
+            if (
+                provider.name not in tracked_providers
+                and provider.rate_limit_type
+                and provider.rate_limit_value
+            ):
+                rate_limit_list.append(
+                    {
+                        "provider": provider.name,
+                        "limit_type": provider.rate_limit_type,
+                        "limit_value": provider.rate_limit_value,
+                        "current_usage": 0,
+                        "percentage": 0.0,
+                        "reset_time": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
+                        "reset_in_seconds": 3600,
+                        "status": "ok",
+                    }
+                )
 
         return rate_limit_list
 
@@ -710,6 +752,7 @@ async def get_rate_limits():
 # ============================================================================
 # GET /api/config/keys - API Keys Status
 # ============================================================================
+
 
 @router.get("/config/keys")
 async def get_api_keys():
@@ -738,17 +781,19 @@ async def get_api_keys():
             rate_status = rate_limiter.get_status(provider.name)
             usage_quota_remaining = None
             if rate_status:
-                percentage_used = rate_status['percentage']
+                percentage_used = rate_status["percentage"]
                 usage_quota_remaining = f"{100 - percentage_used:.1f}%"
 
-            keys_list.append({
-                "provider": provider.name,
-                "key_masked": provider.api_key_masked or "***NOT_SET***",
-                "created_at": provider.created_at.isoformat(),
-                "expires_at": None,  # Not tracked in current schema
-                "status": key_status,
-                "usage_quota_remaining": usage_quota_remaining
-            })
+            keys_list.append(
+                {
+                    "provider": provider.name,
+                    "key_masked": provider.api_key_masked or "***NOT_SET***",
+                    "created_at": provider.created_at.isoformat(),
+                    "expires_at": None,  # Not tracked in current schema
+                    "status": key_status,
+                    "usage_quota_remaining": usage_quota_remaining,
+                }
+            )
 
         return keys_list
 
@@ -760,6 +805,7 @@ async def get_api_keys():
 # ============================================================================
 # POST /api/config/keys/test - Test API Key
 # ============================================================================
+
 
 @router.post("/config/keys/test")
 async def test_api_key(request: TestKeyRequest):
@@ -779,10 +825,14 @@ async def test_api_key(request: TestKeyRequest):
             raise HTTPException(status_code=404, detail=f"Provider not found: {request.provider}")
 
         if not provider.requires_key:
-            raise HTTPException(status_code=400, detail=f"Provider {request.provider} does not require an API key")
+            raise HTTPException(
+                status_code=400, detail=f"Provider {request.provider} does not require an API key"
+            )
 
         if not provider.api_key_masked:
-            raise HTTPException(status_code=400, detail=f"No API key configured for {request.provider}")
+            raise HTTPException(
+                status_code=400, detail=f"No API key configured for {request.provider}"
+            )
 
         # Perform health check to test key
         checker = HealthChecker()
@@ -790,13 +840,20 @@ async def test_api_key(request: TestKeyRequest):
         await checker.close()
 
         if not result:
-            raise HTTPException(status_code=500, detail=f"Failed to test API key for {request.provider}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to test API key for {request.provider}"
+            )
 
         # Determine if key is valid based on result
         key_valid = result.status.value == "online" or result.status.value == "degraded"
 
         # Check for auth-specific errors
-        if result.error_message and ('auth' in result.error_message.lower() or 'key' in result.error_message.lower() or '401' in result.error_message or '403' in result.error_message):
+        if result.error_message and (
+            "auth" in result.error_message.lower()
+            or "key" in result.error_message.lower()
+            or "401" in result.error_message
+            or "403" in result.error_message
+        ):
             key_valid = False
 
         return {
@@ -806,7 +863,7 @@ async def test_api_key(request: TestKeyRequest):
             "response_time_ms": result.response_time,
             "status_code": result.status_code,
             "error_message": result.error_message,
-            "test_endpoint": result.endpoint_tested
+            "test_endpoint": result.endpoint_tested,
         }
 
     except HTTPException:
@@ -819,6 +876,7 @@ async def test_api_key(request: TestKeyRequest):
 # ============================================================================
 # GET /api/charts/health-history - Health History for Charts
 # ============================================================================
+
 
 @router.get("/charts/health-history")
 async def get_health_history(
@@ -838,11 +896,7 @@ async def get_health_history(
         metrics = db_manager.get_system_metrics(hours=hours)
 
         if not metrics:
-            return {
-                "timestamps": [],
-                "success_rate": [],
-                "avg_response_time": []
-            }
+            return {"timestamps": [], "success_rate": [], "avg_response_time": []}
 
         # Sort by timestamp
         metrics.sort(key=lambda x: x.timestamp)
@@ -864,7 +918,7 @@ async def get_health_history(
         return {
             "timestamps": timestamps,
             "success_rate": success_rates,
-            "avg_response_time": avg_response_times
+            "avg_response_time": avg_response_times,
         }
 
     except Exception as e:
@@ -875,6 +929,7 @@ async def get_health_history(
 # ============================================================================
 # GET /api/charts/compliance - Compliance History for Charts
 # ============================================================================
+
 
 @router.get("/charts/compliance")
 async def get_compliance_history(
@@ -894,10 +949,7 @@ async def get_compliance_history(
         configs = db_manager.get_all_schedule_configs(enabled_only=True)
 
         if not configs:
-            return {
-                "dates": [],
-                "compliance_percentage": []
-            }
+            return {"dates": [], "compliance_percentage": []}
 
         # Generate date range
         end_date = datetime.utcnow().date()
@@ -917,27 +969,22 @@ async def get_compliance_history(
 
             for config in configs:
                 compliance_records = db_manager.get_schedule_compliance(
-                    provider_id=config.provider_id,
-                    hours=24
+                    provider_id=config.provider_id, hours=24
                 )
 
                 # Filter for current date
-                day_records = [
-                    r for r in compliance_records
-                    if day_start <= r.timestamp <= day_end
-                ]
+                day_records = [r for r in compliance_records if day_start <= r.timestamp <= day_end]
 
                 total_checks += len(day_records)
                 on_time_checks += sum(1 for r in day_records if r.on_time)
 
             # Calculate percentage
-            compliance_pct = round((on_time_checks / total_checks * 100), 2) if total_checks > 0 else 100.0
+            compliance_pct = (
+                round((on_time_checks / total_checks * 100), 2) if total_checks > 0 else 100.0
+            )
             compliance_percentages.append(compliance_pct)
 
-        return {
-            "dates": dates,
-            "compliance_percentage": compliance_percentages
-        }
+        return {"dates": dates, "compliance_percentage": compliance_percentages}
 
     except Exception as e:
         logger.error(f"Error getting compliance history: {e}", exc_info=True)
@@ -947,6 +994,7 @@ async def get_compliance_history(
 # ============================================================================
 # GET /api/charts/rate-limit-history - Rate Limit History for Charts
 # ============================================================================
+
 
 @router.get("/charts/rate-limit-history")
 async def get_rate_limit_history(
@@ -967,10 +1015,7 @@ async def get_rate_limit_history(
         providers_with_limits = [p for p in providers if p.rate_limit_type and p.rate_limit_value]
 
         if not providers_with_limits:
-            return {
-                "timestamps": [],
-                "providers": []
-            }
+            return {"timestamps": [], "providers": []}
 
         # Generate hourly timestamps
         end_time = datetime.utcnow()
@@ -989,8 +1034,7 @@ async def get_rate_limit_history(
         for provider in providers_with_limits[:5]:  # Limit to top 5 for readability
             # Get rate limit usage records for this provider
             rate_limit_records = db_manager.get_rate_limit_usage(
-                provider_id=provider.id,
-                hours=hours
+                provider_id=provider.id, hours=hours
             )
 
             if not rate_limit_records:
@@ -1005,8 +1049,7 @@ async def get_rate_limit_history(
 
                 # Get records in this hour bucket
                 hour_records = [
-                    r for r in rate_limit_records
-                    if current_time <= r.timestamp < hour_end
+                    r for r in rate_limit_records if current_time <= r.timestamp < hour_end
                 ]
 
                 if hour_records:
@@ -1019,15 +1062,9 @@ async def get_rate_limit_history(
 
                 current_time = hour_end
 
-            provider_data.append({
-                "name": provider.name,
-                "usage_percentage": usage_percentages
-            })
+            provider_data.append({"name": provider.name, "usage_percentage": usage_percentages})
 
-        return {
-            "timestamps": timestamps,
-            "providers": provider_data
-        }
+        return {"timestamps": timestamps, "providers": provider_data}
 
     except Exception as e:
         logger.error(f"Error getting rate limit history: {e}", exc_info=True)
@@ -1037,6 +1074,7 @@ async def get_rate_limit_history(
 # ============================================================================
 # GET /api/charts/freshness-history - Data Freshness History for Charts
 # ============================================================================
+
 
 @router.get("/charts/freshness-history")
 async def get_freshness_history(
@@ -1056,10 +1094,7 @@ async def get_freshness_history(
         providers = db_manager.get_all_providers()
 
         if not providers:
-            return {
-                "timestamps": [],
-                "providers": []
-            }
+            return {"timestamps": [], "providers": []}
 
         # Generate hourly timestamps
         end_time = datetime.utcnow()
@@ -1078,9 +1113,7 @@ async def get_freshness_history(
         for provider in providers[:5]:  # Limit to top 5 for readability
             # Get data collection records for this provider
             collections = db_manager.get_data_collections(
-                provider_id=provider.id,
-                hours=hours,
-                limit=1000  # Get more records for analysis
+                provider_id=provider.id, hours=hours, limit=1000  # Get more records for analysis
             )
 
             if not collections:
@@ -1095,8 +1128,7 @@ async def get_freshness_history(
 
                 # Get records in this hour bucket
                 hour_records = [
-                    c for c in collections
-                    if current_time <= c.actual_fetch_time < hour_end
+                    c for c in collections if current_time <= c.actual_fetch_time < hour_end
                 ]
 
                 if hour_records:
@@ -1107,7 +1139,9 @@ async def get_freshness_history(
                             staleness_list.append(record.staleness_minutes)
                         elif record.data_timestamp and record.actual_fetch_time:
                             # Calculate staleness if not already stored
-                            staleness_seconds = (record.actual_fetch_time - record.data_timestamp).total_seconds()
+                            staleness_seconds = (
+                                record.actual_fetch_time - record.data_timestamp
+                            ).total_seconds()
                             staleness_minutes = staleness_seconds / 60
                             staleness_list.append(staleness_minutes)
 
@@ -1124,15 +1158,9 @@ async def get_freshness_history(
 
             # Only add provider if it has some data
             if any(v is not None and v > 0 for v in staleness_values):
-                provider_data.append({
-                    "name": provider.name,
-                    "staleness_minutes": staleness_values
-                })
+                provider_data.append({"name": provider.name, "staleness_minutes": staleness_values})
 
-        return {
-            "timestamps": timestamps,
-            "providers": provider_data
-        }
+        return {"timestamps": timestamps, "providers": provider_data}
 
     except Exception as e:
         logger.error(f"Error getting freshness history: {e}", exc_info=True)
@@ -1142,6 +1170,7 @@ async def get_freshness_history(
 # ============================================================================
 # Health Check Endpoint
 # ============================================================================
+
 
 @router.get("/health")
 async def api_health():
@@ -1156,10 +1185,10 @@ async def api_health():
         db_health = db_manager.health_check()
 
         return {
-            "status": "healthy" if db_health['status'] == 'healthy' else "unhealthy",
+            "status": "healthy" if db_health["status"] == "healthy" else "unhealthy",
             "timestamp": datetime.utcnow().isoformat(),
-            "database": db_health['status'],
-            "version": "1.0.0"
+            "database": db_health["status"],
+            "version": "1.0.0",
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}", exc_info=True)
@@ -1167,7 +1196,7 @@ async def api_health():
             "status": "unhealthy",
             "timestamp": datetime.utcnow().isoformat(),
             "error": str(e),
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
 

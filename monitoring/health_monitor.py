@@ -51,7 +51,11 @@ class HealthMonitor:
             result = await client.get(endpoint, headers=headers)
 
             # Determine status
-            status = StatusEnum.SUCCESS if result["success"] and result["status_code"] == 200 else StatusEnum.FAILED
+            status = (
+                StatusEnum.SUCCESS
+                if result["success"] and result["status_code"] == 200
+                else StatusEnum.FAILED
+            )
 
             # Log attempt
             attempt = ConnectionAttempt(
@@ -63,7 +67,7 @@ class HealthMonitor:
                 http_status_code=result["status_code"],
                 error_type=result["error"]["type"] if result["error"] else None,
                 error_message=result["error"]["message"] if result["error"] else None,
-                retry_count=0
+                retry_count=0,
             )
             db.add(attempt)
 
@@ -72,9 +76,13 @@ class HealthMonitor:
             provider.last_check_at = datetime.utcnow()
 
             # Calculate overall status
-            recent_attempts = db.query(ConnectionAttempt).filter(
-                ConnectionAttempt.provider_id == provider.id
-            ).order_by(ConnectionAttempt.timestamp.desc()).limit(5).all()
+            recent_attempts = (
+                db.query(ConnectionAttempt)
+                .filter(ConnectionAttempt.provider_id == provider.id)
+                .order_by(ConnectionAttempt.timestamp.desc())
+                .limit(5)
+                .all()
+            )
 
             success_count = sum(1 for a in recent_attempts if a.status == StatusEnum.SUCCESS)
 
@@ -87,7 +95,9 @@ class HealthMonitor:
 
             db.commit()
 
-            logger.info(f"Health check for {provider.name}: {status.value} ({result['response_time_ms']}ms)")
+            logger.info(
+                f"Health check for {provider.name}: {status.value} ({result['response_time_ms']}ms)"
+            )
 
         except Exception as e:
             logger.error(f"Health check failed for {provider.name}: {e}")
@@ -106,7 +116,7 @@ class HealthMonitor:
             "Binance": f"{provider.endpoint_url}/ping",
             "NewsAPI": f"{provider.endpoint_url}/news?language=en&category=technology",
             "The Graph": "https://api.thegraph.com/index-node/graphql",
-            "Blockchair": f"{provider.endpoint_url}/bitcoin/stats"
+            "Blockchair": f"{provider.endpoint_url}/bitcoin/stats",
         }
 
         return endpoints.get(provider.name, provider.endpoint_url)

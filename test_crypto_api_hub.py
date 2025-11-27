@@ -19,7 +19,7 @@ async def test_services_loading():
     print(f"✅ Loaded services successfully")
     print(f"   Total categories: {len(services.get('services', {}))}")
 
-    for category, service_list in services.get('services', {}).items():
+    for category, service_list in services.get("services", {}).items():
         print(f"   - {category}: {len(service_list)} services")
 
     return True
@@ -74,7 +74,7 @@ async def test_endpoint():
     print(f"   Success: {result.get('success')}")
     print(f"   Status: {result.get('status_code')}")
 
-    if result.get('success'):
+    if result.get("success"):
         print(f"   Response: {json.dumps(result.get('data'), indent=2)[:200]}...")
 
     return True
@@ -109,7 +109,7 @@ async def main():
         test_get_stats,
         test_search,
         test_category_filter,
-        test_endpoint
+        test_endpoint,
     ]
 
     results = []
@@ -123,6 +123,7 @@ async def main():
 
     # Close the service
     from crypto_api_hub_backend import crypto_hub_service
+
     await crypto_hub_service.close()
 
     print("\n" + "=" * 60)

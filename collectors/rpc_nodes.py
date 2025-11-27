@@ -12,7 +12,9 @@ from utils.logger import setup_logger, log_api_request, log_error
 logger = setup_logger("rpc_collector")
 
 
-async def get_eth_block_number(provider: str, rpc_url: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+async def get_eth_block_number(
+    provider: str, rpc_url: str, api_key: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Fetch latest Ethereum block number from RPC endpoint
 
@@ -36,12 +38,7 @@ async def get_eth_block_number(provider: str, rpc_url: str, api_key: Optional[st
         url = f"{rpc_url}/{api_key}" if api_key else rpc_url
 
         # JSON-RPC request payload
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "eth_blockNumber",
-            "params": [],
-            "id": 1
-        }
+        payload = {"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1}
 
         headers = {"Content-Type": "application/json"}
 
@@ -55,7 +52,7 @@ async def get_eth_block_number(provider: str, rpc_url: str, api_key: Optional[st
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -68,7 +65,7 @@ async def get_eth_block_number(provider: str, rpc_url: str, api_key: Optional[st
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -79,11 +76,7 @@ async def get_eth_block_number(provider: str, rpc_url: str, api_key: Optional[st
         if isinstance(data, dict) and "result" in data:
             hex_block = data["result"]
             block_number = int(hex_block, 16) if hex_block else 0
-            block_data = {
-                "block_number": block_number,
-                "hex": hex_block,
-                "chain": "ethereum"
-            }
+            block_data = {"block_number": block_number, "hex": hex_block, "chain": "ethereum"}
 
         logger.info(f"{provider} - {endpoint} - Block: {block_data.get('block_number', 'N/A')}")
 
@@ -94,7 +87,7 @@ async def get_eth_block_number(provider: str, rpc_url: str, api_key: Optional[st
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -107,11 +100,13 @@ async def get_eth_block_number(provider: str, rpc_url: str, api_key: Optional[st
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
-async def get_eth_gas_price(provider: str, rpc_url: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+async def get_eth_gas_price(
+    provider: str, rpc_url: str, api_key: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Fetch current gas price from RPC endpoint
 
@@ -132,12 +127,7 @@ async def get_eth_gas_price(provider: str, rpc_url: str, api_key: Optional[str] 
         client = get_client()
         url = f"{rpc_url}/{api_key}" if api_key else rpc_url
 
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "eth_gasPrice",
-            "params": [],
-            "id": 1
-        }
+        payload = {"jsonrpc": "2.0", "method": "eth_gasPrice", "params": [], "id": 1}
 
         headers = {"Content-Type": "application/json"}
         response = await client.post(url, json=payload, headers=headers, timeout=10)
@@ -148,7 +138,7 @@ async def get_eth_gas_price(provider: str, rpc_url: str, api_key: Optional[str] 
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -161,7 +151,7 @@ async def get_eth_gas_price(provider: str, rpc_url: str, api_key: Optional[str] 
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         data = response["data"]
@@ -176,7 +166,7 @@ async def get_eth_gas_price(provider: str, rpc_url: str, api_key: Optional[str] 
                 "gas_price_wei": gas_wei,
                 "gas_price_gwei": round(gas_gwei, 2),
                 "hex": hex_gas,
-                "chain": "ethereum"
+                "chain": "ethereum",
             }
 
         logger.info(f"{provider} - {endpoint} - Gas: {gas_data.get('gas_price_gwei', 'N/A')} Gwei")
@@ -188,7 +178,7 @@ async def get_eth_gas_price(provider: str, rpc_url: str, api_key: Optional[str] 
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -201,11 +191,13 @@ async def get_eth_gas_price(provider: str, rpc_url: str, api_key: Optional[str] 
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
-async def get_eth_chain_id(provider: str, rpc_url: str, api_key: Optional[str] = None) -> Dict[str, Any]:
+async def get_eth_chain_id(
+    provider: str, rpc_url: str, api_key: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Fetch chain ID from RPC endpoint
 
@@ -224,12 +216,7 @@ async def get_eth_chain_id(provider: str, rpc_url: str, api_key: Optional[str] =
         client = get_client()
         url = f"{rpc_url}/{api_key}" if api_key else rpc_url
 
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "eth_chainId",
-            "params": [],
-            "id": 1
-        }
+        payload = {"jsonrpc": "2.0", "method": "eth_chainId", "params": [], "id": 1}
 
         headers = {"Content-Type": "application/json"}
         response = await client.post(url, json=payload, headers=headers, timeout=10)
@@ -242,7 +229,7 @@ async def get_eth_chain_id(provider: str, rpc_url: str, api_key: Optional[str] =
                 "data": None,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
         data = response["data"]
@@ -262,13 +249,13 @@ async def get_eth_chain_id(provider: str, rpc_url: str, api_key: Optional[str] =
                 56: "BSC Mainnet",
                 97: "BSC Testnet",
                 137: "Polygon Mainnet",
-                80001: "Mumbai Testnet"
+                80001: "Mumbai Testnet",
             }
 
             chain_data = {
                 "chain_id": chain_id,
                 "chain_name": chain_names.get(chain_id, f"Unknown (ID: {chain_id})"),
-                "hex": hex_chain
+                "hex": hex_chain,
             }
 
         return {
@@ -278,7 +265,7 @@ async def get_eth_chain_id(provider: str, rpc_url: str, api_key: Optional[str] =
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -289,7 +276,7 @@ async def get_eth_chain_id(provider: str, rpc_url: str, api_key: Optional[str] =
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": str(e),
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -308,15 +295,17 @@ async def collect_infura_data(api_key: Optional[str] = None) -> List[Dict[str, A
 
     if not api_key:
         logger.warning(f"{provider} - No API key provided, skipping")
-        return [{
-            "provider": provider,
-            "category": "rpc_nodes",
-            "data": None,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "success": False,
-            "error": "API key required",
-            "error_type": "missing_api_key"
-        }]
+        return [
+            {
+                "provider": provider,
+                "category": "rpc_nodes",
+                "data": None,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "success": False,
+                "error": "API key required",
+                "error_type": "missing_api_key",
+            }
+        ]
 
     logger.info(f"Starting {provider} data collection")
 
@@ -324,22 +313,24 @@ async def collect_infura_data(api_key: Optional[str] = None) -> List[Dict[str, A
         get_eth_block_number(provider, rpc_url, api_key),
         get_eth_gas_price(provider, rpc_url, api_key),
         get_eth_chain_id(provider, rpc_url, api_key),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     processed = []
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"{provider} - Collector failed: {str(result)}")
-            processed.append({
-                "provider": provider,
-                "category": "rpc_nodes",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed.append(
+                {
+                    "provider": provider,
+                    "category": "rpc_nodes",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed.append(result)
 
@@ -373,22 +364,24 @@ async def collect_alchemy_data(api_key: Optional[str] = None) -> List[Dict[str, 
         get_eth_block_number(provider, rpc_url, api_key),
         get_eth_gas_price(provider, rpc_url, api_key),
         get_eth_chain_id(provider, rpc_url, api_key),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     processed = []
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"{provider} - Collector failed: {str(result)}")
-            processed.append({
-                "provider": provider,
-                "category": "rpc_nodes",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed.append(
+                {
+                    "provider": provider,
+                    "category": "rpc_nodes",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed.append(result)
 
@@ -414,22 +407,24 @@ async def collect_ankr_data() -> List[Dict[str, Any]]:
         get_eth_block_number(provider, rpc_url),
         get_eth_gas_price(provider, rpc_url),
         get_eth_chain_id(provider, rpc_url),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     processed = []
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"{provider} - Collector failed: {str(result)}")
-            processed.append({
-                "provider": provider,
-                "category": "rpc_nodes",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed.append(
+                {
+                    "provider": provider,
+                    "category": "rpc_nodes",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed.append(result)
 
@@ -460,21 +455,23 @@ async def collect_public_rpc_data() -> List[Dict[str, Any]]:
         results = await asyncio.gather(
             get_eth_block_number(provider, rpc_url),
             get_eth_gas_price(provider, rpc_url),
-            return_exceptions=True
+            return_exceptions=True,
         )
 
         for result in results:
             if isinstance(result, Exception):
                 logger.error(f"{provider} - Collector failed: {str(result)}")
-                all_results.append({
-                    "provider": provider,
-                    "category": "rpc_nodes",
-                    "data": None,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "success": False,
-                    "error": str(result),
-                    "error_type": "exception"
-                })
+                all_results.append(
+                    {
+                        "provider": provider,
+                        "category": "rpc_nodes",
+                        "data": None,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "success": False,
+                        "error": str(result),
+                        "error_type": "exception",
+                    }
+                )
             else:
                 all_results.append(result)
 
@@ -485,8 +482,7 @@ async def collect_public_rpc_data() -> List[Dict[str, Any]]:
 
 
 async def collect_rpc_data(
-    infura_key: Optional[str] = None,
-    alchemy_key: Optional[str] = None
+    infura_key: Optional[str] = None, alchemy_key: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """
     Main function to collect RPC data from all sources
@@ -551,6 +547,7 @@ class RPCNodeCollector:
             Dict with aggregated RPC node data
         """
         import os
+
         infura_key = os.getenv("INFURA_API_KEY")
         alchemy_key = os.getenv("ALCHEMY_API_KEY")
         results = await collect_rpc_data(infura_key, alchemy_key)
@@ -563,7 +560,7 @@ class RPCNodeCollector:
             "average_latency": 0,
             "events": [],
             "block_number": None,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         total_latency = 0
@@ -588,7 +585,7 @@ class RPCNodeCollector:
                     "provider": provider,
                     "response_time_ms": response_time,
                     "status": "active",
-                    "data": data
+                    "data": data,
                 }
 
                 # Extract block number
@@ -596,7 +593,10 @@ class RPCNodeCollector:
                     try:
                         block_number = int(data["result"], 16)
                         node_info["block_number"] = block_number
-                        if aggregated["block_number"] is None or block_number > aggregated["block_number"]:
+                        if (
+                            aggregated["block_number"] is None
+                            or block_number > aggregated["block_number"]
+                        ):
                             aggregated["block_number"] = block_number
                     except:
                         pass
@@ -612,6 +612,7 @@ class RPCNodeCollector:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         import os
 
@@ -624,9 +625,9 @@ if __name__ == "__main__":
         for result in results:
             print(f"\nProvider: {result['provider']}")
             print(f"Success: {result['success']}")
-            if result['success']:
+            if result["success"]:
                 print(f"Response Time: {result.get('response_time_ms', 0):.2f}ms")
-                data = result.get('data', {})
+                data = result.get("data", {})
                 if data:
                     print(f"Data: {data}")
             else:

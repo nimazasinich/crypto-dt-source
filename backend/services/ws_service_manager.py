@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class ServiceType(str, Enum):
     """Available service types for WebSocket subscriptions"""
+
     # Data Collection Services
     MARKET_DATA = "market_data"
     EXPLORERS = "explorers"
@@ -118,12 +119,14 @@ class WebSocketServiceManager:
         logger.info(f"New WebSocket connection: {client_id}")
 
         # Send connection established message
-        await connection.send_message({
-            "type": "connection_established",
-            "client_id": client_id,
-            "timestamp": datetime.utcnow().isoformat(),
-            "available_services": [s.value for s in ServiceType]
-        })
+        await connection.send_message(
+            {
+                "type": "connection_established",
+                "client_id": client_id,
+                "timestamp": datetime.utcnow().isoformat(),
+                "available_services": [s.value for s in ServiceType],
+            }
+        )
 
         return connection
 
@@ -149,7 +152,7 @@ class WebSocketServiceManager:
         service: ServiceType,
         message_type: str,
         data: Any,
-        filter_func: Optional[Callable[[WebSocketConnection], bool]] = None
+        filter_func: Optional[Callable[[WebSocketConnection], bool]] = None,
     ):
         """
         Broadcast a message to all subscribed clients
@@ -164,7 +167,7 @@ class WebSocketServiceManager:
             "service": service.value,
             "type": message_type,
             "data": data,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
         disconnected_clients = []
@@ -183,11 +186,7 @@ class WebSocketServiceManager:
             await self.disconnect(client_id)
 
     async def send_to_client(
-        self,
-        client_id: str,
-        service: ServiceType,
-        message_type: str,
-        data: Any
+        self, client_id: str, service: ServiceType, message_type: str, data: Any
     ) -> bool:
         """
         Send a message to a specific client
@@ -208,16 +207,12 @@ class WebSocketServiceManager:
                     "service": service.value,
                     "type": message_type,
                     "data": data,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
                 return await connection.send_message(message)
         return False
 
-    async def handle_client_message(
-        self,
-        connection: WebSocketConnection,
-        message: Dict[str, Any]
-    ):
+    async def handle_client_message(self, connection: WebSocketConnection, message: Dict[str, Any]):
         """
         Handle incoming messages from clients
 
@@ -236,25 +231,29 @@ class WebSocketServiceManager:
                 try:
                     service = ServiceType(service_name)
                     connection.subscribe(service)
-                    await connection.send_message({
-                        "service": "system",
-                        "type": "subscription_confirmed",
-                        "data": {
-                            "service": service_name,
-                            "subscriptions": [s.value for s in connection.subscriptions]
-                        },
-                        "timestamp": datetime.utcnow().isoformat()
-                    })
+                    await connection.send_message(
+                        {
+                            "service": "system",
+                            "type": "subscription_confirmed",
+                            "data": {
+                                "service": service_name,
+                                "subscriptions": [s.value for s in connection.subscriptions],
+                            },
+                            "timestamp": datetime.utcnow().isoformat(),
+                        }
+                    )
                 except ValueError:
-                    await connection.send_message({
-                        "service": "system",
-                        "type": "error",
-                        "data": {
-                            "message": f"Invalid service: {service_name}",
-                            "available_services": [s.value for s in ServiceType]
-                        },
-                        "timestamp": datetime.utcnow().isoformat()
-                    })
+                    await connection.send_message(
+                        {
+                            "service": "system",
+                            "type": "error",
+                            "data": {
+                                "message": f"Invalid service: {service_name}",
+                                "available_services": [s.value for s in ServiceType],
+                            },
+                            "timestamp": datetime.utcnow().isoformat(),
+                        }
+                    )
 
         elif action == "unsubscribe":
             service_name = message.get("service")
@@ -262,61 +261,68 @@ class WebSocketServiceManager:
                 try:
                     service = ServiceType(service_name)
                     connection.unsubscribe(service)
-                    await connection.send_message({
-                        "service": "system",
-                        "type": "unsubscription_confirmed",
-                        "data": {
-                            "service": service_name,
-                            "subscriptions": [s.value for s in connection.subscriptions]
-                        },
-                        "timestamp": datetime.utcnow().isoformat()
-                    })
+                    await connection.send_message(
+                        {
+                            "service": "system",
+                            "type": "unsubscription_confirmed",
+                            "data": {
+                                "service": service_name,
+                                "subscriptions": [s.value for s in connection.subscriptions],
+                            },
+                            "timestamp": datetime.utcnow().isoformat(),
+                        }
+                    )
                 except ValueError:
-                    await connection.send_message({
-                        "service": "system",
-                        "type": "error",
-                        "data": {"message": f"Invalid service: {service_name}"},
-                        "timestamp": datetime.utcnow().isoformat()
-                    })
+                    await connection.send_message(
+                        {
+                            "service": "system",
+                            "type": "error",
+                            "data": {"message": f"Invalid service: {service_name}"},
+                            "timestamp": datetime.utcnow().isoformat(),
+                        }
+                    )
 
         elif action == "get_status":
-            await connection.send_message({
-                "service": "system",
-                "type": "status",
-                "data": {
-                    "client_id": connection.client_id,
-                    "connected_at": connection.connected_at.isoformat(),
-                    "last_activity": connection.last_activity.isoformat(),
-                    "subscriptions": [s.value for s in connection.subscriptions],
-                    "total_clients": len(self.connections)
-                },
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            await connection.send_message(
+                {
+                    "service": "system",
+                    "type": "status",
+                    "data": {
+                        "client_id": connection.client_id,
+                        "connected_at": connection.connected_at.isoformat(),
+                        "last_activity": connection.last_activity.isoformat(),
+                        "subscriptions": [s.value for s in connection.subscriptions],
+                        "total_clients": len(self.connections),
+                    },
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
         elif action == "ping":
-            await connection.send_message({
-                "service": "system",
-                "type": "pong",
-                "data": message.get("data", {}),
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            await connection.send_message(
+                {
+                    "service": "system",
+                    "type": "pong",
+                    "data": message.get("data", {}),
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
         else:
-            await connection.send_message({
-                "service": "system",
-                "type": "error",
-                "data": {
-                    "message": f"Unknown action: {action}",
-                    "supported_actions": ["subscribe", "unsubscribe", "get_status", "ping"]
-                },
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            await connection.send_message(
+                {
+                    "service": "system",
+                    "type": "error",
+                    "data": {
+                        "message": f"Unknown action: {action}",
+                        "supported_actions": ["subscribe", "unsubscribe", "get_status", "ping"],
+                    },
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
     async def start_service_stream(
-        self,
-        service: ServiceType,
-        data_generator: Callable,
-        interval: float = 1.0
+        self, service: ServiceType, data_generator: Callable, interval: float = 1.0
     ):
         """
         Start a continuous data stream for a service
@@ -342,11 +348,7 @@ class WebSocketServiceManager:
                 if has_subscribers:
                     data = await data_generator()
                     if data:
-                        await self.broadcast(
-                            service=service,
-                            message_type="update",
-                            data=data
-                        )
+                        await self.broadcast(service=service, message_type="update", data=data)
 
                 await asyncio.sleep(interval)
 
@@ -362,8 +364,7 @@ class WebSocketServiceManager:
         subscription_counts = {}
         for service in ServiceType:
             subscription_counts[service.value] = sum(
-                1 for conn in self.connections.values()
-                if conn.is_subscribed(service)
+                1 for conn in self.connections.values() if conn.is_subscribed(service)
             )
 
         return {
@@ -373,11 +374,11 @@ class WebSocketServiceManager:
                     "client_id": conn.client_id,
                     "connected_at": conn.connected_at.isoformat(),
                     "last_activity": conn.last_activity.isoformat(),
-                    "subscriptions": [s.value for s in conn.subscriptions]
+                    "subscriptions": [s.value for s in conn.subscriptions],
                 }
                 for conn in self.connections.values()
             ],
-            "subscription_counts": subscription_counts
+            "subscription_counts": subscription_counts,
         }
 
 

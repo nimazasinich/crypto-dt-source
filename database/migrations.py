@@ -16,13 +16,7 @@ logger = logging.getLogger(__name__)
 class Migration:
     """Represents a single database migration"""
 
-    def __init__(
-        self,
-        version: int,
-        description: str,
-        up_sql: str,
-        down_sql: str = ""
-    ):
+    def __init__(self, version: int, description: str, up_sql: str, down_sql: str = ""):
         """
         Initialize migration
 
@@ -62,14 +56,16 @@ class MigrationManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS schema_migrations (
                     version INTEGER PRIMARY KEY,
                     description TEXT NOT NULL,
                     applied_at TIMESTAMP NOT NULL,
                     execution_time_ms INTEGER
                 )
-            """)
+            """
+            )
 
             conn.commit()
             conn.close()
@@ -84,10 +80,11 @@ class MigrationManager:
         """Register all migrations in order"""
 
         # Migration 1: Add whale tracking table
-        self.migrations.append(Migration(
-            version=1,
-            description="Add whale tracking table",
-            up_sql="""
+        self.migrations.append(
+            Migration(
+                version=1,
+                description="Add whale tracking table",
+                up_sql="""
                 CREATE TABLE IF NOT EXISTS whale_transactions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     transaction_hash TEXT UNIQUE NOT NULL,
@@ -107,14 +104,16 @@ class MigrationManager:
                 CREATE INDEX IF NOT EXISTS idx_whale_blockchain
                 ON whale_transactions(blockchain);
             """,
-            down_sql="DROP TABLE IF EXISTS whale_transactions;"
-        ))
+                down_sql="DROP TABLE IF EXISTS whale_transactions;",
+            )
+        )
 
         # Migration 2: Add indices for performance
-        self.migrations.append(Migration(
-            version=2,
-            description="Add performance indices",
-            up_sql="""
+        self.migrations.append(
+            Migration(
+                version=2,
+                description="Add performance indices",
+                up_sql="""
                 CREATE INDEX IF NOT EXISTS idx_prices_symbol_timestamp
                 ON prices(symbol, timestamp);
 
@@ -124,18 +123,20 @@ class MigrationManager:
                 CREATE INDEX IF NOT EXISTS idx_analysis_symbol_timestamp
                 ON market_analysis(symbol, timestamp DESC);
             """,
-            down_sql="""
+                down_sql="""
                 DROP INDEX IF EXISTS idx_prices_symbol_timestamp;
                 DROP INDEX IF EXISTS idx_news_published_date;
                 DROP INDEX IF EXISTS idx_analysis_symbol_timestamp;
-            """
-        ))
+            """,
+            )
+        )
 
         # Migration 3: Add API key tracking
-        self.migrations.append(Migration(
-            version=3,
-            description="Add API key tracking table",
-            up_sql="""
+        self.migrations.append(
+            Migration(
+                version=3,
+                description="Add API key tracking table",
+                up_sql="""
                 CREATE TABLE IF NOT EXISTS api_key_usage (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     api_key_hash TEXT NOT NULL,
@@ -152,14 +153,16 @@ class MigrationManager:
                 CREATE INDEX IF NOT EXISTS idx_api_usage_key
                 ON api_key_usage(api_key_hash);
             """,
-            down_sql="DROP TABLE IF EXISTS api_key_usage;"
-        ))
+                down_sql="DROP TABLE IF EXISTS api_key_usage;",
+            )
+        )
 
         # Migration 4: Add user queries metadata
-        self.migrations.append(Migration(
-            version=4,
-            description="Enhance user queries table with metadata",
-            up_sql="""
+        self.migrations.append(
+            Migration(
+                version=4,
+                description="Enhance user queries table with metadata",
+                up_sql="""
                 CREATE TABLE IF NOT EXISTS user_queries_v2 (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     query TEXT NOT NULL,
@@ -183,14 +186,16 @@ class MigrationManager:
                 CREATE INDEX IF NOT EXISTS idx_user_queries_timestamp
                 ON user_queries(timestamp);
             """,
-            down_sql="-- Cannot rollback data migration"
-        ))
+                down_sql="-- Cannot rollback data migration",
+            )
+        )
 
         # Migration 5: Add caching metadata table
-        self.migrations.append(Migration(
-            version=5,
-            description="Add cache metadata table",
-            up_sql="""
+        self.migrations.append(
+            Migration(
+                version=5,
+                description="Add cache metadata table",
+                up_sql="""
                 CREATE TABLE IF NOT EXISTS cache_metadata (
                     cache_key TEXT PRIMARY KEY,
                     data_type TEXT NOT NULL,
@@ -203,8 +208,9 @@ class MigrationManager:
                 CREATE INDEX IF NOT EXISTS idx_cache_expires
                 ON cache_metadata(expires_at);
             """,
-            down_sql="DROP TABLE IF EXISTS cache_metadata;"
-        ))
+                down_sql="DROP TABLE IF EXISTS cache_metadata;",
+            )
+        )
 
         logger.info(f"Registered {len(self.migrations)} migrations")
 
@@ -219,9 +225,7 @@ class MigrationManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute(
-                "SELECT MAX(version) FROM schema_migrations"
-            )
+            cursor.execute("SELECT MAX(version) FROM schema_migrations")
             result = cursor.fetchone()
 
             conn.close()
@@ -241,10 +245,7 @@ class MigrationManager:
         """
         current_version = self.get_current_version()
 
-        return [
-            migration for migration in self.migrations
-            if migration.version > current_version
-        ]
+        return [migration for migration in self.migrations if migration.version > current_version]
 
     def apply_migration(self, migration: Migration) -> bool:
         """
@@ -274,12 +275,7 @@ class MigrationManager:
                 (version, description, applied_at, execution_time_ms)
                 VALUES (?, ?, ?, ?)
                 """,
-                (
-                    migration.version,
-                    migration.description,
-                    datetime.now(),
-                    execution_time
-                )
+                (migration.version, migration.description, datetime.now(), execution_time),
             )
 
             conn.commit()
@@ -294,8 +290,7 @@ class MigrationManager:
 
         except Exception as e:
             logger.error(
-                f"Failed to apply migration {migration.version}: {e}\n"
-                f"{traceback.format_exc()}"
+                f"Failed to apply migration {migration.version}: {e}\n" f"{traceback.format_exc()}"
             )
             return False
 
@@ -335,10 +330,7 @@ class MigrationManager:
         Returns:
             True if successful, False otherwise
         """
-        migration = next(
-            (m for m in self.migrations if m.version == version),
-            None
-        )
+        migration = next((m for m in self.migrations if m.version == version), None)
 
         if not migration:
             logger.error(f"Migration {version} not found")
@@ -356,10 +348,7 @@ class MigrationManager:
             cursor.executescript(migration.down_sql)
 
             # Remove migration record
-            cursor.execute(
-                "DELETE FROM schema_migrations WHERE version = ?",
-                (version,)
-            )
+            cursor.execute("DELETE FROM schema_migrations WHERE version = ?", (version,))
 
             conn.commit()
             conn.close()
@@ -382,11 +371,13 @@ class MigrationManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT version, description, applied_at
                 FROM schema_migrations
                 ORDER BY version
-            """)
+            """
+            )
 
             history = cursor.fetchall()
             conn.close()

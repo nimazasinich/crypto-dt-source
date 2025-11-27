@@ -20,6 +20,7 @@ from api.hf_auth import verify_hf_token
 
 try:
     from datasets import load_dataset
+
     DATASETS_AVAILABLE = True
 except ImportError:
     DATASETS_AVAILABLE = False
@@ -35,6 +36,7 @@ router = APIRouter(prefix="/api/hub", tags=["data-hub"])
 # Response models
 class MarketDataResponse(BaseModel):
     """Market data response model"""
+
     symbol: str
     price: float
     market_cap: Optional[float] = None
@@ -49,6 +51,7 @@ class MarketDataResponse(BaseModel):
 
 class OHLCDataResponse(BaseModel):
     """OHLC data response model"""
+
     symbol: str
     interval: str
     timestamp: str
@@ -63,6 +66,7 @@ class OHLCDataResponse(BaseModel):
 
 class DataHubStatus(BaseModel):
     """Data hub status response"""
+
     status: str
     message: str
     market_dataset: Dict[str, Any]
@@ -84,11 +88,7 @@ def _load_market_dataset():
             raise ImportError("datasets library not available")
 
         logger.info(f"Loading market dataset from HuggingFace: {MARKET_DATASET}")
-        dataset = load_dataset(
-            MARKET_DATASET,
-            split="train",
-            token=HF_TOKEN
-        )
+        dataset = load_dataset(MARKET_DATASET, split="train", token=HF_TOKEN)
         return dataset
 
     except Exception as e:
@@ -103,11 +103,7 @@ def _load_ohlc_dataset():
             raise ImportError("datasets library not available")
 
         logger.info(f"Loading OHLC dataset from HuggingFace: {OHLC_DATASET}")
-        dataset = load_dataset(
-            OHLC_DATASET,
-            split="train",
-            token=HF_TOKEN
-        )
+        dataset = load_dataset(OHLC_DATASET, split="train", token=HF_TOKEN)
         return dataset
 
     except Exception as e:
@@ -119,7 +115,7 @@ def _load_ohlc_dataset():
     "/status",
     response_model=DataHubStatus,
     summary="Data Hub Status",
-    description="Get status of HuggingFace Data Hub and available datasets"
+    description="Get status of HuggingFace Data Hub and available datasets",
 )
 async def get_hub_status():
     """
@@ -144,7 +140,7 @@ async def get_hub_status():
                     "available": True,
                     "records": len(market_dataset),
                     "columns": market_dataset.column_names,
-                    "url": f"https://huggingface.co/datasets/{MARKET_DATASET}"
+                    "url": f"https://huggingface.co/datasets/{MARKET_DATASET}",
                 }
         except Exception as e:
             market_info["error"] = str(e)
@@ -157,17 +153,23 @@ async def get_hub_status():
                     "available": True,
                     "records": len(ohlc_dataset),
                     "columns": ohlc_dataset.column_names,
-                    "url": f"https://huggingface.co/datasets/{OHLC_DATASET}"
+                    "url": f"https://huggingface.co/datasets/{OHLC_DATASET}",
                 }
         except Exception as e:
             ohlc_info["error"] = str(e)
 
         return DataHubStatus(
-            status="healthy" if (market_info["available"] or ohlc_info["available"]) else "degraded",
-            message="Data Hub operational" if (market_info["available"] or ohlc_info["available"]) else "No datasets available",
+            status=(
+                "healthy" if (market_info["available"] or ohlc_info["available"]) else "degraded"
+            ),
+            message=(
+                "Data Hub operational"
+                if (market_info["available"] or ohlc_info["available"])
+                else "No datasets available"
+            ),
             market_dataset=market_info,
             ohlc_dataset=ohlc_info,
-            timestamp=datetime.utcnow().isoformat() + "Z"
+            timestamp=datetime.utcnow().isoformat() + "Z",
         )
 
     except Exception as e:
@@ -179,12 +181,14 @@ async def get_hub_status():
     "/market",
     response_model=List[MarketDataResponse],
     summary="Get Market Data from HuggingFace",
-    description="Fetch real-time cryptocurrency market data FROM HuggingFace Datasets"
+    description="Fetch real-time cryptocurrency market data FROM HuggingFace Datasets",
 )
 async def get_market_data_from_hub(
-    symbols: Optional[str] = Query(None, description="Comma-separated list of symbols (e.g., 'BTC,ETH')"),
+    symbols: Optional[str] = Query(
+        None, description="Comma-separated list of symbols (e.g., 'BTC,ETH')"
+    ),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
-    _: dict = Depends(verify_hf_token)
+    _: dict = Depends(verify_hf_token),
 ):
     """
     Get market data FROM HuggingFace Dataset
@@ -211,8 +215,7 @@ async def get_market_data_from_hub(
 
         if not dataset:
             raise HTTPException(
-                status_code=503,
-                detail="Market dataset not available on HuggingFace"
+                status_code=503, detail="Market dataset not available on HuggingFace"
             )
 
         # Convert to pandas for filtering
@@ -220,8 +223,7 @@ async def get_market_data_from_hub(
 
         if df.empty:
             raise HTTPException(
-                status_code=404,
-                detail="No market data available in HuggingFace Dataset"
+                status_code=404, detail="No market data available in HuggingFace Dataset"
             )
 
         # Filter by symbols if provided
@@ -250,8 +252,7 @@ async def get_market_data_from_hub(
     except Exception as e:
         logger.error(f"Error fetching market data from HuggingFace: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail=f"Error fetching market data from HuggingFace: {str(e)}"
+            status_code=500, detail=f"Error fetching market data from HuggingFace: {str(e)}"
         )
 
 
@@ -259,13 +260,13 @@ async def get_market_data_from_hub(
     "/ohlc",
     response_model=List[OHLCDataResponse],
     summary="Get OHLC Data from HuggingFace",
-    description="Fetch cryptocurrency candlestick data FROM HuggingFace Datasets"
+    description="Fetch cryptocurrency candlestick data FROM HuggingFace Datasets",
 )
 async def get_ohlc_data_from_hub(
     symbol: str = Query(..., description="Trading pair symbol (e.g., 'BTCUSDT')"),
     interval: str = Query("1h", description="Candle interval (e.g., '1h', '4h', '1d')"),
     limit: int = Query(500, ge=1, le=5000, description="Maximum number of candles to return"),
-    _: dict = Depends(verify_hf_token)
+    _: dict = Depends(verify_hf_token),
 ):
     """
     Get OHLC/candlestick data FROM HuggingFace Dataset
@@ -292,18 +293,14 @@ async def get_ohlc_data_from_hub(
         dataset = _load_ohlc_dataset()
 
         if not dataset:
-            raise HTTPException(
-                status_code=503,
-                detail="OHLC dataset not available on HuggingFace"
-            )
+            raise HTTPException(status_code=503, detail="OHLC dataset not available on HuggingFace")
 
         # Convert to pandas for filtering
         df = dataset.to_pandas()
 
         if df.empty:
             raise HTTPException(
-                status_code=404,
-                detail="No OHLC data available in HuggingFace Dataset"
+                status_code=404, detail="No OHLC data available in HuggingFace Dataset"
             )
 
         # Filter by symbol and interval
@@ -313,7 +310,7 @@ async def get_ohlc_data_from_hub(
         if df.empty:
             raise HTTPException(
                 status_code=404,
-                detail=f"No OHLC data for {symbol_upper} {interval} in HuggingFace Dataset"
+                detail=f"No OHLC data for {symbol_upper} {interval} in HuggingFace Dataset",
             )
 
         # Sort by timestamp descending (most recent first)
@@ -335,15 +332,14 @@ async def get_ohlc_data_from_hub(
     except Exception as e:
         logger.error(f"Error fetching OHLC data from HuggingFace: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail=f"Error fetching OHLC data from HuggingFace: {str(e)}"
+            status_code=500, detail=f"Error fetching OHLC data from HuggingFace: {str(e)}"
         )
 
 
 @router.get(
     "/dataset-info",
     summary="Get Dataset Information",
-    description="Get detailed information about HuggingFace Datasets"
+    description="Get detailed information about HuggingFace Datasets",
 )
 async def get_dataset_info(
     dataset_type: str = Query("market", description="Dataset type: 'market' or 'ohlc'")
@@ -373,15 +369,11 @@ async def get_dataset_info(
             dataset = _load_ohlc_dataset()
         else:
             raise HTTPException(
-                status_code=400,
-                detail="Invalid dataset_type. Must be 'market' or 'ohlc'"
+                status_code=400, detail="Invalid dataset_type. Must be 'market' or 'ohlc'"
             )
 
         if not dataset:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Dataset not found: {dataset_name}"
-            )
+            raise HTTPException(status_code=404, detail=f"Dataset not found: {dataset_name}")
 
         # Get dataset info
         df = dataset.to_pandas()
@@ -393,7 +385,7 @@ async def get_dataset_info(
             "columns": dataset.column_names,
             "features": str(dataset.features),
             "size_mb": df.memory_usage(deep=True).sum() / 1024 / 1024,
-            "sample_records": df.head(3).to_dict("records") if not df.empty else []
+            "sample_records": df.head(3).to_dict("records") if not df.empty else [],
         }
 
         # Add timestamp info if available
@@ -410,17 +402,14 @@ async def get_dataset_info(
         raise
     except Exception as e:
         logger.error(f"Error getting dataset info: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error getting dataset info: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error getting dataset info: {str(e)}")
 
 
 # Health check for Data Hub
 @router.get(
     "/health",
     summary="Data Hub Health Check",
-    description="Check if Data Hub is operational and datasets are accessible"
+    description="Check if Data Hub is operational and datasets are accessible",
 )
 async def data_hub_health():
     """
@@ -438,7 +427,7 @@ async def data_hub_health():
         health = {
             "status": "healthy",
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "datasets": {}
+            "datasets": {},
         }
 
         # Check market dataset
@@ -449,10 +438,15 @@ async def data_hub_health():
                 health["datasets"]["market"] = {
                     "available": True,
                     "records": len(market_dataset),
-                    "latest_update": str(df["fetched_at"].max()) if "fetched_at" in df.columns else None
+                    "latest_update": (
+                        str(df["fetched_at"].max()) if "fetched_at" in df.columns else None
+                    ),
                 }
             else:
-                health["datasets"]["market"] = {"available": False, "error": "Could not load dataset"}
+                health["datasets"]["market"] = {
+                    "available": False,
+                    "error": "Could not load dataset",
+                }
                 health["status"] = "degraded"
         except Exception as e:
             health["datasets"]["market"] = {"available": False, "error": str(e)}
@@ -466,7 +460,9 @@ async def data_hub_health():
                 health["datasets"]["ohlc"] = {
                     "available": True,
                     "records": len(ohlc_dataset),
-                    "latest_update": str(df["fetched_at"].max()) if "fetched_at" in df.columns else None
+                    "latest_update": (
+                        str(df["fetched_at"].max()) if "fetched_at" in df.columns else None
+                    ),
                 }
             else:
                 health["datasets"]["ohlc"] = {"available": False, "error": "Could not load dataset"}
@@ -482,5 +478,5 @@ async def data_hub_health():
         return {
             "status": "unhealthy",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.utcnow().isoformat() + "Z",
         }

@@ -13,14 +13,9 @@ from pathlib import Path
 def check_dependencies():
     """بررسی وابستگی‌های لازم"""
     print("🔍 بررسی وابستگی‌ها...")
-    
-    required_packages = [
-        'fastapi',
-        'uvicorn',
-        'aiohttp',
-        'pydantic'
-    ]
-    
+
+    required_packages = ["fastapi", "uvicorn", "aiohttp", "pydantic"]
+
     missing = []
     for package in required_packages:
         try:
@@ -29,11 +24,11 @@ def check_dependencies():
         except ImportError:
             missing.append(package)
             print(f"  ❌ {package} - نصب نشده")
-    
+
     if missing:
         print(f"\n⚠️  {len(missing)} پکیج نصب نشده است!")
         response = input("آیا می‌خواهید الان نصب شوند? (y/n): ")
-        if response.lower() == 'y':
+        if response.lower() == "y":
             install_dependencies()
         else:
             print("❌ بدون نصب وابستگی‌ها، سرور نمی‌تواند اجرا شود.")
@@ -46,9 +41,7 @@ def install_dependencies():
     """نصب وابستگی‌ها از requirements.txt"""
     print("\n📦 در حال نصب وابستگی‌ها...")
     try:
-        subprocess.check_call([
-            sys.executable, "-m", "pip", "install", "-r", "requirements.txt"
-        ])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
         print("✅ همه وابستگی‌ها با موفقیت نصب شدند\n")
     except subprocess.CalledProcessError:
         print("❌ خطا در نصب وابستگی‌ها")
@@ -58,7 +51,7 @@ def install_dependencies():
 def check_config_files():
     """بررسی فایل‌های پیکربندی"""
     print("🔍 بررسی فایل‌های پیکربندی...")
-    
+
     config_file = Path("providers_config_extended.json")
     if not config_file.exists():
         print(f"  ❌ {config_file} یافت نشد!")
@@ -66,13 +59,13 @@ def check_config_files():
         sys.exit(1)
     else:
         print(f"  ✅ {config_file}")
-    
+
     dashboard_file = Path("unified_dashboard.html")
     if not dashboard_file.exists():
         print(f"  ⚠️  {dashboard_file} یافت نشد - داشبورد در دسترس نخواهد بود")
     else:
         print(f"  ✅ {dashboard_file}")
-    
+
     print()
 
 
@@ -113,15 +106,22 @@ def run_server_production():
     print("📊 داشبورد: http://localhost:8000")
     print("📖 API Docs: http://localhost:8000/docs")
     print("\n⏸️  برای توقف سرور Ctrl+C را فشار دهید\n")
-    
+
     try:
-        subprocess.run([
-            sys.executable, "-m", "uvicorn",
-            "api_server_extended:app",
-            "--host", "0.0.0.0",
-            "--port", "8000",
-            "--log-level", "info"
-        ])
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "api_server_extended:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--log-level",
+                "info",
+            ]
+        )
     except KeyboardInterrupt:
         print("\n\n🛑 سرور متوقف شد")
 
@@ -134,16 +134,23 @@ def run_server_development():
     print("📖 API Docs: http://localhost:8000/docs")
     print("\n⏸️  برای توقف سرور Ctrl+C را فشار دهید")
     print("♻️  تغییرات فایل‌ها به‌طور خودکار اعمال می‌شود\n")
-    
+
     try:
-        subprocess.run([
-            sys.executable, "-m", "uvicorn",
-            "api_server_extended:app",
-            "--host", "0.0.0.0",
-            "--port", "8000",
-            "--reload",
-            "--log-level", "debug"
-        ])
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "api_server_extended:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000",
+                "--reload",
+                "--log-level",
+                "debug",
+            ]
+        )
     except KeyboardInterrupt:
         print("\n\n🛑 سرور متوقف شد")
 
@@ -164,10 +171,11 @@ def show_stats():
     print("\n📊 نمایش آمار ارائه‌دهندگان...\n")
     try:
         from provider_manager import ProviderManager
+
         manager = ProviderManager()
         stats = manager.get_all_stats()
-        
-        summary = stats['summary']
+
+        summary = stats["summary"]
         print("=" * 60)
         print(f"📈 آمار کلی سیستم")
         print("=" * 60)
@@ -179,17 +187,17 @@ def show_stats():
         print(f"  درخواست‌های موفق:    {summary['successful_requests']}")
         print(f"  نرخ موفقیت:          {summary['overall_success_rate']:.2f}%")
         print("=" * 60)
-        
+
         print(f"\n🔄 Pool‌های موجود: {len(stats['pools'])}")
-        for pool_id, pool_data in stats['pools'].items():
+        for pool_id, pool_data in stats["pools"].items():
             print(f"\n  📦 {pool_data['pool_name']}")
             print(f"     دسته: {pool_data['category']}")
             print(f"     استراتژی: {pool_data['rotation_strategy']}")
             print(f"     اعضا: {pool_data['total_providers']}")
             print(f"     در دسترس: {pool_data['available_providers']}")
-        
+
         print("\n✅ برای جزئیات بیشتر، سرور را اجرا کرده و به داشبورد مراجعه کنید")
-        
+
     except ImportError:
         print("❌ خطا: provider_manager.py یافت نشد یا وابستگی‌ها نصب نشده‌اند")
     except Exception as e:
@@ -199,18 +207,18 @@ def show_stats():
 def main():
     """تابع اصلی"""
     show_banner()
-    
+
     # بررسی وابستگی‌ها
     check_dependencies()
-    
+
     # بررسی فایل‌های پیکربندی
     check_config_files()
-    
+
     # حلقه منو
     while True:
         show_menu()
         choice = input("انتخاب شما: ").strip()
-        
+
         if choice == "1":
             run_server_production()
             break

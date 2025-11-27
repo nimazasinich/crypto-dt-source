@@ -16,7 +16,7 @@ from collectors import (
     collect_explorer_data,
     collect_news_data,
     collect_sentiment_data,
-    collect_onchain_data
+    collect_onchain_data,
 )
 
 
@@ -37,20 +37,22 @@ def format_result_summary(result: Dict[str, Any]) -> str:
     lines.append(f"Category: {result.get('category', 'Unknown')}")
     lines.append(f"Success: {result.get('success', False)}")
 
-    if result.get('success'):
+    if result.get("success"):
         lines.append(f"Response Time: {result.get('response_time_ms', 0):.2f}ms")
-        staleness = result.get('staleness_minutes')
+        staleness = result.get("staleness_minutes")
         if staleness is not None:
             lines.append(f"Data Staleness: {staleness:.2f} minutes")
 
         # Add provider-specific info
-        if result.get('index_value'):
-            lines.append(f"Fear & Greed Index: {result['index_value']} ({result['index_classification']})")
-        if result.get('post_count'):
+        if result.get("index_value"):
+            lines.append(
+                f"Fear & Greed Index: {result['index_value']} ({result['index_classification']})"
+            )
+        if result.get("post_count"):
             lines.append(f"Posts: {result['post_count']}")
-        if result.get('article_count'):
+        if result.get("article_count"):
             lines.append(f"Articles: {result['article_count']}")
-        if result.get('is_placeholder'):
+        if result.get("is_placeholder"):
             lines.append("Status: PLACEHOLDER IMPLEMENTATION")
     else:
         lines.append(f"Error Type: {result.get('error_type', 'unknown')}")
@@ -64,7 +66,7 @@ def print_category_summary(category: str, results: List[Dict[str, Any]]):
     print_separator(f"{category.upper()}")
 
     total = len(results)
-    successful = sum(1 for r in results if r.get('success', False))
+    successful = sum(1 for r in results if r.get("success", False))
 
     print(f"Total Collectors: {total}")
     print(f"Successful: {successful}")
@@ -90,25 +92,29 @@ async def collect_all_data() -> Dict[str, List[Dict[str, Any]]]:
     # Run all collectors concurrently
     print("Executing all collectors in parallel...")
 
-    market_results, explorer_results, news_results, sentiment_results, onchain_results = await asyncio.gather(
-        collect_market_data(),
-        collect_explorer_data(),
-        collect_news_data(),
-        collect_sentiment_data(),
-        collect_onchain_data(),
-        return_exceptions=True
+    market_results, explorer_results, news_results, sentiment_results, onchain_results = (
+        await asyncio.gather(
+            collect_market_data(),
+            collect_explorer_data(),
+            collect_news_data(),
+            collect_sentiment_data(),
+            collect_onchain_data(),
+            return_exceptions=True,
+        )
     )
 
     # Handle any exceptions
     def handle_exception(result, category):
         if isinstance(result, Exception):
-            return [{
-                "provider": "Unknown",
-                "category": category,
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            }]
+            return [
+                {
+                    "provider": "Unknown",
+                    "category": category,
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            ]
         return result
 
     return {
@@ -116,7 +122,7 @@ async def collect_all_data() -> Dict[str, List[Dict[str, Any]]]:
         "explorers": handle_exception(explorer_results, "blockchain_explorers"),
         "news": handle_exception(news_results, "news"),
         "sentiment": handle_exception(sentiment_results, "sentiment"),
-        "onchain": handle_exception(onchain_results, "onchain_analytics")
+        "onchain": handle_exception(onchain_results, "onchain_analytics"),
     }
 
 
@@ -139,17 +145,16 @@ async def main():
 
     total_collectors = sum(len(results) for results in all_results.values())
     total_successful = sum(
-        sum(1 for r in results if r.get('success', False))
-        for results in all_results.values()
+        sum(1 for r in results if r.get("success", False)) for results in all_results.values()
     )
     total_failed = total_collectors - total_successful
 
     # Calculate average response time for successful calls
     response_times = [
-        r.get('response_time_ms', 0)
+        r.get("response_time_ms", 0)
         for results in all_results.values()
         for r in results
-        if r.get('success', False) and 'response_time_ms' in r
+        if r.get("success", False) and "response_time_ms" in r
     ]
     avg_response_time = sum(response_times) / len(response_times) if response_times else 0
 
@@ -162,7 +167,7 @@ async def main():
     # Category breakdown
     print("By Category:")
     for category, results in all_results.items():
-        successful = sum(1 for r in results if r.get('success', False))
+        successful = sum(1 for r in results if r.get("success", False))
         total = len(results)
         print(f"  {category:20} {successful}/{total} successful")
 
@@ -171,7 +176,7 @@ async def main():
     # Save results to file
     output_file = f"collector_results_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
     try:
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(all_results, f, indent=2, default=str)
         print(f"Results saved to: {output_file}")
     except Exception as e:
@@ -189,8 +194,7 @@ if __name__ == "__main__":
     # Exit with appropriate code
     total_collectors = sum(len(r) for r in results.values())
     total_successful = sum(
-        sum(1 for item in r if item.get('success', False))
-        for r in results.values()
+        sum(1 for item in r if item.get("success", False)) for r in results.values()
     )
 
     # Exit with 0 if at least 50% successful, else 1

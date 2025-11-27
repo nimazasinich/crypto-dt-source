@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class HealthStatus(Enum):
     """Health status enumeration"""
+
     ONLINE = "online"
     DEGRADED = "degraded"
     OFFLINE = "offline"
@@ -28,6 +29,7 @@ class HealthStatus(Enum):
 @dataclass
 class HealthCheckResult:
     """Result of a health check"""
+
     provider_name: str
     category: str
     status: HealthStatus
@@ -44,8 +46,8 @@ class HealthCheckResult:
     def to_dict(self) -> Dict:
         """Convert to dictionary"""
         d = asdict(self)
-        d['status'] = self.status.value
-        d['timestamp_human'] = datetime.fromtimestamp(self.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+        d["status"] = self.status.value
+        d["timestamp_human"] = datetime.fromtimestamp(self.timestamp).strftime("%Y-%m-%d %H:%M:%S")
         return d
 
     def get_badge(self) -> str:
@@ -54,7 +56,7 @@ class HealthCheckResult:
             HealthStatus.ONLINE: "🟢",
             HealthStatus.DEGRADED: "🟡",
             HealthStatus.OFFLINE: "🔴",
-            HealthStatus.UNKNOWN: "⚪"
+            HealthStatus.UNKNOWN: "⚪",
         }
         return badges.get(self.status, "⚪")
 
@@ -72,14 +74,11 @@ class APIMonitor:
         self.results_history = []  # Store recent results
 
     async def check_endpoint(
-        self,
-        resource: Dict,
-        use_proxy: bool = False,
-        proxy_index: int = 0
+        self, resource: Dict, use_proxy: bool = False, proxy_index: int = 0
     ) -> HealthCheckResult:
         """Check a single endpoint health"""
-        provider_name = resource.get('name', 'Unknown')
-        category = resource.get('category', 'Other')
+        provider_name = resource.get("name", "Unknown")
+        category = resource.get("category", "Other")
 
         # Check cache first
         cache_key = f"{provider_name}:{category}"
@@ -90,21 +89,21 @@ class APIMonitor:
                 return cached_result
 
         # Construct URL
-        url = resource.get('url', '')
-        endpoint = resource.get('endpoint', '')
+        url = resource.get("url", "")
+        endpoint = resource.get("endpoint", "")
         test_url = f"{url}{endpoint}" if endpoint else url
 
         # Add API key if available
-        api_key = resource.get('key', '')
+        api_key = resource.get("key", "")
         if not api_key:
             # Try to get from config
-            key_name = provider_name.lower().replace(' ', '').replace('(', '').replace(')', '')
+            key_name = provider_name.lower().replace(" ", "").replace("(", "").replace(")", "")
             api_key = self.config.get_api_key(key_name)
 
         # Apply proxy if needed
         if use_proxy:
             proxy_url = self.config.get_cors_proxy(proxy_index)
-            if 'allorigins' in proxy_url:
+            if "allorigins" in proxy_url:
                 test_url = f"{proxy_url}{test_url}"
             else:
                 test_url = f"{proxy_url}{test_url}"
@@ -113,16 +112,21 @@ class APIMonitor:
 
         try:
             async with self.semaphore:
-                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout)) as session:
+                async with aiohttp.ClientSession(
+                    timeout=aiohttp.ClientTimeout(total=self.timeout)
+                ) as session:
                     headers = {}
 
                     # Add API key to headers if available
                     if api_key:
-                        if 'coinmarketcap' in provider_name.lower():
-                            headers['X-CMC_PRO_API_KEY'] = api_key
-                        elif 'etherscan' in provider_name.lower() or 'bscscan' in provider_name.lower():
+                        if "coinmarketcap" in provider_name.lower():
+                            headers["X-CMC_PRO_API_KEY"] = api_key
+                        elif (
+                            "etherscan" in provider_name.lower()
+                            or "bscscan" in provider_name.lower()
+                        ):
                             # Add as query parameter instead
-                            separator = '&' if '?' in test_url else '?'
+                            separator = "&" if "?" in test_url else "?"
                             test_url = f"{test_url}{separator}apikey={api_key}"
 
                     async with session.get(test_url, headers=headers, ssl=False) as response:
@@ -153,7 +157,7 @@ class APIMonitor:
                             status=status,
                             response_time=response_time,
                             status_code=status_code,
-                            endpoint_tested=test_url[:100]  # Truncate long URLs
+                            endpoint_tested=test_url[:100],  # Truncate long URLs
                         )
 
         except asyncio.TimeoutError:
@@ -164,7 +168,7 @@ class APIMonitor:
                 status=HealthStatus.OFFLINE,
                 response_time=response_time,
                 error_message="Timeout",
-                endpoint_tested=test_url[:100]
+                endpoint_tested=test_url[:100],
             )
 
         except Exception as e:
@@ -175,7 +179,7 @@ class APIMonitor:
                 status=HealthStatus.OFFLINE,
                 response_time=response_time,
                 error_message=str(e)[:200],  # Truncate long errors
-                endpoint_tested=test_url[:100]
+                endpoint_tested=test_url[:100],
             )
             logger.error(f"Error checking {provider_name}: {e}")
 
@@ -191,9 +195,7 @@ class APIMonitor:
         return result
 
     async def check_all(
-        self,
-        resources: Optional[List[Dict]] = None,
-        use_proxy: bool = False
+        self, resources: Optional[List[Dict]] = None, use_proxy: bool = False
     ) -> List[HealthCheckResult]:
         """Check all endpoints"""
         if resources is None:
@@ -223,22 +225,18 @@ class APIMonitor:
         return valid_results
 
     async def check_by_category(
-        self,
-        category: str,
-        use_proxy: bool = False
+        self, category: str, use_proxy: bool = False
     ) -> List[HealthCheckResult]:
         """Check all endpoints in a category"""
         resources = self.config.get_by_category(category)
         return await self.check_all(resources, use_proxy)
 
     async def check_single(
-        self,
-        provider_name: str,
-        use_proxy: bool = False
+        self, provider_name: str, use_proxy: bool = False
     ) -> Optional[HealthCheckResult]:
         """Check a single provider by name"""
         resources = self.config.get_all_resources()
-        resource = next((r for r in resources if r.get('name') == provider_name), None)
+        resource = next((r for r in resources if r.get("name") == provider_name), None)
 
         if resource:
             return await self.check_endpoint(resource, use_proxy)
@@ -248,14 +246,14 @@ class APIMonitor:
         """Calculate summary statistics from results"""
         if not results:
             return {
-                'total': 0,
-                'online': 0,
-                'degraded': 0,
-                'offline': 0,
-                'unknown': 0,
-                'online_percentage': 0,
-                'avg_response_time': 0,
-                'critical_issues': 0
+                "total": 0,
+                "online": 0,
+                "degraded": 0,
+                "offline": 0,
+                "unknown": 0,
+                "online_percentage": 0,
+                "avg_response_time": 0,
+                "critical_issues": 0,
             }
 
         online = sum(1 for r in results if r.status == HealthStatus.ONLINE)
@@ -268,26 +266,27 @@ class APIMonitor:
 
         # Critical issues: Tier 1 APIs that are offline
         critical_issues = sum(
-            1 for r in results
+            1
+            for r in results
             if r.status == HealthStatus.OFFLINE and self._is_tier1(r.provider_name)
         )
 
         return {
-            'total': len(results),
-            'online': online,
-            'degraded': degraded,
-            'offline': offline,
-            'unknown': unknown,
-            'online_percentage': round((online / len(results)) * 100, 2) if results else 0,
-            'avg_response_time': round(avg_response_time, 2),
-            'critical_issues': critical_issues
+            "total": len(results),
+            "online": online,
+            "degraded": degraded,
+            "offline": offline,
+            "unknown": unknown,
+            "online_percentage": round((online / len(results)) * 100, 2) if results else 0,
+            "avg_response_time": round(avg_response_time, 2),
+            "critical_issues": critical_issues,
         }
 
     def _is_tier1(self, provider_name: str) -> bool:
         """Check if provider is Tier 1"""
         resources = self.config.get_all_resources()
-        resource = next((r for r in resources if r.get('name') == provider_name), None)
-        return resource.get('tier', 3) == 1 if resource else False
+        resource = next((r for r in resources if r.get("name") == provider_name), None)
+        return resource.get("tier", 3) == 1 if resource else False
 
     def get_category_stats(self, results: List[HealthCheckResult]) -> Dict[str, Dict]:
         """Get statistics grouped by category"""
@@ -314,11 +313,7 @@ class APIMonitor:
         self.cache.clear()
         logger.info("Cache cleared")
 
-    def get_uptime_percentage(
-        self,
-        provider_name: str,
-        hours: int = 24
-    ) -> float:
+    def get_uptime_percentage(self, provider_name: str, hours: int = 24) -> float:
         """Calculate uptime percentage for a provider"""
         recent = self.get_recent_history(hours)
         provider_results = [r for r in recent if r.provider_name == provider_name]

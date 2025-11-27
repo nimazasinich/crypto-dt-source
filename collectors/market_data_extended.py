@@ -31,10 +31,7 @@ async def get_coinpaprika_tickers() -> Dict[str, Any]:
         # Coinpaprika API (free, no key needed)
         url = "https://api.coinpaprika.com/v1/tickers"
 
-        params = {
-            "quotes": "USD",
-            "limit": 100
-        }
+        params = {"quotes": "USD", "limit": 100}
 
         # Make request
         response = await client.get(url, params=params, timeout=15)
@@ -46,7 +43,7 @@ async def get_coinpaprika_tickers() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -59,7 +56,7 @@ async def get_coinpaprika_tickers() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -69,7 +66,9 @@ async def get_coinpaprika_tickers() -> Dict[str, Any]:
         market_data = None
         if isinstance(data, list):
             top_10 = data[:10]
-            total_market_cap = sum(coin.get("quotes", {}).get("USD", {}).get("market_cap", 0) for coin in top_10)
+            total_market_cap = sum(
+                coin.get("quotes", {}).get("USD", {}).get("market_cap", 0) for coin in top_10
+            )
 
             market_data = {
                 "total_coins": len(data),
@@ -81,13 +80,17 @@ async def get_coinpaprika_tickers() -> Dict[str, Any]:
                         "price": coin.get("quotes", {}).get("USD", {}).get("price"),
                         "market_cap": coin.get("quotes", {}).get("USD", {}).get("market_cap"),
                         "volume_24h": coin.get("quotes", {}).get("USD", {}).get("volume_24h"),
-                        "percent_change_24h": coin.get("quotes", {}).get("USD", {}).get("percent_change_24h")
+                        "percent_change_24h": coin.get("quotes", {})
+                        .get("USD", {})
+                        .get("percent_change_24h"),
                     }
                     for coin in top_10
-                ]
+                ],
             }
 
-        logger.info(f"{provider} - {endpoint} - Retrieved {len(data) if isinstance(data, list) else 0} tickers")
+        logger.info(
+            f"{provider} - {endpoint} - Retrieved {len(data) if isinstance(data, list) else 0} tickers"
+        )
 
         return {
             "provider": provider,
@@ -96,7 +99,7 @@ async def get_coinpaprika_tickers() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -109,7 +112,7 @@ async def get_coinpaprika_tickers() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -142,7 +145,7 @@ async def get_defillama_tvl() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -155,7 +158,7 @@ async def get_defillama_tvl() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -180,15 +183,16 @@ async def get_defillama_tvl() -> Dict[str, Any]:
                         "tvl": round(p.get("tvl", 0), 2),
                         "change_1d": p.get("change_1d"),
                         "change_7d": p.get("change_7d"),
-                        "chains": p.get("chains", [])[:3]  # Top 3 chains
+                        "chains": p.get("chains", [])[:3],  # Top 3 chains
                     }
                     for p in top_20
-                ]
+                ],
             }
 
         logger.info(
             f"{provider} - {endpoint} - Total TVL: ${tvl_data.get('total_tvl', 0):,.0f}"
-            if tvl_data else f"{provider} - {endpoint} - No data"
+            if tvl_data
+            else f"{provider} - {endpoint} - No data"
         )
 
         return {
@@ -198,7 +202,7 @@ async def get_defillama_tvl() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -211,7 +215,7 @@ async def get_defillama_tvl() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -246,7 +250,7 @@ async def get_coincap_assets() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -259,7 +263,7 @@ async def get_coincap_assets() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -281,13 +285,15 @@ async def get_coincap_assets() -> Dict[str, Any]:
                         "price_usd": float(asset.get("priceUsd", 0)),
                         "market_cap_usd": float(asset.get("marketCapUsd", 0)),
                         "volume_24h_usd": float(asset.get("volumeUsd24Hr", 0)),
-                        "change_percent_24h": float(asset.get("changePercent24Hr", 0))
+                        "change_percent_24h": float(asset.get("changePercent24Hr", 0)),
                     }
                     for asset in top_10
-                ]
+                ],
             }
 
-        logger.info(f"{provider} - {endpoint} - Retrieved {asset_data.get('total_assets', 0)} assets")
+        logger.info(
+            f"{provider} - {endpoint} - Retrieved {asset_data.get('total_assets', 0)} assets"
+        )
 
         return {
             "provider": provider,
@@ -296,7 +302,7 @@ async def get_coincap_assets() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -309,7 +315,7 @@ async def get_coincap_assets() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -351,7 +357,7 @@ async def get_messari_assets(api_key: Optional[str] = None) -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -364,7 +370,7 @@ async def get_messari_assets(api_key: Optional[str] = None) -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -377,22 +383,34 @@ async def get_messari_assets(api_key: Optional[str] = None) -> Dict[str, Any]:
 
             asset_data = {
                 "total_assets": len(assets) if isinstance(assets, list) else 0,
-                "assets": [
-                    {
-                        "symbol": asset.get("symbol"),
-                        "name": asset.get("name"),
-                        "slug": asset.get("slug"),
-                        "metrics": {
-                            "market_cap": asset.get("metrics", {}).get("marketcap", {}).get("current_marketcap_usd"),
-                            "volume_24h": asset.get("metrics", {}).get("market_data", {}).get("volume_last_24_hours"),
-                            "price": asset.get("metrics", {}).get("market_data", {}).get("price_usd")
+                "assets": (
+                    [
+                        {
+                            "symbol": asset.get("symbol"),
+                            "name": asset.get("name"),
+                            "slug": asset.get("slug"),
+                            "metrics": {
+                                "market_cap": asset.get("metrics", {})
+                                .get("marketcap", {})
+                                .get("current_marketcap_usd"),
+                                "volume_24h": asset.get("metrics", {})
+                                .get("market_data", {})
+                                .get("volume_last_24_hours"),
+                                "price": asset.get("metrics", {})
+                                .get("market_data", {})
+                                .get("price_usd"),
+                            },
                         }
-                    }
-                    for asset in assets[:10]
-                ] if isinstance(assets, list) else []
+                        for asset in assets[:10]
+                    ]
+                    if isinstance(assets, list)
+                    else []
+                ),
             }
 
-        logger.info(f"{provider} - {endpoint} - Retrieved {asset_data.get('total_assets', 0)} assets")
+        logger.info(
+            f"{provider} - {endpoint} - Retrieved {asset_data.get('total_assets', 0)} assets"
+        )
 
         return {
             "provider": provider,
@@ -401,7 +419,7 @@ async def get_messari_assets(api_key: Optional[str] = None) -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -414,7 +432,7 @@ async def get_messari_assets(api_key: Optional[str] = None) -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -437,10 +455,7 @@ async def get_cryptocompare_toplist() -> Dict[str, Any]:
         # CryptoCompare API
         url = "https://min-api.cryptocompare.com/data/top/totalvolfull"
 
-        params = {
-            "limit": 20,
-            "tsym": "USD"
-        }
+        params = {"limit": 20, "tsym": "USD"}
 
         # Make request
         response = await client.get(url, params=params, timeout=10)
@@ -452,7 +467,7 @@ async def get_cryptocompare_toplist() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -465,7 +480,7 @@ async def get_cryptocompare_toplist() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -485,13 +500,15 @@ async def get_cryptocompare_toplist() -> Dict[str, Any]:
                         "price": coin.get("RAW", {}).get("USD", {}).get("PRICE"),
                         "market_cap": coin.get("RAW", {}).get("USD", {}).get("MKTCAP"),
                         "volume_24h": coin.get("RAW", {}).get("USD", {}).get("VOLUME24HOUR"),
-                        "change_24h": coin.get("RAW", {}).get("USD", {}).get("CHANGEPCT24HOUR")
+                        "change_24h": coin.get("RAW", {}).get("USD", {}).get("CHANGEPCT24HOUR"),
                     }
                     for coin in (coins[:10] if isinstance(coins, list) else [])
-                ]
+                ],
             }
 
-        logger.info(f"{provider} - {endpoint} - Retrieved {toplist_data.get('total_coins', 0)} coins")
+        logger.info(
+            f"{provider} - {endpoint} - Retrieved {toplist_data.get('total_coins', 0)} coins"
+        )
 
         return {
             "provider": provider,
@@ -500,7 +517,7 @@ async def get_cryptocompare_toplist() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -513,7 +530,7 @@ async def get_cryptocompare_toplist() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -536,7 +553,7 @@ async def collect_extended_market_data(messari_key: Optional[str] = None) -> Lis
         get_coincap_assets(),
         get_messari_assets(messari_key),
         get_cryptocompare_toplist(),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     # Process results
@@ -544,27 +561,32 @@ async def collect_extended_market_data(messari_key: Optional[str] = None) -> Lis
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"Collector failed with exception: {str(result)}")
-            processed_results.append({
-                "provider": "Unknown",
-                "category": "market_data",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed_results.append(
+                {
+                    "provider": "Unknown",
+                    "category": "market_data",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed_results.append(result)
 
     # Log summary
     successful = sum(1 for r in processed_results if r.get("success", False))
-    logger.info(f"Extended market data collection complete: {successful}/{len(processed_results)} successful")
+    logger.info(
+        f"Extended market data collection complete: {successful}/{len(processed_results)} successful"
+    )
 
     return processed_results
 
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         import os
 
@@ -578,15 +600,15 @@ if __name__ == "__main__":
             print(f"Category: {result['category']}")
             print(f"Success: {result['success']}")
 
-            if result['success']:
+            if result["success"]:
                 print(f"Response Time: {result.get('response_time_ms', 0):.2f}ms")
-                data = result.get('data', {})
+                data = result.get("data", {})
                 if data:
-                    if 'total_tvl' in data:
+                    if "total_tvl" in data:
                         print(f"Total TVL: ${data['total_tvl']:,.0f}")
-                    elif 'total_assets' in data:
+                    elif "total_assets" in data:
                         print(f"Total Assets: {data['total_assets']}")
-                    elif 'total_coins' in data:
+                    elif "total_coins" in data:
                         print(f"Total Coins: {data['total_coins']}")
             else:
                 print(f"Error: {result.get('error', 'Unknown')}")

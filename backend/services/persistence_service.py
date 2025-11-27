@@ -2,6 +2,7 @@
 Persistence Service
 Handles data persistence with multiple export formats (JSON, CSV, database)
 """
+
 import json
 import csv
 import logging
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 class PersistenceService:
     """Service for persisting data in multiple formats"""
 
-    def __init__(self, db_manager=None, data_dir: str = 'data'):
+    def __init__(self, db_manager=None, data_dir: str = "data"):
         self.db_manager = db_manager
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -29,10 +30,7 @@ class PersistenceService:
         self.max_history_per_api = 1000  # Keep last 1000 records per API
 
     async def save_api_data(
-        self,
-        api_id: str,
-        data: Dict[str, Any],
-        metadata: Optional[Dict[str, Any]] = None
+        self, api_id: str, data: Dict[str, Any], metadata: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
         Save API data with metadata
@@ -50,10 +48,10 @@ class PersistenceService:
 
             # Create data record
             record = {
-                'api_id': api_id,
-                'timestamp': timestamp.isoformat(),
-                'data': data,
-                'metadata': metadata or {}
+                "api_id": api_id,
+                "timestamp": timestamp.isoformat(),
+                "data": data,
+                "metadata": metadata or {},
             }
 
             # Update cache
@@ -64,7 +62,7 @@ class PersistenceService:
 
             # Trim history if needed
             if len(self.history[api_id]) > self.max_history_per_api:
-                self.history[api_id] = self.history[api_id][-self.max_history_per_api:]
+                self.history[api_id] = self.history[api_id][-self.max_history_per_api :]
 
             # Save to database if available
             if self.db_manager:
@@ -78,11 +76,7 @@ class PersistenceService:
             return False
 
     async def _save_to_database(
-        self,
-        api_id: str,
-        data: Dict[str, Any],
-        metadata: Dict[str, Any],
-        timestamp: datetime
+        self, api_id: str, data: Dict[str, Any], metadata: Dict[str, Any], timestamp: datetime
     ):
         """Save data to database"""
         if not self.db_manager:
@@ -90,7 +84,7 @@ class PersistenceService:
 
         try:
             # Save using database manager methods
-            category = metadata.get('category', 'unknown')
+            category = metadata.get("category", "unknown")
 
             with self.db_manager.get_session() as session:
                 # Find or create provider
@@ -103,9 +97,9 @@ class PersistenceService:
                     provider = Provider(
                         name=api_id,
                         category=category,
-                        endpoint_url=metadata.get('url', ''),
-                        requires_key=metadata.get('requires_key', False),
-                        priority_tier=metadata.get('priority', 3)
+                        endpoint_url=metadata.get("url", ""),
+                        requires_key=metadata.get("requires_key", False),
+                        priority_tier=metadata.get("priority", 3),
                     )
                     session.add(provider)
                     session.flush()
@@ -120,7 +114,7 @@ class PersistenceService:
                     staleness_minutes=0,
                     record_count=len(data) if isinstance(data, (list, dict)) else 1,
                     payload_size_bytes=len(json.dumps(data)),
-                    on_schedule=True
+                    on_schedule=True,
                 )
                 session.add(collection)
 
@@ -145,10 +139,7 @@ class PersistenceService:
         return dict(self.history)
 
     async def export_to_json(
-        self,
-        filepath: str,
-        api_ids: Optional[List[str]] = None,
-        include_history: bool = False
+        self, filepath: str, api_ids: Optional[List[str]] = None, include_history: bool = False
     ) -> bool:
         """
         Export data to JSON file
@@ -168,25 +159,22 @@ class PersistenceService:
             # Prepare data
             if include_history:
                 data = {
-                    'cache': self.cache,
-                    'history': dict(self.history),
-                    'exported_at': datetime.now().isoformat()
+                    "cache": self.cache,
+                    "history": dict(self.history),
+                    "exported_at": datetime.now().isoformat(),
                 }
             else:
-                data = {
-                    'cache': self.cache,
-                    'exported_at': datetime.now().isoformat()
-                }
+                data = {"cache": self.cache, "exported_at": datetime.now().isoformat()}
 
             # Filter by API IDs if specified
             if api_ids:
-                if 'cache' in data:
-                    data['cache'] = {k: v for k, v in data['cache'].items() if k in api_ids}
-                if 'history' in data:
-                    data['history'] = {k: v for k, v in data['history'].items() if k in api_ids}
+                if "cache" in data:
+                    data["cache"] = {k: v for k, v in data["cache"].items() if k in api_ids}
+                if "history" in data:
+                    data["history"] = {k: v for k, v in data["history"].items() if k in api_ids}
 
             # Write to file
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, default=str)
 
             logger.info(f"Exported data to JSON: {filepath}")
@@ -197,10 +185,7 @@ class PersistenceService:
             return False
 
     async def export_to_csv(
-        self,
-        filepath: str,
-        api_ids: Optional[List[str]] = None,
-        flatten: bool = True
+        self, filepath: str, api_ids: Optional[List[str]] = None, flatten: bool = True
     ) -> bool:
         """
         Export data to CSV file
@@ -226,23 +211,23 @@ class PersistenceService:
 
             for api_id, record in cache_items:
                 row = {
-                    'api_id': api_id,
-                    'timestamp': record.get('timestamp'),
-                    'category': record.get('metadata', {}).get('category', ''),
+                    "api_id": api_id,
+                    "timestamp": record.get("timestamp"),
+                    "category": record.get("metadata", {}).get("category", ""),
                 }
 
                 # Flatten data if requested
                 if flatten:
-                    data = record.get('data', {})
+                    data = record.get("data", {})
                     if isinstance(data, dict):
                         for key, value in data.items():
                             # Simple flattening - only first level
                             if isinstance(value, (str, int, float, bool)):
-                                row[f'data_{key}'] = value
+                                row[f"data_{key}"] = value
                             else:
-                                row[f'data_{key}'] = json.dumps(value)
+                                row[f"data_{key}"] = json.dumps(value)
                 else:
-                    row['data'] = json.dumps(record.get('data'))
+                    row["data"] = json.dumps(record.get("data"))
 
                 rows.append(row)
 
@@ -260,11 +245,7 @@ class PersistenceService:
             logger.error(f"Error exporting to CSV: {e}")
             return False
 
-    async def export_history_to_csv(
-        self,
-        filepath: str,
-        api_id: str
-    ) -> bool:
+    async def export_history_to_csv(self, filepath: str, api_id: str) -> bool:
         """
         Export historical data for a specific API to CSV
 
@@ -289,9 +270,9 @@ class PersistenceService:
             rows = []
             for record in history:
                 row = {
-                    'timestamp': record.get('timestamp'),
-                    'api_id': record.get('api_id'),
-                    'data': json.dumps(record.get('data'))
+                    "timestamp": record.get("timestamp"),
+                    "api_id": record.get("api_id"),
+                    "data": json.dumps(record.get("data")),
                 }
                 rows.append(row)
 
@@ -319,21 +300,21 @@ class PersistenceService:
         try:
             filepath = Path(filepath)
 
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # Import cache
-            if 'cache' in data:
-                self.cache.update(data['cache'])
+            if "cache" in data:
+                self.cache.update(data["cache"])
 
             # Import history
-            if 'history' in data:
-                for api_id, records in data['history'].items():
+            if "history" in data:
+                for api_id, records in data["history"].items():
                     self.history[api_id].extend(records)
 
                     # Trim if needed
                     if len(self.history[api_id]) > self.max_history_per_api:
-                        self.history[api_id] = self.history[api_id][-self.max_history_per_api:]
+                        self.history[api_id] = self.history[api_id][-self.max_history_per_api :]
 
             logger.info(f"Imported data from JSON: {filepath}")
             return True
@@ -356,19 +337,16 @@ class PersistenceService:
             if backup_dir:
                 backup_path = Path(backup_dir)
             else:
-                backup_path = self.data_dir / 'backups'
+                backup_path = self.data_dir / "backups"
 
             backup_path.mkdir(parents=True, exist_ok=True)
 
             # Create backup filename with timestamp
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            backup_file = backup_path / f'backup_{timestamp}.json'
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_file = backup_path / f"backup_{timestamp}.json"
 
             # Export everything
-            await self.export_to_json(
-                str(backup_file),
-                include_history=True
-            )
+            await self.export_to_json(str(backup_file), include_history=True)
 
             logger.info(f"Created backup: {backup_file}")
             return str(backup_file)
@@ -424,23 +402,21 @@ class PersistenceService:
         for api_id, records in self.history.items():
             if records:
                 timestamps = [
-                    datetime.fromisoformat(r['timestamp'])
-                    for r in records
-                    if 'timestamp' in r
+                    datetime.fromisoformat(r["timestamp"]) for r in records if "timestamp" in r
                 ]
 
                 if timestamps:
                     api_stats[api_id] = {
-                        'record_count': len(records),
-                        'oldest': min(timestamps).isoformat(),
-                        'newest': max(timestamps).isoformat()
+                        "record_count": len(records),
+                        "oldest": min(timestamps).isoformat(),
+                        "newest": max(timestamps).isoformat(),
                     }
 
         return {
-            'cached_apis': total_cached,
-            'total_history_records': total_history_records,
-            'apis_with_history': len(self.history),
-            'api_statistics': api_stats
+            "cached_apis": total_cached,
+            "total_history_records": total_history_records,
+            "apis_with_history": len(self.history),
+            "api_statistics": api_stats,
         }
 
     async def cleanup_old_data(self, days: int = 7) -> int:
@@ -462,8 +438,7 @@ class PersistenceService:
 
                 # Filter out old records
                 self.history[api_id] = [
-                    r for r in records
-                    if datetime.fromisoformat(r['timestamp']) > cutoff
+                    r for r in records if datetime.fromisoformat(r["timestamp"]) > cutoff
                 ]
 
                 removed_count += original_count - len(self.history[api_id])
@@ -480,11 +455,7 @@ class PersistenceService:
             return 0
 
     async def save_collection_data(
-        self,
-        api_id: str,
-        category: str,
-        data: Dict[str, Any],
-        timestamp: datetime
+        self, api_id: str, category: str, data: Dict[str, Any], timestamp: datetime
     ):
         """
         Save data collection (compatibility method for scheduler)
@@ -495,9 +466,6 @@ class PersistenceService:
             data: Collected data
             timestamp: Collection timestamp
         """
-        metadata = {
-            'category': category,
-            'collection_time': timestamp.isoformat()
-        }
+        metadata = {"category": category, "collection_time": timestamp.isoformat()}
 
         await self.save_api_data(api_id, data, metadata)

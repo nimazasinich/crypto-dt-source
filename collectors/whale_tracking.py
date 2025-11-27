@@ -39,7 +39,7 @@ async def get_whalealert_transactions(api_key: Optional[str] = None) -> Dict[str
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": "missing_api_key"
+                "error_type": "missing_api_key",
             }
 
         client = get_client()
@@ -51,11 +51,7 @@ async def get_whalealert_transactions(api_key: Optional[str] = None) -> Dict[str
         now = int(datetime.now(timezone.utc).timestamp())
         start_time = now - 3600  # 1 hour ago
 
-        params = {
-            "api_key": api_key,
-            "start": start_time,
-            "limit": 100  # Max 100 transactions
-        }
+        params = {"api_key": api_key, "start": start_time, "limit": 100}  # Max 100 transactions
 
         # Make request
         response = await client.get(url, params=params, timeout=15)
@@ -67,7 +63,7 @@ async def get_whalealert_transactions(api_key: Optional[str] = None) -> Dict[str
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -80,7 +76,7 @@ async def get_whalealert_transactions(api_key: Optional[str] = None) -> Dict[str
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -100,13 +96,19 @@ async def get_whalealert_transactions(api_key: Optional[str] = None) -> Dict[str
                 "total_value_usd": round(total_value_usd, 2),
                 "unique_symbols": list(symbols),
                 "time_range_hours": 1,
-                "largest_tx": max(transactions, key=lambda x: x.get("amount_usd", 0)) if transactions else None,
-                "transactions": transactions[:10]  # Keep only top 10 for brevity
+                "largest_tx": (
+                    max(transactions, key=lambda x: x.get("amount_usd", 0))
+                    if transactions
+                    else None
+                ),
+                "transactions": transactions[:10],  # Keep only top 10 for brevity
             }
 
         logger.info(
             f"{provider} - {endpoint} - Retrieved {whale_data.get('transaction_count', 0)} transactions, "
-            f"Total value: ${whale_data.get('total_value_usd', 0):,.0f}" if whale_data else "No data"
+            f"Total value: ${whale_data.get('total_value_usd', 0):,.0f}"
+            if whale_data
+            else "No data"
         )
 
         return {
@@ -116,7 +118,7 @@ async def get_whalealert_transactions(api_key: Optional[str] = None) -> Dict[str
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -129,7 +131,7 @@ async def get_whalealert_transactions(api_key: Optional[str] = None) -> Dict[str
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -162,9 +164,9 @@ async def get_arkham_intel() -> Dict[str, Any]:
                 "Entity tracking and attribution",
                 "Transaction flow analysis",
                 "Dark web marketplace monitoring",
-                "Exchange flow tracking"
+                "Exchange flow tracking",
             ],
-            "note": "Requires Arkham API access or partnership"
+            "note": "Requires Arkham API access or partnership",
         }
 
         logger.info(f"{provider} - {endpoint} - Placeholder data returned")
@@ -176,7 +178,7 @@ async def get_arkham_intel() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
     except Exception as e:
@@ -189,7 +191,7 @@ async def get_arkham_intel() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -223,7 +225,7 @@ async def get_clankapp_whales() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -238,13 +240,13 @@ async def get_clankapp_whales() -> Dict[str, Any]:
                     "planned_features": [
                         "Whale wallet tracking",
                         "Large transaction alerts",
-                        "Portfolio tracking"
-                    ]
+                        "Portfolio tracking",
+                    ],
                 },
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": True,
                 "error": None,
-                "is_placeholder": True
+                "is_placeholder": True,
             }
 
         # Extract data
@@ -259,7 +261,7 @@ async def get_clankapp_whales() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -268,14 +270,11 @@ async def get_clankapp_whales() -> Dict[str, Any]:
         return {
             "provider": provider,
             "category": category,
-            "data": {
-                "status": "placeholder",
-                "message": f"ClankApp integration error: {str(e)}"
-            },
+            "data": {"status": "placeholder", "message": f"ClankApp integration error: {str(e)}"},
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
 
@@ -343,7 +342,7 @@ async def get_bitquery_whale_transactions() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -358,13 +357,13 @@ async def get_bitquery_whale_transactions() -> Dict[str, Any]:
                     "planned_features": [
                         "Large transaction tracking via GraphQL",
                         "Multi-chain whale monitoring",
-                        "Token transfer analytics"
-                    ]
+                        "Token transfer analytics",
+                    ],
                 },
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": True,
                 "error": None,
-                "is_placeholder": True
+                "is_placeholder": True,
             }
 
         # Extract data
@@ -380,12 +379,13 @@ async def get_bitquery_whale_transactions() -> Dict[str, Any]:
                 whale_data = {
                     "transaction_count": len(transfers),
                     "total_value": round(total_value, 2),
-                    "largest_transfers": transfers[:5]
+                    "largest_transfers": transfers[:5],
                 }
 
         logger.info(
             f"{provider} - {endpoint} - Retrieved {whale_data.get('transaction_count', 0)} large transactions"
-            if whale_data else f"{provider} - {endpoint} - No data"
+            if whale_data
+            else f"{provider} - {endpoint} - No data"
         )
 
         return {
@@ -395,7 +395,7 @@ async def get_bitquery_whale_transactions() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -404,14 +404,11 @@ async def get_bitquery_whale_transactions() -> Dict[str, Any]:
         return {
             "provider": provider,
             "category": category,
-            "data": {
-                "status": "placeholder",
-                "message": f"BitQuery integration error: {str(e)}"
-            },
+            "data": {"status": "placeholder", "message": f"BitQuery integration error: {str(e)}"},
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
 
@@ -433,7 +430,7 @@ async def collect_whale_tracking_data(whalealert_key: Optional[str] = None) -> L
         get_arkham_intel(),
         get_clankapp_whales(),
         get_bitquery_whale_transactions(),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     # Process results
@@ -441,15 +438,17 @@ async def collect_whale_tracking_data(whalealert_key: Optional[str] = None) -> L
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"Collector failed with exception: {str(result)}")
-            processed_results.append({
-                "provider": "Unknown",
-                "category": "whale_tracking",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed_results.append(
+                {
+                    "provider": "Unknown",
+                    "category": "whale_tracking",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed_results.append(result)
 
@@ -489,6 +488,7 @@ class WhaleTrackingCollector:
             Dict with aggregated whale tracking data
         """
         import os
+
         whalealert_key = os.getenv("WHALEALERT_API_KEY")
         results = await collect_whale_tracking_data(whalealert_key)
 
@@ -499,7 +499,7 @@ class WhaleTrackingCollector:
             "total_volume": 0,
             "alert_threshold": 1000000,  # $1M default threshold
             "alerts": [],
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         for result in results:
@@ -515,15 +515,17 @@ class WhaleTrackingCollector:
                 if provider == "WhaleAlert" and isinstance(data, dict):
                     transactions = data.get("transactions", [])
                     for tx in transactions:
-                        aggregated["large_transactions"].append({
-                            "amount": tx.get("amount", 0),
-                            "amount_usd": tx.get("amount_usd", 0),
-                            "symbol": tx.get("symbol", "unknown"),
-                            "from": tx.get("from", {}).get("owner", "unknown"),
-                            "to": tx.get("to", {}).get("owner", "unknown"),
-                            "timestamp": tx.get("timestamp"),
-                            "source": provider
-                        })
+                        aggregated["large_transactions"].append(
+                            {
+                                "amount": tx.get("amount", 0),
+                                "amount_usd": tx.get("amount_usd", 0),
+                                "symbol": tx.get("symbol", "unknown"),
+                                "from": tx.get("from", {}).get("owner", "unknown"),
+                                "to": tx.get("to", {}).get("owner", "unknown"),
+                                "timestamp": tx.get("timestamp"),
+                                "source": provider,
+                            }
+                        )
                     aggregated["total_volume"] += data.get("total_value_usd", 0)
 
                 # Parse other sources
@@ -537,6 +539,7 @@ class WhaleTrackingCollector:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         import os
 
@@ -550,14 +553,16 @@ if __name__ == "__main__":
             print(f"Success: {result['success']}")
             print(f"Is Placeholder: {result.get('is_placeholder', False)}")
 
-            if result['success']:
-                data = result.get('data', {})
+            if result["success"]:
+                data = result.get("data", {})
                 if isinstance(data, dict):
-                    if data.get('status') == 'placeholder':
+                    if data.get("status") == "placeholder":
                         print(f"Status: {data.get('message', 'N/A')}")
                     else:
                         print(f"Transaction Count: {data.get('transaction_count', 'N/A')}")
-                        print(f"Total Value: ${data.get('total_value_usd', data.get('total_value', 0)):,.0f}")
+                        print(
+                            f"Total Value: ${data.get('total_value_usd', data.get('total_value', 0)):,.0f}"
+                        )
             else:
                 print(f"Error: {result.get('error', 'Unknown')}")
 

@@ -42,7 +42,7 @@ def init_default_pools():
                 {"name": "CoinGecko", "priority": 3, "weight": 1},
                 {"name": "CoinMarketCap", "priority": 2, "weight": 1},
                 {"name": "Binance", "priority": 1, "weight": 1},
-            ]
+            ],
         },
         {
             "name": "Blockchain Explorers Pool",
@@ -53,7 +53,7 @@ def init_default_pools():
                 {"name": "Etherscan", "priority": 1, "weight": 1},
                 {"name": "BscScan", "priority": 1, "weight": 1},
                 {"name": "TronScan", "priority": 1, "weight": 1},
-            ]
+            ],
         },
         {
             "name": "News Sources Pool",
@@ -63,7 +63,7 @@ def init_default_pools():
             "providers": [
                 {"name": "CryptoPanic", "priority": 2, "weight": 1},
                 {"name": "NewsAPI", "priority": 1, "weight": 1},
-            ]
+            ],
         },
         {
             "name": "Sentiment Analysis Pool",
@@ -72,7 +72,7 @@ def init_default_pools():
             "rotation_strategy": "least_used",
             "providers": [
                 {"name": "AlternativeMe", "priority": 1, "weight": 1},
-            ]
+            ],
         },
         {
             "name": "RPC Nodes Pool",
@@ -82,7 +82,7 @@ def init_default_pools():
             "providers": [
                 {"name": "Infura", "priority": 2, "weight": 1},
                 {"name": "Alchemy", "priority": 1, "weight": 1},
-            ]
+            ],
         },
     ]
 
@@ -92,6 +92,7 @@ def init_default_pools():
         try:
             # Check if pool already exists
             from database.models import SourcePool
+
             existing_pool = session.query(SourcePool).filter_by(name=config["name"]).first()
 
             if existing_pool:
@@ -103,7 +104,7 @@ def init_default_pools():
                 name=config["name"],
                 category=config["category"],
                 description=config["description"],
-                rotation_strategy=config["rotation_strategy"]
+                rotation_strategy=config["rotation_strategy"],
             )
 
             logger.info(f"Created pool: {pool.name}")
@@ -119,7 +120,7 @@ def init_default_pools():
                         pool_id=pool.id,
                         provider_id=provider.id,
                         priority=provider_config["priority"],
-                        weight=provider_config["weight"]
+                        weight=provider_config["weight"],
                     )
                     logger.info(
                         f"  Added {provider.name} to pool "
@@ -127,14 +128,9 @@ def init_default_pools():
                     )
                     added_count += 1
                 else:
-                    logger.warning(
-                        f"  Provider '{provider_config['name']}' not found, skipping"
-                    )
+                    logger.warning(f"  Provider '{provider_config['name']}' not found, skipping")
 
-            created_pools.append({
-                "name": pool.name,
-                "members": added_count
-            })
+            created_pools.append({"name": pool.name, "members": added_count})
 
         except Exception as e:
             logger.error(f"Error creating pool '{config['name']}': {e}", exc_info=True)

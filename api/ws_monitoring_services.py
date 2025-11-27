@@ -26,6 +26,7 @@ router = APIRouter()
 # Monitoring Service Handlers
 # ============================================================================
 
+
 class MonitoringStreamers:
     """Handles data streaming for all monitoring services"""
 
@@ -59,7 +60,7 @@ class MonitoringStreamers:
                     "unhealthy_count": health_data.get("unhealthy_count", 0),
                     "total_providers": health_data.get("total_providers", 0),
                     "providers": health_data.get("providers", {}),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming health status: {e}")
@@ -80,7 +81,7 @@ class MonitoringStreamers:
                 if issues:
                     return {
                         "providers_with_issues": issues,
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.utcnow().isoformat(),
                     }
         except Exception as e:
             logger.error(f"Error streaming provider health: {e}")
@@ -95,23 +96,19 @@ class MonitoringStreamers:
 
                 for name, status in health_data.get("providers", {}).items():
                     if status.get("status") == "critical":
-                        critical_issues.append({
-                            "provider": name,
-                            "status": status,
-                            "alert_level": "critical"
-                        })
+                        critical_issues.append(
+                            {"provider": name, "status": status, "alert_level": "critical"}
+                        )
                     elif status.get("status") == "unhealthy":
-                        critical_issues.append({
-                            "provider": name,
-                            "status": status,
-                            "alert_level": "warning"
-                        })
+                        critical_issues.append(
+                            {"provider": name, "status": status, "alert_level": "warning"}
+                        )
 
                 if critical_issues:
                     return {
                         "alerts": critical_issues,
                         "total_alerts": len(critical_issues),
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.utcnow().isoformat(),
                     }
         except Exception as e:
             logger.error(f"Error streaming health alerts: {e}")
@@ -134,7 +131,7 @@ class MonitoringStreamers:
                     "active_sources": pool_data.get("active_sources", []),
                     "inactive_sources": pool_data.get("inactive_sources", []),
                     "failover_count": pool_data.get("failover_count", 0),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming pool status: {e}")
@@ -148,10 +145,7 @@ class MonitoringStreamers:
         try:
             events = self.pool_manager.get_recent_failovers()
             if events:
-                return {
-                    "failover_events": events,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"failover_events": events, "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming failover events: {e}")
             return None
@@ -164,10 +158,7 @@ class MonitoringStreamers:
         try:
             health_data = self.pool_manager.get_source_health()
             if health_data:
-                return {
-                    "source_health": health_data,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"source_health": health_data, "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming source health: {e}")
             return None
@@ -189,7 +180,7 @@ class MonitoringStreamers:
                     "total_jobs": status_data.get("total_jobs", 0),
                     "active_jobs": status_data.get("active_jobs", 0),
                     "jobs": status_data.get("jobs", []),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
         except Exception as e:
             logger.error(f"Error streaming scheduler status: {e}")
@@ -203,10 +194,7 @@ class MonitoringStreamers:
         try:
             executions = self.scheduler.get_recent_executions()
             if executions:
-                return {
-                    "executions": executions,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"executions": executions, "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming job executions: {e}")
             return None
@@ -219,10 +207,7 @@ class MonitoringStreamers:
         try:
             failures = self.scheduler.get_recent_failures()
             if failures:
-                return {
-                    "failures": failures,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return {"failures": failures, "timestamp": datetime.utcnow().isoformat()}
         except Exception as e:
             logger.error(f"Error streaming job failures: {e}")
             return None
@@ -236,31 +221,36 @@ monitoring_streamers = MonitoringStreamers()
 # Background Streaming Tasks
 # ============================================================================
 
+
 async def start_monitoring_streams():
     """Start all monitoring stream tasks"""
     logger.info("Starting monitoring WebSocket streams")
 
     tasks = [
         # Health Checker
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.HEALTH_CHECKER,
-            monitoring_streamers.stream_health_status,
-            interval=30.0  # 30 second updates
-        )),
-
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.HEALTH_CHECKER,
+                monitoring_streamers.stream_health_status,
+                interval=30.0,  # 30 second updates
+            )
+        ),
         # Pool Manager
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.POOL_MANAGER,
-            monitoring_streamers.stream_pool_status,
-            interval=20.0  # 20 second updates
-        )),
-
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.POOL_MANAGER,
+                monitoring_streamers.stream_pool_status,
+                interval=20.0,  # 20 second updates
+            )
+        ),
         # Scheduler
-        asyncio.create_task(ws_manager.start_service_stream(
-            ServiceType.SCHEDULER,
-            monitoring_streamers.stream_scheduler_status,
-            interval=15.0  # 15 second updates
-        )),
+        asyncio.create_task(
+            ws_manager.start_service_stream(
+                ServiceType.SCHEDULER,
+                monitoring_streamers.stream_scheduler_status,
+                interval=15.0,  # 15 second updates
+            )
+        ),
     ]
 
     await asyncio.gather(*tasks, return_exceptions=True)
@@ -269,6 +259,7 @@ async def start_monitoring_streams():
 # ============================================================================
 # WebSocket Endpoints
 # ============================================================================
+
 
 @router.websocket("/ws/monitoring")
 async def websocket_monitoring_endpoint(websocket: WebSocket):

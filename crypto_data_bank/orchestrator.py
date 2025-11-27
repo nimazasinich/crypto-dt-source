@@ -22,8 +22,7 @@ from crypto_data_bank.collectors.sentiment_collector import SentimentCollector
 from crypto_data_bank.ai.huggingface_models import get_analyzer
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -46,15 +45,15 @@ class DataCollectionOrchestrator:
 
         # Collection intervals (in seconds)
         self.intervals = {
-            'prices': 60,  # Every 1 minute
-            'news': 300,  # Every 5 minutes
-            'sentiment': 180,  # Every 3 minutes
+            "prices": 60,  # Every 1 minute
+            "news": 300,  # Every 5 minutes
+            "sentiment": 180,  # Every 3 minutes
         }
 
         self.last_collection = {
-            'prices': None,
-            'news': None,
-            'sentiment': None,
+            "prices": None,
+            "news": None,
+            "sentiment": None,
         }
 
     async def collect_and_store_prices(self):
@@ -73,15 +72,13 @@ class DataCollectionOrchestrator:
             for price_data in aggregated:
                 try:
                     self.db.save_price(
-                        symbol=price_data['symbol'],
-                        price_data=price_data,
-                        source='free_aggregated'
+                        symbol=price_data["symbol"], price_data=price_data, source="free_aggregated"
                     )
                     saved_count += 1
                 except Exception as e:
                     logger.error(f"Error saving price for {price_data.get('symbol')}: {e}")
 
-            self.last_collection['prices'] = datetime.now()
+            self.last_collection["prices"] = datetime.now()
 
             logger.info(f"✅ Saved {saved_count}/{len(aggregated)} prices to database")
 
@@ -89,16 +86,12 @@ class DataCollectionOrchestrator:
                 "success": True,
                 "prices_collected": len(aggregated),
                 "prices_saved": saved_count,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"❌ Error collecting prices: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
 
     async def collect_and_store_news(self):
         """جمع‌آوری و ذخیره اخبار"""
@@ -112,7 +105,7 @@ class DataCollectionOrchestrator:
             unique_news = self.news_collector.deduplicate_news(all_news)
 
             # Analyze with AI (if available)
-            if hasattr(self.ai_analyzer, 'analyze_news_batch'):
+            if hasattr(self.ai_analyzer, "analyze_news_batch"):
                 logger.info("🤖 Analyzing news with AI...")
                 analyzed_news = await self.ai_analyzer.analyze_news_batch(unique_news[:50])
             else:
@@ -123,46 +116,47 @@ class DataCollectionOrchestrator:
             for news_item in analyzed_news:
                 try:
                     # Add AI sentiment if available
-                    if 'ai_sentiment' in news_item:
-                        news_item['sentiment'] = news_item['ai_confidence']
+                    if "ai_sentiment" in news_item:
+                        news_item["sentiment"] = news_item["ai_confidence"]
 
                     self.db.save_news(news_item)
                     saved_count += 1
                 except Exception as e:
                     logger.error(f"Error saving news: {e}")
 
-            self.last_collection['news'] = datetime.now()
+            self.last_collection["news"] = datetime.now()
 
             logger.info(f"✅ Saved {saved_count}/{len(analyzed_news)} news items to database")
 
             # Store AI analysis if available
-            if analyzed_news and 'ai_sentiment' in analyzed_news[0]:
+            if analyzed_news and "ai_sentiment" in analyzed_news[0]:
                 try:
                     # Get trending coins from news
                     trending = self.news_collector.get_trending_coins(analyzed_news)
 
                     # Save AI analysis for trending coins
                     for trend in trending[:10]:
-                        symbol = trend['coin']
-                        symbol_news = [n for n in analyzed_news if symbol in n.get('coins', [])]
+                        symbol = trend["coin"]
+                        symbol_news = [n for n in analyzed_news if symbol in n.get("coins", [])]
 
                         if symbol_news:
                             agg_sentiment = await self.ai_analyzer.calculate_aggregated_sentiment(
-                                symbol_news,
-                                symbol
+                                symbol_news, symbol
                             )
 
-                            self.db.save_ai_analysis({
-                                'symbol': symbol,
-                                'analysis_type': 'news_sentiment',
-                                'model_used': 'finbert',
-                                'input_data': {
-                                    'news_count': len(symbol_news),
-                                    'mentions': trend['mentions']
-                                },
-                                'output_data': agg_sentiment,
-                                'confidence': agg_sentiment.get('confidence', 0.0)
-                            })
+                            self.db.save_ai_analysis(
+                                {
+                                    "symbol": symbol,
+                                    "analysis_type": "news_sentiment",
+                                    "model_used": "finbert",
+                                    "input_data": {
+                                        "news_count": len(symbol_news),
+                                        "mentions": trend["mentions"],
+                                    },
+                                    "output_data": agg_sentiment,
+                                    "confidence": agg_sentiment.get("confidence", 0.0),
+                                }
+                            )
 
                     logger.info(f"✅ Saved AI analysis for {len(trending[:10])} trending coins")
 
@@ -173,17 +167,13 @@ class DataCollectionOrchestrator:
                 "success": True,
                 "news_collected": len(unique_news),
                 "news_saved": saved_count,
-                "ai_analyzed": 'ai_sentiment' in analyzed_news[0] if analyzed_news else False,
-                "timestamp": datetime.now().isoformat()
+                "ai_analyzed": "ai_sentiment" in analyzed_news[0] if analyzed_news else False,
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"❌ Error collecting news: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
 
     async def collect_and_store_sentiment(self):
         """جمع‌آوری و ذخیره احساسات بازار"""
@@ -194,29 +184,26 @@ class DataCollectionOrchestrator:
             sentiment_data = await self.sentiment_collector.collect_all_sentiment_data()
 
             # Save overall sentiment
-            if sentiment_data.get('overall_sentiment'):
+            if sentiment_data.get("overall_sentiment"):
                 self.db.save_sentiment(
-                    sentiment_data['overall_sentiment'],
-                    source='free_aggregated'
+                    sentiment_data["overall_sentiment"], source="free_aggregated"
                 )
 
-            self.last_collection['sentiment'] = datetime.now()
+            self.last_collection["sentiment"] = datetime.now()
 
-            logger.info(f"✅ Saved market sentiment: {sentiment_data['overall_sentiment']['overall_sentiment']}")
+            logger.info(
+                f"✅ Saved market sentiment: {sentiment_data['overall_sentiment']['overall_sentiment']}"
+            )
 
             return {
                 "success": True,
-                "sentiment": sentiment_data['overall_sentiment'],
-                "timestamp": datetime.now().isoformat()
+                "sentiment": sentiment_data["overall_sentiment"],
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"❌ Error collecting sentiment: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
 
     async def collect_all_data_once(self) -> Dict[str, Any]:
         """
@@ -229,14 +216,20 @@ class DataCollectionOrchestrator:
             self.collect_and_store_prices(),
             self.collect_and_store_news(),
             self.collect_and_store_sentiment(),
-            return_exceptions=True
+            return_exceptions=True,
         )
 
         return {
-            "prices": results[0] if not isinstance(results[0], Exception) else {"error": str(results[0])},
-            "news": results[1] if not isinstance(results[1], Exception) else {"error": str(results[1])},
-            "sentiment": results[2] if not isinstance(results[2], Exception) else {"error": str(results[2])},
-            "timestamp": datetime.now().isoformat()
+            "prices": (
+                results[0] if not isinstance(results[0], Exception) else {"error": str(results[0])}
+            ),
+            "news": (
+                results[1] if not isinstance(results[1], Exception) else {"error": str(results[1])}
+            ),
+            "sentiment": (
+                results[2] if not isinstance(results[2], Exception) else {"error": str(results[2])}
+            ),
+            "timestamp": datetime.now().isoformat(),
         }
 
     async def price_collection_loop(self):
@@ -244,7 +237,7 @@ class DataCollectionOrchestrator:
         while self.is_running:
             try:
                 await self.collect_and_store_prices()
-                await asyncio.sleep(self.intervals['prices'])
+                await asyncio.sleep(self.intervals["prices"])
             except Exception as e:
                 logger.error(f"Error in price collection loop: {e}")
                 await asyncio.sleep(60)  # Wait 1 minute on error
@@ -254,7 +247,7 @@ class DataCollectionOrchestrator:
         while self.is_running:
             try:
                 await self.collect_and_store_news()
-                await asyncio.sleep(self.intervals['news'])
+                await asyncio.sleep(self.intervals["news"])
             except Exception as e:
                 logger.error(f"Error in news collection loop: {e}")
                 await asyncio.sleep(300)  # Wait 5 minutes on error
@@ -264,7 +257,7 @@ class DataCollectionOrchestrator:
         while self.is_running:
             try:
                 await self.collect_and_store_sentiment()
-                await asyncio.sleep(self.intervals['sentiment'])
+                await asyncio.sleep(self.intervals["sentiment"])
             except Exception as e:
                 logger.error(f"Error in sentiment collection loop: {e}")
                 await asyncio.sleep(180)  # Wait 3 minutes on error
@@ -310,17 +303,17 @@ class DataCollectionOrchestrator:
         return {
             "is_running": self.is_running,
             "last_collection": {
-                k: v.isoformat() if v else None
-                for k, v in self.last_collection.items()
+                k: v.isoformat() if v else None for k, v in self.last_collection.items()
             },
             "intervals": self.intervals,
             "database_stats": self.db.get_statistics(),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
 # Singleton instance
 _orchestrator = None
+
 
 def get_orchestrator() -> DataCollectionOrchestrator:
     """دریافت instance هماهنگ‌کننده"""
@@ -332,9 +325,9 @@ def get_orchestrator() -> DataCollectionOrchestrator:
 
 async def main():
     """Test the orchestrator"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 Testing Data Collection Orchestrator")
-    print("="*70)
+    print("=" * 70)
 
     orchestrator = get_orchestrator()
 

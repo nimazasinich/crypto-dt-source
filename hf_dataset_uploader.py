@@ -19,6 +19,7 @@ import pandas as pd
 try:
     from huggingface_hub import HfApi, create_repo, upload_file
     from datasets import Dataset, DatasetDict
+
     HF_HUB_AVAILABLE = True
 except ImportError:
     HF_HUB_AVAILABLE = False
@@ -46,7 +47,7 @@ class HuggingFaceDatasetUploader:
         self,
         hf_token: Optional[str] = None,
         dataset_namespace: Optional[str] = None,
-        auto_create: bool = True
+        auto_create: bool = True,
     ):
         """
         Initialize HuggingFace Dataset Uploader
@@ -129,7 +130,7 @@ class HuggingFaceDatasetUploader:
                         dataset_name,
                         token=self.token,
                         repo_type="dataset",
-                        private=False  # Public dataset
+                        private=False,  # Public dataset
                     )
 
                     # Upload README
@@ -188,7 +189,7 @@ All data is real - no mock or fake data.
                         path_in_repo="README.md",
                         repo_id=dataset_name,
                         repo_type="dataset",
-                        token=self.token
+                        token=self.token,
                     )
 
                     logger.info(f"✅ Created dataset: {dataset_name}")
@@ -202,9 +203,7 @@ All data is real - no mock or fake data.
             return False
 
     async def upload_market_data(
-        self,
-        market_data: List[Dict[str, Any]],
-        append: bool = True
+        self, market_data: List[Dict[str, Any]], append: bool = True
     ) -> bool:
         """
         Upload market data to HuggingFace Dataset
@@ -224,7 +223,7 @@ All data is real - no mock or fake data.
             # Ensure dataset exists
             if not self._ensure_dataset_exists(
                 self.market_data_dataset,
-                "Real-time cryptocurrency market data from multiple sources"
+                "Real-time cryptocurrency market data from multiple sources",
             ):
                 return False
 
@@ -246,10 +245,9 @@ All data is real - no mock or fake data.
             if append:
                 try:
                     from datasets import load_dataset
+
                     existing_dataset = load_dataset(
-                        self.market_data_dataset,
-                        split="train",
-                        token=self.token
+                        self.market_data_dataset, split="train", token=self.token
                     )
 
                     # Combine with new data
@@ -259,16 +257,14 @@ All data is real - no mock or fake data.
                     # Remove duplicates based on symbol and timestamp
                     # Keep only the latest record for each symbol
                     combined_df = combined_df.sort_values(
-                        by=["symbol", "timestamp"],
-                        ascending=[True, False]
+                        by=["symbol", "timestamp"], ascending=[True, False]
                     )
-                    combined_df = combined_df.drop_duplicates(
-                        subset=["symbol"],
-                        keep="first"
-                    )
+                    combined_df = combined_df.drop_duplicates(subset=["symbol"], keep="first")
 
                     dataset = Dataset.from_pandas(combined_df)
-                    logger.info(f"Appended {len(df)} new records to {len(existing_df)} existing records")
+                    logger.info(
+                        f"Appended {len(df)} new records to {len(existing_df)} existing records"
+                    )
 
                 except Exception as e:
                     logger.warning(f"Could not load existing dataset (might be first upload): {e}")
@@ -277,11 +273,7 @@ All data is real - no mock or fake data.
 
             # Push to hub
             logger.info(f"Uploading {len(dataset)} records to {self.market_data_dataset}...")
-            dataset.push_to_hub(
-                self.market_data_dataset,
-                token=self.token,
-                private=False
-            )
+            dataset.push_to_hub(self.market_data_dataset, token=self.token, private=False)
 
             logger.info(f"✅ Successfully uploaded market data to {self.market_data_dataset}")
             logger.info(f"   Records: {len(dataset)}")
@@ -293,11 +285,7 @@ All data is real - no mock or fake data.
             logger.error(f"Error uploading market data: {e}", exc_info=True)
             return False
 
-    async def upload_ohlc_data(
-        self,
-        ohlc_data: List[Dict[str, Any]],
-        append: bool = True
-    ) -> bool:
+    async def upload_ohlc_data(self, ohlc_data: List[Dict[str, Any]], append: bool = True) -> bool:
         """
         Upload OHLC/candlestick data to HuggingFace Dataset
 
@@ -316,7 +304,7 @@ All data is real - no mock or fake data.
             # Ensure dataset exists
             if not self._ensure_dataset_exists(
                 self.ohlc_dataset,
-                "Real-time cryptocurrency OHLC/candlestick data from multiple exchanges"
+                "Real-time cryptocurrency OHLC/candlestick data from multiple exchanges",
             ):
                 return False
 
@@ -336,10 +324,9 @@ All data is real - no mock or fake data.
             if append:
                 try:
                     from datasets import load_dataset
+
                     existing_dataset = load_dataset(
-                        self.ohlc_dataset,
-                        split="train",
-                        token=self.token
+                        self.ohlc_dataset, split="train", token=self.token
                     )
 
                     existing_df = existing_dataset.to_pandas()
@@ -347,12 +334,13 @@ All data is real - no mock or fake data.
 
                     # Remove duplicates based on symbol, interval, and timestamp
                     combined_df = combined_df.drop_duplicates(
-                        subset=["symbol", "interval", "timestamp"],
-                        keep="last"
+                        subset=["symbol", "interval", "timestamp"], keep="last"
                     )
 
                     dataset = Dataset.from_pandas(combined_df)
-                    logger.info(f"Appended {len(df)} new OHLC records to {len(existing_df)} existing records")
+                    logger.info(
+                        f"Appended {len(df)} new OHLC records to {len(existing_df)} existing records"
+                    )
 
                 except Exception as e:
                     logger.warning(f"Could not load existing OHLC dataset: {e}")
@@ -360,11 +348,7 @@ All data is real - no mock or fake data.
 
             # Push to hub
             logger.info(f"Uploading {len(dataset)} OHLC records to {self.ohlc_dataset}...")
-            dataset.push_to_hub(
-                self.ohlc_dataset,
-                token=self.token,
-                private=False
-            )
+            dataset.push_to_hub(self.ohlc_dataset, token=self.token, private=False)
 
             logger.info(f"✅ Successfully uploaded OHLC data to {self.ohlc_dataset}")
             logger.info(f"   Records: {len(dataset)}")
@@ -376,19 +360,14 @@ All data is real - no mock or fake data.
             logger.error(f"Error uploading OHLC data: {e}", exc_info=True)
             return False
 
-    async def upload_news_data(
-        self,
-        news_data: List[Dict[str, Any]],
-        append: bool = True
-    ) -> bool:
+    async def upload_news_data(self, news_data: List[Dict[str, Any]], append: bool = True) -> bool:
         """Upload news data to HuggingFace Dataset"""
         try:
             if not news_data:
                 return False
 
             if not self._ensure_dataset_exists(
-                self.news_dataset,
-                "Real-time cryptocurrency news from multiple sources"
+                self.news_dataset, "Real-time cryptocurrency news from multiple sources"
             ):
                 return False
 
@@ -398,6 +377,7 @@ All data is real - no mock or fake data.
             if append:
                 try:
                     from datasets import load_dataset
+
                     existing = load_dataset(self.news_dataset, split="train", token=self.token)
                     existing_df = existing.to_pandas()
                     combined_df = pd.concat([existing_df, df], ignore_index=True)
@@ -414,9 +394,7 @@ All data is real - no mock or fake data.
             return False
 
     async def upload_sentiment_data(
-        self,
-        sentiment_data: List[Dict[str, Any]],
-        append: bool = True
+        self, sentiment_data: List[Dict[str, Any]], append: bool = True
     ) -> bool:
         """Upload sentiment data to HuggingFace Dataset"""
         try:
@@ -425,7 +403,7 @@ All data is real - no mock or fake data.
 
             if not self._ensure_dataset_exists(
                 self.sentiment_dataset,
-                "Cryptocurrency market sentiment indicators from multiple sources"
+                "Cryptocurrency market sentiment indicators from multiple sources",
             ):
                 return False
 
@@ -435,6 +413,7 @@ All data is real - no mock or fake data.
             if append:
                 try:
                     from datasets import load_dataset
+
                     existing = load_dataset(self.sentiment_dataset, split="train", token=self.token)
                     existing_df = existing.to_pandas()
                     combined_df = pd.concat([existing_df, df], ignore_index=True)
@@ -450,9 +429,7 @@ All data is real - no mock or fake data.
             return False
 
     async def upload_onchain_data(
-        self,
-        onchain_data: List[Dict[str, Any]],
-        append: bool = True
+        self, onchain_data: List[Dict[str, Any]], append: bool = True
     ) -> bool:
         """Upload on-chain analytics to HuggingFace Dataset"""
         try:
@@ -460,8 +437,7 @@ All data is real - no mock or fake data.
                 return False
 
             if not self._ensure_dataset_exists(
-                self.onchain_dataset,
-                "On-chain cryptocurrency analytics and metrics"
+                self.onchain_dataset, "On-chain cryptocurrency analytics and metrics"
             ):
                 return False
 
@@ -471,6 +447,7 @@ All data is real - no mock or fake data.
             if append:
                 try:
                     from datasets import load_dataset
+
                     existing = load_dataset(self.onchain_dataset, split="train", token=self.token)
                     existing_df = existing.to_pandas()
                     combined_df = pd.concat([existing_df, df], ignore_index=True)
@@ -486,9 +463,7 @@ All data is real - no mock or fake data.
             return False
 
     async def upload_whale_data(
-        self,
-        whale_data: List[Dict[str, Any]],
-        append: bool = True
+        self, whale_data: List[Dict[str, Any]], append: bool = True
     ) -> bool:
         """Upload whale transaction data to HuggingFace Dataset"""
         try:
@@ -496,8 +471,7 @@ All data is real - no mock or fake data.
                 return False
 
             if not self._ensure_dataset_exists(
-                self.whale_dataset,
-                "Large cryptocurrency transactions and whale movements"
+                self.whale_dataset, "Large cryptocurrency transactions and whale movements"
             ):
                 return False
 
@@ -507,6 +481,7 @@ All data is real - no mock or fake data.
             if append:
                 try:
                     from datasets import load_dataset
+
                     existing = load_dataset(self.whale_dataset, split="train", token=self.token)
                     existing_df = existing.to_pandas()
                     combined_df = pd.concat([existing_df, df], ignore_index=True)
@@ -515,16 +490,16 @@ All data is real - no mock or fake data.
                     pass
 
             dataset.push_to_hub(self.whale_dataset, token=self.token, private=False)
-            logger.info(f"✅ Uploaded {len(dataset)} whale transaction records to {self.whale_dataset}")
+            logger.info(
+                f"✅ Uploaded {len(dataset)} whale transaction records to {self.whale_dataset}"
+            )
             return True
         except Exception as e:
             logger.error(f"Error uploading whale data: {e}", exc_info=True)
             return False
 
     async def upload_explorer_data(
-        self,
-        explorer_data: List[Dict[str, Any]],
-        append: bool = True
+        self, explorer_data: List[Dict[str, Any]], append: bool = True
     ) -> bool:
         """Upload block explorer data to HuggingFace Dataset"""
         try:
@@ -532,8 +507,7 @@ All data is real - no mock or fake data.
                 return False
 
             if not self._ensure_dataset_exists(
-                self.explorer_dataset,
-                "Blockchain data from multiple block explorers"
+                self.explorer_dataset, "Blockchain data from multiple block explorers"
             ):
                 return False
 
@@ -543,6 +517,7 @@ All data is real - no mock or fake data.
             if append:
                 try:
                     from datasets import load_dataset
+
                     existing = load_dataset(self.explorer_dataset, split="train", token=self.token)
                     existing_df = existing.to_pandas()
                     combined_df = pd.concat([existing_df, df], ignore_index=True)
@@ -575,7 +550,7 @@ All data is real - no mock or fake data.
                 "sentiment": self.sentiment_dataset,
                 "onchain": self.onchain_dataset,
                 "whale": self.whale_dataset,
-                "explorer": self.explorer_dataset
+                "explorer": self.explorer_dataset,
             }
 
             dataset_name = dataset_map.get(dataset_type, self.market_data_dataset)
@@ -590,7 +565,7 @@ All data is real - no mock or fake data.
                 "likes": info.likes,
                 "tags": info.tags,
                 "private": info.private,
-                "url": f"https://huggingface.co/datasets/{dataset_name}"
+                "url": f"https://huggingface.co/datasets/{dataset_name}",
             }
 
         except Exception as e:
@@ -603,8 +578,7 @@ _uploader_instance: Optional[HuggingFaceDatasetUploader] = None
 
 
 def get_dataset_uploader(
-    hf_token: Optional[str] = None,
-    dataset_namespace: Optional[str] = None
+    hf_token: Optional[str] = None, dataset_namespace: Optional[str] = None
 ) -> HuggingFaceDatasetUploader:
     """
     Get or create HuggingFace Dataset Uploader singleton instance
@@ -620,8 +594,7 @@ def get_dataset_uploader(
 
     if _uploader_instance is None:
         _uploader_instance = HuggingFaceDatasetUploader(
-            hf_token=hf_token,
-            dataset_namespace=dataset_namespace
+            hf_token=hf_token, dataset_namespace=dataset_namespace
         )
 
     return _uploader_instance
@@ -648,7 +621,7 @@ if __name__ == "__main__":
                 "high_24h": 45500.0,
                 "low_24h": 44000.0,
                 "provider": "coingecko",
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             },
             {
                 "symbol": "ETH",
@@ -659,8 +632,8 @@ if __name__ == "__main__":
                 "high_24h": 3250.0,
                 "low_24h": 3100.0,
                 "provider": "coingecko",
-                "timestamp": datetime.utcnow().isoformat() + "Z"
-            }
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            },
         ]
 
         # Sample OHLC data
@@ -674,7 +647,7 @@ if __name__ == "__main__":
                 "low": 44300.0,
                 "close": 44800.0,
                 "volume": 1250000.0,
-                "provider": "binance"
+                "provider": "binance",
             }
         ]
 
@@ -704,6 +677,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ Error: {e}")
             import traceback
+
             traceback.print_exc()
 
     asyncio.run(test_uploader())

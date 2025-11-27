@@ -14,7 +14,7 @@ from database.models import (
     WhaleTransaction,
     SentimentMetric,
     GasPrice,
-    BlockchainStat
+    BlockchainStat,
 )
 from utils.logger import setup_logger
 
@@ -39,11 +39,11 @@ class DataAccessMixin:
         volume_24h: Optional[float] = None,
         price_change_24h: Optional[float] = None,
         source: str = "unknown",
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> Optional[MarketPrice]:
         """
         Save market price data
-        
+
         Args:
             symbol: Cryptocurrency symbol (e.g., BTC, ETH)
             price_usd: Price in USD
@@ -52,7 +52,7 @@ class DataAccessMixin:
             price_change_24h: 24-hour price change percentage
             source: Data source name
             timestamp: Data timestamp (defaults to now)
-        
+
         Returns:
             MarketPrice object if successful, None otherwise
         """
@@ -65,13 +65,13 @@ class DataAccessMixin:
                     volume_24h=volume_24h,
                     price_change_24h=price_change_24h,
                     source=source,
-                    timestamp=timestamp or datetime.utcnow()
+                    timestamp=timestamp or datetime.utcnow(),
                 )
                 session.add(price)
                 session.flush()
                 logger.debug(f"Saved price for {symbol}: ${price_usd}")
                 return price
-        
+
         except Exception as e:
             logger.error(f"Error saving market price for {symbol}: {e}", exc_info=True)
             return None
@@ -83,29 +83,28 @@ class DataAccessMixin:
                 # Get latest price for each symbol
                 subquery = (
                     session.query(
-                        MarketPrice.symbol,
-                        func.max(MarketPrice.timestamp).label('max_timestamp')
+                        MarketPrice.symbol, func.max(MarketPrice.timestamp).label("max_timestamp")
                     )
                     .group_by(MarketPrice.symbol)
                     .subquery()
                 )
-                
+
                 prices = (
                     session.query(MarketPrice)
                     .join(
                         subquery,
                         and_(
                             MarketPrice.symbol == subquery.c.symbol,
-                            MarketPrice.timestamp == subquery.c.max_timestamp
-                        )
+                            MarketPrice.timestamp == subquery.c.max_timestamp,
+                        ),
                     )
                     .order_by(desc(MarketPrice.market_cap))
                     .limit(limit)
                     .all()
                 )
-                
+
                 return prices
-        
+
         except Exception as e:
             logger.error(f"Error getting latest prices: {e}", exc_info=True)
             return []
@@ -121,7 +120,7 @@ class DataAccessMixin:
                     .first()
                 )
                 return price
-        
+
         except Exception as e:
             logger.error(f"Error getting price for {symbol}: {e}", exc_info=True)
             return None
@@ -131,19 +130,16 @@ class DataAccessMixin:
         try:
             with self.get_session() as session:
                 cutoff = datetime.utcnow() - timedelta(hours=hours)
-                
+
                 history = (
                     session.query(MarketPrice)
-                    .filter(
-                        MarketPrice.symbol == symbol.upper(),
-                        MarketPrice.timestamp >= cutoff
-                    )
+                    .filter(MarketPrice.symbol == symbol.upper(), MarketPrice.timestamp >= cutoff)
                     .order_by(MarketPrice.timestamp)
                     .all()
                 )
-                
+
                 return history
-        
+
         except Exception as e:
             logger.error(f"Error getting price history for {symbol}: {e}", exc_info=True)
             return []
@@ -160,7 +156,7 @@ class DataAccessMixin:
         content: Optional[str] = None,
         url: Optional[str] = None,
         sentiment: Optional[str] = None,
-        tags: Optional[str] = None
+        tags: Optional[str] = None,
     ) -> Optional[NewsArticle]:
         """Save news article"""
         try:
@@ -172,43 +168,35 @@ class DataAccessMixin:
                     url=url,
                     published_at=published_at,
                     sentiment=sentiment,
-                    tags=tags
+                    tags=tags,
                 )
                 session.add(article)
                 session.flush()
                 logger.debug(f"Saved news article: {title[:50]}...")
                 return article
-        
+
         except Exception as e:
             logger.error(f"Error saving news article: {e}", exc_info=True)
             return None
 
     def get_latest_news(
-        self,
-        limit: int = 50,
-        source: Optional[str] = None,
-        sentiment: Optional[str] = None
+        self, limit: int = 50, source: Optional[str] = None, sentiment: Optional[str] = None
     ) -> List[NewsArticle]:
         """Get latest news articles"""
         try:
             with self.get_session() as session:
                 query = session.query(NewsArticle)
-                
+
                 if source:
                     query = query.filter(NewsArticle.source == source)
-                
+
                 if sentiment:
                     query = query.filter(NewsArticle.sentiment == sentiment)
-                
-                articles = (
-                    query
-                    .order_by(desc(NewsArticle.published_at))
-                    .limit(limit)
-                    .all()
-                )
-                
+
+                articles = query.order_by(desc(NewsArticle.published_at)).limit(limit).all()
+
                 return articles
-        
+
         except Exception as e:
             logger.error(f"Error getting latest news: {e}", exc_info=True)
             return []
@@ -219,7 +207,7 @@ class DataAccessMixin:
             with self.get_session() as session:
                 article = session.query(NewsArticle).filter(NewsArticle.id == news_id).first()
                 return article
-        
+
         except Exception as e:
             logger.error(f"Error getting news {news_id}: {e}", exc_info=True)
             return None
@@ -230,17 +218,14 @@ class DataAccessMixin:
             with self.get_session() as session:
                 articles = (
                     session.query(NewsArticle)
-                    .filter(
-                        NewsArticle.title.contains(query) | 
-                        NewsArticle.content.contains(query)
-                    )
+                    .filter(NewsArticle.title.contains(query) | NewsArticle.content.contains(query))
                     .order_by(desc(NewsArticle.published_at))
                     .limit(limit)
                     .all()
                 )
-                
+
                 return articles
-        
+
         except Exception as e:
             logger.error(f"Error searching news: {e}", exc_info=True)
             return []
@@ -255,7 +240,7 @@ class DataAccessMixin:
         value: float,
         classification: str,
         source: str,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> Optional[SentimentMetric]:
         """Save sentiment metric"""
         try:
@@ -265,13 +250,13 @@ class DataAccessMixin:
                     value=value,
                     classification=classification,
                     source=source,
-                    timestamp=timestamp or datetime.utcnow()
+                    timestamp=timestamp or datetime.utcnow(),
                 )
                 session.add(metric)
                 session.flush()
                 logger.debug(f"Saved sentiment: {metric_name} = {value} ({classification})")
                 return metric
-        
+
         except Exception as e:
             logger.error(f"Error saving sentiment metric: {e}", exc_info=True)
             return None
@@ -281,12 +266,10 @@ class DataAccessMixin:
         try:
             with self.get_session() as session:
                 metric = (
-                    session.query(SentimentMetric)
-                    .order_by(desc(SentimentMetric.timestamp))
-                    .first()
+                    session.query(SentimentMetric).order_by(desc(SentimentMetric.timestamp)).first()
                 )
                 return metric
-        
+
         except Exception as e:
             logger.error(f"Error getting latest sentiment: {e}", exc_info=True)
             return None
@@ -296,16 +279,16 @@ class DataAccessMixin:
         try:
             with self.get_session() as session:
                 cutoff = datetime.utcnow() - timedelta(hours=hours)
-                
+
                 history = (
                     session.query(SentimentMetric)
                     .filter(SentimentMetric.timestamp >= cutoff)
                     .order_by(SentimentMetric.timestamp)
                     .all()
                 )
-                
+
                 return history
-        
+
         except Exception as e:
             logger.error(f"Error getting sentiment history: {e}", exc_info=True)
             return []
@@ -323,7 +306,7 @@ class DataAccessMixin:
         amount: float,
         amount_usd: float,
         source: str,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> Optional[WhaleTransaction]:
         """Save whale transaction"""
         try:
@@ -334,11 +317,11 @@ class DataAccessMixin:
                     .filter(WhaleTransaction.transaction_hash == transaction_hash)
                     .first()
                 )
-                
+
                 if existing:
                     logger.debug(f"Transaction {transaction_hash} already exists")
                     return existing
-                
+
                 transaction = WhaleTransaction(
                     blockchain=blockchain,
                     transaction_hash=transaction_hash,
@@ -347,13 +330,13 @@ class DataAccessMixin:
                     amount=amount,
                     amount_usd=amount_usd,
                     source=source,
-                    timestamp=timestamp or datetime.utcnow()
+                    timestamp=timestamp or datetime.utcnow(),
                 )
                 session.add(transaction)
                 session.flush()
                 logger.debug(f"Saved whale transaction: {amount_usd} USD on {blockchain}")
                 return transaction
-        
+
         except Exception as e:
             logger.error(f"Error saving whale transaction: {e}", exc_info=True)
             return None
@@ -362,28 +345,23 @@ class DataAccessMixin:
         self,
         limit: int = 50,
         blockchain: Optional[str] = None,
-        min_amount_usd: Optional[float] = None
+        min_amount_usd: Optional[float] = None,
     ) -> List[WhaleTransaction]:
         """Get recent whale transactions"""
         try:
             with self.get_session() as session:
                 query = session.query(WhaleTransaction)
-                
+
                 if blockchain:
                     query = query.filter(WhaleTransaction.blockchain == blockchain)
-                
+
                 if min_amount_usd:
                     query = query.filter(WhaleTransaction.amount_usd >= min_amount_usd)
-                
-                transactions = (
-                    query
-                    .order_by(desc(WhaleTransaction.timestamp))
-                    .limit(limit)
-                    .all()
-                )
-                
+
+                transactions = query.order_by(desc(WhaleTransaction.timestamp)).limit(limit).all()
+
                 return transactions
-        
+
         except Exception as e:
             logger.error(f"Error getting whale transactions: {e}", exc_info=True)
             return []
@@ -393,45 +371,42 @@ class DataAccessMixin:
         try:
             with self.get_session() as session:
                 cutoff = datetime.utcnow() - timedelta(hours=hours)
-                
+
                 transactions = (
                     session.query(WhaleTransaction)
                     .filter(WhaleTransaction.timestamp >= cutoff)
                     .all()
                 )
-                
+
                 if not transactions:
                     return {
-                        'total_transactions': 0,
-                        'total_volume_usd': 0,
-                        'avg_transaction_usd': 0,
-                        'largest_transaction_usd': 0,
-                        'by_blockchain': {}
+                        "total_transactions": 0,
+                        "total_volume_usd": 0,
+                        "avg_transaction_usd": 0,
+                        "largest_transaction_usd": 0,
+                        "by_blockchain": {},
                     }
-                
+
                 total_volume = sum(tx.amount_usd for tx in transactions)
                 avg_transaction = total_volume / len(transactions)
                 largest = max(tx.amount_usd for tx in transactions)
-                
+
                 # Group by blockchain
                 by_blockchain = {}
                 for tx in transactions:
                     if tx.blockchain not in by_blockchain:
-                        by_blockchain[tx.blockchain] = {
-                            'count': 0,
-                            'volume_usd': 0
-                        }
-                    by_blockchain[tx.blockchain]['count'] += 1
-                    by_blockchain[tx.blockchain]['volume_usd'] += tx.amount_usd
-                
+                        by_blockchain[tx.blockchain] = {"count": 0, "volume_usd": 0}
+                    by_blockchain[tx.blockchain]["count"] += 1
+                    by_blockchain[tx.blockchain]["volume_usd"] += tx.amount_usd
+
                 return {
-                    'total_transactions': len(transactions),
-                    'total_volume_usd': total_volume,
-                    'avg_transaction_usd': avg_transaction,
-                    'largest_transaction_usd': largest,
-                    'by_blockchain': by_blockchain
+                    "total_transactions": len(transactions),
+                    "total_volume_usd": total_volume,
+                    "avg_transaction_usd": avg_transaction,
+                    "largest_transaction_usd": largest,
+                    "by_blockchain": by_blockchain,
                 }
-        
+
         except Exception as e:
             logger.error(f"Error getting whale stats: {e}", exc_info=True)
             return {}
@@ -448,7 +423,7 @@ class DataAccessMixin:
         fast_gas_price: Optional[float] = None,
         standard_gas_price: Optional[float] = None,
         slow_gas_price: Optional[float] = None,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> Optional[GasPrice]:
         """Save gas price data"""
         try:
@@ -460,13 +435,13 @@ class DataAccessMixin:
                     standard_gas_price=standard_gas_price,
                     slow_gas_price=slow_gas_price,
                     source=source,
-                    timestamp=timestamp or datetime.utcnow()
+                    timestamp=timestamp or datetime.utcnow(),
                 )
                 session.add(gas_price)
                 session.flush()
                 logger.debug(f"Saved gas price for {blockchain}: {gas_price_gwei} Gwei")
                 return gas_price
-        
+
         except Exception as e:
             logger.error(f"Error saving gas price: {e}", exc_info=True)
             return None
@@ -478,37 +453,36 @@ class DataAccessMixin:
                 # Get latest gas price for each blockchain
                 subquery = (
                     session.query(
-                        GasPrice.blockchain,
-                        func.max(GasPrice.timestamp).label('max_timestamp')
+                        GasPrice.blockchain, func.max(GasPrice.timestamp).label("max_timestamp")
                     )
                     .group_by(GasPrice.blockchain)
                     .subquery()
                 )
-                
+
                 gas_prices = (
                     session.query(GasPrice)
                     .join(
                         subquery,
                         and_(
                             GasPrice.blockchain == subquery.c.blockchain,
-                            GasPrice.timestamp == subquery.c.max_timestamp
-                        )
+                            GasPrice.timestamp == subquery.c.max_timestamp,
+                        ),
                     )
                     .all()
                 )
-                
+
                 result = {}
                 for gp in gas_prices:
                     result[gp.blockchain] = {
-                        'gas_price_gwei': gp.gas_price_gwei,
-                        'fast': gp.fast_gas_price,
-                        'standard': gp.standard_gas_price,
-                        'slow': gp.slow_gas_price,
-                        'timestamp': gp.timestamp.isoformat()
+                        "gas_price_gwei": gp.gas_price_gwei,
+                        "fast": gp.fast_gas_price,
+                        "standard": gp.standard_gas_price,
+                        "slow": gp.slow_gas_price,
+                        "timestamp": gp.timestamp.isoformat(),
                     }
-                
+
                 return result
-        
+
         except Exception as e:
             logger.error(f"Error getting gas prices: {e}", exc_info=True)
             return {}
@@ -525,7 +499,7 @@ class DataAccessMixin:
         total_transactions: Optional[int] = None,
         network_hashrate: Optional[float] = None,
         difficulty: Optional[float] = None,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> Optional[BlockchainStat]:
         """Save blockchain statistics"""
         try:
@@ -537,13 +511,13 @@ class DataAccessMixin:
                     network_hashrate=network_hashrate,
                     difficulty=difficulty,
                     source=source,
-                    timestamp=timestamp or datetime.utcnow()
+                    timestamp=timestamp or datetime.utcnow(),
                 )
                 session.add(stat)
                 session.flush()
                 logger.debug(f"Saved blockchain stat for {blockchain}")
                 return stat
-        
+
         except Exception as e:
             logger.error(f"Error saving blockchain stat: {e}", exc_info=True)
             return None
@@ -556,37 +530,36 @@ class DataAccessMixin:
                 subquery = (
                     session.query(
                         BlockchainStat.blockchain,
-                        func.max(BlockchainStat.timestamp).label('max_timestamp')
+                        func.max(BlockchainStat.timestamp).label("max_timestamp"),
                     )
                     .group_by(BlockchainStat.blockchain)
                     .subquery()
                 )
-                
+
                 stats = (
                     session.query(BlockchainStat)
                     .join(
                         subquery,
                         and_(
                             BlockchainStat.blockchain == subquery.c.blockchain,
-                            BlockchainStat.timestamp == subquery.c.max_timestamp
-                        )
+                            BlockchainStat.timestamp == subquery.c.max_timestamp,
+                        ),
                     )
                     .all()
                 )
-                
+
                 result = {}
                 for stat in stats:
                     result[stat.blockchain] = {
-                        'latest_block': stat.latest_block,
-                        'total_transactions': stat.total_transactions,
-                        'network_hashrate': stat.network_hashrate,
-                        'difficulty': stat.difficulty,
-                        'timestamp': stat.timestamp.isoformat()
+                        "latest_block": stat.latest_block,
+                        "total_transactions": stat.total_transactions,
+                        "network_hashrate": stat.network_hashrate,
+                        "difficulty": stat.difficulty,
+                        "timestamp": stat.timestamp.isoformat(),
                     }
-                
+
                 return result
-        
+
         except Exception as e:
             logger.error(f"Error getting blockchain stats: {e}", exc_info=True)
             return {}
-

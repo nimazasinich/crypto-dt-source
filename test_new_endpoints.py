@@ -12,16 +12,18 @@ from datetime import datetime
 # Base URL - adjust if needed
 BASE_URL = "http://localhost:7860"
 
+
 def print_test_header(test_name):
     """Print formatted test header"""
     print(f"\n{'='*60}")
     print(f"🧪 TEST: {test_name}")
     print(f"{'='*60}")
 
+
 def test_models_list():
     """Test listing all available models"""
     print_test_header("List All AI Models")
-    
+
     try:
         response = requests.get(f"{BASE_URL}/api/models/list")
         if response.status_code == 200:
@@ -29,11 +31,11 @@ def test_models_list():
             print(f"✅ SUCCESS: Found {data['total']} models")
             print(f"   - Loaded: {data['loaded']}")
             print(f"   - Failed: {data['failed']}")
-            
+
             # Show first 5 models
-            for model in data['models'][:5]:
+            for model in data["models"][:5]:
                 print(f"   - {model['key']}: {model['name']} ({model['status']})")
-            
+
             return True
         else:
             print(f"❌ FAILED: HTTP {response.status_code}")
@@ -46,9 +48,9 @@ def test_models_list():
 def test_model_info():
     """Test getting model information"""
     print_test_header("Get Model Info")
-    
+
     model_key = "crypto_sent_0"
-    
+
     try:
         response = requests.get(f"{BASE_URL}/api/models/{model_key}/info")
         if response.status_code == 200:
@@ -72,19 +74,16 @@ def test_model_info():
 def test_model_predict():
     """Test model prediction"""
     print_test_header("Model Prediction")
-    
+
     model_key = "crypto_sent_0"
     payload = {
         "text": "Bitcoin is showing strong bullish momentum with high volume!",
-        "symbol": "BTC"
+        "symbol": "BTC",
     }
-    
+
     try:
-        response = requests.post(
-            f"{BASE_URL}/api/models/{model_key}/predict",
-            json=payload
-        )
-        
+        response = requests.post(f"{BASE_URL}/api/models/{model_key}/predict", json=payload)
+
         if response.status_code == 200:
             data = response.json()
             print(f"✅ SUCCESS: Prediction generated")
@@ -105,31 +104,28 @@ def test_model_predict():
 def test_batch_predict():
     """Test batch predictions"""
     print_test_header("Batch Prediction")
-    
+
     payload = {
         "model_key": "crypto_sent_0",
         "items": [
             {"text": "Bitcoin to the moon!", "symbol": "BTC"},
             {"text": "Ethereum showing weakness", "symbol": "ETH"},
-            {"text": "Crypto market is stable", "symbol": "MARKET"}
-        ]
+            {"text": "Crypto market is stable", "symbol": "MARKET"},
+        ],
     }
-    
+
     try:
-        response = requests.post(
-            f"{BASE_URL}/api/models/batch/predict",
-            json=payload
-        )
-        
+        response = requests.post(f"{BASE_URL}/api/models/batch/predict", json=payload)
+
         if response.status_code == 200:
             data = response.json()
             print(f"✅ SUCCESS: Batch prediction completed")
             print(f"   - Total items: {data['total_items']}")
             print(f"   - Processed: {data['processed']}")
-            
-            for i, result in enumerate(data['results'][:3]):
+
+            for i, result in enumerate(data["results"][:3]):
                 print(f"   - Item {i+1}: {result['symbol']} - {result['status']}")
-            
+
             return True
         else:
             print(f"❌ FAILED: HTTP {response.status_code}")
@@ -143,34 +139,31 @@ def test_batch_predict():
 def test_gap_detect():
     """Test gap detection"""
     print_test_header("Gap Detection")
-    
+
     payload = {
         "data": {
             "symbol": "BTC",
             "prices": [
                 {"timestamp": 1000, "open": 50000, "high": 51000, "low": 49000, "close": 50500},
                 # Missing data at timestamp 2000
-                {"timestamp": 3000, "open": 50500, "high": 51500, "low": 50000, "close": 51000}
-            ]
+                {"timestamp": 3000, "open": 50500, "high": 51500, "low": 50000, "close": 51000},
+            ],
         },
         "required_fields": ["ohlc_data", "volume", "sentiment"],
-        "context": {}
+        "context": {},
     }
-    
+
     try:
-        response = requests.post(
-            f"{BASE_URL}/api/gaps/detect",
-            json=payload
-        )
-        
+        response = requests.post(f"{BASE_URL}/api/gaps/detect", json=payload)
+
         if response.status_code == 200:
             data = response.json()
             print(f"✅ SUCCESS: Gap detection completed")
             print(f"   - Gaps detected: {data['gaps_detected']}")
-            
-            for i, gap in enumerate(data['gaps'][:3]):
+
+            for i, gap in enumerate(data["gaps"][:3]):
                 print(f"   - Gap {i+1}: {gap.get('gap_type')} (severity: {gap.get('severity')})")
-            
+
             return True
         else:
             print(f"❌ FAILED: HTTP {response.status_code}")
@@ -184,26 +177,24 @@ def test_gap_detect():
 def test_gap_fill():
     """Test gap filling"""
     print_test_header("Gap Filling")
-    
+
     payload = {
         "data": {
             "symbol": "BTC",
             "prices": [
                 {"timestamp": 1000, "open": 50000, "high": 51000, "low": 49000, "close": 50500},
-                {"timestamp": 3000, "open": 50500, "high": 51500, "low": 50000, "close": 51000}
-            ]
+                {"timestamp": 3000, "open": 50500, "high": 51500, "low": 50000, "close": 51000},
+            ],
         },
         "required_fields": ["prices"],
-        "context": {"symbol": "BTC"}
+        "context": {"symbol": "BTC"},
     }
-    
+
     try:
         response = requests.post(
-            f"{BASE_URL}/api/gaps/fill",
-            json=payload,
-            timeout=30  # Gap filling might take time
+            f"{BASE_URL}/api/gaps/fill", json=payload, timeout=30  # Gap filling might take time
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             print(f"✅ SUCCESS: Gap filling completed")
@@ -226,12 +217,12 @@ def test_gap_fill():
 def test_gap_statistics():
     """Test gap filling statistics"""
     print_test_header("Gap Fill Statistics")
-    
+
     try:
         response = requests.get(f"{BASE_URL}/api/gaps/statistics")
         if response.status_code == 200:
             data = response.json()
-            stats = data.get('statistics', {})
+            stats = data.get("statistics", {})
             print(f"✅ SUCCESS: Statistics retrieved")
             print(f"   - Total attempts: {stats.get('total_attempts', 0)}")
             print(f"   - Successful fills: {stats.get('successful_fills', 0)}")
@@ -249,7 +240,7 @@ def test_gap_statistics():
 def test_websocket_stats():
     """Test WebSocket statistics"""
     print_test_header("WebSocket Statistics")
-    
+
     try:
         response = requests.get(f"{BASE_URL}/api/ws/stats")
         if response.status_code == 200:
@@ -269,7 +260,7 @@ def test_websocket_stats():
 def test_health_check():
     """Test health endpoint"""
     print_test_header("Health Check")
-    
+
     try:
         response = requests.get(f"{BASE_URL}/health")
         if response.status_code == 200:
@@ -287,12 +278,12 @@ def test_health_check():
 
 def run_all_tests():
     """Run all tests and report results"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🚀 TESTING NEW ENDPOINTS")
-    print("="*60)
+    print("=" * 60)
     print(f"📡 Base URL: {BASE_URL}")
     print(f"⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
+
     tests = [
         ("Health Check", test_health_check),
         ("List Models", test_models_list),
@@ -304,7 +295,7 @@ def run_all_tests():
         ("Gap Statistics", test_gap_statistics),
         ("WebSocket Stats", test_websocket_stats),
     ]
-    
+
     results = []
     for test_name, test_func in tests:
         try:
@@ -313,21 +304,21 @@ def run_all_tests():
         except Exception as e:
             print(f"❌ CRITICAL ERROR in {test_name}: {e}")
             results.append((test_name, False))
-    
+
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 TEST SUMMARY")
-    print("="*60)
-    
+    print("=" * 60)
+
     passed = sum(1 for _, r in results if r)
     total = len(results)
-    
+
     for test_name, result in results:
         status = "✅ PASS" if result else "❌ FAIL"
         print(f"{status} - {test_name}")
-    
+
     print(f"\n📈 Results: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
-    
+
     if passed == total:
         print("🎉 ALL TESTS PASSED!")
         return 0

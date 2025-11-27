@@ -22,12 +22,7 @@ class RateLimiter:
         self.limits: Dict[str, Dict] = {}
         self.lock = Lock()
 
-    def configure_limit(
-        self,
-        provider: str,
-        limit_type: str,
-        limit_value: int
-    ):
+    def configure_limit(self, provider: str, limit_type: str, limit_value: int):
         """
         Configure rate limit for a provider
 
@@ -56,7 +51,7 @@ class RateLimiter:
                 "limit_value": limit_value,
                 "current_usage": 0,
                 "reset_time": reset_time,
-                "last_request_time": None
+                "last_request_time": None,
             }
 
             logger.info(f"Configured rate limit for {provider}: {limit_value} {limit_type}")
@@ -176,7 +171,11 @@ class RateLimiter:
                 self._reset_limit(provider)
                 limit_info = self.limits[provider]
 
-            percentage = (limit_info["current_usage"] / limit_info["limit_value"]) * 100 if limit_info["limit_value"] > 0 else 0
+            percentage = (
+                (limit_info["current_usage"] / limit_info["limit_value"]) * 100
+                if limit_info["limit_value"] > 0
+                else 0
+            )
             seconds_until_reset = max(0, (limit_info["reset_time"] - now).total_seconds())
 
             status = "ok"
@@ -194,7 +193,11 @@ class RateLimiter:
                 "reset_time": limit_info["reset_time"].isoformat(),
                 "reset_in_seconds": int(seconds_until_reset),
                 "status": status,
-                "last_request_time": limit_info["last_request_time"].isoformat() if limit_info["last_request_time"] else None
+                "last_request_time": (
+                    limit_info["last_request_time"].isoformat()
+                    if limit_info["last_request_time"]
+                    else None
+                ),
             }
 
     def get_all_statuses(self) -> Dict[str, Dict]:
@@ -205,10 +208,7 @@ class RateLimiter:
             Dict mapping provider names to their rate limit status
         """
         with self.lock:
-            return {
-                provider: self.get_status(provider)
-                for provider in self.limits.keys()
-            }
+            return {provider: self.get_status(provider) for provider in self.limits.keys()}
 
     def remove_limit(self, provider: str):
         """

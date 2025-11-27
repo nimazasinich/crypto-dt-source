@@ -14,6 +14,7 @@ Base = declarative_base()
 
 class ProviderCategory(enum.Enum):
     """Provider category enumeration"""
+
     MARKET_DATA = "market_data"
     BLOCKCHAIN_EXPLORERS = "blockchain_explorers"
     NEWS = "news"
@@ -25,6 +26,7 @@ class ProviderCategory(enum.Enum):
 
 class RateLimitType(enum.Enum):
     """Rate limit period type"""
+
     PER_MINUTE = "per_minute"
     PER_HOUR = "per_hour"
     PER_DAY = "per_day"
@@ -32,6 +34,7 @@ class RateLimitType(enum.Enum):
 
 class ConnectionStatus(enum.Enum):
     """Connection attempt status"""
+
     SUCCESS = "success"
     FAILED = "failed"
     TIMEOUT = "timeout"
@@ -40,7 +43,8 @@ class ConnectionStatus(enum.Enum):
 
 class Provider(Base):
     """API Provider configuration table"""
-    __tablename__ = 'providers'
+
+    __tablename__ = "providers"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False, unique=True)
@@ -56,19 +60,28 @@ class Provider(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    connection_attempts = relationship("ConnectionAttempt", back_populates="provider", cascade="all, delete-orphan")
-    data_collections = relationship("DataCollection", back_populates="provider", cascade="all, delete-orphan")
-    rate_limit_usage = relationship("RateLimitUsage", back_populates="provider", cascade="all, delete-orphan")
-    schedule_config = relationship("ScheduleConfig", back_populates="provider", uselist=False, cascade="all, delete-orphan")
+    connection_attempts = relationship(
+        "ConnectionAttempt", back_populates="provider", cascade="all, delete-orphan"
+    )
+    data_collections = relationship(
+        "DataCollection", back_populates="provider", cascade="all, delete-orphan"
+    )
+    rate_limit_usage = relationship(
+        "RateLimitUsage", back_populates="provider", cascade="all, delete-orphan"
+    )
+    schedule_config = relationship(
+        "ScheduleConfig", back_populates="provider", uselist=False, cascade="all, delete-orphan"
+    )
 
 
 class ConnectionAttempt(Base):
     """Connection attempts log table"""
-    __tablename__ = 'connection_attempts'
+
+    __tablename__ = "connection_attempts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, index=True)
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=False, index=True)
     endpoint = Column(String(500), nullable=False)
     status = Column(String(50), nullable=False)
     response_time_ms = Column(Integer, nullable=True)
@@ -84,10 +97,11 @@ class ConnectionAttempt(Base):
 
 class DataCollection(Base):
     """Data collections table"""
-    __tablename__ = 'data_collections'
+
+    __tablename__ = "data_collections"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, index=True)
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=False, index=True)
     category = Column(String(100), nullable=False)
     scheduled_time = Column(DateTime, nullable=False)
     actual_fetch_time = Column(DateTime, nullable=False)
@@ -105,11 +119,12 @@ class DataCollection(Base):
 
 class RateLimitUsage(Base):
     """Rate limit usage tracking table"""
-    __tablename__ = 'rate_limit_usage'
+
+    __tablename__ = "rate_limit_usage"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, index=True)
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=False, index=True)
     limit_type = Column(String(50), nullable=False)
     limit_value = Column(Integer, nullable=False)
     current_usage = Column(Integer, nullable=False)
@@ -122,10 +137,11 @@ class RateLimitUsage(Base):
 
 class ScheduleConfig(Base):
     """Schedule configuration table"""
-    __tablename__ = 'schedule_config'
+
+    __tablename__ = "schedule_config"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, unique=True)
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=False, unique=True)
     schedule_interval = Column(String(50), nullable=False)  # e.g., "every_1_min", "every_5_min"
     enabled = Column(Boolean, default=True)
     last_run = Column(DateTime, nullable=True)
@@ -140,10 +156,11 @@ class ScheduleConfig(Base):
 
 class ScheduleCompliance(Base):
     """Schedule compliance tracking table"""
-    __tablename__ = 'schedule_compliance'
+
+    __tablename__ = "schedule_compliance"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, index=True)
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=False, index=True)
     expected_time = Column(DateTime, nullable=False)
     actual_time = Column(DateTime, nullable=True)
     delay_seconds = Column(Integer, nullable=True)
@@ -154,11 +171,12 @@ class ScheduleCompliance(Base):
 
 class FailureLog(Base):
     """Detailed failure tracking table"""
-    __tablename__ = 'failure_logs'
+
+    __tablename__ = "failure_logs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, index=True)
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=False, index=True)
     endpoint = Column(String(500), nullable=False)
     error_type = Column(String(100), nullable=False, index=True)
     error_message = Column(Text, nullable=True)
@@ -170,11 +188,12 @@ class FailureLog(Base):
 
 class Alert(Base):
     """Alerts table"""
-    __tablename__ = 'alerts'
+
+    __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
-    provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False)
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=False)
     alert_type = Column(String(100), nullable=False)
     severity = Column(String(50), default="medium")
     message = Column(Text, nullable=False)
@@ -184,7 +203,8 @@ class Alert(Base):
 
 class SystemMetrics(Base):
     """System-wide metrics table"""
-    __tablename__ = 'system_metrics'
+
+    __tablename__ = "system_metrics"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
@@ -200,29 +220,35 @@ class SystemMetrics(Base):
 
 class SourcePool(Base):
     """Source pools for intelligent rotation"""
-    __tablename__ = 'source_pools'
+
+    __tablename__ = "source_pools"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False, unique=True)
     category = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
-    rotation_strategy = Column(String(50), default="round_robin")  # round_robin, least_used, priority
+    rotation_strategy = Column(
+        String(50), default="round_robin"
+    )  # round_robin, least_used, priority
     enabled = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     pool_members = relationship("PoolMember", back_populates="pool", cascade="all, delete-orphan")
-    rotation_history = relationship("RotationHistory", back_populates="pool", cascade="all, delete-orphan")
+    rotation_history = relationship(
+        "RotationHistory", back_populates="pool", cascade="all, delete-orphan"
+    )
 
 
 class PoolMember(Base):
     """Members of source pools"""
-    __tablename__ = 'pool_members'
+
+    __tablename__ = "pool_members"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    pool_id = Column(Integer, ForeignKey('source_pools.id'), nullable=False, index=True)
-    provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, index=True)
+    pool_id = Column(Integer, ForeignKey("source_pools.id"), nullable=False, index=True)
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=False, index=True)
     priority = Column(Integer, default=1)  # Higher number = higher priority
     weight = Column(Integer, default=1)  # For weighted rotation
     enabled = Column(Boolean, default=True)
@@ -239,12 +265,13 @@ class PoolMember(Base):
 
 class RotationHistory(Base):
     """History of source rotations"""
-    __tablename__ = 'rotation_history'
+
+    __tablename__ = "rotation_history"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    pool_id = Column(Integer, ForeignKey('source_pools.id'), nullable=False, index=True)
-    from_provider_id = Column(Integer, ForeignKey('providers.id'), nullable=True, index=True)
-    to_provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False, index=True)
+    pool_id = Column(Integer, ForeignKey("source_pools.id"), nullable=False, index=True)
+    from_provider_id = Column(Integer, ForeignKey("providers.id"), nullable=True, index=True)
+    to_provider_id = Column(Integer, ForeignKey("providers.id"), nullable=False, index=True)
     rotation_reason = Column(String(100), nullable=False)  # rate_limit, failure, manual, scheduled
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     success = Column(Boolean, default=True)
@@ -258,11 +285,14 @@ class RotationHistory(Base):
 
 class RotationState(Base):
     """Current rotation state for each pool"""
-    __tablename__ = 'rotation_state'
+
+    __tablename__ = "rotation_state"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    pool_id = Column(Integer, ForeignKey('source_pools.id'), nullable=False, unique=True, index=True)
-    current_provider_id = Column(Integer, ForeignKey('providers.id'), nullable=True)
+    pool_id = Column(
+        Integer, ForeignKey("source_pools.id"), nullable=False, unique=True, index=True
+    )
+    current_provider_id = Column(Integer, ForeignKey("providers.id"), nullable=True)
     last_rotation = Column(DateTime, nullable=True)
     next_rotation = Column(DateTime, nullable=True)
     rotation_count = Column(Integer, default=0)
@@ -278,9 +308,11 @@ class RotationState(Base):
 # Data Storage Tables (Actual Crypto Data)
 # ============================================================================
 
+
 class MarketPrice(Base):
     """Market price data table"""
-    __tablename__ = 'market_prices'
+
+    __tablename__ = "market_prices"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     symbol = Column(String(20), nullable=False, index=True)
@@ -294,7 +326,8 @@ class MarketPrice(Base):
 
 class NewsArticle(Base):
     """News articles table"""
-    __tablename__ = 'news_articles'
+
+    __tablename__ = "news_articles"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(500), nullable=False)
@@ -309,7 +342,8 @@ class NewsArticle(Base):
 
 class WhaleTransaction(Base):
     """Whale transactions table"""
-    __tablename__ = 'whale_transactions'
+
+    __tablename__ = "whale_transactions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     blockchain = Column(String(50), nullable=False, index=True)
@@ -325,7 +359,8 @@ class WhaleTransaction(Base):
 
 class SentimentMetric(Base):
     """Sentiment metrics table"""
-    __tablename__ = 'sentiment_metrics'
+
+    __tablename__ = "sentiment_metrics"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     metric_name = Column(String(100), nullable=False, index=True)
@@ -337,7 +372,8 @@ class SentimentMetric(Base):
 
 class GasPrice(Base):
     """Gas prices table"""
-    __tablename__ = 'gas_prices'
+
+    __tablename__ = "gas_prices"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     blockchain = Column(String(50), nullable=False, index=True)
@@ -351,7 +387,8 @@ class GasPrice(Base):
 
 class BlockchainStat(Base):
     """Blockchain statistics table"""
-    __tablename__ = 'blockchain_stats'
+
+    __tablename__ = "blockchain_stats"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     blockchain = Column(String(50), nullable=False, index=True)
@@ -367,16 +404,18 @@ class BlockchainStat(Base):
 # HuggingFace Space API Cache Tables (REAL DATA ONLY)
 # ============================================================================
 
+
 class CachedMarketData(Base):
     """
     Cached market data from FREE APIs (CoinGecko, Binance, etc.)
-    
+
     CRITICAL RULES:
     - ONLY real data from external APIs
     - NEVER fake/mock/generated data
     - Updated by background workers
     """
-    __tablename__ = 'cached_market_data'
+
+    __tablename__ = "cached_market_data"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     symbol = Column(String(20), nullable=False, index=True)  # BTC, ETH, etc.
@@ -387,8 +426,10 @@ class CachedMarketData(Base):
     high_24h = Column(Float, nullable=True)  # 24h high price
     low_24h = Column(Float, nullable=True)  # 24h low price
     provider = Column(String(50), nullable=False)  # coingecko, binance, etc.
-    fetched_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)  # When fetched
-    
+    fetched_at = Column(
+        DateTime, default=datetime.utcnow, nullable=False, index=True
+    )  # When fetched
+
     # Index for fast queries
     __table_args__ = (
         # Unique constraint to prevent duplicates
@@ -399,13 +440,14 @@ class CachedMarketData(Base):
 class CachedOHLC(Base):
     """
     Cached OHLC (candlestick) data from FREE APIs (Binance, CryptoCompare, etc.)
-    
+
     CRITICAL RULES:
     - ONLY real candlestick data from exchanges
     - NEVER generated/interpolated candles
     - Updated by background workers
     """
-    __tablename__ = 'cached_ohlc'
+
+    __tablename__ = "cached_ohlc"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     symbol = Column(String(20), nullable=False, index=True)  # BTCUSDT, ETHUSDT, etc.
@@ -418,7 +460,7 @@ class CachedOHLC(Base):
     volume = Column(Float, nullable=False)  # Volume
     provider = Column(String(50), nullable=False)  # binance, cryptocompare, etc.
     fetched_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # When fetched
-    
+
     # Composite index for fast queries
     __table_args__ = (
         # Unique constraint to prevent duplicate candles

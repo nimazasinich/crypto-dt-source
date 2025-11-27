@@ -11,6 +11,7 @@ import logging
 
 try:
     from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
@@ -42,9 +43,7 @@ class HuggingFaceAnalyzer:
             # Sentiment Analysis Model - FinBERT (specialized for financial text)
             try:
                 self.sentiment_analyzer = pipeline(
-                    "sentiment-analysis",
-                    model="ProsusAI/finbert",
-                    tokenizer="ProsusAI/finbert"
+                    "sentiment-analysis", model="ProsusAI/finbert", tokenizer="ProsusAI/finbert"
                 )
                 logger.info("✅ Loaded FinBERT for sentiment analysis")
             except Exception as e:
@@ -53,7 +52,7 @@ class HuggingFaceAnalyzer:
                 try:
                     self.sentiment_analyzer = pipeline(
                         "sentiment-analysis",
-                        model="distilbert-base-uncased-finetuned-sst-2-english"
+                        model="distilbert-base-uncased-finetuned-sst-2-english",
                     )
                     logger.info("✅ Loaded DistilBERT for sentiment analysis (fallback)")
                 except Exception as e2:
@@ -62,8 +61,7 @@ class HuggingFaceAnalyzer:
             # Zero-shot Classification (for categorizing news/tweets)
             try:
                 self.zero_shot_classifier = pipeline(
-                    "zero-shot-classification",
-                    model="facebook/bart-large-mnli"
+                    "zero-shot-classification", model="facebook/bart-large-mnli"
                 )
                 logger.info("✅ Loaded BART for zero-shot classification")
             except Exception as e:
@@ -82,11 +80,7 @@ class HuggingFaceAnalyzer:
         Analyze sentiment of a news article
         """
         if not self.models_loaded or not self.sentiment_analyzer:
-            return {
-                "sentiment": "neutral",
-                "confidence": 0.0,
-                "error": "Model not available"
-            }
+            return {"sentiment": "neutral", "confidence": 0.0, "error": "Model not available"}
 
         try:
             # Truncate text to avoid token limit
@@ -97,30 +91,22 @@ class HuggingFaceAnalyzer:
             result = self.sentiment_analyzer(text)[0]
 
             # Map FinBERT labels to standard format
-            label_map = {
-                "positive": "bullish",
-                "negative": "bearish",
-                "neutral": "neutral"
-            }
+            label_map = {"positive": "bullish", "negative": "bearish", "neutral": "neutral"}
 
-            sentiment = label_map.get(result['label'].lower(), result['label'].lower())
+            sentiment = label_map.get(result["label"].lower(), result["label"].lower())
 
             return {
                 "sentiment": sentiment,
-                "confidence": round(result['score'], 4),
-                "raw_label": result['label'],
+                "confidence": round(result["score"], 4),
+                "raw_label": result["label"],
                 "text_analyzed": text[:100] + "...",
                 "model": "finbert",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"❌ Sentiment analysis error: {e}")
-            return {
-                "sentiment": "neutral",
-                "confidence": 0.0,
-                "error": str(e)
-            }
+            return {"sentiment": "neutral", "confidence": 0.0, "error": str(e)}
 
     async def analyze_news_batch(self, news_list: List[Dict]) -> List[Dict]:
         """
@@ -134,12 +120,14 @@ class HuggingFaceAnalyzer:
 
             sentiment_result = await self.analyze_news_sentiment(text)
 
-            results.append({
-                **news,
-                "ai_sentiment": sentiment_result['sentiment'],
-                "ai_confidence": sentiment_result['confidence'],
-                "ai_analysis": sentiment_result
-            })
+            results.append(
+                {
+                    **news,
+                    "ai_sentiment": sentiment_result["sentiment"],
+                    "ai_confidence": sentiment_result["confidence"],
+                    "ai_analysis": sentiment_result,
+                }
+            )
 
             # Small delay to avoid overloading
             await asyncio.sleep(0.1)
@@ -152,11 +140,7 @@ class HuggingFaceAnalyzer:
         Categorize news using zero-shot classification
         """
         if not self.models_loaded or not self.zero_shot_classifier:
-            return {
-                "category": "general",
-                "confidence": 0.0,
-                "error": "Model not available"
-            }
+            return {"category": "general", "confidence": 0.0, "error": "Model not available"}
 
         try:
             # Define categories
@@ -170,7 +154,7 @@ class HuggingFaceAnalyzer:
                 "nft",
                 "exchange",
                 "mining",
-                "general"
+                "general",
             ]
 
             # Truncate text
@@ -180,28 +164,22 @@ class HuggingFaceAnalyzer:
             result = self.zero_shot_classifier(text, categories)
 
             return {
-                "category": result['labels'][0],
-                "confidence": round(result['scores'][0], 4),
+                "category": result["labels"][0],
+                "confidence": round(result["scores"][0], 4),
                 "all_categories": [
                     {"label": label, "score": round(score, 4)}
-                    for label, score in zip(result['labels'][:3], result['scores'][:3])
+                    for label, score in zip(result["labels"][:3], result["scores"][:3])
                 ],
                 "model": "bart-mnli",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"❌ Categorization error: {e}")
-            return {
-                "category": "general",
-                "confidence": 0.0,
-                "error": str(e)
-            }
+            return {"category": "general", "confidence": 0.0, "error": str(e)}
 
     async def calculate_aggregated_sentiment(
-        self,
-        news_list: List[Dict],
-        symbol: Optional[str] = None
+        self, news_list: List[Dict], symbol: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         محاسبه احساسات جمعی از چندین خبر
@@ -212,14 +190,13 @@ class HuggingFaceAnalyzer:
                 "overall_sentiment": "neutral",
                 "sentiment_score": 0.0,
                 "confidence": 0.0,
-                "news_count": 0
+                "news_count": 0,
             }
 
         # Filter by symbol if provided
         if symbol:
             news_list = [
-                n for n in news_list
-                if symbol.upper() in [c.upper() for c in n.get('coins', [])]
+                n for n in news_list if symbol.upper() in [c.upper() for c in n.get("coins", [])]
             ]
 
         if not news_list:
@@ -228,7 +205,7 @@ class HuggingFaceAnalyzer:
                 "sentiment_score": 0.0,
                 "confidence": 0.0,
                 "news_count": 0,
-                "note": f"No news found for {symbol}"
+                "note": f"No news found for {symbol}",
             }
 
         # Analyze each news item
@@ -241,12 +218,12 @@ class HuggingFaceAnalyzer:
         total_confidence = 0.0
 
         for news in analyzed_news:
-            sentiment = news.get('ai_sentiment', 'neutral')
-            confidence = news.get('ai_confidence', 0.0)
+            sentiment = news.get("ai_sentiment", "neutral")
+            confidence = news.get("ai_confidence", 0.0)
 
-            if sentiment == 'bullish':
+            if sentiment == "bullish":
                 bullish_count += confidence
-            elif sentiment == 'bearish':
+            elif sentiment == "bearish":
                 bearish_count += confidence
             else:
                 neutral_count += confidence
@@ -276,7 +253,7 @@ class HuggingFaceAnalyzer:
             "bearish_weight": round(bearish_count, 2),
             "neutral_weight": round(neutral_count, 2),
             "symbol": symbol,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     async def predict_price_direction(
@@ -284,7 +261,7 @@ class HuggingFaceAnalyzer:
         symbol: str,
         recent_news: List[Dict],
         current_price: float,
-        historical_prices: List[float]
+        historical_prices: List[float],
     ) -> Dict[str, Any]:
         """
         پیش‌بینی جهت قیمت بر اساس اخبار و روند قیمت
@@ -302,7 +279,7 @@ class HuggingFaceAnalyzer:
         # Combine signals
         # News sentiment weight: 60%
         # Price momentum weight: 40%
-        news_score = news_sentiment['sentiment_score'] * 0.6
+        news_score = news_sentiment["sentiment_score"] * 0.6
         momentum_score = min(50, max(-50, price_change * 10)) * 0.4
 
         combined_score = news_score + momentum_score
@@ -331,9 +308,9 @@ class HuggingFaceAnalyzer:
             "price_momentum_score": round(momentum_score / 0.4, 2),
             "current_price": current_price,
             "price_change_pct": round(price_change, 2),
-            "news_analyzed": news_sentiment['news_count'],
+            "news_analyzed": news_sentiment["news_count"],
             "timestamp": datetime.now().isoformat(),
-            "model": "combined_analysis"
+            "model": "combined_analysis",
         }
 
 
@@ -350,14 +327,33 @@ class SimpleHuggingFaceAnalyzer:
 
         # Bullish keywords
         bullish_keywords = [
-            'bullish', 'surge', 'rally', 'gain', 'rise', 'soar',
-            'adoption', 'breakthrough', 'positive', 'growth', 'boom'
+            "bullish",
+            "surge",
+            "rally",
+            "gain",
+            "rise",
+            "soar",
+            "adoption",
+            "breakthrough",
+            "positive",
+            "growth",
+            "boom",
         ]
 
         # Bearish keywords
         bearish_keywords = [
-            'bearish', 'crash', 'plunge', 'drop', 'fall', 'decline',
-            'regulation', 'ban', 'hack', 'scam', 'negative', 'crisis'
+            "bearish",
+            "crash",
+            "plunge",
+            "drop",
+            "fall",
+            "decline",
+            "regulation",
+            "ban",
+            "hack",
+            "scam",
+            "negative",
+            "crisis",
         ]
 
         bullish_count = sum(1 for word in bullish_keywords if word in text_lower)
@@ -377,7 +373,7 @@ class SimpleHuggingFaceAnalyzer:
             "sentiment": sentiment,
             "confidence": confidence,
             "method": "keyword_based",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
@@ -393,9 +389,9 @@ def get_analyzer() -> Any:
 
 async def main():
     """Test HuggingFace models"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🤗 Testing HuggingFace AI Models")
-    print("="*70)
+    print("=" * 70)
 
     analyzer = get_analyzer()
 
@@ -403,7 +399,7 @@ async def main():
     test_news = [
         "Bitcoin surges past $50,000 as institutional adoption accelerates",
         "SEC delays decision on crypto ETF, causing market uncertainty",
-        "Ethereum network upgrade successfully completed without issues"
+        "Ethereum network upgrade successfully completed without issues",
     ]
 
     print("\n📊 Testing Sentiment Analysis:")
@@ -421,10 +417,7 @@ async def main():
         print(f"   Confidence: {categorization['confidence']:.2%}")
 
         print("\n\n📈 Testing Aggregated Sentiment:")
-        mock_news = [
-            {"title": news, "description": "", "coins": ["BTC"]}
-            for news in test_news
-        ]
+        mock_news = [{"title": news, "description": "", "coins": ["BTC"]} for news in test_news]
         agg_sentiment = await analyzer.calculate_aggregated_sentiment(mock_news, "BTC")
         print(f"   Overall: {agg_sentiment['overall_sentiment']}")
         print(f"   Score: {agg_sentiment['sentiment_score']}/100")

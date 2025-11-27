@@ -16,12 +16,13 @@ print("=" * 60)
 print("\n1️⃣ Testing providers config loading...")
 try:
     from hf_unified_server import PROVIDERS_CONFIG, PROVIDERS_CONFIG_PATH
+
     print(f"   ✅ Config path: {PROVIDERS_CONFIG_PATH}")
     print(f"   ✅ Config exists: {PROVIDERS_CONFIG_PATH.exists()}")
     print(f"   ✅ Providers loaded: {len(PROVIDERS_CONFIG)}")
-    
+
     # Check for HuggingFace Space providers
-    hf_providers = [p for p in PROVIDERS_CONFIG.keys() if 'huggingface_space' in p]
+    hf_providers = [p for p in PROVIDERS_CONFIG.keys() if "huggingface_space" in p]
     print(f"   ✅ HuggingFace Space providers: {len(hf_providers)}")
     for provider in hf_providers:
         print(f"      - {provider}")
@@ -32,6 +33,7 @@ except Exception as e:
 print("\n2️⃣ Testing FastAPI app import...")
 try:
     from hf_unified_server import app
+
     print(f"   ✅ App imported successfully")
     print(f"   ✅ App title: {app.title}")
     print(f"   ✅ App version: {app.version}")
@@ -42,6 +44,7 @@ except Exception as e:
 print("\n3️⃣ Testing main.py routing...")
 try:
     from main import app as main_app
+
     print(f"   ✅ main.py imports successfully")
     print(f"   ✅ Routes loaded: {len(main_app.routes)}")
 except Exception as e:
@@ -57,9 +60,9 @@ try:
         print(f"      Category: {provider_info.get('category')}")
         print(f"      Base URL: {provider_info.get('base_url')}")
         print(f"      Endpoints: {len(provider_info.get('endpoints', {}))}")
-        
+
         # Show first 5 endpoints
-        endpoints = list(provider_info.get('endpoints', {}).items())[:5]
+        endpoints = list(provider_info.get("endpoints", {}).items())[:5]
         print(f"      First 5 endpoints:")
         for key, path in endpoints:
             print(f"         - {key}: {path}")

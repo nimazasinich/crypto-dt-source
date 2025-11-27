@@ -49,22 +49,17 @@ class DataSourceCollector:
             "coinmarketcap": os.getenv("COINMARKETCAP_KEY_1"),
             "messari": os.getenv("MESSARI_API_KEY"),
             "cryptocompare": os.getenv("CRYPTOCOMPARE_KEY"),
-
             # Blockchain Explorers
             "etherscan": os.getenv("ETHERSCAN_KEY_1"),
             "bscscan": os.getenv("BSCSCAN_KEY"),
             "tronscan": os.getenv("TRONSCAN_KEY"),
-
             # News
             "newsapi": os.getenv("NEWSAPI_KEY"),
-
             # RPC Nodes
             "infura": os.getenv("INFURA_API_KEY"),
             "alchemy": os.getenv("ALCHEMY_API_KEY"),
-
             # Whale Tracking
             "whalealert": os.getenv("WHALEALERT_API_KEY"),
-
             # HuggingFace
             "huggingface": os.getenv("HUGGINGFACE_TOKEN"),
         }
@@ -110,8 +105,7 @@ class DataSourceCollector:
 
         # RPC nodes
         rpc_results = await collect_rpc_data(
-            infura_key=self.api_keys.get("infura"),
-            alchemy_key=self.api_keys.get("alchemy")
+            infura_key=self.api_keys.get("infura"), alchemy_key=self.api_keys.get("alchemy")
         )
         results.extend(rpc_results)
 
@@ -175,9 +169,7 @@ class DataSourceCollector:
         """
         logger.info("Collecting whale tracking data...")
 
-        results = await collect_whale_tracking_data(
-            whalealert_key=self.api_keys.get("whalealert")
-        )
+        results = await collect_whale_tracking_data(whalealert_key=self.api_keys.get("whalealert"))
 
         logger.info(f"Whale tracking collection complete: {len(results)} results")
         return results
@@ -202,7 +194,7 @@ class DataSourceCollector:
             self.collect_all_news(),
             self.collect_all_sentiment(),
             self.collect_whale_tracking(),
-            return_exceptions=True
+            return_exceptions=True,
         )
 
         # Handle exceptions
@@ -231,28 +223,32 @@ class DataSourceCollector:
         duration = (end_time - start_time).total_seconds()
 
         total_sources = (
-            len(market_data) +
-            len(blockchain_data) +
-            len(news_data) +
-            len(sentiment_data) +
-            len(whale_data)
+            len(market_data)
+            + len(blockchain_data)
+            + len(news_data)
+            + len(sentiment_data)
+            + len(whale_data)
         )
 
-        successful_sources = sum([
-            sum(1 for r in market_data if r.get("success", False)),
-            sum(1 for r in blockchain_data if r.get("success", False)),
-            sum(1 for r in news_data if r.get("success", False)),
-            sum(1 for r in sentiment_data if r.get("success", False)),
-            sum(1 for r in whale_data if r.get("success", False))
-        ])
+        successful_sources = sum(
+            [
+                sum(1 for r in market_data if r.get("success", False)),
+                sum(1 for r in blockchain_data if r.get("success", False)),
+                sum(1 for r in news_data if r.get("success", False)),
+                sum(1 for r in sentiment_data if r.get("success", False)),
+                sum(1 for r in whale_data if r.get("success", False)),
+            ]
+        )
 
-        placeholder_count = sum([
-            sum(1 for r in market_data if r.get("is_placeholder", False)),
-            sum(1 for r in blockchain_data if r.get("is_placeholder", False)),
-            sum(1 for r in news_data if r.get("is_placeholder", False)),
-            sum(1 for r in sentiment_data if r.get("is_placeholder", False)),
-            sum(1 for r in whale_data if r.get("is_placeholder", False))
-        ])
+        placeholder_count = sum(
+            [
+                sum(1 for r in market_data if r.get("is_placeholder", False)),
+                sum(1 for r in blockchain_data if r.get("is_placeholder", False)),
+                sum(1 for r in news_data if r.get("is_placeholder", False)),
+                sum(1 for r in sentiment_data if r.get("is_placeholder", False)),
+                sum(1 for r in whale_data if r.get("is_placeholder", False)),
+            ]
+        )
 
         # Aggregate results
         results = {
@@ -263,37 +259,39 @@ class DataSourceCollector:
                 "successful_sources": successful_sources,
                 "failed_sources": total_sources - successful_sources,
                 "placeholder_sources": placeholder_count,
-                "success_rate": round(successful_sources / total_sources * 100, 2) if total_sources > 0 else 0,
+                "success_rate": (
+                    round(successful_sources / total_sources * 100, 2) if total_sources > 0 else 0
+                ),
                 "categories": {
                     "market_data": {
                         "total": len(market_data),
-                        "successful": sum(1 for r in market_data if r.get("success", False))
+                        "successful": sum(1 for r in market_data if r.get("success", False)),
                     },
                     "blockchain": {
                         "total": len(blockchain_data),
-                        "successful": sum(1 for r in blockchain_data if r.get("success", False))
+                        "successful": sum(1 for r in blockchain_data if r.get("success", False)),
                     },
                     "news": {
                         "total": len(news_data),
-                        "successful": sum(1 for r in news_data if r.get("success", False))
+                        "successful": sum(1 for r in news_data if r.get("success", False)),
                     },
                     "sentiment": {
                         "total": len(sentiment_data),
-                        "successful": sum(1 for r in sentiment_data if r.get("success", False))
+                        "successful": sum(1 for r in sentiment_data if r.get("success", False)),
                     },
                     "whale_tracking": {
                         "total": len(whale_data),
-                        "successful": sum(1 for r in whale_data if r.get("success", False))
-                    }
-                }
+                        "successful": sum(1 for r in whale_data if r.get("success", False)),
+                    },
+                },
             },
             "data": {
                 "market_data": market_data,
                 "blockchain": blockchain_data,
                 "news": news_data,
                 "sentiment": sentiment_data,
-                "whale_tracking": whale_data
-            }
+                "whale_tracking": whale_data,
+            },
         }
 
         # Log summary
@@ -306,17 +304,17 @@ class DataSourceCollector:
         logger.info(f"Placeholders: {placeholder_count}")
         logger.info("=" * 60)
         logger.info("Category Breakdown:")
-        for category, stats in results['statistics']['categories'].items():
+        for category, stats in results["statistics"]["categories"].items():
             logger.info(f"  {category}: {stats['successful']}/{stats['total']}")
         logger.info("=" * 60)
 
         # Save all collected data to database
         try:
             persistence_stats = data_persistence.save_all_data(results)
-            results['persistence_stats'] = persistence_stats
+            results["persistence_stats"] = persistence_stats
         except Exception as e:
             logger.error(f"Error persisting data to database: {e}", exc_info=True)
-            results['persistence_stats'] = {'error': str(e)}
+            results["persistence_stats"] = {"error": str(e)}
 
         return results
 
@@ -349,6 +347,7 @@ class DataSourceCollector:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         collector = DataSourceCollector()
 
@@ -366,17 +365,21 @@ if __name__ == "__main__":
         print("=" * 80)
         print(f"Duration: {results['duration_seconds']} seconds")
         print(f"Total Sources: {results['statistics']['total_sources']}")
-        print(f"Successful: {results['statistics']['successful_sources']} "
-              f"({results['statistics']['success_rate']}%)")
+        print(
+            f"Successful: {results['statistics']['successful_sources']} "
+            f"({results['statistics']['success_rate']}%)"
+        )
         print(f"Failed: {results['statistics']['failed_sources']}")
         print(f"Placeholders: {results['statistics']['placeholder_sources']}")
         print("\n" + "-" * 80)
         print("CATEGORY BREAKDOWN:")
         print("-" * 80)
 
-        for category, stats in results['statistics']['categories'].items():
-            success_rate = (stats['successful'] / stats['total'] * 100) if stats['total'] > 0 else 0
-            print(f"{category:20} {stats['successful']:3}/{stats['total']:3} ({success_rate:5.1f}%)")
+        for category, stats in results["statistics"]["categories"].items():
+            success_rate = (stats["successful"] / stats["total"] * 100) if stats["total"] > 0 else 0
+            print(
+                f"{category:20} {stats['successful']:3}/{stats['total']:3} ({success_rate:5.1f}%)"
+            )
 
         print("=" * 80)
 
@@ -385,14 +388,14 @@ if __name__ == "__main__":
         print("SAMPLE DATA FROM EACH CATEGORY")
         print("=" * 80)
 
-        for category, data_list in results['data'].items():
+        for category, data_list in results["data"].items():
             print(f"\n{category.upper()}:")
-            successful = [d for d in data_list if d.get('success', False)]
+            successful = [d for d in data_list if d.get("success", False)]
             if successful:
                 sample = successful[0]
                 print(f"  Provider: {sample.get('provider', 'N/A')}")
                 print(f"  Success: {sample.get('success', False)}")
-                if sample.get('data'):
+                if sample.get("data"):
                     print(f"  Data keys: {list(sample.get('data', {}).keys())[:5]}")
             else:
                 print("  No successful data")

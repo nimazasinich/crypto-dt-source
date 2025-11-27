@@ -61,7 +61,7 @@ async def get_coingecko_simple_price() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "staleness_minutes": None,
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
         # Build request URL
@@ -72,7 +72,7 @@ async def get_coingecko_simple_price() -> Dict[str, Any]:
             "include_market_cap": "true",
             "include_24hr_vol": "true",
             "include_24hr_change": "true",
-            "include_last_updated_at": "true"
+            "include_last_updated_at": "true",
         }
 
         # Make request
@@ -85,7 +85,7 @@ async def get_coingecko_simple_price() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -99,7 +99,7 @@ async def get_coingecko_simple_price() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -112,8 +112,7 @@ async def get_coingecko_simple_price() -> Dict[str, Any]:
             for coin_data in data.values():
                 if isinstance(coin_data, dict) and "last_updated_at" in coin_data:
                     data_timestamp = datetime.fromtimestamp(
-                        coin_data["last_updated_at"],
-                        tz=timezone.utc
+                        coin_data["last_updated_at"], tz=timezone.utc
                     )
                     break
 
@@ -121,7 +120,9 @@ async def get_coingecko_simple_price() -> Dict[str, Any]:
 
         logger.info(
             f"{provider} - {endpoint} - Retrieved {len(data) if isinstance(data, dict) else 0} coins, "
-            f"staleness: {staleness:.2f}m" if staleness else "staleness: N/A"
+            f"staleness: {staleness:.2f}m"
+            if staleness
+            else "staleness: N/A"
         )
 
         return {
@@ -133,7 +134,7 @@ async def get_coingecko_simple_price() -> Dict[str, Any]:
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -147,7 +148,7 @@ async def get_coingecko_simple_price() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -178,7 +179,7 @@ async def get_coinmarketcap_quotes() -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "staleness_minutes": None,
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
         # Check if API key is available
@@ -193,26 +194,17 @@ async def get_coinmarketcap_quotes() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": "missing_api_key"
+                "error_type": "missing_api_key",
             }
 
         # Build request
         url = f"{provider_config.endpoint_url}{endpoint}"
-        headers = {
-            "X-CMC_PRO_API_KEY": provider_config.api_key,
-            "Accept": "application/json"
-        }
-        params = {
-            "symbol": "BTC,ETH,BNB",
-            "convert": "USD"
-        }
+        headers = {"X-CMC_PRO_API_KEY": provider_config.api_key, "Accept": "application/json"}
+        params = {"symbol": "BTC,ETH,BNB", "convert": "USD"}
 
         # Make request
         response = await client.get(
-            url,
-            headers=headers,
-            params=params,
-            timeout=provider_config.timeout_ms // 1000
+            url, headers=headers, params=params, timeout=provider_config.timeout_ms // 1000
         )
 
         # Log request
@@ -222,7 +214,7 @@ async def get_coinmarketcap_quotes() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -236,7 +228,7 @@ async def get_coinmarketcap_quotes() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -263,7 +255,9 @@ async def get_coinmarketcap_quotes() -> Dict[str, Any]:
         coin_count = len(data.get("data", {})) if isinstance(data, dict) else 0
         logger.info(
             f"{provider} - {endpoint} - Retrieved {coin_count} coins, "
-            f"staleness: {staleness:.2f}m" if staleness else "staleness: N/A"
+            f"staleness: {staleness:.2f}m"
+            if staleness
+            else "staleness: N/A"
         )
 
         return {
@@ -275,7 +269,7 @@ async def get_coinmarketcap_quotes() -> Dict[str, Any]:
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -289,7 +283,7 @@ async def get_coinmarketcap_quotes() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -311,9 +305,7 @@ async def get_binance_ticker() -> Dict[str, Any]:
 
         # Binance API base URL
         url = f"https://api.binance.com{endpoint}"
-        params = {
-            "symbols": '["BTCUSDT","ETHUSDT","BNBUSDT"]'
-        }
+        params = {"symbols": '["BTCUSDT","ETHUSDT","BNBUSDT"]'}
 
         # Make request
         response = await client.get(url, params=params, timeout=10)
@@ -325,7 +317,7 @@ async def get_binance_ticker() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -339,7 +331,7 @@ async def get_binance_ticker() -> Dict[str, Any]:
                 "staleness_minutes": None,
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Extract data
@@ -353,8 +345,7 @@ async def get_binance_ticker() -> Dict[str, Any]:
             if isinstance(first_ticker, dict) and "closeTime" in first_ticker:
                 try:
                     data_timestamp = datetime.fromtimestamp(
-                        first_ticker["closeTime"] / 1000,
-                        tz=timezone.utc
+                        first_ticker["closeTime"] / 1000, tz=timezone.utc
                     )
                 except:
                     pass
@@ -364,7 +355,9 @@ async def get_binance_ticker() -> Dict[str, Any]:
         ticker_count = len(data) if isinstance(data, list) else 0
         logger.info(
             f"{provider} - {endpoint} - Retrieved {ticker_count} tickers, "
-            f"staleness: {staleness:.2f}m" if staleness else "staleness: N/A"
+            f"staleness: {staleness:.2f}m"
+            if staleness
+            else "staleness: N/A"
         )
 
         return {
@@ -376,7 +369,7 @@ async def get_binance_ticker() -> Dict[str, Any]:
             "staleness_minutes": staleness,
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -390,7 +383,7 @@ async def get_binance_ticker() -> Dict[str, Any]:
             "staleness_minutes": None,
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -408,7 +401,7 @@ async def collect_market_data() -> List[Dict[str, Any]]:
         get_coingecko_simple_price(),
         get_coinmarketcap_quotes(),
         get_binance_ticker(),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     # Process results
@@ -416,22 +409,26 @@ async def collect_market_data() -> List[Dict[str, Any]]:
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"Collector failed with exception: {str(result)}")
-            processed_results.append({
-                "provider": "Unknown",
-                "category": "market_data",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "staleness_minutes": None,
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed_results.append(
+                {
+                    "provider": "Unknown",
+                    "category": "market_data",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "staleness_minutes": None,
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed_results.append(result)
 
     # Log summary
     successful = sum(1 for r in processed_results if r.get("success", False))
-    logger.info(f"Market data collection complete: {successful}/{len(processed_results)} successful")
+    logger.info(
+        f"Market data collection complete: {successful}/{len(processed_results)} successful"
+    )
 
     return processed_results
 
@@ -468,7 +465,7 @@ class MarketDataCollector:
             "market_caps": {},
             "price_changes": {},
             "sources": [],
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         for result in results:
@@ -505,7 +502,9 @@ class MarketDataCollector:
                                 if "volume_24h" in quote:
                                     aggregated["volumes"][symbol] = quote["volume_24h"]
                                 if "percent_change_24h" in quote:
-                                    aggregated["price_changes"][symbol] = quote["percent_change_24h"]
+                                    aggregated["price_changes"][symbol] = quote[
+                                        "percent_change_24h"
+                                    ]
 
                 # Parse Binance data
                 elif provider == "Binance" and isinstance(data, list):
@@ -517,13 +516,16 @@ class MarketDataCollector:
                             if "volume" in ticker:
                                 aggregated["volumes"][symbol] = float(ticker["volume"])
                             if "priceChangePercent" in ticker:
-                                aggregated["price_changes"][symbol] = float(ticker["priceChangePercent"])
+                                aggregated["price_changes"][symbol] = float(
+                                    ticker["priceChangePercent"]
+                                )
 
         return aggregated
 
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         results = await collect_market_data()
 
@@ -532,7 +534,7 @@ if __name__ == "__main__":
             print(f"\nProvider: {result['provider']}")
             print(f"Success: {result['success']}")
             print(f"Staleness: {result.get('staleness_minutes', 'N/A')} minutes")
-            if result['success']:
+            if result["success"]:
                 print(f"Response Time: {result.get('response_time_ms', 0):.2f}ms")
             else:
                 print(f"Error: {result.get('error', 'Unknown')}")

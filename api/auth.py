@@ -18,14 +18,12 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Security(secu
     # If tokens configured, require authentication
     if not credentials:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
         )
 
     if credentials.credentials not in config.API_TOKENS:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token"
         )
 
     return credentials.credentials
@@ -39,9 +37,6 @@ async def verify_ip(request: Request):
 
     client_ip = request.client.host
     if client_ip not in config.ALLOWED_IPS:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="IP not whitelisted"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="IP not whitelisted")
 
     return True

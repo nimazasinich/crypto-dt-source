@@ -30,7 +30,7 @@ class APIClient:
         url: str,
         headers: Optional[Dict] = None,
         params: Optional[Dict] = None,
-        retry_count: int = 0
+        retry_count: int = 0,
     ) -> Dict[str, Any]:
         """Make GET request with retry logic"""
         start_time = datetime.utcnow()
@@ -50,18 +50,21 @@ class APIClient:
                     "status_code": response.status,
                     "data": data,
                     "response_time_ms": elapsed_ms,
-                    "error": None if response.status == 200 else {
-                        "type": "http_error",
-                        "message": f"HTTP {response.status}"
-                    }
+                    "error": (
+                        None
+                        if response.status == 200
+                        else {"type": "http_error", "message": f"HTTP {response.status}"}
+                    ),
                 }
 
         except asyncio.TimeoutError:
             elapsed_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
 
             if retry_count < self.max_retries:
-                logger.warning(f"Timeout for {url}, retrying ({retry_count + 1}/{self.max_retries})")
-                await asyncio.sleep(2 ** retry_count)  # Exponential backoff
+                logger.warning(
+                    f"Timeout for {url}, retrying ({retry_count + 1}/{self.max_retries})"
+                )
+                await asyncio.sleep(2**retry_count)  # Exponential backoff
                 return await self.get(url, headers, params, retry_count + 1)
 
             return {
@@ -69,7 +72,7 @@ class APIClient:
                 "status_code": 0,
                 "data": None,
                 "response_time_ms": elapsed_ms,
-                "error": {"type": "timeout", "message": "Request timeout"}
+                "error": {"type": "timeout", "message": "Request timeout"},
             }
 
         except aiohttp.ClientError as e:
@@ -80,7 +83,7 @@ class APIClient:
                 "status_code": 0,
                 "data": None,
                 "response_time_ms": elapsed_ms,
-                "error": {"type": "client_error", "message": str(e)}
+                "error": {"type": "client_error", "message": str(e)},
             }
 
         except Exception as e:
@@ -93,5 +96,5 @@ class APIClient:
                 "status_code": 0,
                 "data": None,
                 "response_time_ms": elapsed_ms,
-                "error": {"type": "unknown", "message": str(e)}
+                "error": {"type": "unknown", "message": str(e)},
             }

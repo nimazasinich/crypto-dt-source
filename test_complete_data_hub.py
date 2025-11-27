@@ -63,6 +63,7 @@ print(f"   OHLC Data: {HF_USERNAME}/crypto-ohlc-data")
 print("\n📋 Step 2: Test External API Fetch")
 print("-" * 100)
 
+
 async def test_external_apis():
     """Test fetching from external APIs"""
     try:
@@ -87,7 +88,9 @@ async def test_external_apis():
         if ohlc_data and len(ohlc_data) > 0:
             print(f"✅ Binance: Fetched {len(ohlc_data)} candles for BTCUSDT")
             latest = ohlc_data[-1]
-            print(f"   Latest: O={latest['open']:.2f} H={latest['high']:.2f} L={latest['low']:.2f} C={latest['close']:.2f}")
+            print(
+                f"   Latest: O={latest['open']:.2f} H={latest['high']:.2f} L={latest['low']:.2f} C={latest['close']:.2f}"
+            )
         else:
             print("❌ Binance: No data received")
             return False
@@ -97,8 +100,10 @@ async def test_external_apis():
     except Exception as e:
         print(f"❌ Error testing external APIs: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 # Run test
 try:
@@ -111,6 +116,7 @@ except Exception as e:
 # Test 2: Local Cache
 print("\n📋 Step 3: Test Local SQLite Cache")
 print("-" * 100)
+
 
 async def test_local_cache():
     """Test saving to local SQLite cache"""
@@ -160,8 +166,10 @@ async def test_local_cache():
     except Exception as e:
         print(f"❌ Error testing local cache: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 # Run test
 try:
@@ -174,6 +182,7 @@ except Exception as e:
 # Test 3: HuggingFace Dataset Upload
 print("\n📋 Step 4: Test HuggingFace Dataset Upload")
 print("-" * 100)
+
 
 async def test_hf_upload():
     """Test uploading to HuggingFace Datasets"""
@@ -197,7 +206,7 @@ async def test_hf_upload():
                 "low_24h": 44000.0,
                 "provider": "coingecko",
                 "timestamp": datetime.utcnow().isoformat() + "Z",
-                "fetched_at": datetime.utcnow().isoformat() + "Z"
+                "fetched_at": datetime.utcnow().isoformat() + "Z",
             },
             {
                 "symbol": "ETH",
@@ -209,8 +218,8 @@ async def test_hf_upload():
                 "low_24h": 3100.0,
                 "provider": "coingecko",
                 "timestamp": datetime.utcnow().isoformat() + "Z",
-                "fetched_at": datetime.utcnow().isoformat() + "Z"
-            }
+                "fetched_at": datetime.utcnow().isoformat() + "Z",
+            },
         ]
 
         sample_ohlc_data = [
@@ -224,7 +233,7 @@ async def test_hf_upload():
                 "close": 44800.0,
                 "volume": 1250000.0,
                 "provider": "binance",
-                "fetched_at": datetime.utcnow().isoformat() + "Z"
+                "fetched_at": datetime.utcnow().isoformat() + "Z",
             }
         ]
 
@@ -275,8 +284,10 @@ async def test_hf_upload():
     except Exception as e:
         print(f"❌ Error testing HuggingFace upload: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 # Run test
 try:
@@ -291,6 +302,7 @@ except Exception as e:
 # Test 4: Client API Access
 print("\n📋 Step 5: Test Client API Access FROM HuggingFace")
 print("-" * 100)
+
 
 async def test_client_api():
     """Test client access to data FROM HuggingFace Datasets"""
@@ -344,8 +356,10 @@ async def test_client_api():
     except Exception as e:
         print(f"❌ Error testing client API: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 # Run test
 try:
@@ -362,7 +376,8 @@ print("\n" + "=" * 100)
 print("📊 TEST SUMMARY")
 print("=" * 100)
 
-print("""
+print(
+    """
 ✅ Implementation Complete!
 
 NEW Data Flow Architecture:
@@ -402,7 +417,8 @@ These datasets are:
   ✅ Publicly accessible (no auth required for read)
   ✅ Real data only (no mock data)
   ✅ Fully versioned and tracked
-""")
+"""
+)
 
 print("=" * 100)
 print("✅ COMPLETE DATA HUB INTEGRATION TEST FINISHED")

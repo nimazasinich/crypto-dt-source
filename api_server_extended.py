@@ -31,7 +31,11 @@ USE_MOCK_DATA = os.getenv("USE_MOCK_DATA", "false").lower() == "true"
 PORT = int(os.getenv("PORT", "7860"))
 
 # Paths - In Docker container, use /app as base
-WORKSPACE_ROOT = Path("/app" if Path("/app").exists() else (Path("/workspace") if Path("/workspace").exists() else Path(".")))
+WORKSPACE_ROOT = Path(
+    "/app"
+    if Path("/app").exists()
+    else (Path("/workspace") if Path("/workspace").exists() else Path("."))
+)
 DB_PATH = WORKSPACE_ROOT / "data" / "database" / "crypto_monitor.db"
 LOG_DIR = WORKSPACE_ROOT / "logs"
 PROVIDERS_CONFIG_PATH = WORKSPACE_ROOT / "providers_config_extended.json"
@@ -48,7 +52,7 @@ _provider_state = {
     "pools": {},
     "logs": [],
     "last_check": None,
-    "stats": {"total": 0, "online": 0, "offline": 0, "degraded": 0}
+    "stats": {"total": 0, "online": 0, "offline": 0, "degraded": 0},
 }
 
 
@@ -58,7 +62,8 @@ def init_database():
     conn = sqlite3.connect(str(DB_PATH))
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS prices (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             symbol TEXT NOT NULL,
@@ -70,9 +75,11 @@ def init_database():
             rank INTEGER,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS sentiment_analysis (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             text TEXT NOT NULL,
@@ -84,9 +91,11 @@ def init_database():
             scores TEXT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS news_articles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
@@ -99,11 +108,14 @@ def init_database():
             published_date DATETIME,
             analyzed_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_prices_symbol ON prices(symbol)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_prices_timestamp ON prices(timestamp)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_sentiment_timestamp ON sentiment_analysis(timestamp)")
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sentiment_timestamp ON sentiment_analysis(timestamp)"
+    )
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_sentiment_symbol ON sentiment_analysis(symbol)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_news_published ON news_articles(published_date)")
 
@@ -117,18 +129,21 @@ def save_price_to_db(price_data: Dict[str, Any]):
     try:
         conn = sqlite3.connect(str(DB_PATH))
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO prices (symbol, name, price_usd, volume_24h, market_cap, percent_change_24h, rank)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            price_data.get("symbol"),
-            price_data.get("name"),
-            price_data.get("price_usd", 0.0),
-            price_data.get("volume_24h"),
-            price_data.get("market_cap"),
-            price_data.get("percent_change_24h"),
-            price_data.get("rank")
-        ))
+        """,
+            (
+                price_data.get("symbol"),
+                price_data.get("name"),
+                price_data.get("price_usd", 0.0),
+                price_data.get("volume_24h"),
+                price_data.get("market_cap"),
+                price_data.get("percent_change_24h"),
+                price_data.get("rank"),
+            ),
+        )
         conn.commit()
         conn.close()
     except Exception as e:
@@ -141,12 +156,15 @@ def get_price_history_from_db(symbol: str, limit: int = 10) -> List[Dict[str, An
         conn = sqlite3.connect(str(DB_PATH))
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM prices
             WHERE symbol = ?
             ORDER BY timestamp DESC
             LIMIT ?
-        """, (symbol, limit))
+        """,
+            (symbol, limit),
+        )
         rows = cursor.fetchall()
         conn.close()
         return [dict(row) for row in rows]
@@ -160,7 +178,7 @@ def load_providers_config() -> Dict[str, Any]:
     """Load providers from providers_config_extended.json"""
     try:
         if PROVIDERS_CONFIG_PATH.exists():
-            with open(PROVIDERS_CONFIG_PATH, 'r', encoding='utf-8') as f:
+            with open(PROVIDERS_CONFIG_PATH, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 # Validate structure
                 if not isinstance(config, dict):
@@ -184,22 +202,24 @@ def load_apl_report() -> Dict[str, Any]:
     """Load APL validation report (alias for auto-discovery report)"""
     return load_auto_discovery_report()
 
+
 def load_auto_discovery_report() -> Dict[str, Any]:
     """Load PROVIDER_AUTO_DISCOVERY_REPORT.json"""
     try:
         if AUTO_DISCOVERY_REPORT_PATH.exists():
-            with open(AUTO_DISCOVERY_REPORT_PATH, 'r', encoding='utf-8') as f:
+            with open(AUTO_DISCOVERY_REPORT_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
         return {}
     except Exception as e:
         logger.error(f"Error loading auto-discovery report: {e}")
         return {}
 
+
 def load_api_registry() -> Dict[str, Any]:
     """Load all_apis_merged_2025.json"""
     try:
         if API_REGISTRY_PATH.exists():
-            with open(API_REGISTRY_PATH, 'r', encoding='utf-8') as f:
+            with open(API_REGISTRY_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
         return {}
     except Exception as e:
@@ -215,7 +235,7 @@ def deduplicate_providers(providers_list: List[Dict[str, Any]]) -> List[Dict[str
     """
     seen = {}
     result = []
-    
+
     for provider in providers_list:
         # Determine unique key
         provider_id = provider.get("id") or provider.get("provider_id")
@@ -225,14 +245,18 @@ def deduplicate_providers(providers_list: List[Dict[str, Any]]) -> List[Dict[str
             name = provider.get("name", "unknown")
             base_url = provider.get("base_url", "")
             key = f"name_url:{name}:{base_url}"
-        
+
         if key in seen:
             # Merge tags/categories
             existing = seen[key]
-            existing_tags = set(existing.get("tags", []) if isinstance(existing.get("tags"), list) else [])
-            new_tags = set(provider.get("tags", []) if isinstance(provider.get("tags"), list) else [])
+            existing_tags = set(
+                existing.get("tags", []) if isinstance(existing.get("tags"), list) else []
+            )
+            new_tags = set(
+                provider.get("tags", []) if isinstance(provider.get("tags"), list) else []
+            )
             existing["tags"] = list(existing_tags | new_tags)
-            
+
             # Merge categories if different
             existing_cat = existing.get("category", "")
             new_cat = provider.get("category", "")
@@ -247,10 +271,10 @@ def deduplicate_providers(providers_list: List[Dict[str, Any]]) -> List[Dict[str
                 provider["tags"] = []
             elif not isinstance(provider["tags"], list):
                 provider["tags"] = [provider["tags"]]
-            
+
             seen[key] = provider
             result.append(provider)
-    
+
     return result
 
 
@@ -260,7 +284,7 @@ def deduplicate_resources(resources_list: List[Dict[str, Any]]) -> List[Dict[str
     """
     seen = {}
     result = []
-    
+
     for resource in resources_list:
         # Determine unique key
         resource_id = resource.get("id")
@@ -271,11 +295,11 @@ def deduplicate_resources(resources_list: List[Dict[str, Any]]) -> List[Dict[str
             url = resource.get("url") or resource.get("base_url", "")
             path = resource.get("path", "")
             key = f"name_url:{name}:{url}{path}"
-        
+
         if key not in seen:
             seen[key] = resource
             result.append(resource)
-    
+
     return result
 
 
@@ -286,40 +310,40 @@ def filter_resources_by_query(resources: List[Dict[str, Any]], query: str) -> Li
     """
     if not query:
         return resources
-    
+
     query_lower = query.lower()
     filtered = []
-    
+
     for resource in resources:
         # Search in name
         if query_lower in resource.get("name", "").lower():
             filtered.append(resource)
             continue
-        
+
         # Search in description
         if query_lower in resource.get("description", "").lower():
             filtered.append(resource)
             continue
-        
+
         # Search in category
         if query_lower in resource.get("category", "").lower():
             filtered.append(resource)
             continue
-        
+
         # Search in tags
         tags = resource.get("tags", [])
         if isinstance(tags, list):
             if any(query_lower in str(tag).lower() for tag in tags):
                 filtered.append(resource)
                 continue
-    
+
     return filtered
 
 
 # ===== Real Data Providers =====
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    "Accept": "application/json"
+    "Accept": "application/json",
 }
 
 
@@ -331,13 +355,15 @@ async def fetch_coingecko_simple_price() -> Dict[str, Any]:
         "vs_currencies": "usd",
         "include_market_cap": "true",
         "include_24hr_vol": "true",
-        "include_24hr_change": "true"
+        "include_24hr_change": "true",
     }
 
     async with httpx.AsyncClient(timeout=15.0, headers=HEADERS) as client:
         response = await client.get(url, params=params)
         if response.status_code != 200:
-            raise HTTPException(status_code=503, detail=f"CoinGecko API error: HTTP {response.status_code}")
+            raise HTTPException(
+                status_code=503, detail=f"CoinGecko API error: HTTP {response.status_code}"
+            )
         return response.json()
 
 
@@ -349,7 +375,9 @@ async def fetch_fear_greed_index() -> Dict[str, Any]:
     async with httpx.AsyncClient(timeout=15.0, headers=HEADERS) as client:
         response = await client.get(url, params=params)
         if response.status_code != 200:
-            raise HTTPException(status_code=503, detail=f"Alternative.me API error: HTTP {response.status_code}")
+            raise HTTPException(
+                status_code=503, detail=f"Alternative.me API error: HTTP {response.status_code}"
+            )
         return response.json()
 
 
@@ -360,7 +388,9 @@ async def fetch_coingecko_trending() -> Dict[str, Any]:
     async with httpx.AsyncClient(timeout=15.0, headers=HEADERS) as client:
         response = await client.get(url)
         if response.status_code != 200:
-            raise HTTPException(status_code=503, detail=f"CoinGecko trending API error: HTTP {response.status_code}")
+            raise HTTPException(
+                status_code=503, detail=f"CoinGecko trending API error: HTTP {response.status_code}"
+            )
         return response.json()
 
 
@@ -369,9 +399,11 @@ from dataclasses import dataclass, field
 from typing import Callable
 import time as time_module
 
+
 @dataclass
 class ProviderHealthEntry:
     """Health tracking entry for a provider/resource"""
+
     id: str
     name: str
     status: str = "unknown"  # "healthy", "degraded", "unavailable", "unknown"
@@ -382,17 +414,20 @@ class ProviderHealthEntry:
     cooldown_until: Optional[float] = None
     last_error_message: Optional[str] = None
 
+
 class HealthRegistry:
     """
     Self-healing health registry for providers and external API endpoints.
     Tracks failures, implements cooldowns, and provides graceful degradation.
     """
+
     def __init__(self):
         self._providers: Dict[str, ProviderHealthEntry] = {}
         self._lock = threading.Lock()
         # Load config
         try:
             from config import get_settings
+
             self.settings = get_settings()
         except:
             # Fallback defaults if config not available
@@ -400,34 +435,35 @@ class HealthRegistry:
                 health_error_threshold = 3
                 health_cooldown_seconds = 300
                 health_success_recovery_count = 2
+
             self.settings = FallbackSettings()
-    
-    def _get_or_create_entry(self, provider_id: str, provider_name: str = None) -> ProviderHealthEntry:
+
+    def _get_or_create_entry(
+        self, provider_id: str, provider_name: str = None
+    ) -> ProviderHealthEntry:
         """Get or create health entry for a provider"""
         if provider_id not in self._providers:
             self._providers[provider_id] = ProviderHealthEntry(
-                id=provider_id,
-                name=provider_name or provider_id,
-                status="unknown"
+                id=provider_id, name=provider_name or provider_id, status="unknown"
             )
         return self._providers[provider_id]
-    
+
     def update_on_success(self, provider_id: str, provider_name: str = None):
         """Update health registry after successful provider call"""
         with self._lock:
             entry = self._get_or_create_entry(provider_id, provider_name)
             entry.last_success = time_module.time()
             entry.success_count += 1
-            
+
             # Reset error count gradually
             if entry.error_count > 0:
                 entry.error_count = max(0, entry.error_count - 1)
-            
+
             # Recovery logic
             if entry.success_count >= self.settings.health_success_recovery_count:
                 entry.status = "healthy"
                 entry.cooldown_until = None
-    
+
     def update_on_failure(self, provider_id: str, error_msg: str, provider_name: str = None):
         """Update health registry after failed provider call"""
         with self._lock:
@@ -436,7 +472,7 @@ class HealthRegistry:
             entry.error_count += 1
             entry.last_error_message = error_msg[:500]  # Limit error message length
             entry.success_count = 0
-            
+
             # Determine status based on error count
             if entry.error_count >= self.settings.health_error_threshold:
                 entry.status = "unavailable"
@@ -445,7 +481,7 @@ class HealthRegistry:
                 entry.status = "degraded"
             else:
                 entry.status = "healthy"
-    
+
     def is_in_cooldown(self, provider_id: str) -> bool:
         """Check if provider is in cooldown period"""
         if provider_id not in self._providers:
@@ -454,13 +490,13 @@ class HealthRegistry:
         if entry.cooldown_until is None:
             return False
         return time_module.time() < entry.cooldown_until
-    
+
     def get_status(self, provider_id: str) -> Optional[str]:
         """Get current status of a provider"""
         if provider_id not in self._providers:
             return "unknown"
         return self._providers[provider_id].status
-    
+
     def get_all_entries(self) -> List[Dict[str, Any]]:
         """Get all health entries as list of dicts"""
         with self._lock:
@@ -475,11 +511,11 @@ class HealthRegistry:
                     "success_count": entry.success_count,
                     "cooldown_until": entry.cooldown_until,
                     "in_cooldown": self.is_in_cooldown(entry.id),
-                    "last_error_message": entry.last_error_message
+                    "last_error_message": entry.last_error_message,
                 }
                 for entry in self._providers.values()
             ]
-    
+
     def get_summary(self) -> Dict[str, Any]:
         """Get summary statistics of health registry"""
         with self._lock:
@@ -489,36 +525,33 @@ class HealthRegistry:
             unavailable = sum(1 for e in self._providers.values() if e.status == "unavailable")
             unknown = sum(1 for e in self._providers.values() if e.status == "unknown")
             in_cooldown = sum(1 for e in self._providers.values() if self.is_in_cooldown(e.id))
-            
+
             return {
                 "total": total,
                 "healthy": healthy,
                 "degraded": degraded,
                 "unavailable": unavailable,
                 "unknown": unknown,
-                "in_cooldown": in_cooldown
+                "in_cooldown": in_cooldown,
             }
+
 
 # Global health registry instance
 _health_registry = HealthRegistry()
 
 
 async def call_provider_safe(
-    provider_id: str,
-    provider_name: str,
-    call_func: Callable,
-    *args,
-    **kwargs
+    provider_id: str, provider_name: str, call_func: Callable, *args, **kwargs
 ) -> Dict[str, Any]:
     """
     Safely call a provider with health tracking.
-    
+
     Args:
         provider_id: Unique identifier for the provider
         provider_name: Human-readable name
         call_func: Async function to call
         *args, **kwargs: Arguments to pass to call_func
-    
+
     Returns:
         Dict with status and data or error
     """
@@ -530,27 +563,19 @@ async def call_provider_safe(
             "status": "cooldown",
             "error": f"Provider in cooldown for {cooldown_remaining}s",
             "provider_id": provider_id,
-            "cooldown_remaining": cooldown_remaining
+            "cooldown_remaining": cooldown_remaining,
         }
-    
+
     try:
         # Call the provider function
         result = await call_func(*args, **kwargs)
         # Update health on success
         _health_registry.update_on_success(provider_id, provider_name)
-        return {
-            "status": "success",
-            "data": result,
-            "provider_id": provider_id
-        }
+        return {"status": "success", "data": result, "provider_id": provider_id}
     except httpx.TimeoutException as e:
         error_msg = f"Timeout: {str(e)[:200]}"
         _health_registry.update_on_failure(provider_id, error_msg, provider_name)
-        return {
-            "status": "timeout",
-            "error": error_msg,
-            "provider_id": provider_id
-        }
+        return {"status": "timeout", "error": error_msg, "provider_id": provider_id}
     except httpx.HTTPStatusError as e:
         error_msg = f"HTTP {e.response.status_code}: {str(e)[:200]}"
         _health_registry.update_on_failure(provider_id, error_msg, provider_name)
@@ -558,16 +583,12 @@ async def call_provider_safe(
             "status": "http_error",
             "error": error_msg,
             "provider_id": provider_id,
-            "status_code": e.response.status_code
+            "status_code": e.response.status_code,
         }
     except Exception as e:
         error_msg = f"{type(e).__name__}: {str(e)[:200]}"
         _health_registry.update_on_failure(provider_id, error_msg, provider_name)
-        return {
-            "status": "error",
-            "error": error_msg,
-            "provider_id": provider_id
-        }
+        return {"status": "error", "error": error_msg, "provider_id": provider_id}
 
 
 # ===== Lifespan Management =====
@@ -578,43 +599,53 @@ async def lifespan(app: FastAPI):
     print("🚀 Starting Crypto Monitor Admin API")
     print("=" * 80)
     init_database()
-    
+
     # Load providers
     config = load_providers_config()
     _provider_state["providers"] = config.get("providers", {})
     print(f"✓ Loaded {len(_provider_state['providers'])} providers from config")
-    
+
     # Load auto-discovery report
     apl_report = load_auto_discovery_report()
     if apl_report:
         print(f"✓ Loaded auto-discovery report with validation data")
-    
+
     # Load API registry
     api_registry = load_api_registry()
     if api_registry:
         metadata = api_registry.get("metadata", {})
-        print(f"✓ Loaded API registry: {metadata.get('name', 'unknown')} v{metadata.get('version', 'unknown')}")
-    
+        print(
+            f"✓ Loaded API registry: {metadata.get('name', 'unknown')} v{metadata.get('version', 'unknown')}"
+        )
+
     # Initialize AI models
     try:
         from ai_models import initialize_models, registry_status
+
         model_init_result = initialize_models()
         registry_info = registry_status()
         print(f"✓ AI Models initialized: {model_init_result}")
         print(f"✓ HF Registry status: {registry_info}")
     except Exception as e:
         print(f"⚠ AI Models initialization failed: {e}")
-    
+
     # Validate unified resources
     try:
         from backend.services.resource_validator import validate_unified_resources
-        validation_report = validate_unified_resources(str(WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"))
-        print(f"✓ Resource validation: {validation_report['local_backend_routes']['routes_count']} local routes")
-        if validation_report['local_backend_routes']['duplicate_signatures'] > 0:
-            print(f"⚠ Found {validation_report['local_backend_routes']['duplicate_signatures']} duplicate route signatures")
+
+        validation_report = validate_unified_resources(
+            str(WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json")
+        )
+        print(
+            f"✓ Resource validation: {validation_report['local_backend_routes']['routes_count']} local routes"
+        )
+        if validation_report["local_backend_routes"]["duplicate_signatures"] > 0:
+            print(
+                f"⚠ Found {validation_report['local_backend_routes']['duplicate_signatures']} duplicate route signatures"
+            )
     except Exception as e:
         print(f"⚠ Resource validation failed: {e}")
-    
+
     print(f"✓ Server ready on port {PORT}")
     print("=" * 80)
     yield
@@ -626,7 +657,7 @@ app = FastAPI(
     title="Crypto Monitor Admin API",
     description="Real-time cryptocurrency data API with Admin Dashboard",
     version="5.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS Middleware
@@ -638,6 +669,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Middleware to ensure HTML responses have correct Content-Type
 class HTMLContentTypeMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -647,11 +679,13 @@ class HTMLContentTypeMiddleware(BaseHTTPMiddleware):
             response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 
+
 app.add_middleware(HTMLContentTypeMiddleware)
 
 # ===== Include Real Data Router - ZERO MOCK DATA =====
 try:
     from backend.routers.real_data_api import router as real_data_router
+
     app.include_router(real_data_router)
     print("✓ ✅ Real Data API Router loaded - NO MOCK DATA")
 except Exception as router_error:
@@ -660,6 +694,7 @@ except Exception as router_error:
 # ===== Include Data Hub Complete Router - All APIs Integrated =====
 try:
     from backend.routers.data_hub_api import router as data_hub_router
+
     app.include_router(data_hub_router)
     print("✓ ✅ Data Hub Complete Router loaded - All APIs integrated with new keys")
 except Exception as data_hub_error:
@@ -680,11 +715,13 @@ try:
 except Exception as e:
     print(f"⚠ Could not mount static files: {e}")
 
+
 # Serve trading pairs file
 @app.get("/trading_pairs.txt")
 async def get_trading_pairs():
     """Serve trading pairs text file"""
     from fastapi.responses import PlainTextResponse
+
     trading_pairs_file = WORKSPACE_ROOT / "trading_pairs.txt"
     if trading_pairs_file.exists():
         return FileResponse(trading_pairs_file, media_type="text/plain")
@@ -704,8 +741,8 @@ async def root():
             media_type="text/html",
             headers={
                 "Content-Type": "text/html; charset=utf-8",
-                "X-Content-Type-Options": "nosniff"
-            }
+                "X-Content-Type-Options": "nosniff",
+            },
         )
     # Fallback to legacy index.html
     index_path = WORKSPACE_ROOT / "index.html"
@@ -716,13 +753,14 @@ async def root():
             media_type="text/html",
             headers={
                 "Content-Type": "text/html; charset=utf-8",
-                "X-Content-Type-Options": "nosniff"
-            }
+                "X-Content-Type-Options": "nosniff",
+            },
         )
     return HTMLResponse(
         "<h1>Cryptocurrency Data & Analysis API</h1><p>See <a href='/docs'>/docs</a> for API documentation</p>",
-        headers={"Content-Type": "text/html; charset=utf-8"}
+        headers={"Content-Type": "text/html; charset=utf-8"},
     )
+
 
 @app.get("/index.html", response_class=HTMLResponse)
 async def index():
@@ -735,13 +773,13 @@ async def index():
             media_type="text/html",
             headers={
                 "Content-Type": "text/html; charset=utf-8",
-                "X-Content-Type-Options": "nosniff"
-            }
+                "X-Content-Type-Options": "nosniff",
+            },
         )
     return HTMLResponse(
-        "<h1>index.html not found</h1>",
-        headers={"Content-Type": "text/html; charset=utf-8"}
+        "<h1>index.html not found</h1>", headers={"Content-Type": "text/html; charset=utf-8"}
     )
+
 
 @app.get("/ai-tools", response_class=HTMLResponse)
 async def ai_tools_page(request: Request):
@@ -761,12 +799,11 @@ async def ai_tools_page(request: Request):
             media_type="text/html",
             headers={
                 "Content-Type": "text/html; charset=utf-8",
-                "X-Content-Type-Options": "nosniff"
-            }
+                "X-Content-Type-Options": "nosniff",
+            },
         )
     return HTMLResponse(
-        "<h1>AI Tools page not found</h1>",
-        headers={"Content-Type": "text/html; charset=utf-8"}
+        "<h1>AI Tools page not found</h1>", headers={"Content-Type": "text/html; charset=utf-8"}
     )
 
 
@@ -781,59 +818,69 @@ def serve_page(page_name: str) -> HTMLResponse:
             media_type="text/html",
             headers={
                 "Content-Type": "text/html; charset=utf-8",
-                "X-Content-Type-Options": "nosniff"
-            }
+                "X-Content-Type-Options": "nosniff",
+            },
         )
     return HTMLResponse(
         f"<h1>Page '{page_name}' not found</h1><p><a href='/'>Return to Dashboard</a></p>",
         status_code=404,
-        headers={"Content-Type": "text/html; charset=utf-8"}
+        headers={"Content-Type": "text/html; charset=utf-8"},
     )
+
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page():
     """Serve dashboard page"""
     return serve_page("dashboard")
 
+
 @app.get("/market", response_class=HTMLResponse)
 async def market_page():
     """Serve market page"""
     return serve_page("market")
+
 
 @app.get("/models", response_class=HTMLResponse)
 async def models_page():
     """Serve AI models page"""
     return serve_page("models")
 
+
 @app.get("/sentiment", response_class=HTMLResponse)
 async def sentiment_page():
     """Serve sentiment analysis page"""
     return serve_page("sentiment")
+
 
 @app.get("/ai-analyst", response_class=HTMLResponse)
 async def ai_analyst_page():
     """Serve AI analyst page"""
     return serve_page("ai-analyst")
 
+
 @app.get("/trading-assistant", response_class=HTMLResponse)
 async def trading_assistant_page():
     """Serve trading assistant page"""
     return serve_page("trading-assistant")
+
 
 @app.get("/news", response_class=HTMLResponse)
 async def news_page():
     """Serve news page"""
     return serve_page("news")
 
+
 @app.get("/providers", response_class=HTMLResponse)
 async def providers_page():
     """Serve providers page"""
     return serve_page("providers")
 
+
 @app.get("/diagnostics", response_class=HTMLResponse)
 async def diagnostics_page():
     """Serve diagnostics page"""
     return serve_page("diagnostics")
+
 
 @app.get("/api-explorer", response_class=HTMLResponse)
 async def api_explorer_page():
@@ -850,7 +897,7 @@ async def health():
         "timestamp": datetime.now().isoformat(),
         "database": str(DB_PATH),
         "use_mock_data": USE_MOCK_DATA,
-        "providers_loaded": len(_provider_state["providers"])
+        "providers_loaded": len(_provider_state["providers"]),
     }
 
 
@@ -867,22 +914,14 @@ async def api_health():
                 version = metadata.get("version")
         except Exception:
             pass
-        
-        return {
-            "status": "ok",
-            "timestamp": datetime.now().isoformat(),
-            "version": version
-        }
+
+        return {"status": "ok", "timestamp": datetime.now().isoformat(), "version": version}
     except Exception as e:
         # Even if something goes wrong, return a clean response
         logger.error(f"Health check error: {e}")
         return JSONResponse(
             status_code=200,
-            content={
-                "status": "ok",
-                "timestamp": datetime.now().isoformat(),
-                "version": "unknown"
-            }
+            content={"status": "ok", "timestamp": datetime.now().isoformat(), "version": "unknown"},
         )
 
 
@@ -893,58 +932,57 @@ async def get_status():
         # Load providers
         config = load_providers_config()
         providers = config.get("providers", {})
-        
+
         # Count free vs paid providers
-        free_count = sum(1 for p in providers.values() 
-                        if not p.get("requires_auth", False) and p.get("rate_limit"))
-        paid_count = sum(1 for p in providers.values() 
-                        if p.get("requires_auth", False))
-        
+        free_count = sum(
+            1
+            for p in providers.values()
+            if not p.get("requires_auth", False) and p.get("rate_limit")
+        )
+        paid_count = sum(1 for p in providers.values() if p.get("requires_auth", False))
+
         # Load resources from unified file
-        resources_json = WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+        resources_json = (
+            WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+        )
         resources_data = {"total": 0, "categories": {}}
-        
+
         if resources_json.exists():
             try:
-                with open(resources_json, 'r', encoding='utf-8') as f:
+                with open(resources_json, "r", encoding="utf-8") as f:
                     unified_data = json.load(f)
-                    registry = unified_data.get('registry', {})
-                    
+                    registry = unified_data.get("registry", {})
+
                     for category, items in registry.items():
-                        if category == 'metadata':
+                        if category == "metadata":
                             continue
                         if isinstance(items, list):
                             count = len(items)
-                            resources_data['total'] += count
-                            
+                            resources_data["total"] += count
+
                             # Group similar categories
-                            cat_key = category.replace('_', '-')
-                            if cat_key not in resources_data['categories']:
-                                resources_data['categories'][cat_key] = 0
-                            resources_data['categories'][cat_key] += count
+                            cat_key = category.replace("_", "-")
+                            if cat_key not in resources_data["categories"]:
+                                resources_data["categories"][cat_key] = 0
+                            resources_data["categories"][cat_key] += count
             except Exception as e:
                 logger.error(f"Error loading resources: {e}")
-        
+
         # Get model count
         model_count = 0
         try:
             from ai_models import MODEL_SPECS
+
             model_count = len(MODEL_SPECS) if MODEL_SPECS else 0
         except Exception:
             pass
-        
+
         return {
             "status": "ok",
             "timestamp": datetime.now().isoformat(),
-            "providers": {
-                "total": len(providers),
-                "free": free_count,
-                "paid": paid_count
-            },
+            "providers": {"total": len(providers), "free": free_count, "paid": paid_count},
             "resources": resources_data,
-            "models": {
-                "total": model_count
-            }
+            "models": {"total": model_count},
         }
     except Exception as e:
         logger.error(f"Status endpoint error: {e}")
@@ -953,7 +991,7 @@ async def get_status():
             "timestamp": datetime.now().isoformat(),
             "error": str(e),
             "providers": {"total": 0, "free": 0, "paid": 0},
-            "resources": {"total": 0, "categories": {}}
+            "resources": {"total": 0, "categories": {}},
         }
 
 
@@ -962,18 +1000,18 @@ async def get_stats():
     """System statistics"""
     config = load_providers_config()
     providers = config.get("providers", {})
-    
+
     # Group by category
     categories = defaultdict(int)
     for p in providers.values():
         cat = p.get("category", "unknown")
         categories[cat] += 1
-    
+
     return {
         "total_providers": len(providers),
         "categories": dict(categories),
         "total_categories": len(categories),
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -986,9 +1024,24 @@ async def get_market_data():
 
         cryptocurrencies = []
         coin_mapping = {
-            "bitcoin": {"name": "Bitcoin", "symbol": "BTC", "rank": 1, "image": "https://assets.coingecko.com/coins/images/1/small/bitcoin.png"},
-            "ethereum": {"name": "Ethereum", "symbol": "ETH", "rank": 2, "image": "https://assets.coingecko.com/coins/images/279/small/ethereum.png"},
-            "binancecoin": {"name": "BNB", "symbol": "BNB", "rank": 3, "image": "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png"}
+            "bitcoin": {
+                "name": "Bitcoin",
+                "symbol": "BTC",
+                "rank": 1,
+                "image": "https://assets.coingecko.com/coins/images/1/small/bitcoin.png",
+            },
+            "ethereum": {
+                "name": "Ethereum",
+                "symbol": "ETH",
+                "rank": 2,
+                "image": "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
+            },
+            "binancecoin": {
+                "name": "BNB",
+                "symbol": "BNB",
+                "rank": 3,
+                "image": "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png",
+            },
         }
 
         for coin_id, coin_info in coin_mapping.items():
@@ -1002,20 +1055,22 @@ async def get_market_data():
                     "change_24h": coin_data.get("usd_24h_change", 0),
                     "market_cap": coin_data.get("usd_market_cap", 0),
                     "volume_24h": coin_data.get("usd_24h_vol", 0),
-                    "image": coin_info["image"]
+                    "image": coin_info["image"],
                 }
                 cryptocurrencies.append(crypto_entry)
 
                 # Save to database
-                save_price_to_db({
-                    "symbol": coin_info["symbol"],
-                    "name": coin_info["name"],
-                    "price_usd": crypto_entry["price"],
-                    "volume_24h": crypto_entry["volume_24h"],
-                    "market_cap": crypto_entry["market_cap"],
-                    "percent_change_24h": crypto_entry["change_24h"],
-                    "rank": coin_info["rank"]
-                })
+                save_price_to_db(
+                    {
+                        "symbol": coin_info["symbol"],
+                        "name": coin_info["name"],
+                        "price_usd": crypto_entry["price"],
+                        "volume_24h": crypto_entry["volume_24h"],
+                        "market_cap": crypto_entry["market_cap"],
+                        "percent_change_24h": crypto_entry["change_24h"],
+                        "rank": coin_info["rank"],
+                    }
+                )
 
         # Calculate dominance
         total_market_cap = sum(c["market_cap"] for c in cryptocurrencies)
@@ -1030,7 +1085,7 @@ async def get_market_data():
             "total_market_cap": total_market_cap,
             "btc_dominance": btc_dominance,
             "timestamp": datetime.now().isoformat(),
-            "source": "CoinGecko API (Real Data)"
+            "source": "CoinGecko API (Real Data)",
         }
 
     except Exception as e:
@@ -1041,20 +1096,15 @@ async def get_market_data():
 async def get_market_history(symbol: str = "BTC", limit: int = 10):
     """Get price history from database - REAL DATA ONLY"""
     history = get_price_history_from_db(symbol.upper(), limit)
-    
+
     if not history:
-        return {
-            "symbol": symbol,
-            "history": [],
-            "count": 0,
-            "message": "No history available"
-        }
-    
+        return {"symbol": symbol, "history": [], "count": 0, "message": "No history available"}
+
     return {
         "symbol": symbol,
         "history": history,
         "count": len(history),
-        "source": "SQLite Database (Real Data)"
+        "source": "SQLite Database (Real Data)",
     }
 
 
@@ -1063,18 +1113,18 @@ async def get_sentiment():
     """Sentiment data from Alternative.me - REAL DATA ONLY"""
     try:
         data = await fetch_fear_greed_index()
-        
+
         if "data" in data and len(data["data"]) > 0:
             fng_data = data["data"][0]
             return {
                 "fear_greed_index": int(fng_data["value"]),
                 "fear_greed_label": fng_data["value_classification"],
                 "timestamp": datetime.now().isoformat(),
-                "source": "Alternative.me API (Real Data)"
+                "source": "Alternative.me API (Real Data)",
             }
-        
+
         raise HTTPException(status_code=503, detail="Invalid response from Alternative.me")
-        
+
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Failed to fetch sentiment: {str(e)}")
 
@@ -1089,38 +1139,38 @@ async def analyze_sentiment_simple(request: Dict[str, Any]):
             analyze_social_sentiment,
             _registry,
             MODEL_SPECS,
-            ModelNotAvailable
+            ModelNotAvailable,
         )
-        
+
         text = request.get("text", "").strip()
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
-        
+
         mode = request.get("mode", "auto").lower()
         model_key = request.get("model_key")
-        
+
         # If model_key is provided, use that specific model
         if model_key:
             if model_key not in MODEL_SPECS:
                 raise HTTPException(status_code=404, detail=f"Model key '{model_key}' not found")
-            
+
             try:
                 pipeline = _registry.get_pipeline(model_key)
                 spec = MODEL_SPECS[model_key]
-                
+
                 # Handle trading signal models specially
                 if spec.category == "trading_signal":
                     raw_result = pipeline(text, max_length=200, num_return_sequences=1)
                     if isinstance(raw_result, list) and raw_result:
                         raw_result = raw_result[0]
                     generated_text = raw_result.get("generated_text", str(raw_result))
-                    
+
                     decision = "HOLD"
                     if "buy" in generated_text.lower():
                         decision = "BUY"
                     elif "sell" in generated_text.lower():
                         decision = "SELL"
-                    
+
                     return {
                         "sentiment": decision.lower(),
                         "confidence": 0.7,
@@ -1130,40 +1180,46 @@ async def analyze_sentiment_simple(request: Dict[str, Any]):
                         "extra": {
                             "decision": decision,
                             "rationale": generated_text,
-                            "raw": raw_result
-                        }
+                            "raw": raw_result,
+                        },
                     }
-                
+
                 # Regular sentiment analysis
                 raw_result = pipeline(text[:512])
                 if isinstance(raw_result, list) and raw_result:
                     raw_result = raw_result[0]
-                
+
                 label = raw_result.get("label", "neutral").upper()
                 score = raw_result.get("score", 0.5)
-                
+
                 # Map to standard format
-                mapped = "Bullish" if "POSITIVE" in label or "BULLISH" in label or "LABEL_2" in label else (
-                    "Bearish" if "NEGATIVE" in label or "BEARISH" in label or "LABEL_0" in label else "Neutral"
+                mapped = (
+                    "Bullish"
+                    if "POSITIVE" in label or "BULLISH" in label or "LABEL_2" in label
+                    else (
+                        "Bearish"
+                        if "NEGATIVE" in label or "BEARISH" in label or "LABEL_0" in label
+                        else "Neutral"
+                    )
                 )
-                
+
                 return {
                     "sentiment": mapped,
                     "confidence": score,
                     "raw_label": label,
                     "mode": mode,
                     "model": model_key,
-                    "extra": {"raw": raw_result}
+                    "extra": {"raw": raw_result},
                 }
-                
+
             except ModelNotAvailable as e:
                 logger.warning(f"Model {model_key} not available: {e}")
                 raise HTTPException(status_code=503, detail=f"Model not available: {str(e)}")
-        
+
         # Mode-based routing (no explicit model key)
         result = None
         actual_model = None
-        
+
         if mode == "crypto" or mode == "auto":
             result = analyze_crypto_sentiment(text)
             actual_model = "crypto_sent_kk08"  # Default crypto model
@@ -1184,23 +1240,20 @@ async def analyze_sentiment_simple(request: Dict[str, Any]):
                 if isinstance(raw_result, list) and raw_result:
                     raw_result = raw_result[0]
                 generated_text = raw_result.get("generated_text", str(raw_result))
-                
+
                 decision = "HOLD"
                 if "buy" in generated_text.lower():
                     decision = "BUY"
                 elif "sell" in generated_text.lower():
                     decision = "SELL"
-                
+
                 return {
                     "sentiment": decision,
                     "confidence": 0.7,
                     "raw_label": decision,
                     "mode": "trading",
                     "model": "crypto_trading_lm",
-                    "extra": {
-                        "decision": decision,
-                        "rationale": generated_text
-                    }
+                    "extra": {"decision": decision, "rationale": generated_text},
                 }
             except ModelNotAvailable:
                 # Fallback to crypto sentiment
@@ -1209,26 +1262,26 @@ async def analyze_sentiment_simple(request: Dict[str, Any]):
         else:
             result = analyze_crypto_sentiment(text)  # Default fallback
             actual_model = "crypto_sent_kk08"
-        
+
         if not result:
             raise HTTPException(status_code=500, detail="Sentiment analysis failed")
-        
+
         # Standardize result format
         sentiment = result.get("label", "Neutral")
         confidence = result.get("confidence", 0.5)
-        
+
         # Capitalize first letter
         sentiment_formatted = sentiment.capitalize() if isinstance(sentiment, str) else "Neutral"
-        
+
         return {
             "sentiment": sentiment_formatted,
             "confidence": confidence,
             "raw_label": sentiment,
             "mode": mode,
             "model": actual_model,
-            "extra": result
+            "extra": result,
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1241,17 +1294,19 @@ async def get_resources(q: Optional[str] = None):
     """Get all resources with optional search query and deduplication"""
     try:
         resources_list = []
-        
+
         # Load from unified resources file
-        resources_json = WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+        resources_json = (
+            WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+        )
         if resources_json.exists():
             try:
-                with open(resources_json, 'r', encoding='utf-8') as f:
+                with open(resources_json, "r", encoding="utf-8") as f:
                     unified_data = json.load(f)
-                    registry = unified_data.get('registry', {})
-                    
+                    registry = unified_data.get("registry", {})
+
                     for category, items in registry.items():
-                        if category == 'metadata':
+                        if category == "metadata":
                             continue
                         if isinstance(items, list):
                             for item in items:
@@ -1262,11 +1317,21 @@ async def get_resources(q: Optional[str] = None):
                                     "category": category,
                                     "url": item.get("url") or item.get("base_url", ""),
                                     "free": item.get("free", True),
-                                    "auth_required": item.get("auth_required", False) or (item.get("auth", {}).get("type") != "none" if "auth" in item else False),
-                                    "tags": item.get("tags", []) if isinstance(item.get("tags"), list) else [],
-                                    "description": item.get("description", "") or item.get("note", "")
+                                    "auth_required": item.get("auth_required", False)
+                                    or (
+                                        item.get("auth", {}).get("type") != "none"
+                                        if "auth" in item
+                                        else False
+                                    ),
+                                    "tags": (
+                                        item.get("tags", [])
+                                        if isinstance(item.get("tags"), list)
+                                        else []
+                                    ),
+                                    "description": item.get("description", "")
+                                    or item.get("note", ""),
                                 }
-                                
+
                                 # Additional fields if present
                                 if "method" in item:
                                     resource["method"] = item["method"]
@@ -1274,11 +1339,11 @@ async def get_resources(q: Optional[str] = None):
                                     resource["path"] = item["path"]
                                 if "endpoint" in item:
                                     resource["endpoint"] = item["endpoint"]
-                                
+
                                 resources_list.append(resource)
             except Exception as e:
                 logger.error(f"Error loading unified resources: {e}")
-        
+
         # Load from API registry (all_apis_merged_2025.json)
         api_registry = load_api_registry()
         if api_registry and "raw_files" in api_registry:
@@ -1286,31 +1351,34 @@ async def get_resources(q: Optional[str] = None):
             for raw_file in api_registry.get("raw_files", [])[:10]:  # Limit to first 10
                 content = raw_file.get("content", "")
                 filename = raw_file.get("filename", "")
-                
+
                 # Simple extraction: look for URLs in content
                 import re
+
                 urls = re.findall(r'https?://[^\s<>"]+', content)
                 for url in urls[:5]:  # Limit URLs per file
-                    resources_list.append({
-                        "id": None,
-                        "name": f"Resource from {filename}",
-                        "category": "discovered",
-                        "url": url,
-                        "free": True,
-                        "auth_required": False,
-                        "tags": ["auto-discovered"],
-                        "description": f"Auto-discovered from {filename}"
-                    })
-        
+                    resources_list.append(
+                        {
+                            "id": None,
+                            "name": f"Resource from {filename}",
+                            "category": "discovered",
+                            "url": url,
+                            "free": True,
+                            "auth_required": False,
+                            "tags": ["auto-discovered"],
+                            "description": f"Auto-discovered from {filename}",
+                        }
+                    )
+
         # Apply deduplication
         deduplicated_resources = deduplicate_resources(resources_list)
-        
+
         # Apply search filter if query provided
         if q:
             deduplicated_resources = filter_resources_by_query(deduplicated_resources, q)
-        
+
         return deduplicated_resources
-        
+
     except Exception as e:
         logger.error(f"Error in get_resources: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch resources: {str(e)}")
@@ -1323,55 +1391,62 @@ async def get_resources_summary():
         # Load API registry for metadata
         api_registry = load_api_registry()
         metadata = api_registry.get("metadata", {}) if api_registry else {}
-        
+
         # Try to load resources from JSON files
-        resources_json = WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
-        
+        resources_json = (
+            WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+        )
+
         summary = {
             "total_resources": 0,
             "free_resources": 0,
             "models_available": 0,
             "local_routes_count": 0,
-            "categories": {}
+            "categories": {},
         }
-        
+
         # Load from unified resources
         if resources_json.exists():
-            with open(resources_json, 'r', encoding='utf-8') as f:
+            with open(resources_json, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                registry = data.get('registry', {})
-                
+                registry = data.get("registry", {})
+
                 # Process all categories
                 for category, items in registry.items():
-                    if category == 'metadata':
+                    if category == "metadata":
                         continue
                     if isinstance(items, list):
                         count = len(items)
-                        summary['total_resources'] += count
-                        summary['categories'][category] = {
+                        summary["total_resources"] += count
+                        summary["categories"][category] = {
                             "count": count,
-                            "type": "local" if category == "local_backend_routes" else "external"
+                            "type": "local" if category == "local_backend_routes" else "external",
                         }
-                        
+
                         # Track local routes separately
-                        if category == 'local_backend_routes':
-                            summary['local_routes_count'] = count
-                        
-                        free_count = sum(1 for item in items if item.get('free', False) or item.get('auth', {}).get('type') == 'none')
-                        summary['free_resources'] += free_count
-        
+                        if category == "local_backend_routes":
+                            summary["local_routes_count"] = count
+
+                        free_count = sum(
+                            1
+                            for item in items
+                            if item.get("free", False) or item.get("auth", {}).get("type") == "none"
+                        )
+                        summary["free_resources"] += free_count
+
         # Try to get model count
         try:
             from ai_models import MODEL_SPECS
-            summary['models_available'] = len(MODEL_SPECS) if MODEL_SPECS else 0
+
+            summary["models_available"] = len(MODEL_SPECS) if MODEL_SPECS else 0
         except:
-            summary['models_available'] = 0
-        
+            summary["models_available"] = 0
+
         return {
             "success": True,
             "summary": summary,
             "api_registry_metadata": metadata,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
         return {
@@ -1381,41 +1456,42 @@ async def get_resources_summary():
                 "total_resources": 0,
                 "free_resources": 0,
                 "models_available": 0,
-                "categories": {}
+                "categories": {},
             },
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
+
 
 @app.get("/api/resources/apis")
 async def get_resources_apis():
     """Get API registry with local and external routes"""
     registry = load_api_registry()
-    
+
     # Load unified resources for local routes
     resources_json = WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
     local_routes = []
     unified_metadata = {}
-    
+
     if resources_json.exists():
         try:
-            with open(resources_json, 'r', encoding='utf-8') as f:
+            with open(resources_json, "r", encoding="utf-8") as f:
                 unified_data = json.load(f)
-                unified_registry = unified_data.get('registry', {})
-                unified_metadata = unified_registry.get('metadata', {})
-                local_routes = unified_registry.get('local_backend_routes', [])
+                unified_registry = unified_data.get("registry", {})
+                unified_metadata = unified_registry.get("metadata", {})
+                local_routes = unified_registry.get("local_backend_routes", [])
         except Exception as e:
             logger.error(f"Error loading unified resources: {e}")
-    
+
     # Process legacy registry
     categories = set()
     metadata = {}
     raw_files = []
     trimmed_files = []
-    
+
     if registry:
         metadata = registry.get("metadata", {})
         raw_files = registry.get("raw_files", [])
-        
+
         # Extract categories from raw file content (basic parsing)
         for raw_file in raw_files[:5]:  # Limit to first 5 files for performance
             content = raw_file.get("content", "")
@@ -1434,20 +1510,22 @@ async def get_resources_apis():
                 categories.add("sentiment")
             if "whale" in content.lower():
                 categories.add("whale_tracking")
-        
+
         # Provide trimmed raw files (first 500 chars each)
         for raw_file in raw_files[:10]:  # Limit to 10 files
             content = raw_file.get("content", "")
-            trimmed_files.append({
-                "filename": raw_file.get("filename", ""),
-                "preview": content[:500] + "..." if len(content) > 500 else content,
-                "size": len(content)
-            })
-    
+            trimmed_files.append(
+                {
+                    "filename": raw_file.get("filename", ""),
+                    "preview": content[:500] + "..." if len(content) > 500 else content,
+                    "size": len(content),
+                }
+            )
+
     # Add local category
     if local_routes:
         categories.add("local")
-    
+
     return {
         "ok": True,
         "metadata": {
@@ -1456,47 +1534,47 @@ async def get_resources_apis():
             "description": metadata.get("description", ""),
             "created_at": metadata.get("created_at", ""),
             "source_files": metadata.get("source_files", []),
-            "updated": unified_metadata.get("updated", "")
+            "updated": unified_metadata.get("updated", ""),
         },
         "categories": list(categories),
         "local_routes": {
             "count": len(local_routes),
-            "routes": local_routes[:20]  # Return first 20 for preview
+            "routes": local_routes[:20],  # Return first 20 for preview
         },
         "raw_files_preview": trimmed_files,
         "total_raw_files": len(raw_files),
-        "sources": ["all_apis_merged_2025.json", "crypto_resources_unified_2025-11-11.json"]
+        "sources": ["all_apis_merged_2025.json", "crypto_resources_unified_2025-11-11.json"],
     }
+
 
 @app.get("/api/resources/apis/raw")
 async def get_resources_apis_raw():
     """Get raw files from API registry (trimmed to avoid huge payloads)"""
     registry = load_api_registry()
-    
+
     if not registry:
-        return {
-            "ok": False,
-            "error": "API registry file not found"
-        }
-    
+        return {"ok": False, "error": "API registry file not found"}
+
     raw_files = registry.get("raw_files", [])
-    
+
     # Return trimmed versions (first 1000 chars each, max 20 files)
     trimmed = []
     for raw_file in raw_files[:20]:
         content = raw_file.get("content", "")
-        trimmed.append({
-            "filename": raw_file.get("filename", ""),
-            "preview": content[:1000] + "..." if len(content) > 1000 else content,
-            "full_size": len(content)
-        })
-    
+        trimmed.append(
+            {
+                "filename": raw_file.get("filename", ""),
+                "preview": content[:1000] + "..." if len(content) > 1000 else content,
+                "full_size": len(content),
+            }
+        )
+
     return {
         "ok": True,
         "files": trimmed,
         "total_files": len(raw_files),
         "showing": min(20, len(raw_files)),
-        "source": "all_apis_merged_2025.json"
+        "source": "all_apis_merged_2025.json",
     }
 
 
@@ -1505,27 +1583,29 @@ async def get_trending():
     """Trending coins from CoinGecko - REAL DATA ONLY"""
     try:
         data = await fetch_coingecko_trending()
-        
+
         trending_coins = []
         if "coins" in data:
             for item in data["coins"][:10]:
                 coin = item.get("item", {})
-                trending_coins.append({
-                    "id": coin.get("id"),
-                    "name": coin.get("name"),
-                    "symbol": coin.get("symbol"),
-                    "market_cap_rank": coin.get("market_cap_rank"),
-                    "thumb": coin.get("thumb"),
-                    "score": coin.get("score", 0)
-                })
-        
+                trending_coins.append(
+                    {
+                        "id": coin.get("id"),
+                        "name": coin.get("name"),
+                        "symbol": coin.get("symbol"),
+                        "market_cap_rank": coin.get("market_cap_rank"),
+                        "thumb": coin.get("thumb"),
+                        "score": coin.get("score", 0),
+                    }
+                )
+
         return {
             "trending": trending_coins,
             "count": len(trending_coins),
             "timestamp": datetime.now().isoformat(),
-            "source": "CoinGecko API (Real Data)"
+            "source": "CoinGecko API (Real Data)",
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Failed to fetch trending: {str(e)}")
 
@@ -1538,34 +1618,38 @@ async def get_providers():
         # Load primary config
         config = load_providers_config()
         providers_dict = config.get("providers", {})
-        
+
         # Load auto-discovery report for validation status
         discovery_report = load_auto_discovery_report()
         discovery_results = {}
         if discovery_report and "http_providers" in discovery_report:
             for result in discovery_report["http_providers"].get("results", []):
                 discovery_results[result.get("provider_id")] = result
-        
+
         # Build provider list from primary config
         providers_list = []
         for provider_id, provider_data in providers_dict.items():
             # Merge with auto-discovery data if available
             discovery_data = discovery_results.get(provider_id, {})
-            
+
             # Determine auth requirement
             auth_required = provider_data.get("requires_auth", False)
             free = not auth_required
-            
+
             # Extract tags from provider data
             tags = []
             if "tags" in provider_data:
-                tags = provider_data["tags"] if isinstance(provider_data["tags"], list) else [provider_data["tags"]]
-            
+                tags = (
+                    provider_data["tags"]
+                    if isinstance(provider_data["tags"], list)
+                    else [provider_data["tags"]]
+                )
+
             # Build description
             description = provider_data.get("description", "") or provider_data.get("note", "")
             if not description and provider_data.get("name"):
                 description = f"{provider_data.get('name')} - {provider_data.get('category', 'unknown')} provider"
-            
+
             provider_entry = {
                 "id": provider_id,
                 "name": provider_data.get("name", provider_id),
@@ -1580,53 +1664,54 @@ async def get_providers():
                 "weight": provider_data.get("weight", 0),
                 "rate_limit": provider_data.get("rate_limit", {}),
                 "endpoints": provider_data.get("endpoints", {}),
-                "status": discovery_data.get("status", "UNKNOWN") if discovery_data else "unvalidated",
+                "status": (
+                    discovery_data.get("status", "UNKNOWN") if discovery_data else "unvalidated"
+                ),
                 "validated_at": provider_data.get("validated_at"),
-                "response_time_ms": discovery_data.get("response_time_ms") or provider_data.get("response_time_ms"),
-                "added_by": provider_data.get("added_by", "manual")
+                "response_time_ms": discovery_data.get("response_time_ms")
+                or provider_data.get("response_time_ms"),
+                "added_by": provider_data.get("added_by", "manual"),
             }
             providers_list.append(provider_entry)
-        
+
         # Add HF Models as providers (with proper structure)
         try:
             from ai_models import MODEL_SPECS, _registry
+
             for model_key, spec in MODEL_SPECS.items():
                 is_loaded = model_key in _registry._pipelines
-                providers_list.append({
-                    "id": f"hf_model_{model_key}",
-                    "name": f"HF Model: {spec.model_id}",
-                    "category": spec.category,
-                    "base_url": f"/api/models/{model_key}/predict",
-                    "auth_required": spec.requires_auth,
-                    "free": not spec.requires_auth,
-                    "tags": ["huggingface", "ai-model", spec.task, spec.category],
-                    "description": f"Hugging Face {spec.task} model for {spec.category}",
-                    "type": "hf_model",
-                    "status": "available" if is_loaded else "not_loaded",
-                    "model_key": model_key,
-                    "model_id": spec.model_id,
-                    "task": spec.task,
-                    "added_by": "hf_models"
-                })
+                providers_list.append(
+                    {
+                        "id": f"hf_model_{model_key}",
+                        "name": f"HF Model: {spec.model_id}",
+                        "category": spec.category,
+                        "base_url": f"/api/models/{model_key}/predict",
+                        "auth_required": spec.requires_auth,
+                        "free": not spec.requires_auth,
+                        "tags": ["huggingface", "ai-model", spec.task, spec.category],
+                        "description": f"Hugging Face {spec.task} model for {spec.category}",
+                        "type": "hf_model",
+                        "status": "available" if is_loaded else "not_loaded",
+                        "model_key": model_key,
+                        "model_id": spec.model_id,
+                        "task": spec.task,
+                        "added_by": "hf_models",
+                    }
+                )
         except Exception as e:
             logger.warning(f"Could not add HF models as providers: {e}")
-        
+
         # Apply deduplication
         deduplicated_providers = deduplicate_providers(providers_list)
-        
+
         return {
             "providers": deduplicated_providers,
             "total": len(deduplicated_providers),
-            "source": "providers_config_extended.json + PROVIDER_AUTO_DISCOVERY_REPORT.json + HF Models (deduplicated)"
+            "source": "providers_config_extended.json + PROVIDER_AUTO_DISCOVERY_REPORT.json + HF Models (deduplicated)",
         }
     except Exception as e:
         logger.error(f"Error in get_providers: {e}")
-        return {
-            "providers": [],
-            "total": 0,
-            "error": str(e),
-            "source": "error"
-        }
+        return {"providers": [], "total": 0, "error": str(e), "source": "error"}
 
 
 @app.get("/api/providers/{provider_id}")
@@ -1637,12 +1722,13 @@ async def get_provider_detail(provider_id: str):
         model_key = provider_id.replace("hf_model_", "")
         try:
             from ai_models import MODEL_SPECS, _registry
+
             if model_key not in MODEL_SPECS:
                 raise HTTPException(status_code=404, detail=f"Model {model_key} not found")
-            
+
             spec = MODEL_SPECS[model_key]
             is_loaded = model_key in _registry._pipelines
-            
+
             return {
                 "provider_id": provider_id,
                 "name": f"HF Model: {spec.model_id}",
@@ -1657,26 +1743,23 @@ async def get_provider_detail(provider_id: str):
                 "usage": {
                     "method": "POST",
                     "url": f"/api/models/{model_key}/predict",
-                    "body": {"text": "string", "options": {}}
+                    "body": {"text": "string", "options": {}},
                 },
-                "added_by": "hf_models"
+                "added_by": "hf_models",
             }
         except HTTPException:
             raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-    
+
     # Regular provider
     config = load_providers_config()
     providers = config.get("providers", {})
-    
+
     if provider_id not in providers:
         raise HTTPException(status_code=404, detail=f"Provider {provider_id} not found")
-    
-    return {
-        "provider_id": provider_id,
-        **providers[provider_id]
-    }
+
+    return {"provider_id": provider_id, **providers[provider_id]}
 
 
 @app.get("/api/providers/category/{category}")
@@ -1684,27 +1767,17 @@ async def get_providers_by_category(category: str):
     """Get providers by category"""
     config = load_providers_config()
     providers = config.get("providers", {})
-    
-    filtered = {
-        pid: data for pid, data in providers.items()
-        if data.get("category") == category
-    }
-    
-    return {
-        "category": category,
-        "providers": filtered,
-        "count": len(filtered)
-    }
+
+    filtered = {pid: data for pid, data in providers.items() if data.get("category") == category}
+
+    return {"category": category, "providers": filtered, "count": len(filtered)}
 
 
 # ===== Pools Endpoints (Placeholder - to be implemented) =====
 @app.get("/api/pools")
 async def get_pools():
     """Get provider pools"""
-    return {
-        "pools": [],
-        "message": "Pools feature not yet implemented in this version"
-    }
+    return {"pools": [], "message": "Pools feature not yet implemented in this version"}
 
 
 # ===== Logs Endpoints =====
@@ -1713,7 +1786,7 @@ async def get_recent_logs():
     """Get recent logs"""
     return {
         "logs": _provider_state.get("logs", [])[-50:],
-        "count": min(50, len(_provider_state.get("logs", [])))
+        "count": min(50, len(_provider_state.get("logs", []))),
     }
 
 
@@ -1722,10 +1795,7 @@ async def get_error_logs():
     """Get error logs"""
     all_logs = _provider_state.get("logs", [])
     errors = [log for log in all_logs if log.get("level") == "ERROR"]
-    return {
-        "errors": errors[-50:],
-        "count": len(errors)
-    }
+    return {"errors": errors[-50:], "count": len(errors)}
 
 
 # ===== Diagnostics Endpoints =====
@@ -1734,28 +1804,28 @@ async def run_diagnostics(auto_fix: bool = False):
     """Run system diagnostics"""
     issues = []
     fixes_applied = []
-    
+
     # Check database
     if not DB_PATH.exists():
         issues.append({"type": "database", "message": "Database file not found"})
         if auto_fix:
             init_database()
             fixes_applied.append("Initialized database")
-    
+
     # Check providers config
     if not PROVIDERS_CONFIG_PATH.exists():
         issues.append({"type": "config", "message": "Providers config not found"})
-    
+
     # Check auto-discovery report
     if not AUTO_DISCOVERY_REPORT_PATH.exists():
         issues.append({"type": "auto_discovery", "message": "Auto-discovery report not found"})
-    
+
     return {
         "status": "completed",
         "issues_found": len(issues),
         "issues": issues,
         "fixes_applied": fixes_applied if auto_fix else [],
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -1763,10 +1833,7 @@ async def run_diagnostics(auto_fix: bool = False):
 async def get_last_diagnostics():
     """Get last diagnostics results"""
     # Would load from file in real implementation
-    return {
-        "status": "no_previous_run",
-        "message": "No previous diagnostics run found"
-    }
+    return {"status": "no_previous_run", "message": "No previous diagnostics run found"}
 
 
 @app.get("/api/diagnostics/health")
@@ -1779,7 +1846,7 @@ async def get_diagnostics_health():
         # Get provider health
         provider_health = _health_registry.get_all_entries()
         provider_summary = _health_registry.get_summary()
-        
+
         # Get model health
         model_health = []
         model_summary = {
@@ -1788,11 +1855,12 @@ async def get_diagnostics_health():
             "degraded": 0,
             "unavailable": 0,
             "unknown": 0,
-            "in_cooldown": 0
+            "in_cooldown": 0,
         }
-        
+
         try:
             from ai_models import get_model_health_registry
+
             model_health = get_model_health_registry()
             # Calculate model summary
             model_summary["total"] = len(model_health)
@@ -1803,30 +1871,28 @@ async def get_diagnostics_health():
                     model_summary["in_cooldown"] += 1
         except Exception as e:
             logger.warning(f"Could not load model health: {e}")
-        
+
         return {
             "status": "success",
             "timestamp": datetime.now().isoformat(),
-            "providers": {
-                "summary": provider_summary,
-                "entries": provider_health
-            },
-            "models": {
-                "summary": model_summary,
-                "entries": model_health
-            },
+            "providers": {"summary": provider_summary, "entries": provider_health},
+            "models": {"summary": model_summary, "entries": model_health},
             "overall_health": {
-                "providers_ok": provider_summary["healthy"] >= (provider_summary["total"] // 2) if provider_summary["total"] > 0 else True,
-                "models_ok": model_summary["healthy"] >= (model_summary["total"] // 4) if model_summary["total"] > 0 else True
-            }
+                "providers_ok": (
+                    provider_summary["healthy"] >= (provider_summary["total"] // 2)
+                    if provider_summary["total"] > 0
+                    else True
+                ),
+                "models_ok": (
+                    model_summary["healthy"] >= (model_summary["total"] // 4)
+                    if model_summary["total"] > 0
+                    else True
+                ),
+            },
         }
     except Exception as e:
         logger.error(f"Error getting health diagnostics: {e}")
-        return {
-            "status": "error",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"status": "error", "error": str(e), "timestamp": datetime.now().isoformat()}
 
 
 @app.post("/api/diagnostics/self-heal")
@@ -1834,40 +1900,35 @@ async def trigger_self_heal(model_key: Optional[str] = None):
     """
     Trigger self-healing actions for models.
     Safe, idempotent, and non-blocking.
-    
+
     Query params:
         model_key: Specific model to reinitialize (optional)
     """
     try:
         from ai_models import attempt_model_reinit, get_model_health_registry
-        
+
         results = []
-        
+
         if model_key:
             # Reinit specific model
             result = attempt_model_reinit(model_key)
-            results.append({
-                "model_key": model_key,
-                **result
-            })
+            results.append({"model_key": model_key, **result})
         else:
             # Reinit all failed models that are out of cooldown
             model_health = get_model_health_registry()
             failed_models = [
-                m for m in model_health
+                m
+                for m in model_health
                 if m.get("status") in ["unavailable", "degraded"]
                 and not m.get("in_cooldown", False)
             ]
-            
+
             for model in failed_models[:5]:  # Limit to 5 at a time to avoid blocking
                 result = attempt_model_reinit(model["key"])
-                results.append({
-                    "model_key": model["key"],
-                    **result
-                })
-        
+                results.append({"model_key": model["key"], **result})
+
         success_count = sum(1 for r in results if r.get("status") == "success")
-        
+
         return {
             "status": "completed",
             "timestamp": datetime.now().isoformat(),
@@ -1875,16 +1936,12 @@ async def trigger_self_heal(model_key: Optional[str] = None):
             "summary": {
                 "total_attempts": len(results),
                 "successful": success_count,
-                "failed": len(results) - success_count
-            }
+                "failed": len(results) - success_count,
+            },
         }
     except Exception as e:
         logger.error(f"Error in self-heal: {e}")
-        return {
-            "status": "error",
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"status": "error", "error": str(e), "timestamp": datetime.now().isoformat()}
 
 
 # ===== APL (Auto Provider Loader) Endpoints =====
@@ -1898,26 +1955,23 @@ async def run_apl_scan():
             capture_output=True,
             text=True,
             timeout=300,
-            cwd=str(WORKSPACE_ROOT)
+            cwd=str(WORKSPACE_ROOT),
         )
-        
+
         # Reload providers after APL run
         config = load_providers_config()
         _provider_state["providers"] = config.get("providers", {})
-        
+
         return {
             "status": "completed",
             "stdout": result.stdout[-1000:],  # Last 1000 chars
             "returncode": result.returncode,
             "providers_count": len(_provider_state["providers"]),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-        
+
     except subprocess.TimeoutExpired:
-        return {
-            "status": "timeout",
-            "message": "APL scan timed out after 5 minutes"
-        }
+        return {"status": "timeout", "message": "APL scan timed out after 5 minutes"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"APL scan failed: {str(e)}")
 
@@ -1927,49 +1981,53 @@ async def get_apl_report():
     """Get APL validation report (alias for auto-discovery report)"""
     return await get_providers_auto_discovery_report()
 
+
 @app.get("/api/providers/auto-discovery-report")
 async def get_providers_auto_discovery_report():
     """Get PROVIDER_AUTO_DISCOVERY_REPORT.json"""
     report = load_auto_discovery_report()
-    
+
     if not report:
         return {
             "ok": False,
             "error": "Auto-discovery report file not found",
-            "message": f"Report file not found at {AUTO_DISCOVERY_REPORT_PATH}"
+            "message": f"Report file not found at {AUTO_DISCOVERY_REPORT_PATH}",
         }
-    
-    return {
-        "ok": True,
-        "report": report,
-        "source": "PROVIDER_AUTO_DISCOVERY_REPORT.json"
-    }
+
+    return {"ok": True, "report": report, "source": "PROVIDER_AUTO_DISCOVERY_REPORT.json"}
+
 
 @app.get("/api/providers/health-summary")
 async def get_providers_health_summary():
     """Get simplified health summary from auto-discovery report + local routes - always returns 200"""
     try:
         report = load_auto_discovery_report()
-        
+
         # Load local routes for health checking
-        resources_json = WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+        resources_json = (
+            WORKSPACE_ROOT / "api-resources" / "crypto_resources_unified_2025-11-11.json"
+        )
         local_routes = []
         local_health = {"total": 0, "checked": 0, "up": 0, "down": 0}
-        
+
         if resources_json.exists():
             try:
-                with open(resources_json, 'r', encoding='utf-8') as f:
+                with open(resources_json, "r", encoding="utf-8") as f:
                     unified_data = json.load(f)
-                    unified_registry = unified_data.get('registry', {})
-                    local_routes = unified_registry.get('local_backend_routes', [])
+                    unified_registry = unified_data.get("registry", {})
+                    local_routes = unified_registry.get("local_backend_routes", [])
                     local_health["total"] = len(local_routes)
-                    
+
                     # Quick health check for up to 10 local routes
                     async with httpx.AsyncClient(timeout=2.0) as client:
-                        routes_to_check = [r for r in local_routes if 'ws://' not in r.get('base_url', '')][:10]
+                        routes_to_check = [
+                            r for r in local_routes if "ws://" not in r.get("base_url", "")
+                        ][:10]
                         for route in routes_to_check:
-                            base_url = route.get('base_url', '').replace('{API_BASE}', f'http://localhost:{PORT}')
-                            if 'http' in base_url:
+                            base_url = route.get("base_url", "").replace(
+                                "{API_BASE}", f"http://localhost:{PORT}"
+                            )
+                            if "http" in base_url:
                                 try:
                                     response = await client.get(base_url, timeout=2.0)
                                     local_health["checked"] += 1
@@ -1982,7 +2040,7 @@ async def get_providers_health_summary():
                                     local_health["down"] += 1
             except Exception as e:
                 logger.error(f"Error checking local routes health: {e}")
-        
+
         if not report or "stats" not in report:
             return JSONResponse(
                 status_code=200,
@@ -1998,25 +2056,29 @@ async def get_providers_health_summary():
                         "hf_valid": 0,
                         "hf_invalid": 0,
                         "hf_conditional": 0,
-                        "status_breakdown": {"VALID": 0, "INVALID": 0, "CONDITIONALLY_AVAILABLE": 0},
+                        "status_breakdown": {
+                            "VALID": 0,
+                            "INVALID": 0,
+                            "CONDITIONALLY_AVAILABLE": 0,
+                        },
                         "execution_time_sec": 0,
                         "timestamp": "",
-                        "local_routes": local_health
-                    }
-                }
+                        "local_routes": local_health,
+                    },
+                },
             )
-        
+
         stats = report.get("stats", {})
         http_providers = report.get("http_providers", {})
         hf_providers = report.get("hf_providers", {})
-        
+
         # Count by status
         status_counts = {"VALID": 0, "INVALID": 0, "CONDITIONALLY_AVAILABLE": 0}
         for result in http_providers.get("results", []):
             status = result.get("status", "UNKNOWN")
             if status in status_counts:
                 status_counts[status] += 1
-        
+
         return JSONResponse(
             status_code=200,
             content={
@@ -2032,10 +2094,10 @@ async def get_providers_health_summary():
                     "status_breakdown": status_counts,
                     "execution_time_sec": stats.get("execution_time_sec", 0),
                     "timestamp": stats.get("timestamp", ""),
-                    "local_routes": local_health
+                    "local_routes": local_health,
                 },
-                "source": "PROVIDER_AUTO_DISCOVERY_REPORT.json + local routes"
-            }
+                "source": "PROVIDER_AUTO_DISCOVERY_REPORT.json + local routes",
+            },
         )
     except Exception as e:
         logger.error(f"Error loading health summary: {e}")
@@ -2055,10 +2117,11 @@ async def get_providers_health_summary():
                     "status_breakdown": {"VALID": 0, "INVALID": 0, "CONDITIONALLY_AVAILABLE": 0},
                     "execution_time_sec": 0,
                     "timestamp": "",
-                    "local_routes": {"total": 0, "checked": 0, "up": 0, "down": 0}
-                }
-            }
+                    "local_routes": {"total": 0, "checked": 0, "up": 0, "down": 0},
+                },
+            },
         )
+
 
 @app.get("/api/apl/summary")
 async def get_apl_summary():
@@ -2071,16 +2134,16 @@ async def get_apl_summary():
 async def get_hf_models():
     """Get HuggingFace models from APL report"""
     report = load_apl_report()
-    
+
     if not report:
         return {"models": [], "count": 0}
-    
+
     hf_models = report.get("hf_models", {}).get("results", [])
-    
+
     return {
         "models": hf_models,
         "count": len(hf_models),
-        "source": "APL Validation Report (Real Data)"
+        "source": "APL Validation Report (Real Data)",
     }
 
 
@@ -2089,13 +2152,11 @@ async def get_hf_health():
     """Get HF services health"""
     try:
         from backend.services.hf_registry import REGISTRY
+
         health = REGISTRY.health()
         return health
     except Exception as e:
-        return {
-            "ok": False,
-            "error": f"HF registry not available: {str(e)}"
-        }
+        return {"ok": False, "error": f"HF registry not available: {str(e)}"}
 
 
 # ===== DeFi Endpoint =====
@@ -2106,7 +2167,7 @@ async def get_defi():
         "success": True,
         "message": "DeFi data endpoint",
         "data": [],
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -2117,15 +2178,18 @@ async def get_news_api(limit: int = 20):
     try:
         conn = sqlite3.connect(str(DB_PATH))
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM news_articles 
             ORDER BY analyzed_at DESC 
             LIMIT ?
-        """, (limit,))
+        """,
+            (limit,),
+        )
         rows = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
         conn.close()
-        
+
         results = []
         for row in rows:
             record = dict(zip(columns, row))
@@ -2135,19 +2199,10 @@ async def get_news_api(limit: int = 20):
                 except:
                     pass
             results.append(record)
-        
-        return {
-            "success": True,
-            "news": results,
-            "count": len(results)
-        }
+
+        return {"success": True, "news": results, "count": len(results)}
     except Exception as e:
-        return {
-            "success": False,
-            "news": [],
-            "count": 0,
-            "error": str(e)
-        }
+        return {"success": False, "news": [], "count": 0, "error": str(e)}
 
 
 # ===== Logs Endpoints =====
@@ -2159,13 +2214,10 @@ async def get_logs_summary():
             "success": True,
             "total": len(_provider_state.get("logs", [])),
             "recent": _provider_state.get("logs", [])[-10:],
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}
 
 
 # ===== Diagnostics Endpoints =====
@@ -2173,17 +2225,9 @@ async def get_logs_summary():
 async def get_diagnostics_errors():
     """Get diagnostic errors"""
     try:
-        return {
-            "success": True,
-            "errors": [],
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"success": True, "errors": [], "timestamp": datetime.now().isoformat()}
     except Exception as e:
-        return {
-            "success": False,
-            "errors": [],
-            "error": str(e)
-        }
+        return {"success": False, "errors": [], "error": str(e)}
 
 
 # ===== Resources Endpoints =====
@@ -2191,18 +2235,9 @@ async def get_diagnostics_errors():
 async def search_resources(q: str = "", source: str = "all"):
     """Search resources"""
     try:
-        return {
-            "success": True,
-            "query": q,
-            "source": source,
-            "results": [],
-            "count": 0
-        }
+        return {"success": True, "query": q, "source": source, "results": [], "count": 0}
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}
 
 
 # ===== V2 API Endpoints (compatibility) =====
@@ -2213,7 +2248,7 @@ async def export_v2(export_type: str, data: Dict[str, Any] = None):
         "success": True,
         "type": export_type,
         "message": "Export functionality",
-        "data": data or {}
+        "data": data or {},
     }
 
 
@@ -2223,18 +2258,14 @@ async def backup_v2():
     return {
         "success": True,
         "message": "Backup functionality",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
 @app.post("/api/v2/import/providers")
 async def import_providers_v2(data: Dict[str, Any]):
     """V2 import providers endpoint"""
-    return {
-        "success": True,
-        "message": "Import providers functionality",
-        "data": data
-    }
+    return {"success": True, "message": "Import providers functionality", "data": data}
 
 
 # ===== HuggingFace ML Sentiment Endpoints =====
@@ -2249,34 +2280,34 @@ async def analyze_sentiment(request: Dict[str, Any]):
             analyze_market_text,
             _registry,
             MODEL_SPECS,
-            ModelNotAvailable
+            ModelNotAvailable,
         )
-        
+
         text = request.get("text", "").strip()
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
-        
+
         mode = request.get("mode", "auto").lower()
         source = request.get("source", "user")
         model_key = request.get("model_key")
         symbol = request.get("symbol")
-        
+
         try:
             # If model_key is provided, use that specific model
             if model_key and model_key in MODEL_SPECS:
                 try:
                     pipeline = _registry.get_pipeline(model_key)
                     spec = MODEL_SPECS[model_key]
-                    
+
                     # Handle different task types
                     if spec.task == "text-generation":
                         # For trading signal models or generation models
                         raw_result = pipeline(text, max_length=200, num_return_sequences=1)
                         if isinstance(raw_result, list) and raw_result:
                             raw_result = raw_result[0]
-                        
+
                         generated_text = raw_result.get("generated_text", str(raw_result))
-                        
+
                         # Parse trading signals if applicable
                         if spec.category == "trading_signal":
                             # Extract signal from generated text
@@ -2285,7 +2316,7 @@ async def analyze_sentiment(request: Dict[str, Any]):
                                 decision = "BUY"
                             elif "sell" in generated_text.lower():
                                 decision = "SELL"
-                            
+
                             return {
                                 "ok": True,
                                 "available": True,
@@ -2299,8 +2330,8 @@ async def analyze_sentiment(request: Dict[str, Any]):
                                 "extra": {
                                     "decision": decision,
                                     "rationale": generated_text,
-                                    "raw": raw_result
-                                }
+                                    "raw": raw_result,
+                                },
                             }
                         else:
                             # Generation model - return generated text
@@ -2314,25 +2345,28 @@ async def analyze_sentiment(request: Dict[str, Any]):
                                 "model": model_key,
                                 "engine": "huggingface",
                                 "mode": "generation",
-                                "extra": {
-                                    "generated_text": generated_text,
-                                    "raw": raw_result
-                                }
+                                "extra": {"generated_text": generated_text, "raw": raw_result},
                             }
                     else:
                         # Text classification / sentiment
                         raw_result = pipeline(text[:512])
                         if isinstance(raw_result, list) and raw_result:
                             raw_result = raw_result[0]
-                        
+
                         label = raw_result.get("label", "neutral").upper()
                         score = raw_result.get("score", 0.5)
-                        
+
                         # Map labels to standard format
-                        mapped = "bullish" if "POSITIVE" in label or "BULLISH" in label or "LABEL_2" in label else (
-                            "bearish" if "NEGATIVE" in label or "BEARISH" in label or "LABEL_0" in label else "neutral"
+                        mapped = (
+                            "bullish"
+                            if "POSITIVE" in label or "BULLISH" in label or "LABEL_2" in label
+                            else (
+                                "bearish"
+                                if "NEGATIVE" in label or "BEARISH" in label or "LABEL_0" in label
+                                else "neutral"
+                            )
                         )
-                        
+
                         return {
                             "ok": True,
                             "available": True,
@@ -2345,9 +2379,13 @@ async def analyze_sentiment(request: Dict[str, Any]):
                             "engine": "huggingface",
                             "mode": mode,
                             "extra": {
-                                "vote": score if mapped == "bullish" else (-score if mapped == "bearish" else 0.0),
-                                "raw": raw_result
-                            }
+                                "vote": (
+                                    score
+                                    if mapped == "bullish"
+                                    else (-score if mapped == "bearish" else 0.0)
+                                ),
+                                "raw": raw_result,
+                            },
                         }
                 except ModelNotAvailable as e:
                     logger.warning(f"Model {model_key} not available: {e}")
@@ -2358,9 +2396,9 @@ async def analyze_sentiment(request: Dict[str, Any]):
                         "label": "neutral",
                         "sentiment": "neutral",
                         "score": 0.0,
-                        "confidence": 0.0
+                        "confidence": 0.0,
                     }
-            
+
             # Default mode-based analysis
             if mode == "crypto":
                 result = analyze_crypto_sentiment(text)
@@ -2373,11 +2411,13 @@ async def analyze_sentiment(request: Dict[str, Any]):
                 result = analyze_crypto_sentiment(text)
             else:
                 result = analyze_market_text(text)
-            
+
             sentiment_label = result.get("label", "neutral")
             confidence = result.get("confidence", result.get("score", 0.5))
-            model_used = result.get("model_count", result.get("model", result.get("engine", "unknown")))
-            
+            model_used = result.get(
+                "model_count", result.get("model", result.get("engine", "unknown"))
+            )
+
             # Prepare response compatible with frontend format
             response_data = {
                 "ok": True,
@@ -2388,9 +2428,9 @@ async def analyze_sentiment(request: Dict[str, Any]):
                 "score": float(confidence),
                 "model": f"{model_used} models" if isinstance(model_used, int) else str(model_used),
                 "engine": result.get("engine", "huggingface"),
-                "mode": mode
+                "mode": mode,
             }
-            
+
             # Add details if available for score bars
             if result.get("scores"):
                 scores_dict = result.get("scores", {})
@@ -2399,37 +2439,41 @@ async def analyze_sentiment(request: Dict[str, Any]):
                     scores_list = []
                     for lbl, scr in scores_dict.items():
                         labels_list.append(lbl)
-                        scores_list.append(float(scr) if isinstance(scr, (int, float)) else float(scr.get("score", 0.5)) if isinstance(scr, dict) else 0.5)
+                        scores_list.append(
+                            float(scr)
+                            if isinstance(scr, (int, float))
+                            else float(scr.get("score", 0.5)) if isinstance(scr, dict) else 0.5
+                        )
                     if labels_list:
-                        response_data["details"] = {
-                            "labels": labels_list,
-                            "scores": scores_list
-                        }
-            
+                        response_data["details"] = {"labels": labels_list, "scores": scores_list}
+
             # Save to database
             try:
                 conn = sqlite3.connect(str(DB_PATH))
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO sentiment_analysis 
                     (text, sentiment_label, confidence, model_used, analysis_type, symbol, scores)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    text[:500],
-                    sentiment_label,
-                    confidence,
-                    f"{model_used} models" if isinstance(model_used, int) else str(model_used),
-                    mode,
-                    symbol,
-                    json.dumps(result.get("scores", {}))
-                ))
+                """,
+                    (
+                        text[:500],
+                        sentiment_label,
+                        confidence,
+                        f"{model_used} models" if isinstance(model_used, int) else str(model_used),
+                        mode,
+                        symbol,
+                        json.dumps(result.get("scores", {})),
+                    ),
+                )
                 conn.commit()
                 conn.close()
             except Exception as db_error:
                 logger.warning(f"Failed to save to database: {db_error}")
-            
+
             return response_data
-            
+
         except Exception as e:
             # Unexpected error - log and return error response
             logger.error(f"Sentiment analysis unexpected error: {str(e)}")
@@ -2440,9 +2484,9 @@ async def analyze_sentiment(request: Dict[str, Any]):
                 "sentiment": "neutral",
                 "label": "neutral",
                 "confidence": 0.0,
-                "score": 0.0
+                "score": 0.0,
             }
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -2453,58 +2497,66 @@ async def analyze_sentiment(request: Dict[str, Any]):
 async def summarize_text(request: Dict[str, Any]):
     """
     Summarize text using Hugging Face models or simple text processing.
-    
+
     Expects: { "text": "string", "max_sentences": 3 }
     Returns: { "ok": true, "summary": "...", "sentences": ["...", "..."] }
     """
     try:
         text = request.get("text", "").strip()
         max_sentences = request.get("max_sentences", 3)
-        
+
         if not text:
-            return {
-                "ok": False,
-                "error": "Text is required"
-            }
-        
+            return {"ok": False, "error": "Text is required"}
+
         # Try to use Hugging Face summarization model if available
         try:
             from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
-            
+
             # Check if summarization model is available
             summarization_key = None
             for key, spec in MODEL_SPECS.items():
                 if spec.task == "summarization":
                     summarization_key = key
                     break
-            
+
             if summarization_key:
                 try:
                     pipeline = _registry.get_pipeline(summarization_key)
                     # Use HF model for summarization
                     # Try with parameters first, then fallback to simple call
                     try:
-                        summary_result = pipeline(text, max_length=max_sentences * 50, min_length=max_sentences * 20, do_sample=False)
+                        summary_result = pipeline(
+                            text,
+                            max_length=max_sentences * 50,
+                            min_length=max_sentences * 20,
+                            do_sample=False,
+                        )
                     except TypeError:
                         # Some pipelines don't accept these parameters
                         summary_result = pipeline(text)
-                    
+
                     if isinstance(summary_result, list) and summary_result:
-                        summary_text = summary_result[0].get("summary_text", summary_result[0].get("generated_text", str(summary_result[0])))
+                        summary_text = summary_result[0].get(
+                            "summary_text",
+                            summary_result[0].get("generated_text", str(summary_result[0])),
+                        )
                     elif isinstance(summary_result, dict):
-                        summary_text = summary_result.get("summary_text", summary_result.get("generated_text", str(summary_result)))
+                        summary_text = summary_result.get(
+                            "summary_text",
+                            summary_result.get("generated_text", str(summary_result)),
+                        )
                     else:
                         summary_text = str(summary_result)
-                    
+
                     # Split into sentences
-                    sentences = [s.strip() + ("." if not s.strip().endswith((".", "!", "?")) else "") for s in summary_text.split(". ") if s.strip()]
+                    sentences = [
+                        s.strip() + ("." if not s.strip().endswith((".", "!", "?")) else "")
+                        for s in summary_text.split(". ")
+                        if s.strip()
+                    ]
                     sentences = sentences[:max_sentences]
-                    
-                    return {
-                        "ok": True,
-                        "summary": summary_text,
-                        "sentences": sentences
-                    }
+
+                    return {"ok": True, "summary": summary_text, "sentences": sentences}
                 except ModelNotAvailable:
                     # Fall through to simple summarizer
                     pass
@@ -2515,11 +2567,11 @@ async def summarize_text(request: Dict[str, Any]):
         except Exception as e:
             logger.warning(f"HF summarization model not available: {e}")
             # Fall through to simple summarizer
-        
+
         # Simple placeholder summarizer: split by sentences and take first N
         sentences = []
         current_sentence = ""
-        
+
         for char in text:
             current_sentence += char
             if char in ".!?":
@@ -2529,11 +2581,11 @@ async def summarize_text(request: Dict[str, Any]):
                     current_sentence = ""
                     if len(sentences) >= max_sentences:
                         break
-        
+
         # If we didn't get enough sentences, add the rest
         if len(sentences) < max_sentences and current_sentence.strip():
             sentences.append(current_sentence.strip())
-        
+
         # If still no sentences, just truncate
         if not sentences:
             words = text.split()
@@ -2546,21 +2598,14 @@ async def summarize_text(request: Dict[str, Any]):
                     sentence = " ".join(words[start_idx:end_idx])
                     if sentence:
                         sentences.append(sentence)
-        
+
         summary = " ".join(sentences)
-        
-        return {
-            "ok": True,
-            "summary": summary,
-            "sentences": sentences[:max_sentences]
-        }
-        
+
+        return {"ok": True, "summary": summary, "sentences": sentences[:max_sentences]}
+
     except Exception as e:
         logger.error(f"Summarization failed: {e}")
-        return {
-            "ok": False,
-            "error": f"Summarization failed: {str(e)}"
-        }
+        return {"ok": False, "error": f"Summarization failed: {str(e)}"}
 
 
 @app.post("/api/news/analyze")
@@ -2568,56 +2613,60 @@ async def analyze_news(request: Dict[str, Any]):
     """Analyze news article sentiment using HF models"""
     try:
         from ai_models import analyze_news_item
-        
+
         title = request.get("title", "").strip()
         content = request.get("content", request.get("description", "")).strip()
         url = request.get("url", "")
         source = request.get("source", "unknown")
         published_date = request.get("published_date")
-        
+
         if not title and not content:
             raise HTTPException(status_code=400, detail="Title or content is required")
-        
+
         try:
-            news_item = {
-                "title": title,
-                "description": content
-            }
+            news_item = {"title": title, "description": content}
             result = analyze_news_item(news_item)
-            
+
             sentiment_label = result.get("sentiment", "neutral")
             sentiment_confidence = result.get("sentiment_confidence", 0.5)
             sentiment_details = result.get("sentiment_details", {})
             related_symbols = request.get("related_symbols", [])
-            
+
             # Check if HF models were used (for diagnostics)
-            hf_available = sentiment_details.get("engine", "unknown") == "huggingface" if isinstance(sentiment_details, dict) else True
-            
+            hf_available = (
+                sentiment_details.get("engine", "unknown") == "huggingface"
+                if isinstance(sentiment_details, dict)
+                else True
+            )
+
             # Save to database (always)
             saved_to_db = False
             try:
                 conn = sqlite3.connect(str(DB_PATH))
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO news_articles 
                     (title, content, url, source, sentiment_label, sentiment_confidence, related_symbols, published_date)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    title[:500],
-                    content[:2000] if content else None,
-                    url,
-                    source,
-                    sentiment_label,
-                    sentiment_confidence,
-                    json.dumps(related_symbols) if related_symbols else None,
-                    published_date
-                ))
+                """,
+                    (
+                        title[:500],
+                        content[:2000] if content else None,
+                        url,
+                        source,
+                        sentiment_label,
+                        sentiment_confidence,
+                        json.dumps(related_symbols) if related_symbols else None,
+                        published_date,
+                    ),
+                )
                 conn.commit()
                 conn.close()
                 saved_to_db = True
             except Exception as db_error:
                 logger.warning(f"Failed to save to database: {db_error}")
-            
+
             return {
                 "success": True,
                 "available": True,
@@ -2626,24 +2675,20 @@ async def analyze_news(request: Dict[str, Any]):
                     "title": title,
                     "sentiment": sentiment_label,
                     "confidence": sentiment_confidence,
-                    "details": sentiment_details
+                    "details": sentiment_details,
                 },
-                "saved_to_db": saved_to_db
+                "saved_to_db": saved_to_db,
             }
-            
+
         except Exception as e:
             logger.error(f"News analysis error: {str(e)}")
             return {
                 "success": False,
                 "available": False,
                 "error": f"Analysis failed: {str(e)}",
-                "news": {
-                    "title": title,
-                    "sentiment": "neutral",
-                    "confidence": 0.0
-                }
+                "news": {"title": title, "sentiment": "neutral", "confidence": 0.0},
             }
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -2651,33 +2696,36 @@ async def analyze_news(request: Dict[str, Any]):
 
 
 @app.get("/api/sentiment/history")
-async def get_sentiment_history(
-    symbol: Optional[str] = None,
-    limit: int = 50
-):
+async def get_sentiment_history(symbol: Optional[str] = None, limit: int = 50):
     """Get sentiment analysis history from database"""
     try:
         conn = sqlite3.connect(str(DB_PATH))
         cursor = conn.cursor()
-        
+
         if symbol:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM sentiment_analysis 
                 WHERE symbol = ? 
                 ORDER BY timestamp DESC 
                 LIMIT ?
-            """, (symbol.upper(), limit))
+            """,
+                (symbol.upper(), limit),
+            )
         else:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM sentiment_analysis 
                 ORDER BY timestamp DESC 
                 LIMIT ?
-            """, (limit,))
-        
+            """,
+                (limit,),
+            )
+
         rows = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
         conn.close()
-        
+
         results = []
         for row in rows:
             record = dict(zip(columns, row))
@@ -2687,45 +2735,44 @@ async def get_sentiment_history(
                 except:
                     pass
             results.append(record)
-        
-        return {
-            "success": True,
-            "count": len(results),
-            "results": results
-        }
-        
+
+        return {"success": True, "count": len(results), "results": results}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch sentiment history: {str(e)}")
 
 
 @app.get("/api/news/latest")
-async def get_latest_news(
-    limit: int = 20,
-    sentiment: Optional[str] = None
-):
+async def get_latest_news(limit: int = 20, sentiment: Optional[str] = None):
     """Get latest analyzed news from database"""
     try:
         conn = sqlite3.connect(str(DB_PATH))
         cursor = conn.cursor()
-        
+
         if sentiment:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM news_articles 
                 WHERE sentiment_label = ? 
                 ORDER BY analyzed_at DESC 
                 LIMIT ?
-            """, (sentiment.lower(), limit))
+            """,
+                (sentiment.lower(), limit),
+            )
         else:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM news_articles 
                 ORDER BY analyzed_at DESC 
                 LIMIT ?
-            """, (limit,))
-        
+            """,
+                (limit,),
+            )
+
         rows = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
         conn.close()
-        
+
         results = []
         for row in rows:
             record = dict(zip(columns, row))
@@ -2735,13 +2782,9 @@ async def get_latest_news(
                 except:
                     pass
             results.append(record)
-        
-        return {
-            "success": True,
-            "count": len(results),
-            "news": results
-        }
-        
+
+        return {"success": True, "count": len(results), "news": results}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch news: {str(e)}")
 
@@ -2750,36 +2793,36 @@ async def get_latest_news(
 async def summarize_news(request: Dict[str, Any]):
     """
     Summarize crypto/financial news using Hugging Face Crypto-Financial-News-Summarizer model
-    
+
     Expects: { "title": "News Title", "content": "Full article text" }
     Returns: { "summary": "Summarized news paragraph", "model": "Crypto-Financial-News-Summarizer" }
     """
     try:
         from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
-        
+
         title = request.get("title", "").strip()
         content = request.get("content", "").strip()
-        
+
         if not title and not content:
             raise HTTPException(status_code=400, detail="Title or content is required")
-        
+
         # Combine title and content for summarization
         text_to_summarize = f"{title}. {content}" if title and content else (title or content)
-        
+
         try:
             # Try to use the Crypto-Financial-News-Summarizer model
             summarization_key = "summarization_0"
-            
+
             if summarization_key in MODEL_SPECS:
                 try:
                     pipeline = _registry.get_pipeline(summarization_key)
                     spec = MODEL_SPECS[summarization_key]
-                    
+
                     # Use HF model for summarization
                     # Limit input text to avoid token length issues
                     max_input_length = 1024
                     text_input = text_to_summarize[:max_input_length]
-                    
+
                     try:
                         # Try with parameters first
                         summary_result = pipeline(
@@ -2787,20 +2830,26 @@ async def summarize_news(request: Dict[str, Any]):
                             max_length=150,
                             min_length=50,
                             do_sample=False,
-                            truncation=True
+                            truncation=True,
                         )
                     except TypeError:
                         # Some pipelines don't accept these parameters
                         summary_result = pipeline(text_input, truncation=True)
-                    
+
                     # Extract summary text from result
                     if isinstance(summary_result, list) and summary_result:
-                        summary_text = summary_result[0].get("summary_text", summary_result[0].get("generated_text", str(summary_result[0])))
+                        summary_text = summary_result[0].get(
+                            "summary_text",
+                            summary_result[0].get("generated_text", str(summary_result[0])),
+                        )
                     elif isinstance(summary_result, dict):
-                        summary_text = summary_result.get("summary_text", summary_result.get("generated_text", str(summary_result)))
+                        summary_text = summary_result.get(
+                            "summary_text",
+                            summary_result.get("generated_text", str(summary_result)),
+                        )
                     else:
                         summary_text = str(summary_result)
-                    
+
                     return {
                         "success": True,
                         "summary": summary_text,
@@ -2808,21 +2857,21 @@ async def summarize_news(request: Dict[str, Any]):
                         "available": True,
                         "input_length": len(text_input),
                         "title": title,
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": datetime.now().isoformat(),
                     }
-                    
+
                 except ModelNotAvailable as e:
                     logger.warning(f"Crypto-Financial-News-Summarizer not available: {e}")
                     # Fall through to fallback
                 except Exception as e:
                     logger.warning(f"HF summarization failed: {e}, using fallback")
                     # Fall through to fallback
-            
+
             # Fallback: Simple extractive summarization
             # Split into sentences and take the most important ones
             sentences = []
             current_sentence = ""
-            
+
             for char in text_to_summarize:
                 current_sentence += char
                 if char in ".!?":
@@ -2832,14 +2881,14 @@ async def summarize_news(request: Dict[str, Any]):
                         current_sentence = ""
                         if len(sentences) >= 5:  # Take first 5 sentences max
                             break
-            
+
             # If we didn't get enough sentences, add the rest
             if len(sentences) < 3 and current_sentence.strip():
                 sentences.append(current_sentence.strip())
-            
+
             # Take first 3 sentences as summary
             summary = " ".join(sentences[:3]) if sentences else text_to_summarize[:500]
-            
+
             return {
                 "success": True,
                 "summary": summary,
@@ -2847,9 +2896,9 @@ async def summarize_news(request: Dict[str, Any]):
                 "available": False,
                 "note": "Using fallback extractive summarization (HF model not available)",
                 "title": title,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except Exception as e:
             logger.error(f"Summarization error: {str(e)}")
             return {
@@ -2857,9 +2906,9 @@ async def summarize_news(request: Dict[str, Any]):
                 "error": f"Summarization failed: {str(e)}",
                 "summary": "",
                 "model": "error",
-                "available": False
+                "available": False,
             }
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -2870,11 +2919,17 @@ async def summarize_news(request: Dict[str, Any]):
 async def get_models_status():
     """Get AI models status and registry info - honest status reporting"""
     try:
-        from ai_models import get_model_info, registry_status, HF_MODE, TRANSFORMERS_AVAILABLE, _registry
-        
+        from ai_models import (
+            get_model_info,
+            registry_status,
+            HF_MODE,
+            TRANSFORMERS_AVAILABLE,
+            _registry,
+        )
+
         model_info = get_model_info()
         registry_info = registry_status()
-        
+
         # Determine honest status
         if HF_MODE == "off":
             status = "disabled"
@@ -2896,12 +2951,12 @@ async def get_models_status():
         else:
             status = "unknown"
             status_message = "Unknown status"
-        
+
         # Format failed models as list of [key, error] tuples for ai_tools.html
         failed_list = []
         for key, error in list(_registry._failed_models.items())[:10]:
             failed_list.append([key, str(error)])
-        
+
         return {
             "success": True,
             "status": status,
@@ -2914,12 +2969,11 @@ async def get_models_status():
             "models": model_info,
             "registry": registry_info,
             "failed": failed_list,  # Format: [[key, error], ...] for ai_tools.html
-            "failed_models": list(_registry._failed_models.keys())[:10],  # Keep for backward compatibility
+            "failed_models": list(_registry._failed_models.keys())[
+                :10
+            ],  # Keep for backward compatibility
             "loaded_models": list(_registry._pipelines.keys()),
-            "database": {
-                "path": str(DB_PATH),
-                "exists": DB_PATH.exists()
-            }
+            "database": {"path": str(DB_PATH), "exists": DB_PATH.exists()},
         }
     except Exception as e:
         logger.error(f"Error getting models status: {e}")
@@ -2930,7 +2984,7 @@ async def get_models_status():
             "error": str(e),
             "hf_mode": "unknown",
             "models_loaded": 0,
-            "models_failed": 0
+            "models_failed": 0,
         }
 
 
@@ -2939,10 +2993,10 @@ async def initialize_ai_models():
     """Initialize AI models (force reload)"""
     try:
         from ai_models import initialize_models, _registry
-        
+
         result = initialize_models()
         registry_status = _registry.get_registry_status()
-        
+
         return registry_status
     except Exception as e:
         logger.error(f"Failed to initialize models: {e}")
@@ -2951,7 +3005,7 @@ async def initialize_ai_models():
             "models_loaded": 0,
             "models_failed": 0,
             "items": [],
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -2960,10 +3014,20 @@ async def initialize_ai_models():
 async def list_available_models():
     """List all available Hugging Face models as data sources"""
     try:
-        from ai_models import get_model_info, MODEL_SPECS, _registry, CRYPTO_SENTIMENT_MODELS, SOCIAL_SENTIMENT_MODELS, FINANCIAL_SENTIMENT_MODELS, NEWS_SENTIMENT_MODELS, GENERATION_MODELS, TRADING_SIGNAL_MODELS
-        
+        from ai_models import (
+            get_model_info,
+            MODEL_SPECS,
+            _registry,
+            CRYPTO_SENTIMENT_MODELS,
+            SOCIAL_SENTIMENT_MODELS,
+            FINANCIAL_SENTIMENT_MODELS,
+            NEWS_SENTIMENT_MODELS,
+            GENERATION_MODELS,
+            TRADING_SIGNAL_MODELS,
+        )
+
         model_info = get_model_info()
-        
+
         # Model descriptions
         model_descriptions = {
             "kk08/CryptoBERT": "Crypto sentiment binary classification model trained on cryptocurrency-related text",
@@ -2973,30 +3037,34 @@ async def list_available_models():
             "agarkovv/CryptoTrader-LM": "BTC/ETH trading signal generator providing daily buy/sell/hold recommendations",
             "cardiffnlp/twitter-roberta-base-sentiment-latest": "General Twitter sentiment analysis (fallback model)",
             "ProsusAI/finbert": "Financial sentiment analysis model for news and financial documents",
-            "FurkanGozukara/Crypto-Financial-News-Summarizer": "Specialized model for summarizing cryptocurrency and financial news articles"
+            "FurkanGozukara/Crypto-Financial-News-Summarizer": "Specialized model for summarizing cryptocurrency and financial news articles",
         }
-        
+
         models_list = []
         for key, spec in MODEL_SPECS.items():
             is_loaded = key in _registry._pipelines
             error_msg = None
             if key in _registry._failed_models:
                 error_msg = str(_registry._failed_models[key])
-            
-            models_list.append({
-                "key": key,
-                "id": key,
-                "name": spec.model_id,
-                "model_id": spec.model_id,
-                "task": spec.task,
-                "category": spec.category,
-                "requires_auth": spec.requires_auth,
-                "loaded": is_loaded,
-                "error": error_msg,
-                "description": model_descriptions.get(spec.model_id, f"{spec.category} model for {spec.task}"),
-                "endpoint": f"/api/models/{key}/predict"
-            })
-        
+
+            models_list.append(
+                {
+                    "key": key,
+                    "id": key,
+                    "name": spec.model_id,
+                    "model_id": spec.model_id,
+                    "task": spec.task,
+                    "category": spec.category,
+                    "requires_auth": spec.requires_auth,
+                    "loaded": is_loaded,
+                    "error": error_msg,
+                    "description": model_descriptions.get(
+                        spec.model_id, f"{spec.category} model for {spec.task}"
+                    ),
+                    "endpoint": f"/api/models/{key}/predict",
+                }
+            )
+
         return {
             "success": True,
             "total_models": len(models_list),
@@ -3008,16 +3076,12 @@ async def list_available_models():
                 "news_sentiment": NEWS_SENTIMENT_MODELS,
                 "generation": GENERATION_MODELS,
                 "trading_signals": TRADING_SIGNAL_MODELS,
-                "summarization": ["FurkanGozukara/Crypto-Financial-News-Summarizer"]
+                "summarization": ["FurkanGozukara/Crypto-Financial-News-Summarizer"],
             },
-            "model_info": model_info
+            "model_info": model_info,
         }
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "models": []
-        }
+        return {"success": False, "error": str(e), "models": []}
 
 
 @app.get("/api/models/{model_key}/info")
@@ -3025,13 +3089,13 @@ async def get_model_info_endpoint(model_key: str):
     """Get information about a specific model"""
     try:
         from ai_models import MODEL_SPECS, ModelNotAvailable, _registry
-        
+
         if model_key not in MODEL_SPECS:
             raise HTTPException(status_code=404, detail=f"Model {model_key} not found")
-        
+
         spec = MODEL_SPECS[model_key]
         is_loaded = model_key in _registry._pipelines
-        
+
         return {
             "success": True,
             "model_key": model_key,
@@ -3044,8 +3108,8 @@ async def get_model_info_endpoint(model_key: str):
             "usage": {
                 "method": "POST",
                 "url": f"/api/models/{model_key}/predict",
-                "body": {"text": "string", "options": {}}
-            }
+                "body": {"text": "string", "options": {}},
+            },
         }
     except HTTPException:
         raise
@@ -3058,23 +3122,23 @@ async def predict_with_model(model_key: str, request: Dict[str, Any]):
     """Use a specific model to generate predictions/data"""
     try:
         from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
-        
+
         if model_key not in MODEL_SPECS:
             raise HTTPException(status_code=404, detail=f"Model {model_key} not found")
-        
+
         spec = MODEL_SPECS[model_key]
         text = request.get("text", "").strip()
-        
+
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
-        
+
         try:
             pipeline = _registry.get_pipeline(model_key)
             result = pipeline(text[:512])
-            
+
             if isinstance(result, list) and result:
                 result = result[0]
-            
+
             return {
                 "success": True,
                 "available": True,
@@ -3083,7 +3147,7 @@ async def predict_with_model(model_key: str, request: Dict[str, Any]):
                 "task": spec.task,
                 "input": text[:100],
                 "output": result,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         except ModelNotAvailable as e:
             return {
@@ -3092,9 +3156,9 @@ async def predict_with_model(model_key: str, request: Dict[str, Any]):
                 "model_key": model_key,
                 "model_id": spec.model_id,
                 "error": str(e),
-                "reason": "model_unavailable"
+                "reason": "model_unavailable",
             }
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3106,63 +3170,54 @@ async def batch_predict(request: Dict[str, Any]):
     """Batch prediction using multiple models"""
     try:
         from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
-        
+
         texts = request.get("texts", [])
         model_keys = request.get("models", [])
-        
+
         if not texts:
             raise HTTPException(status_code=400, detail="Texts array is required")
-        
+
         if not model_keys:
             model_keys = list(MODEL_SPECS.keys())[:5]
-        
+
         results = []
         for text in texts:
             if not text.strip():
                 continue
-            
+
             text_results = {}
             for model_key in model_keys:
                 if model_key not in MODEL_SPECS:
                     continue
-                
+
                 try:
                     spec = MODEL_SPECS[model_key]
                     pipeline = _registry.get_pipeline(model_key)
                     result = pipeline(text[:512])
-                    
+
                     if isinstance(result, list) and result:
                         result = result[0]
-                    
+
                     text_results[model_key] = {
                         "model_id": spec.model_id,
                         "result": result,
-                        "success": True
+                        "success": True,
                     }
                 except ModelNotAvailable:
-                    text_results[model_key] = {
-                        "success": False,
-                        "error": "Model not available"
-                    }
+                    text_results[model_key] = {"success": False, "error": "Model not available"}
                 except Exception as e:
-                    text_results[model_key] = {
-                        "success": False,
-                        "error": str(e)
-                    }
-            
-            results.append({
-                "text": text[:100],
-                "predictions": text_results
-            })
-        
+                    text_results[model_key] = {"success": False, "error": str(e)}
+
+            results.append({"text": text[:100], "predictions": text_results})
+
         return {
             "success": True,
             "total_texts": len(results),
             "models_used": model_keys,
             "results": results,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3173,50 +3228,52 @@ async def batch_predict(request: Dict[str, Any]):
 async def analyze_text(request: Dict[str, Any]):
     """
     Analyze or generate text using crypto-gpt-o3-mini generation model.
-    
+
     Expects: { "prompt": "...", "mode": "analysis" | "generation" }
     Returns: { "text": "...", "model": "OpenC/crypto-gpt-o3-mini" }
     """
     try:
         from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
-        
+
         prompt = request.get("prompt", "").strip()
         mode = request.get("mode", "analysis").lower()
         max_length = request.get("max_length", 200)
-        
+
         if not prompt:
             raise HTTPException(status_code=400, detail="Prompt is required")
-        
+
         # Find generation model (crypto-gpt-o3-mini) - use specific key first
         generation_key = "crypto_ai_analyst" if "crypto_ai_analyst" in MODEL_SPECS else None
-        
+
         # Fallback: search by category or model name
         if not generation_key:
             for key, spec in MODEL_SPECS.items():
                 if spec.category == "analysis_generation" or "crypto-gpt" in spec.model_id.lower():
                     generation_key = key
                     break
-        
+
         if not generation_key:
             return {
                 "success": False,
                 "available": False,
                 "error": "Crypto text generation model not configured",
-                "text": ""
+                "text": "",
             }
-        
+
         try:
             spec = MODEL_SPECS[generation_key]
             pipeline = _registry.get_pipeline(generation_key)
-            
+
             # Generate text
-            result = pipeline(prompt, max_length=max_length, num_return_sequences=1, truncation=True)
-            
+            result = pipeline(
+                prompt, max_length=max_length, num_return_sequences=1, truncation=True
+            )
+
             if isinstance(result, list) and result:
                 result = result[0]
-            
+
             generated_text = result.get("generated_text", str(result))
-            
+
             return {
                 "success": True,
                 "available": True,
@@ -3224,9 +3281,9 @@ async def analyze_text(request: Dict[str, Any]):
                 "model": spec.model_id,
                 "mode": mode,
                 "prompt": prompt[:100],
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except ModelNotAvailable as e:
             logger.warning(f"Generation model not available: {e}")
             return {
@@ -3234,9 +3291,9 @@ async def analyze_text(request: Dict[str, Any]):
                 "available": False,
                 "error": f"Model not available: {str(e)}",
                 "text": "",
-                "note": "HF model unavailable - check model configuration"
+                "note": "HF model unavailable - check model configuration",
             }
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3248,7 +3305,7 @@ async def analyze_text(request: Dict[str, Any]):
 async def trading_decision(request: Dict[str, Any]):
     """
     Get trading decision from CryptoTrader-LM model.
-    
+
     Expects: { "symbol": "BTC", "context": "market context..." }
     Returns: {
         "decision": "BUY" | "SELL" | "HOLD",
@@ -3259,23 +3316,23 @@ async def trading_decision(request: Dict[str, Any]):
     """
     try:
         from ai_models import MODEL_SPECS, _registry, ModelNotAvailable
-        
+
         symbol = request.get("symbol", "").strip().upper()
         context = request.get("context", "").strip()
-        
+
         if not symbol:
             raise HTTPException(status_code=400, detail="Symbol is required")
-        
+
         # Find trading signal model (CryptoTrader-LM) - use specific key first
         trading_key = "crypto_trading_lm" if "crypto_trading_lm" in MODEL_SPECS else None
-        
+
         # Fallback: search by category or model name
         if not trading_key:
             for key, spec in MODEL_SPECS.items():
                 if spec.category == "trading_signal" or "cryptotrader" in spec.model_id.lower():
                     trading_key = key
                     break
-        
+
         if not trading_key:
             return {
                 "success": False,
@@ -3283,31 +3340,31 @@ async def trading_decision(request: Dict[str, Any]):
                 "error": "Trading signal model not configured",
                 "decision": "HOLD",
                 "confidence": 0.0,
-                "rationale": "Model not available"
+                "rationale": "Model not available",
             }
-        
+
         try:
             spec = MODEL_SPECS[trading_key]
             pipeline = _registry.get_pipeline(trading_key)
-            
+
             # Build prompt for trading model
             if context:
                 prompt = f"Trading analysis for {symbol}: {context}"
             else:
                 prompt = f"Trading signal for {symbol}"
-            
+
             # Generate trading signal
             result = pipeline(prompt, max_length=150, num_return_sequences=1, truncation=True)
-            
+
             if isinstance(result, list) and result:
                 result = result[0]
-            
+
             generated_text = result.get("generated_text", str(result))
-            
+
             # Parse decision from generated text
             decision = "HOLD"  # Default
             confidence = 0.5
-            
+
             text_lower = generated_text.lower()
             if "buy" in text_lower and "sell" not in text_lower:
                 decision = "BUY"
@@ -3318,10 +3375,12 @@ async def trading_decision(request: Dict[str, Any]):
             elif "hold" in text_lower:
                 decision = "HOLD"
                 confidence = 0.6
-            
+
             # Extract rationale (use generated text as rationale)
-            rationale = generated_text if len(generated_text) < 500 else generated_text[:497] + "..."
-            
+            rationale = (
+                generated_text if len(generated_text) < 500 else generated_text[:497] + "..."
+            )
+
             return {
                 "success": True,
                 "available": True,
@@ -3332,9 +3391,9 @@ async def trading_decision(request: Dict[str, Any]):
                 "model": spec.model_id,
                 "context_provided": bool(context),
                 "raw": result,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except ModelNotAvailable as e:
             logger.warning(f"Trading model not available: {e}")
             return {
@@ -3344,9 +3403,9 @@ async def trading_decision(request: Dict[str, Any]):
                 "decision": "HOLD",
                 "confidence": 0.0,
                 "rationale": "Trading model unavailable - check configuration",
-                "note": "HF model unavailable"
+                "note": "HF model unavailable",
             }
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3356,47 +3415,57 @@ async def trading_decision(request: Dict[str, Any]):
 
 @app.get("/api/models/data/generated")
 async def get_generated_data(
-    limit: int = 50,
-    model_key: Optional[str] = None,
-    symbol: Optional[str] = None
+    limit: int = 50, model_key: Optional[str] = None, symbol: Optional[str] = None
 ):
     """Get data generated by models from database"""
     try:
         conn = sqlite3.connect(str(DB_PATH))
         cursor = conn.cursor()
-        
+
         if model_key and symbol:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM sentiment_analysis 
                 WHERE analysis_type = ? AND symbol = ?
                 ORDER BY timestamp DESC 
                 LIMIT ?
-            """, (model_key, symbol.upper(), limit))
+            """,
+                (model_key, symbol.upper(), limit),
+            )
         elif model_key:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM sentiment_analysis 
                 WHERE analysis_type = ?
                 ORDER BY timestamp DESC 
                 LIMIT ?
-            """, (model_key, limit))
+            """,
+                (model_key, limit),
+            )
         elif symbol:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM sentiment_analysis 
                 WHERE symbol = ?
                 ORDER BY timestamp DESC 
                 LIMIT ?
-            """, (symbol.upper(), limit))
+            """,
+                (symbol.upper(), limit),
+            )
         else:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM sentiment_analysis 
                 ORDER BY timestamp DESC 
                 LIMIT ?
-            """, (limit,))
-        
+            """,
+                (limit,),
+            )
+
         rows = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
         conn.close()
-        
+
         results = []
         for row in rows:
             record = dict(zip(columns, row))
@@ -3406,15 +3475,15 @@ async def get_generated_data(
                 except:
                     pass
             results.append(record)
-        
+
         return {
             "success": True,
             "count": len(results),
             "data": results,
             "source": "models",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch generated data: {str(e)}")
 
@@ -3425,32 +3494,38 @@ async def get_models_data_stats():
     try:
         conn = sqlite3.connect(str(DB_PATH))
         cursor = conn.cursor()
-        
+
         cursor.execute("SELECT COUNT(*) FROM sentiment_analysis")
         total_analyses = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(DISTINCT symbol) FROM sentiment_analysis WHERE symbol IS NOT NULL")
+
+        cursor.execute(
+            "SELECT COUNT(DISTINCT symbol) FROM sentiment_analysis WHERE symbol IS NOT NULL"
+        )
         unique_symbols = cursor.fetchone()[0]
-        
+
         cursor.execute("SELECT COUNT(DISTINCT analysis_type) FROM sentiment_analysis")
         unique_types = cursor.fetchone()[0]
-        
-        cursor.execute("""
+
+        cursor.execute(
+            """
             SELECT sentiment_label, COUNT(*) as count 
             FROM sentiment_analysis 
             GROUP BY sentiment_label
-        """)
+        """
+        )
         sentiment_dist = {row[0]: row[1] for row in cursor.fetchall()}
-        
-        cursor.execute("""
+
+        cursor.execute(
+            """
             SELECT analysis_type, COUNT(*) as count 
             FROM sentiment_analysis 
             GROUP BY analysis_type
-        """)
+        """
+        )
         type_dist = {row[0]: row[1] for row in cursor.fetchall()}
-        
+
         conn.close()
-        
+
         return {
             "success": True,
             "statistics": {
@@ -3458,11 +3533,11 @@ async def get_models_data_stats():
                 "unique_symbols": unique_symbols,
                 "unique_model_types": unique_types,
                 "sentiment_distribution": sentiment_dist,
-                "model_type_distribution": type_dist
+                "model_type_distribution": type_dist,
             },
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch statistics: {str(e)}")
 
@@ -3472,60 +3547,66 @@ async def run_hf_sentiment(data: Dict[str, Any]):
     """Run sentiment analysis using HF models (compatible with UI)"""
     try:
         from ai_models import analyze_market_text, ModelNotAvailable
-        
+
         texts = data.get("texts", [])
         if isinstance(texts, str):
             texts = [texts]
-        
+
         if not texts or not any(t.strip() for t in texts):
             raise HTTPException(status_code=400, detail="At least one text is required")
-        
+
         try:
             all_results = []
             total_vote = 0.0
             count = 0
             models_available = False
-            
+
             for text in texts:
                 if not text.strip():
                     continue
-                
+
                 result = analyze_market_text(text.strip())
-                
+
                 # Check if models are available
                 if result.get("available", True):
                     models_available = True
-                
+
                 label = result.get("label", "neutral")
                 confidence = result.get("confidence", 0.5)
-                
+
                 vote_score = 0.0
                 if label == "bullish":
                     vote_score = confidence
                 elif label == "bearish":
                     vote_score = -confidence
-                
+
                 total_vote += vote_score
                 count += 1
-                
-                all_results.append({
-                    "text": text[:100],
-                    "label": label,
-                    "confidence": confidence,
-                    "vote": vote_score,
-                    "available": result.get("available", True)
-                })
-            
+
+                all_results.append(
+                    {
+                        "text": text[:100],
+                        "label": label,
+                        "confidence": confidence,
+                        "vote": vote_score,
+                        "available": result.get("available", True),
+                    }
+                )
+
             avg_vote = total_vote / count if count > 0 else 0.0
-            
+
             return {
                 "available": models_available,
                 "vote": avg_vote,
                 "results": all_results,
                 "count": count,
-                "average_confidence": sum(r["confidence"] for r in all_results) / len(all_results) if all_results else 0.0
+                "average_confidence": (
+                    sum(r["confidence"] for r in all_results) / len(all_results)
+                    if all_results
+                    else 0.0
+                ),
             }
-            
+
         except ModelNotAvailable as e:
             return {
                 "available": False,
@@ -3534,9 +3615,9 @@ async def run_hf_sentiment(data: Dict[str, Any]):
                 "count": 0,
                 "average_confidence": 0.0,
                 "error": str(e),
-                "reason": "model_unavailable"
+                "reason": "model_unavailable",
             }
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3544,6 +3625,7 @@ async def run_hf_sentiment(data: Dict[str, Any]):
 
 
 # ==================== NEW MODEL ENDPOINTS ====================
+
 
 @app.post("/api/models/{model_key}/predict")
 async def model_predict(model_key: str, request: Request):
@@ -3555,50 +3637,64 @@ async def model_predict(model_key: str, request: Request):
         from ai_models import call_model_safe, MODEL_SPECS
         import uuid
         from datetime import datetime, timedelta
-        
+
         body = await request.json()
         text = body.get("text", "")
         symbol = body.get("symbol", "UNKNOWN")
-        
+
         if not text:
             raise HTTPException(status_code=400, detail="Missing 'text' field in request body")
-        
+
         if model_key not in MODEL_SPECS:
             raise HTTPException(status_code=404, detail=f"Model '{model_key}' not found")
-        
+
         # Call model
         result = call_model_safe(model_key, text)
-        
+
         if result["status"] == "success":
             # Save to database
             output_id = str(uuid.uuid4())
             db = get_database()
-            db.save_model_output({
-                "id": output_id,
-                "symbol": symbol,
-                "model_key": model_key,
-                "prediction_type": MODEL_SPECS[model_key].task,
-                "confidence_score": result.get("data", [{}])[0].get("score", 0.5) if isinstance(result.get("data"), list) else 0.5,
-                "prediction_data": result.get("data", {}),
-                "explanation": {},
-                "metadata": {"text_length": len(text)},
-                "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat()
-            })
-            
+            db.save_model_output(
+                {
+                    "id": output_id,
+                    "symbol": symbol,
+                    "model_key": model_key,
+                    "prediction_type": MODEL_SPECS[model_key].task,
+                    "confidence_score": (
+                        result.get("data", [{}])[0].get("score", 0.5)
+                        if isinstance(result.get("data"), list)
+                        else 0.5
+                    ),
+                    "prediction_data": result.get("data", {}),
+                    "explanation": {},
+                    "metadata": {"text_length": len(text)},
+                    "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
+                }
+            )
+
             return {
                 "id": output_id,
                 "symbol": symbol,
                 "model": model_key,
                 "model_id": MODEL_SPECS[model_key].model_id,
-                "type": result.get("data", [{}])[0].get("label", "unknown") if isinstance(result.get("data"), list) else "unknown",
-                "confidence": result.get("data", [{}])[0].get("score", 0.5) if isinstance(result.get("data"), list) else 0.5,
+                "type": (
+                    result.get("data", [{}])[0].get("label", "unknown")
+                    if isinstance(result.get("data"), list)
+                    else "unknown"
+                ),
+                "confidence": (
+                    result.get("data", [{}])[0].get("score", 0.5)
+                    if isinstance(result.get("data"), list)
+                    else 0.5
+                ),
                 "data": result.get("data", {}),
                 "meta": {
                     "source": "hf-model",
                     "model_key": model_key,
                     "status": result["status"],
-                    "generated_at": datetime.utcnow().isoformat()
-                }
+                    "generated_at": datetime.utcnow().isoformat(),
+                },
             }
         else:
             return {
@@ -3607,13 +3703,9 @@ async def model_predict(model_key: str, request: Request):
                 "model": model_key,
                 "error": result.get("error", "Model unavailable"),
                 "status": result["status"],
-                "meta": {
-                    "source": "hf-model",
-                    "model_key": model_key,
-                    "status": result["status"]
-                }
+                "meta": {"source": "hf-model", "model_key": model_key, "status": result["status"]},
             }
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3627,41 +3719,41 @@ async def batch_predict(request: Request):
         from ai_models import call_model_safe, MODEL_SPECS
         import uuid
         from datetime import datetime
-        
+
         body = await request.json()
         items = body.get("items", [])
         model_key = body.get("model_key", "crypto_sent_0")
-        
+
         if not items:
             raise HTTPException(status_code=400, detail="Missing 'items' array in request body")
-        
+
         if model_key not in MODEL_SPECS:
             raise HTTPException(status_code=404, detail=f"Model '{model_key}' not found")
-        
+
         results = []
         for item in items[:100]:  # Limit to 100 items
             text = item.get("text", "")
             symbol = item.get("symbol", "UNKNOWN")
-            
+
             if text:
                 result = call_model_safe(model_key, text)
-                results.append({
-                    "symbol": symbol,
-                    "status": result["status"],
-                    "data": result.get("data", {}),
-                    "error": result.get("error")
-                })
-        
+                results.append(
+                    {
+                        "symbol": symbol,
+                        "status": result["status"],
+                        "data": result.get("data", {}),
+                        "error": result.get("error"),
+                    }
+                )
+
         return {
             "model_key": model_key,
             "total_items": len(items),
             "processed": len(results),
             "results": results,
-            "meta": {
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            "meta": {"timestamp": datetime.utcnow().isoformat()},
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3673,18 +3765,18 @@ async def detect_gaps(request: Request):
     """Detect missing/incomplete data in provided dataset"""
     try:
         from services.gap_filler import GapFillerService
-        
+
         body = await request.json()
         data = body.get("data", {})
         required_fields = body.get("required_fields", [])
         context = body.get("context", {})
-        
+
         if not data:
             raise HTTPException(status_code=400, detail="Missing 'data' field in request body")
-        
+
         gap_filler = GapFillerService()
         gaps = await gap_filler.detect_gaps(data, required_fields, context)
-        
+
         return {
             "status": "success",
             "gaps_detected": len(gaps),
@@ -3692,10 +3784,10 @@ async def detect_gaps(request: Request):
             "data_summary": {
                 "fields_present": list(data.keys()),
                 "fields_required": required_fields,
-                "fields_missing": [f for f in required_fields if f not in data]
-            }
+                "fields_missing": [f for f in required_fields if f not in data],
+            },
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3711,45 +3803,46 @@ async def fill_gaps(request: Request):
         from provider_manager import ProviderManager
         import uuid
         from datetime import datetime
-        
+
         body = await request.json()
         data = body.get("data", {})
         required_fields = body.get("required_fields", [])
         context = body.get("context", {})
-        
+
         if not data:
             raise HTTPException(status_code=400, detail="Missing 'data' field in request body")
-        
+
         # Initialize services
         provider_manager = ProviderManager()
-        gap_filler = GapFillerService(
-            model_registry=_registry,
-            provider_manager=provider_manager
-        )
-        
+        gap_filler = GapFillerService(model_registry=_registry, provider_manager=provider_manager)
+
         # Fill all gaps
         result = await gap_filler.fill_all_gaps(data, required_fields, context)
-        
+
         # Save audit log
         db = get_database()
         for fill_result in result.get("fill_results", []):
             if fill_result.get("filled"):
-                db.save_gap_fill_audit({
-                    "id": str(uuid.uuid4()),
-                    "request_id": str(uuid.uuid4()),
-                    "gap_type": fill_result["gap"].get("gap_type"),
-                    "strategy_used": fill_result.get("strategy_used"),
-                    "success": fill_result.get("filled"),
-                    "confidence": fill_result.get("confidence"),
-                    "execution_time_ms": fill_result.get("execution_time_ms"),
-                    "models_attempted": [a.get("method") for a in fill_result.get("attempts", [])],
-                    "providers_attempted": [],
-                    "filled_fields": [fill_result["gap"].get("field")],
-                    "metadata": {"timestamp": datetime.utcnow().isoformat()}
-                })
-        
+                db.save_gap_fill_audit(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "request_id": str(uuid.uuid4()),
+                        "gap_type": fill_result["gap"].get("gap_type"),
+                        "strategy_used": fill_result.get("strategy_used"),
+                        "success": fill_result.get("filled"),
+                        "confidence": fill_result.get("confidence"),
+                        "execution_time_ms": fill_result.get("execution_time_ms"),
+                        "models_attempted": [
+                            a.get("method") for a in fill_result.get("attempts", [])
+                        ],
+                        "providers_attempted": [],
+                        "filled_fields": [fill_result["gap"].get("field")],
+                        "metadata": {"timestamp": datetime.utcnow().isoformat()},
+                    }
+                )
+
         return result
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3761,7 +3854,7 @@ async def list_models():
     """List all available AI models with their capabilities"""
     try:
         from ai_models import MODEL_SPECS, _registry
-        
+
         models = []
         for key, spec in MODEL_SPECS.items():
             model_info = {
@@ -3772,17 +3865,21 @@ async def list_models():
                 "requires_auth": spec.requires_auth,
                 "loaded": key in _registry._pipelines,
                 "failed": key in _registry._failed_models,
-                "status": "loaded" if key in _registry._pipelines else ("failed" if key in _registry._failed_models else "not_loaded")
+                "status": (
+                    "loaded"
+                    if key in _registry._pipelines
+                    else ("failed" if key in _registry._failed_models else "not_loaded")
+                ),
             }
             models.append(model_info)
-        
+
         return {
             "total": len(models),
             "loaded": sum(1 for m in models if m["loaded"]),
             "failed": sum(1 for m in models if m["failed"]),
-            "models": models
+            "models": models,
         }
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list models: {str(e)}")
 
@@ -3792,20 +3889,20 @@ async def model_info(model_key: str):
     """Get detailed information about a specific model"""
     try:
         from ai_models import MODEL_SPECS, _registry, get_model_health_registry
-        
+
         if model_key not in MODEL_SPECS:
             raise HTTPException(status_code=404, detail=f"Model '{model_key}' not found")
-        
+
         spec = MODEL_SPECS[model_key]
-        
+
         # Get health info
         health_registry = get_model_health_registry()
         health_info = next((h for h in health_registry if h["key"] == model_key), None)
-        
+
         # Get usage statistics from database
         db = get_database()
         recent_outputs = db.get_model_outputs(model_key=model_key, limit=10)
-        
+
         return {
             "key": model_key,
             "name": spec.model_id,
@@ -3815,9 +3912,9 @@ async def model_info(model_key: str):
             "loaded": key in _registry._pipelines,
             "health": health_info,
             "recent_predictions": len(recent_outputs),
-            "recent_outputs": recent_outputs[:5]  # Return last 5
+            "recent_outputs": recent_outputs[:5],  # Return last 5
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -3830,58 +3927,60 @@ async def gap_fill_statistics():
     try:
         db = get_database()
         stats = db.get_gap_fill_statistics()
-        
-        return {
-            "status": "success",
-            "statistics": stats
-        }
-    
+
+        return {"status": "success", "statistics": stats}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get statistics: {str(e)}")
 
 
 # ==================== WEBSOCKET SUPPORT ====================
 
+
 class WebSocketManager:
     """Manages WebSocket connections for real-time model updates"""
-    
+
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
         self.subscriptions: Dict[str, set] = {}
-    
+
     async def connect(self, websocket: WebSocket, client_id: str):
         """Connect a new WebSocket client"""
         await websocket.accept()
         self.active_connections[client_id] = websocket
         self.subscriptions[client_id] = set()
-        logger.info(f"WebSocket client {client_id} connected. Total: {len(self.active_connections)}")
-    
+        logger.info(
+            f"WebSocket client {client_id} connected. Total: {len(self.active_connections)}"
+        )
+
     async def disconnect(self, client_id: str):
         """Disconnect a WebSocket client"""
         if client_id in self.active_connections:
             del self.active_connections[client_id]
         if client_id in self.subscriptions:
             del self.subscriptions[client_id]
-        logger.info(f"WebSocket client {client_id} disconnected. Total: {len(self.active_connections)}")
-    
+        logger.info(
+            f"WebSocket client {client_id} disconnected. Total: {len(self.active_connections)}"
+        )
+
     async def subscribe_to_models(self, client_id: str, model_keys: List[str]):
         """Subscribe to specific model outputs"""
         if client_id in self.subscriptions:
             self.subscriptions[client_id].update(f"model.{key}" for key in model_keys)
             logger.debug(f"Client {client_id} subscribed to models: {model_keys}")
-    
+
     async def subscribe_to_symbols(self, client_id: str, symbols: List[str]):
         """Subscribe to updates for specific symbols"""
         if client_id in self.subscriptions:
             self.subscriptions[client_id].update(f"symbol.{sym}" for sym in symbols)
             logger.debug(f"Client {client_id} subscribed to symbols: {symbols}")
-    
+
     async def subscribe_to_gap_fills(self, client_id: str):
         """Subscribe to gap filling events"""
         if client_id in self.subscriptions:
             self.subscriptions[client_id].add("gap_fills")
             logger.debug(f"Client {client_id} subscribed to gap fills")
-    
+
     async def broadcast_model_output(self, model_key: str, symbol: str, output: dict):
         """Broadcast when a model generates new output"""
         message = {
@@ -3890,15 +3989,15 @@ class WebSocketManager:
             "symbol": symbol,
             "model_key": model_key,
             "data": output,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
-        
+
         # Send to subscribers of this model
         await self._broadcast_to_channel(f"model.{model_key}", message)
-        
+
         # Send to subscribers of this symbol
         await self._broadcast_to_channel(f"symbol.{symbol}", message)
-    
+
     async def broadcast_gap_fill_event(self, gap_type: str, result: dict):
         """Broadcast gap filling event"""
         message = {
@@ -3906,11 +4005,11 @@ class WebSocketManager:
             "channel": "gap_fills",
             "gap_type": gap_type,
             "data": result,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
-        
+
         await self._broadcast_to_channel("gap_fills", message)
-    
+
     async def broadcast_provider_status(self, provider_id: str, status: dict):
         """Broadcast provider status change"""
         message = {
@@ -3918,15 +4017,15 @@ class WebSocketManager:
             "channel": f"provider.{provider_id}",
             "provider_id": provider_id,
             "data": status,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
-        
+
         await self._broadcast_to_channel(f"provider.{provider_id}", message)
-    
+
     async def _broadcast_to_channel(self, channel: str, message: dict):
         """Send message to all clients subscribed to a channel"""
         disconnected = []
-        
+
         for client_id, channels in self.subscriptions.items():
             if channel in channels:
                 if client_id in self.active_connections:
@@ -3936,11 +4035,11 @@ class WebSocketManager:
                     except Exception as e:
                         logger.warning(f"Failed to send to client {client_id}: {e}")
                         disconnected.append(client_id)
-        
+
         # Clean up disconnected clients
         for client_id in disconnected:
             await self.disconnect(client_id)
-    
+
     async def send_to_client(self, client_id: str, message: dict):
         """Send message to a specific client"""
         if client_id in self.active_connections:
@@ -3950,19 +4049,16 @@ class WebSocketManager:
             except Exception as e:
                 logger.warning(f"Failed to send to client {client_id}: {e}")
                 await self.disconnect(client_id)
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get WebSocket manager statistics"""
         return {
             "active_connections": len(self.active_connections),
             "total_subscriptions": sum(len(subs) for subs in self.subscriptions.values()),
             "clients": [
-                {
-                    "client_id": client_id,
-                    "subscriptions": list(subs)
-                }
+                {"client_id": client_id, "subscriptions": list(subs)}
                 for client_id, subs in self.subscriptions.items()
-            ]
+            ],
         }
 
 
@@ -3974,7 +4070,7 @@ ws_manager = WebSocketManager()
 async def websocket_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for real-time updates
-    
+
     Message format:
     {
         "action": "subscribe_models" | "subscribe_symbols" | "subscribe_gap_fills" | "unsubscribe",
@@ -3983,89 +4079,81 @@ async def websocket_endpoint(websocket: WebSocket):
     }
     """
     import uuid
+
     client_id = str(uuid.uuid4())
-    
+
     await ws_manager.connect(websocket, client_id)
-    
+
     try:
         # Send welcome message
-        await websocket.send_json({
-            "type": "connected",
-            "client_id": client_id,
-            "message": "Connected to Crypto Data API WebSocket",
-            "timestamp": datetime.utcnow().isoformat()
-        })
-        
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "client_id": client_id,
+                "message": "Connected to Crypto Data API WebSocket",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        )
+
         while True:
             # Receive message from client
             data = await websocket.receive_text()
-            
+
             try:
                 message = json.loads(data)
             except json.JSONDecodeError:
-                await websocket.send_json({
-                    "type": "error",
-                    "error": "Invalid JSON"
-                })
+                await websocket.send_json({"type": "error", "error": "Invalid JSON"})
                 continue
-            
+
             action = message.get("action")
-            
+
             if action == "subscribe_models":
                 model_keys = message.get("model_keys", [])
                 await ws_manager.subscribe_to_models(client_id, model_keys)
-                await websocket.send_json({
-                    "type": "subscribed",
-                    "action": "subscribe_models",
-                    "model_keys": model_keys,
-                    "status": "success"
-                })
-            
+                await websocket.send_json(
+                    {
+                        "type": "subscribed",
+                        "action": "subscribe_models",
+                        "model_keys": model_keys,
+                        "status": "success",
+                    }
+                )
+
             elif action == "subscribe_symbols":
                 symbols = message.get("symbols", [])
                 await ws_manager.subscribe_to_symbols(client_id, symbols)
-                await websocket.send_json({
-                    "type": "subscribed",
-                    "action": "subscribe_symbols",
-                    "symbols": symbols,
-                    "status": "success"
-                })
-            
+                await websocket.send_json(
+                    {
+                        "type": "subscribed",
+                        "action": "subscribe_symbols",
+                        "symbols": symbols,
+                        "status": "success",
+                    }
+                )
+
             elif action == "subscribe_gap_fills":
                 await ws_manager.subscribe_to_gap_fills(client_id)
-                await websocket.send_json({
-                    "type": "subscribed",
-                    "action": "subscribe_gap_fills",
-                    "status": "success"
-                })
-            
+                await websocket.send_json(
+                    {"type": "subscribed", "action": "subscribe_gap_fills", "status": "success"}
+                )
+
             elif action == "unsubscribe":
                 await ws_manager.disconnect(client_id)
-                await websocket.send_json({
-                    "type": "unsubscribed",
-                    "status": "success"
-                })
+                await websocket.send_json({"type": "unsubscribed", "status": "success"})
                 break
-            
+
             elif action == "ping":
-                await websocket.send_json({
-                    "type": "pong",
-                    "timestamp": datetime.utcnow().isoformat()
-                })
-            
+                await websocket.send_json(
+                    {"type": "pong", "timestamp": datetime.utcnow().isoformat()}
+                )
+
             elif action == "get_stats":
                 stats = ws_manager.get_stats()
-                await websocket.send_json({
-                    "type": "stats",
-                    "data": stats
-                })
-            
+                await websocket.send_json({"type": "stats", "data": stats})
+
             else:
-                await websocket.send_json({
-                    "type": "error",
-                    "error": f"Unknown action: {action}"
-                })
-    
+                await websocket.send_json({"type": "error", "error": f"Unknown action: {action}"})
+
     except WebSocketDisconnect:
         await ws_manager.disconnect(client_id)
     except Exception as e:
@@ -4082,5 +4170,6 @@ async def websocket_stats():
 # ===== Main Entry Point =====
 if __name__ == "__main__":
     import uvicorn
+
     print(f"Starting Crypto Monitor Admin Server on port {PORT}")
     uvicorn.run(app, host="0.0.0.0", port=PORT, log_level="info")

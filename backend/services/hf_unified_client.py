@@ -36,17 +36,13 @@ class HuggingFaceUnifiedClient:
     def __init__(self):
         """Initialize HuggingFace client with config"""
         self.base_url = os.getenv(
-            "HF_SPACE_BASE_URL",
-            "https://really-amin-datasourceforcryptocurrency.hf.space"
+            "HF_SPACE_BASE_URL", "https://really-amin-datasourceforcryptocurrency.hf.space"
         )
         self.api_token = os.getenv("HF_API_TOKEN", "")
         self.timeout = httpx.Timeout(30.0, connect=10.0)
 
         # Request headers
-        self.headers = {
-            "Content-Type": "application/json",
-            "User-Agent": "CryptoDataHub/1.0"
-        }
+        self.headers = {"Content-Type": "application/json", "User-Agent": "CryptoDataHub/1.0"}
 
         # Add auth token if available
         if self.api_token:
@@ -55,10 +51,10 @@ class HuggingFaceUnifiedClient:
         # Cache configuration
         self.cache = {}
         self.cache_ttl = {
-            "market": 30,      # 30 seconds
-            "ohlcv": 60,       # 1 minute
-            "news": 300,       # 5 minutes
-            "sentiment": 0,    # No cache for sentiment
+            "market": 30,  # 30 seconds
+            "ohlcv": 60,  # 1 minute
+            "news": 300,  # 5 minutes
+            "sentiment": 0,  # No cache for sentiment
             "blockchain": 60,  # 1 minute
         }
 
@@ -107,7 +103,7 @@ class HuggingFaceUnifiedClient:
         params: Optional[Dict] = None,
         json_body: Optional[Dict] = None,
         cache_type: Optional[str] = None,
-        retry: int = 3
+        retry: int = 3,
     ) -> Dict[str, Any]:
         """
         Make HTTP request to HuggingFace Space
@@ -156,12 +152,16 @@ class HuggingFaceUnifiedClient:
                         cache_key = self._get_cache_key(endpoint, params)
                         self._set_cache(cache_key, data, cache_type)
 
-                    logger.info(f"✅ HF Request: {method} {endpoint} (attempt {attempt + 1}/{retry})")
+                    logger.info(
+                        f"✅ HF Request: {method} {endpoint} (attempt {attempt + 1}/{retry})"
+                    )
                     return data
 
             except httpx.HTTPStatusError as e:
                 last_error = e
-                logger.warning(f"❌ HF Request failed (attempt {attempt + 1}/{retry}): {e.response.status_code} - {e.response.text}")
+                logger.warning(
+                    f"❌ HF Request failed (attempt {attempt + 1}/{retry}): {e.response.status_code} - {e.response.text}"
+                )
                 if attempt < retry - 1:
                     await asyncio.sleep(1 * (attempt + 1))  # Exponential backoff
             except Exception as e:
@@ -178,9 +178,7 @@ class HuggingFaceUnifiedClient:
     # =========================================================================
 
     async def get_market_prices(
-        self,
-        symbols: Optional[List[str]] = None,
-        limit: int = 100
+        self, symbols: Optional[List[str]] = None, limit: int = 100
     ) -> Dict[str, Any]:
         """
         دریافت قیمت‌های بازار از HuggingFace
@@ -214,18 +212,10 @@ class HuggingFaceUnifiedClient:
         if symbols:
             params["symbols"] = ",".join(symbols)
 
-        return await self._request(
-            "GET",
-            "/api/market",
-            params=params,
-            cache_type="market"
-        )
+        return await self._request("GET", "/api/market", params=params, cache_type="market")
 
     async def get_market_history(
-        self,
-        symbol: str,
-        timeframe: str = "1h",
-        limit: int = 1000
+        self, symbol: str, timeframe: str = "1h", limit: int = 1000
     ) -> Dict[str, Any]:
         """
         دریافت داده‌های تاریخی OHLCV از HuggingFace
@@ -255,18 +245,9 @@ class HuggingFaceUnifiedClient:
                 "timestamp": 1234567890000
             }
         """
-        params = {
-            "symbol": symbol,
-            "timeframe": timeframe,
-            "limit": limit
-        }
+        params = {"symbol": symbol, "timeframe": timeframe, "limit": limit}
 
-        return await self._request(
-            "GET",
-            "/api/market/history",
-            params=params,
-            cache_type="ohlcv"
-        )
+        return await self._request("GET", "/api/market/history", params=params, cache_type="ohlcv")
 
     # =========================================================================
     # Sentiment Analysis Methods
@@ -302,18 +283,14 @@ class HuggingFaceUnifiedClient:
             "POST",
             "/api/sentiment/analyze",
             json_body=json_body,
-            cache_type=None  # No cache for sentiment
+            cache_type=None,  # No cache for sentiment
         )
 
     # =========================================================================
     # News Methods (از HuggingFace Space)
     # =========================================================================
 
-    async def get_news(
-        self,
-        limit: int = 20,
-        source: Optional[str] = None
-    ) -> Dict[str, Any]:
+    async def get_news(self, limit: int = 20, source: Optional[str] = None) -> Dict[str, Any]:
         """
         دریافت اخبار رمز ارز از HuggingFace
 
@@ -345,12 +322,7 @@ class HuggingFaceUnifiedClient:
         if source:
             params["source"] = source
 
-        return await self._request(
-            "GET",
-            "/api/news",
-            params=params,
-            cache_type="news"
-        )
+        return await self._request("GET", "/api/news", params=params, cache_type="news")
 
     # =========================================================================
     # Blockchain Explorer Methods (از HuggingFace Space)
@@ -381,16 +353,11 @@ class HuggingFaceUnifiedClient:
         params = {"chain": chain}
 
         return await self._request(
-            "GET",
-            "/api/crypto/blockchain/gas",
-            params=params,
-            cache_type="blockchain"
+            "GET", "/api/crypto/blockchain/gas", params=params, cache_type="blockchain"
         )
 
     async def get_blockchain_stats(
-        self,
-        chain: str = "ethereum",
-        hours: int = 24
+        self, chain: str = "ethereum", hours: int = 24
     ) -> Dict[str, Any]:
         """
         دریافت آمار بلاکچین از HuggingFace
@@ -414,10 +381,7 @@ class HuggingFaceUnifiedClient:
         params = {"chain": chain, "hours": hours}
 
         return await self._request(
-            "GET",
-            "/api/crypto/blockchain/stats",
-            params=params,
-            cache_type="blockchain"
+            "GET", "/api/crypto/blockchain/stats", params=params, cache_type="blockchain"
         )
 
     # =========================================================================
@@ -425,28 +389,19 @@ class HuggingFaceUnifiedClient:
     # =========================================================================
 
     async def get_whale_transactions(
-        self,
-        limit: int = 50,
-        chain: Optional[str] = None,
-        min_amount_usd: float = 100000
+        self, limit: int = 50, chain: Optional[str] = None, min_amount_usd: float = 100000
     ) -> Dict[str, Any]:
         """
         دریافت تراکنش‌های نهنگ‌ها از HuggingFace
 
         Endpoint: GET /api/crypto/whales/transactions
         """
-        params = {
-            "limit": limit,
-            "min_amount_usd": min_amount_usd
-        }
+        params = {"limit": limit, "min_amount_usd": min_amount_usd}
         if chain:
             params["chain"] = chain
 
         return await self._request(
-            "GET",
-            "/api/crypto/whales/transactions",
-            params=params,
-            cache_type="market"
+            "GET", "/api/crypto/whales/transactions", params=params, cache_type="market"
         )
 
     async def get_whale_stats(self, hours: int = 24) -> Dict[str, Any]:
@@ -458,10 +413,7 @@ class HuggingFaceUnifiedClient:
         params = {"hours": hours}
 
         return await self._request(
-            "GET",
-            "/api/crypto/whales/stats",
-            params=params,
-            cache_type="market"
+            "GET", "/api/crypto/whales/stats", params=params, cache_type="market"
         )
 
     # =========================================================================
@@ -493,11 +445,7 @@ class HuggingFaceUnifiedClient:
                 "source": "hf_engine"
             }
         """
-        return await self._request(
-            "GET",
-            "/api/health",
-            cache_type=None
-        )
+        return await self._request("GET", "/api/health", cache_type=None)
 
     async def get_system_status(self) -> Dict[str, Any]:
         """
@@ -505,11 +453,7 @@ class HuggingFaceUnifiedClient:
 
         Endpoint: GET /api/status
         """
-        return await self._request(
-            "GET",
-            "/api/status",
-            cache_type=None
-        )
+        return await self._request("GET", "/api/status", cache_type=None)
 
 
 # Global singleton instance

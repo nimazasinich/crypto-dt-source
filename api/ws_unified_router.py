@@ -25,6 +25,7 @@ router = APIRouter()
 # Master WebSocket Endpoint
 # ============================================================================
 
+
 @router.websocket("/ws/master")
 async def websocket_master_endpoint(websocket: WebSocket):
     """
@@ -61,44 +62,40 @@ async def websocket_master_endpoint(websocket: WebSocket):
     connection = await ws_manager.connect(websocket)
 
     # Send welcome message with all available services
-    await connection.send_message({
-        "service": "system",
-        "type": "welcome",
-        "data": {
-            "message": "Connected to master WebSocket endpoint",
-            "available_services": {
-                "data_collection": [
-                    ServiceType.MARKET_DATA.value,
-                    ServiceType.EXPLORERS.value,
-                    ServiceType.NEWS.value,
-                    ServiceType.SENTIMENT.value,
-                    ServiceType.WHALE_TRACKING.value,
-                    ServiceType.RPC_NODES.value,
-                    ServiceType.ONCHAIN.value
-                ],
-                "monitoring": [
-                    ServiceType.HEALTH_CHECKER.value,
-                    ServiceType.POOL_MANAGER.value,
-                    ServiceType.SCHEDULER.value
-                ],
-                "integration": [
-                    ServiceType.HUGGINGFACE.value,
-                    ServiceType.PERSISTENCE.value
-                ],
-                "system": [
-                    ServiceType.SYSTEM.value,
-                    ServiceType.ALL.value
-                ]
+    await connection.send_message(
+        {
+            "service": "system",
+            "type": "welcome",
+            "data": {
+                "message": "Connected to master WebSocket endpoint",
+                "available_services": {
+                    "data_collection": [
+                        ServiceType.MARKET_DATA.value,
+                        ServiceType.EXPLORERS.value,
+                        ServiceType.NEWS.value,
+                        ServiceType.SENTIMENT.value,
+                        ServiceType.WHALE_TRACKING.value,
+                        ServiceType.RPC_NODES.value,
+                        ServiceType.ONCHAIN.value,
+                    ],
+                    "monitoring": [
+                        ServiceType.HEALTH_CHECKER.value,
+                        ServiceType.POOL_MANAGER.value,
+                        ServiceType.SCHEDULER.value,
+                    ],
+                    "integration": [ServiceType.HUGGINGFACE.value, ServiceType.PERSISTENCE.value],
+                    "system": [ServiceType.SYSTEM.value, ServiceType.ALL.value],
+                },
+                "usage": {
+                    "subscribe": {"action": "subscribe", "service": "service_name"},
+                    "unsubscribe": {"action": "unsubscribe", "service": "service_name"},
+                    "get_status": {"action": "get_status"},
+                    "ping": {"action": "ping"},
+                },
             },
-            "usage": {
-                "subscribe": {"action": "subscribe", "service": "service_name"},
-                "unsubscribe": {"action": "unsubscribe", "service": "service_name"},
-                "get_status": {"action": "get_status"},
-                "ping": {"action": "ping"}
-            }
-        },
-        "timestamp": datetime.utcnow().isoformat()
-    })
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    )
 
     try:
         while True:
@@ -126,15 +123,17 @@ async def websocket_all_services(websocket: WebSocket):
     connection = await ws_manager.connect(websocket)
     connection.subscribe(ServiceType.ALL)
 
-    await connection.send_message({
-        "service": "system",
-        "type": "auto_subscribed",
-        "data": {
-            "message": "Automatically subscribed to all services",
-            "subscription": ServiceType.ALL.value
-        },
-        "timestamp": datetime.utcnow().isoformat()
-    })
+    await connection.send_message(
+        {
+            "service": "system",
+            "type": "auto_subscribed",
+            "data": {
+                "message": "Automatically subscribed to all services",
+                "subscription": ServiceType.ALL.value,
+            },
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    )
 
     try:
         while True:
@@ -160,16 +159,18 @@ async def websocket_default_endpoint(websocket: WebSocket):
     """
     connection = await ws_manager.connect(websocket)
 
-    await connection.send_message({
-        "service": "system",
-        "type": "welcome",
-        "data": {
-            "message": "Connected to default WebSocket endpoint",
-            "hint": "Send subscription messages to receive updates",
-            "example": {"action": "subscribe", "service": "market_data"}
-        },
-        "timestamp": datetime.utcnow().isoformat()
-    })
+    await connection.send_message(
+        {
+            "service": "system",
+            "type": "welcome",
+            "data": {
+                "message": "Connected to default WebSocket endpoint",
+                "hint": "Send subscription messages to receive updates",
+                "example": {"action": "subscribe", "service": "market_data"},
+            },
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    )
 
     try:
         while True:
@@ -188,6 +189,7 @@ async def websocket_default_endpoint(websocket: WebSocket):
 # REST API Endpoints for WebSocket Management
 # ============================================================================
 
+
 @router.get("/ws/stats")
 async def get_websocket_stats():
     """
@@ -196,11 +198,7 @@ async def get_websocket_stats():
     Returns information about active connections, subscriptions, and services.
     """
     stats = ws_manager.get_stats()
-    return {
-        "status": "success",
-        "data": stats,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return {"status": "success", "data": stats, "timestamp": datetime.utcnow().isoformat()}
 
 
 @router.get("/ws/services")
@@ -219,94 +217,94 @@ async def get_available_services():
                         "name": "Market Data",
                         "description": "Real-time cryptocurrency prices, volumes, and market caps",
                         "update_interval": "5 seconds",
-                        "endpoints": ["/ws/data", "/ws/market_data"]
+                        "endpoints": ["/ws/data", "/ws/market_data"],
                     },
                     "explorers": {
                         "name": "Blockchain Explorers",
                         "description": "Blockchain data, transactions, and network stats",
                         "update_interval": "10 seconds",
-                        "endpoints": ["/ws/data"]
+                        "endpoints": ["/ws/data"],
                     },
                     "news": {
                         "name": "News Aggregation",
                         "description": "Cryptocurrency news from multiple sources",
                         "update_interval": "60 seconds",
-                        "endpoints": ["/ws/data", "/ws/news"]
+                        "endpoints": ["/ws/data", "/ws/news"],
                     },
                     "sentiment": {
                         "name": "Sentiment Analysis",
                         "description": "Market sentiment and social media trends",
                         "update_interval": "30 seconds",
-                        "endpoints": ["/ws/data", "/ws/sentiment"]
+                        "endpoints": ["/ws/data", "/ws/sentiment"],
                     },
                     "whale_tracking": {
                         "name": "Whale Tracking",
                         "description": "Large transaction monitoring and whale wallet tracking",
                         "update_interval": "15 seconds",
-                        "endpoints": ["/ws/data", "/ws/whale_tracking"]
+                        "endpoints": ["/ws/data", "/ws/whale_tracking"],
                     },
                     "rpc_nodes": {
                         "name": "RPC Nodes",
                         "description": "Blockchain RPC node status and events",
                         "update_interval": "20 seconds",
-                        "endpoints": ["/ws/data"]
+                        "endpoints": ["/ws/data"],
                     },
                     "onchain": {
                         "name": "On-Chain Analytics",
                         "description": "On-chain metrics and smart contract events",
                         "update_interval": "30 seconds",
-                        "endpoints": ["/ws/data"]
-                    }
+                        "endpoints": ["/ws/data"],
+                    },
                 },
                 "monitoring": {
                     "health_checker": {
                         "name": "Health Monitoring",
                         "description": "Provider health checks and system status",
                         "update_interval": "30 seconds",
-                        "endpoints": ["/ws/monitoring", "/ws/health"]
+                        "endpoints": ["/ws/monitoring", "/ws/health"],
                     },
                     "pool_manager": {
                         "name": "Pool Management",
                         "description": "Source pool status and failover events",
                         "update_interval": "20 seconds",
-                        "endpoints": ["/ws/monitoring", "/ws/pool_status"]
+                        "endpoints": ["/ws/monitoring", "/ws/pool_status"],
                     },
                     "scheduler": {
                         "name": "Task Scheduler",
                         "description": "Scheduled task execution and status",
                         "update_interval": "15 seconds",
-                        "endpoints": ["/ws/monitoring", "/ws/scheduler_status"]
-                    }
+                        "endpoints": ["/ws/monitoring", "/ws/scheduler_status"],
+                    },
                 },
                 "integration": {
                     "huggingface": {
                         "name": "HuggingFace AI",
                         "description": "AI model registry and sentiment analysis",
                         "update_interval": "60 seconds",
-                        "endpoints": ["/ws/integration", "/ws/huggingface", "/ws/ai"]
+                        "endpoints": ["/ws/integration", "/ws/huggingface", "/ws/ai"],
                     },
                     "persistence": {
                         "name": "Data Persistence",
                         "description": "Data storage, exports, and backups",
                         "update_interval": "30 seconds",
-                        "endpoints": ["/ws/integration", "/ws/persistence"]
-                    }
+                        "endpoints": ["/ws/integration", "/ws/persistence"],
+                    },
                 },
                 "system": {
                     "all": {
                         "name": "All Services",
                         "description": "Subscribe to all available services",
-                        "endpoints": ["/ws/all"]
+                        "endpoints": ["/ws/all"],
                     }
-                }
+                },
             },
             "master_endpoints": {
                 "/ws": "Default endpoint with subscription management",
                 "/ws/master": "Master endpoint with all service access",
-                "/ws/all": "Auto-subscribe to all services"
-            }
+                "/ws/all": "Auto-subscribe to all services",
+            },
         },
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -323,35 +321,36 @@ async def get_websocket_endpoints():
             "master_endpoints": {
                 "/ws": "Default WebSocket endpoint",
                 "/ws/master": "Master endpoint with all services",
-                "/ws/all": "Auto-subscribe to all services"
+                "/ws/all": "Auto-subscribe to all services",
             },
             "data_collection_endpoints": {
                 "/ws/data": "Unified data collection endpoint",
                 "/ws/market_data": "Market data only",
                 "/ws/whale_tracking": "Whale tracking only",
                 "/ws/news": "News only",
-                "/ws/sentiment": "Sentiment analysis only"
+                "/ws/sentiment": "Sentiment analysis only",
             },
             "monitoring_endpoints": {
                 "/ws/monitoring": "Unified monitoring endpoint",
                 "/ws/health": "Health monitoring only",
                 "/ws/pool_status": "Pool manager only",
-                "/ws/scheduler_status": "Scheduler only"
+                "/ws/scheduler_status": "Scheduler only",
             },
             "integration_endpoints": {
                 "/ws/integration": "Unified integration endpoint",
                 "/ws/huggingface": "HuggingFace services only",
                 "/ws/ai": "AI/ML services (alias for HuggingFace)",
-                "/ws/persistence": "Persistence services only"
-            }
+                "/ws/persistence": "Persistence services only",
+            },
         },
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
 # ============================================================================
 # Background Task Orchestration
 # ============================================================================
+
 
 async def start_all_websocket_streams():
     """
@@ -367,7 +366,7 @@ async def start_all_websocket_streams():
         start_data_collection_streams(),
         start_monitoring_streams(),
         start_integration_streams(),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     logger.info("All WebSocket streaming services started")

@@ -2,6 +2,7 @@
 Feature Flags System
 Allows dynamic toggling of application modules and features
 """
+
 from typing import Dict, Any
 import json
 from pathlib import Path
@@ -51,10 +52,10 @@ class FeatureFlagManager:
         """Load feature flags from storage"""
         try:
             if self.storage_path.exists():
-                with open(self.storage_path, 'r', encoding='utf-8') as f:
+                with open(self.storage_path, "r", encoding="utf-8") as f:
                     saved_flags = json.load(f)
                 # Merge saved flags with defaults (in case new flags were added)
-                self.flags.update(saved_flags.get('flags', {}))
+                self.flags.update(saved_flags.get("flags", {}))
                 logger.info(f"Loaded feature flags from {self.storage_path}")
             else:
                 # Create storage directory if it doesn't exist
@@ -69,11 +70,8 @@ class FeatureFlagManager:
         """Save feature flags to storage"""
         try:
             self.storage_path.parent.mkdir(parents=True, exist_ok=True)
-            data = {
-                'flags': self.flags,
-                'last_updated': datetime.now().isoformat()
-            }
-            with open(self.storage_path, 'w', encoding='utf-8') as f:
+            data = {"flags": self.flags, "last_updated": datetime.now().isoformat()}
+            with open(self.storage_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             logger.info("Feature flags saved successfully")
         except Exception as e:
@@ -170,22 +168,18 @@ class FeatureFlagManager:
         """Get count of enabled/disabled flags"""
         enabled = sum(1 for v in self.flags.values() if v)
         disabled = len(self.flags) - enabled
-        return {
-            'total': len(self.flags),
-            'enabled': enabled,
-            'disabled': disabled
-        }
+        return {"total": len(self.flags), "enabled": enabled, "disabled": disabled}
 
     def get_feature_info(self) -> Dict[str, Any]:
         """Get comprehensive feature flag information"""
         counts = self.get_flag_count()
         return {
-            'flags': self.flags,
-            'counts': counts,
-            'enabled_features': list(self.get_enabled_features().keys()),
-            'disabled_features': list(self.get_disabled_features().keys()),
-            'storage_path': str(self.storage_path),
-            'last_loaded': datetime.now().isoformat()
+            "flags": self.flags,
+            "counts": counts,
+            "enabled_features": list(self.get_enabled_features().keys()),
+            "disabled_features": list(self.get_disabled_features().keys()),
+            "storage_path": str(self.storage_path),
+            "last_loaded": datetime.now().isoformat(),
         }
 
 

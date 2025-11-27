@@ -26,7 +26,7 @@ price = db_manager.save_market_price(
     market_cap=880000000000,
     volume_24h=28500000000,
     price_change_24h=2.5,
-    source="Test"
+    source="Test",
 )
 print(f"✓ Saved market price: BTC = ${price.price_usd}")
 
@@ -40,7 +40,7 @@ news = db_manager.save_news_article(
     content="Bitcoin price surges past $45,000",
     source="Test",
     published_at=datetime.utcnow(),
-    sentiment="positive"
+    sentiment="positive",
 )
 print(f"✓ Saved news article: ID={news.id}")
 
@@ -50,10 +50,7 @@ print(f"✓ Retrieved {len(latest_news)} news articles")
 
 # Test save sentiment
 sentiment = db_manager.save_sentiment_metric(
-    metric_name="fear_greed_index",
-    value=65.0,
-    classification="greed",
-    source="Test"
+    metric_name="fear_greed_index", value=65.0, classification="greed", source="Test"
 )
 print(f"✓ Saved sentiment metric: {sentiment.value}")
 
@@ -81,6 +78,7 @@ print("-" * 80)
 
 try:
     from api.data_endpoints import router
+
     print(f"✓ Data endpoints router imported")
     print(f"✓ Router prefix: {router.prefix}")
     print(f"✓ Router tags: {router.tags}")
@@ -95,21 +93,22 @@ print("-" * 80)
 
 try:
     from collectors.data_persistence import data_persistence
+
     print(f"✓ Data persistence module imported")
 
     # Create mock data
     mock_market_data = [
         {
-            'success': True,
-            'provider': 'CoinGecko',
-            'data': {
-                'bitcoin': {
-                    'usd': 46000.00,
-                    'usd_market_cap': 900000000000,
-                    'usd_24h_vol': 30000000000,
-                    'usd_24h_change': 3.2
+            "success": True,
+            "provider": "CoinGecko",
+            "data": {
+                "bitcoin": {
+                    "usd": 46000.00,
+                    "usd_market_cap": 900000000000,
+                    "usd_24h_vol": 30000000000,
+                    "usd_24h_change": 3.2,
                 }
-            }
+            },
         }
     ]
 
@@ -127,6 +126,7 @@ print("-" * 80)
 
 try:
     from api.ws_data_broadcaster import broadcaster
+
     print(f"✓ WebSocket broadcaster imported")
     print(f"✓ Broadcaster initialized: {broadcaster is not None}")
 except Exception as e:

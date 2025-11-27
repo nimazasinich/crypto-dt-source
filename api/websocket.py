@@ -47,9 +47,9 @@ class ConnectionManager:
 
         # Store metadata
         self.connection_metadata[websocket] = {
-            'client_id': client_id or f"client_{id(websocket)}",
-            'connected_at': datetime.utcnow().isoformat(),
-            'last_ping': datetime.utcnow().isoformat()
+            "client_id": client_id or f"client_{id(websocket)}",
+            "connected_at": datetime.utcnow().isoformat(),
+            "last_ping": datetime.utcnow().isoformat(),
         }
 
         logger.info(
@@ -60,12 +60,12 @@ class ConnectionManager:
         # Send welcome message
         await self.send_personal_message(
             {
-                'type': 'connection_established',
-                'client_id': self.connection_metadata[websocket]['client_id'],
-                'timestamp': datetime.utcnow().isoformat(),
-                'message': 'Connected to Crypto API Monitor WebSocket'
+                "type": "connection_established",
+                "client_id": self.connection_metadata[websocket]["client_id"],
+                "timestamp": datetime.utcnow().isoformat(),
+                "message": "Connected to Crypto API Monitor WebSocket",
             },
-            websocket
+            websocket,
         )
 
     def disconnect(self, websocket: WebSocket):
@@ -76,7 +76,7 @@ class ConnectionManager:
             websocket: WebSocket connection to disconnect
         """
         if websocket in self.active_connections:
-            client_id = self.connection_metadata.get(websocket, {}).get('client_id', 'unknown')
+            client_id = self.connection_metadata.get(websocket, {}).get("client_id", "unknown")
             self.active_connections.remove(websocket)
 
             if websocket in self.connection_metadata:
@@ -144,20 +144,28 @@ class ConnectionManager:
 
             # Build status message
             message = {
-                'type': 'status_update',
-                'timestamp': datetime.utcnow().isoformat(),
-                'system_metrics': {
-                    'total_providers': latest_metrics.total_providers if latest_metrics else len(providers),
-                    'online_count': latest_metrics.online_count if latest_metrics else 0,
-                    'degraded_count': latest_metrics.degraded_count if latest_metrics else 0,
-                    'offline_count': latest_metrics.offline_count if latest_metrics else 0,
-                    'avg_response_time_ms': latest_metrics.avg_response_time_ms if latest_metrics else 0,
-                    'total_requests_hour': latest_metrics.total_requests_hour if latest_metrics else 0,
-                    'total_failures_hour': latest_metrics.total_failures_hour if latest_metrics else 0,
-                    'system_health': latest_metrics.system_health if latest_metrics else 'unknown'
+                "type": "status_update",
+                "timestamp": datetime.utcnow().isoformat(),
+                "system_metrics": {
+                    "total_providers": (
+                        latest_metrics.total_providers if latest_metrics else len(providers)
+                    ),
+                    "online_count": latest_metrics.online_count if latest_metrics else 0,
+                    "degraded_count": latest_metrics.degraded_count if latest_metrics else 0,
+                    "offline_count": latest_metrics.offline_count if latest_metrics else 0,
+                    "avg_response_time_ms": (
+                        latest_metrics.avg_response_time_ms if latest_metrics else 0
+                    ),
+                    "total_requests_hour": (
+                        latest_metrics.total_requests_hour if latest_metrics else 0
+                    ),
+                    "total_failures_hour": (
+                        latest_metrics.total_failures_hour if latest_metrics else 0
+                    ),
+                    "system_health": latest_metrics.system_health if latest_metrics else "unknown",
                 },
-                'alert_count': len(alerts),
-                'active_websocket_clients': len(self.active_connections)
+                "alert_count": len(alerts),
+                "active_websocket_clients": len(self.active_connections),
             }
 
             await self.broadcast(message)
@@ -176,10 +184,10 @@ class ConnectionManager:
         """
         try:
             message = {
-                'type': 'new_log_entry',
-                'timestamp': datetime.utcnow().isoformat(),
-                'log_type': log_type,
-                'data': log_data
+                "type": "new_log_entry",
+                "timestamp": datetime.utcnow().isoformat(),
+                "log_type": log_type,
+                "data": log_data,
             }
 
             await self.broadcast(message)
@@ -198,11 +206,11 @@ class ConnectionManager:
         """
         try:
             message = {
-                'type': 'rate_limit_alert',
-                'timestamp': datetime.utcnow().isoformat(),
-                'provider': provider_name,
-                'percentage': percentage,
-                'severity': 'critical' if percentage >= 95 else 'warning'
+                "type": "rate_limit_alert",
+                "timestamp": datetime.utcnow().isoformat(),
+                "provider": provider_name,
+                "percentage": percentage,
+                "severity": "critical" if percentage >= 95 else "warning",
             }
 
             await self.broadcast(message)
@@ -212,11 +220,7 @@ class ConnectionManager:
             logger.error(f"Error broadcasting rate limit alert: {e}", exc_info=True)
 
     async def broadcast_provider_status_change(
-        self,
-        provider_name: str,
-        old_status: str,
-        new_status: str,
-        details: Optional[Dict] = None
+        self, provider_name: str, old_status: str, new_status: str, details: Optional[Dict] = None
     ):
         """
         Broadcast provider status change
@@ -229,12 +233,12 @@ class ConnectionManager:
         """
         try:
             message = {
-                'type': 'provider_status_change',
-                'timestamp': datetime.utcnow().isoformat(),
-                'provider': provider_name,
-                'old_status': old_status,
-                'new_status': new_status,
-                'details': details or {}
+                "type": "provider_status_change",
+                "timestamp": datetime.utcnow().isoformat(),
+                "provider": provider_name,
+                "old_status": old_status,
+                "new_status": new_status,
+                "details": details or {},
             }
 
             await self.broadcast(message)
@@ -260,11 +264,8 @@ class ConnectionManager:
                 # Check for rate limit warnings
                 rate_limit_statuses = rate_limiter.get_all_statuses()
                 for provider, status_data in rate_limit_statuses.items():
-                    if status_data and status_data.get('percentage', 0) >= 80:
-                        await self.broadcast_rate_limit_alert(
-                            provider,
-                            status_data['percentage']
-                        )
+                    if status_data and status_data.get("percentage", 0) >= 80:
+                        await self.broadcast_rate_limit_alert(provider, status_data["percentage"])
 
                 # Wait 10 seconds before next broadcast
                 await asyncio.sleep(10)
@@ -284,10 +285,7 @@ class ConnectionManager:
         while self._is_running:
             try:
                 # Send ping to all connected clients
-                ping_message = {
-                    'type': 'ping',
-                    'timestamp': datetime.utcnow().isoformat()
-                }
+                ping_message = {"type": "ping", "timestamp": datetime.utcnow().isoformat()}
 
                 await self.broadcast(ping_message)
 
@@ -381,9 +379,9 @@ class ConnectionManager:
         """
         return [
             {
-                'client_id': metadata['client_id'],
-                'connected_at': metadata['connected_at'],
-                'last_ping': metadata['last_ping']
+                "client_id": metadata["client_id"],
+                "connected_at": metadata["connected_at"],
+                "last_ping": metadata["last_ping"],
             }
             for metadata in self.connection_metadata.values()
         ]
@@ -418,7 +416,7 @@ async def websocket_live_endpoint(websocket: WebSocket):
     try:
         # Connect client
         await manager.connect(websocket)
-        client_id = manager.connection_metadata.get(websocket, {}).get('client_id', 'unknown')
+        client_id = manager.connection_metadata.get(websocket, {}).get("client_id", "unknown")
 
         # Start background tasks if not already running
         if not manager._is_running:
@@ -435,18 +433,20 @@ async def websocket_live_endpoint(websocket: WebSocket):
                     message = json.loads(data)
 
                     # Handle pong response
-                    if message.get('type') == 'pong':
+                    if message.get("type") == "pong":
                         if websocket in manager.connection_metadata:
-                            manager.connection_metadata[websocket]['last_ping'] = datetime.utcnow().isoformat()
+                            manager.connection_metadata[websocket][
+                                "last_ping"
+                            ] = datetime.utcnow().isoformat()
                         logger.debug(f"Received pong from {client_id}")
 
                     # Handle subscription requests (future enhancement)
-                    elif message.get('type') == 'subscribe':
+                    elif message.get("type") == "subscribe":
                         # Could implement topic-based subscriptions here
                         logger.debug(f"Client {client_id} subscription request: {message}")
 
                     # Handle unsubscribe requests (future enhancement)
-                    elif message.get('type') == 'unsubscribe':
+                    elif message.get("type") == "unsubscribe":
                         logger.debug(f"Client {client_id} unsubscribe request: {message}")
 
                 except json.JSONDecodeError:
@@ -477,12 +477,12 @@ async def websocket_stats():
         Dictionary with connection stats
     """
     return {
-        'active_connections': manager.get_connection_count(),
-        'connections': manager.get_connection_info(),
-        'background_tasks_running': manager._is_running,
-        'timestamp': datetime.utcnow().isoformat()
+        "active_connections": manager.get_connection_count(),
+        "connections": manager.get_connection_info(),
+        "background_tasks_running": manager._is_running,
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
 # Export manager and router
-__all__ = ['router', 'manager', 'ConnectionManager']
+__all__ = ["router", "manager", "ConnectionManager"]

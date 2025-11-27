@@ -29,13 +29,14 @@ CRYPTO_DATASETS = {
         "tahamajs/bitcoin-enhanced-prediction-dataset-with-comprehensive-news",
         "tahamajs/bitcoin-prediction-dataset-with-local-news-summaries",
         "arad1367/Crypto_Semantic_News",
-    ]
+    ],
 }
 
 _SEED_MODELS = ["ElKulako/cryptobert", "kk08/CryptoBERT"]
 _SEED_DATASETS = []
 for cat in CRYPTO_DATASETS.values():
     _SEED_DATASETS.extend(cat)
+
 
 class HFRegistry:
     def __init__(self):
@@ -54,33 +55,45 @@ class HFRegistry:
         try:
             # Seed models
             for name in _SEED_MODELS:
-                self.models.setdefault(name, {"id": name, "source": "seed", "pipeline_tag": "sentiment-analysis"})
-            
+                self.models.setdefault(
+                    name, {"id": name, "source": "seed", "pipeline_tag": "sentiment-analysis"}
+                )
+
             # Seed datasets with category metadata
             for category, dataset_list in CRYPTO_DATASETS.items():
                 for name in dataset_list:
-                    self.datasets.setdefault(name, {"id": name, "source": "seed", "category": category, "tags": ["crypto", category]})
-            
+                    self.datasets.setdefault(
+                        name,
+                        {
+                            "id": name,
+                            "source": "seed",
+                            "category": category,
+                            "tags": ["crypto", category],
+                        },
+                    )
+
             # Fetch from HF Hub
             q_sent = {"pipeline_tag": "sentiment-analysis", "search": "crypto", "limit": 50}
             models = await self._hf_json(HF_API_MODELS, q_sent)
             for m in models or []:
                 mid = m.get("modelId") or m.get("id") or m.get("name")
-                if not mid: continue
+                if not mid:
+                    continue
                 self.models[mid] = {
                     "id": mid,
                     "pipeline_tag": m.get("pipeline_tag"),
                     "likes": m.get("likes"),
                     "downloads": m.get("downloads"),
                     "tags": m.get("tags") or [],
-                    "source": "hub"
+                    "source": "hub",
                 }
-            
+
             q_crypto = {"search": "crypto", "limit": 100}
             datasets = await self._hf_json(HF_API_DATASETS, q_crypto)
             for d in datasets or []:
                 did = d.get("id") or d.get("name")
-                if not did: continue
+                if not did:
+                    continue
                 # Infer category from tags or name
                 category = "other"
                 tags_str = " ".join(d.get("tags") or []).lower()
@@ -92,24 +105,31 @@ class HFRegistry:
                         category = "news_labeled"
                     else:
                         category = "news_raw"
-                
+
                 self.datasets[did] = {
                     "id": did,
                     "likes": d.get("likes"),
                     "downloads": d.get("downloads"),
                     "tags": d.get("tags") or [],
                     "category": category,
-                    "source": "hub"
+                    "source": "hub",
                 }
-            
+
             self.last_refresh = time.time()
             self.fail_reason = None
             return {"ok": True, "models": len(self.models), "datasets": len(self.datasets)}
         except Exception as e:
             self.fail_reason = str(e)
-            return {"ok": False, "error": self.fail_reason, "models": len(self.models), "datasets": len(self.datasets)}
+            return {
+                "ok": False,
+                "error": self.fail_reason,
+                "models": len(self.models),
+                "datasets": len(self.datasets),
+            }
 
-    def list(self, kind: Literal["models","datasets"]="models", category: Optional[str]=None) -> List[Dict[str, Any]]:
+    def list(
+        self, kind: Literal["models", "datasets"] = "models", category: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         items = list(self.models.values()) if kind == "models" else list(self.datasets.values())
         if category and kind == "datasets":
             items = [d for d in items if d.get("category") == category]
@@ -123,10 +143,12 @@ class HFRegistry:
             "age_sec": age,
             "fail_reason": self.fail_reason,
             "counts": {"models": len(self.models), "datasets": len(self.datasets)},
-            "interval_sec": REFRESH_INTERVAL_SEC
+            "interval_sec": REFRESH_INTERVAL_SEC,
         }
 
+
 REGISTRY = HFRegistry()
+
 
 async def periodic_refresh(loop_sleep: int = REFRESH_INTERVAL_SEC):
     await REGISTRY.refresh()
@@ -135,8 +157,11 @@ async def periodic_refresh(loop_sleep: int = REFRESH_INTERVAL_SEC):
         await REGISTRY.refresh()
         await _sleep(loop_sleep)
 
+
 async def _sleep(sec: int):
     import asyncio
+
     try:
         await asyncio.sleep(sec)
-    except: pass
+    except:
+        pass

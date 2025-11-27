@@ -2,6 +2,7 @@
 Main entry point for HuggingFace Space
 Loads the unified API server with all endpoints
 """
+
 from pathlib import Path
 import sys
 
@@ -17,15 +18,17 @@ except ImportError as e:
     print("Falling back to basic app...")
     # Fallback to basic FastAPI app
     from fastapi import FastAPI
+
     app = FastAPI(title="Crypto API - Loading...")
-    
+
     @app.get("/health")
     def health():
         return {"status": "loading", "message": "Server is starting up..."}
-    
+
     @app.get("/")
     def root():
         return {"message": "Cryptocurrency Data API - Initializing..."}
+
 
 # Export app for uvicorn
 __all__ = ["app"]

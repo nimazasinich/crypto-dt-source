@@ -1,9 +1,11 @@
 """Kraken provider implementation"""
+
 from __future__ import annotations
 from typing import List
 from datetime import datetime
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from core.base_provider import BaseProvider
@@ -41,11 +43,7 @@ class KrakenProvider(BaseProvider):
     }
 
     def __init__(self):
-        super().__init__(
-            name="kraken",
-            base_url="https://api.kraken.com/0/public",
-            timeout=10
-        )
+        super().__init__(name="kraken", base_url="https://api.kraken.com/0/public", timeout=10)
 
     def _normalize_symbol(self, symbol: str) -> str:
         """Normalize symbol to Kraken format"""
@@ -58,10 +56,7 @@ class KrakenProvider(BaseProvider):
         kraken_interval = self.INTERVAL_MAP.get(interval, 60)
 
         url = f"{self.base_url}/OHLC"
-        params = {
-            "pair": kraken_symbol,
-            "interval": kraken_interval
-        }
+        params = {"pair": kraken_symbol, "interval": kraken_interval}
 
         data = await self._make_request(url, params)
 
@@ -81,14 +76,16 @@ class KrakenProvider(BaseProvider):
         # [time, open, high, low, close, vwap, volume, count]
         ohlcv_list = []
         for candle in ohlc_data[:limit]:
-            ohlcv_list.append(OHLCV(
-                timestamp=int(candle[0]) * 1000,  # Convert to milliseconds
-                open=float(candle[1]),
-                high=float(candle[2]),
-                low=float(candle[3]),
-                close=float(candle[4]),
-                volume=float(candle[6])
-            ))
+            ohlcv_list.append(
+                OHLCV(
+                    timestamp=int(candle[0]) * 1000,  # Convert to milliseconds
+                    open=float(candle[1]),
+                    high=float(candle[2]),
+                    low=float(candle[3]),
+                    close=float(candle[4]),
+                    volume=float(candle[6]),
+                )
+            )
 
         return ohlcv_list
 
@@ -98,9 +95,7 @@ class KrakenProvider(BaseProvider):
         pairs = [self._normalize_symbol(s) for s in symbols]
 
         url = f"{self.base_url}/Ticker"
-        params = {
-            "pair": ",".join(pairs)
-        }
+        params = {"pair": ",".join(pairs)}
 
         data = await self._make_request(url, params)
 
@@ -113,8 +108,7 @@ class KrakenProvider(BaseProvider):
         for pair_key, ticker in result.items():
             # Extract base symbol
             base_symbol = next(
-                (s for s, p in self.SYMBOL_MAP.items() if p == pair_key),
-                pair_key[:3]
+                (s for s, p in self.SYMBOL_MAP.items() if p == pair_key), pair_key[:3]
             )
 
             # Kraken ticker format: c = last, v = volume, o = open
@@ -125,14 +119,16 @@ class KrakenProvider(BaseProvider):
             # Calculate 24h change percentage
             change_24h = ((last_price - open_price) / open_price * 100) if open_price > 0 else 0
 
-            prices.append(Price(
-                symbol=base_symbol,
-                name=base_symbol,
-                price=last_price,
-                priceUsd=last_price,
-                change24h=change_24h,
-                volume24h=volume_24h,
-                lastUpdate=datetime.now().isoformat()
-            ))
+            prices.append(
+                Price(
+                    symbol=base_symbol,
+                    name=base_symbol,
+                    price=last_price,
+                    priceUsd=last_price,
+                    change24h=change_24h,
+                    volume24h=volume_24h,
+                    lastUpdate=datetime.now().isoformat(),
+                )
+            )
 
         return prices

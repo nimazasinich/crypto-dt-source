@@ -41,8 +41,10 @@ def get_hf_provider() -> HFSentimentProvider:
 # REQUEST MODELS
 # ============================================================================
 
+
 class SentimentRequest(BaseModel):
     """Request model for sentiment analysis"""
+
     text: str = Field(..., min_length=3, max_length=1000, description="Text to analyze")
     model: Optional[str] = Field(None, description="Custom model ID (optional)")
     use_financial: bool = Field(False, description="Use FinBERT for financial text")
@@ -50,6 +52,7 @@ class SentimentRequest(BaseModel):
 
 class SummarizeRequest(BaseModel):
     """Request model for text summarization"""
+
     text: str = Field(..., min_length=50, max_length=5000, description="Text to summarize")
     max_length: int = Field(150, ge=30, le=500, description="Maximum summary length")
     min_length: int = Field(30, ge=10, le=200, description="Minimum summary length")
@@ -58,12 +61,14 @@ class SummarizeRequest(BaseModel):
 
 class EntitiesRequest(BaseModel):
     """Request model for entity extraction"""
+
     text: str = Field(..., min_length=3, max_length=1000, description="Text to analyze")
     model: Optional[str] = Field(None, description="Custom NER model (optional)")
 
 
 class ClassifyRequest(BaseModel):
     """Request model for zero-shot classification"""
+
     text: str = Field(..., min_length=3, max_length=500, description="Text to classify")
     labels: List[str] = Field(..., min_items=2, max_items=10, description="Candidate labels")
     model: Optional[str] = Field(None, description="Custom model (optional)")
@@ -73,18 +78,19 @@ class ClassifyRequest(BaseModel):
 # SENTIMENT ANALYSIS
 # ============================================================================
 
+
 @router.post("/sentiment")
 async def analyze_sentiment(request: SentimentRequest):
     """
     Analyze sentiment of text using HuggingFace transformer models.
-    
+
     Uses CardiffNLP RoBERTa model by default, or FinBERT for financial text.
-    
+
     Returns:
     - Sentiment label (positive, negative, neutral)
     - Confidence score
     - All class scores
-    
+
     Example request body:
     ```json
     {
@@ -94,12 +100,10 @@ async def analyze_sentiment(request: SentimentRequest):
     ```
     """
     provider = get_hf_provider()
-    
+
     try:
         result = await provider.analyze_sentiment(
-            text=request.text,
-            model=request.model,
-            use_financial_model=request.use_financial
+            text=request.text, model=request.model, use_financial_model=request.use_financial
         )
         return result
     except Exception as e:
@@ -108,27 +112,24 @@ async def analyze_sentiment(request: SentimentRequest):
             "success": False,
             "source": "huggingface",
             "error": "Sentiment analysis failed",
-            "details": str(e)
+            "details": str(e),
         }
 
 
 @router.get("/sentiment")
 async def analyze_sentiment_get(
     text: str = Query(..., min_length=3, max_length=500, description="Text to analyze"),
-    financial: bool = Query(False, description="Use financial model")
+    financial: bool = Query(False, description="Use financial model"),
 ):
     """
     GET version of sentiment analysis for simple queries.
-    
+
     Example: /api/v1/hf/sentiment?text=Bitcoin is bullish today!&financial=true
     """
     provider = get_hf_provider()
-    
+
     try:
-        result = await provider.analyze_sentiment(
-            text=text,
-            use_financial_model=financial
-        )
+        result = await provider.analyze_sentiment(text=text, use_financial_model=financial)
         return result
     except Exception as e:
         logger.error(f"Sentiment GET error: {e}")
@@ -136,7 +137,7 @@ async def analyze_sentiment_get(
             "success": False,
             "source": "huggingface",
             "error": "Sentiment analysis failed",
-            "details": str(e)
+            "details": str(e),
         }
 
 
@@ -144,18 +145,19 @@ async def analyze_sentiment_get(
 # TEXT SUMMARIZATION
 # ============================================================================
 
+
 @router.post("/summarize")
 async def summarize_text(request: SummarizeRequest):
     """
     Summarize text using HuggingFace BART model.
-    
+
     Requires text of at least 50 characters.
-    
+
     Returns:
     - Original text length
     - Summary length
     - Generated summary
-    
+
     Example request body:
     ```json
     {
@@ -166,13 +168,13 @@ async def summarize_text(request: SummarizeRequest):
     ```
     """
     provider = get_hf_provider()
-    
+
     try:
         result = await provider.summarize_text(
             text=request.text,
             max_length=request.max_length,
             min_length=request.min_length,
-            model=request.model
+            model=request.model,
         )
         return result
     except Exception as e:
@@ -181,7 +183,7 @@ async def summarize_text(request: SummarizeRequest):
             "success": False,
             "source": "huggingface",
             "error": "Summarization failed",
-            "details": str(e)
+            "details": str(e),
         }
 
 
@@ -189,17 +191,18 @@ async def summarize_text(request: SummarizeRequest):
 # NAMED ENTITY RECOGNITION
 # ============================================================================
 
+
 @router.post("/entities")
 async def extract_entities(request: EntitiesRequest):
     """
     Extract named entities from text.
-    
+
     Returns entities with:
     - Entity text
     - Entity type (PERSON, ORG, LOC, MISC, etc.)
     - Confidence score
     - Position in text
-    
+
     Example request body:
     ```json
     {
@@ -208,12 +211,9 @@ async def extract_entities(request: EntitiesRequest):
     ```
     """
     provider = get_hf_provider()
-    
+
     try:
-        result = await provider.extract_entities(
-            text=request.text,
-            model=request.model
-        )
+        result = await provider.extract_entities(text=request.text, model=request.model)
         return result
     except Exception as e:
         logger.error(f"Entity extraction error: {e}")
@@ -221,7 +221,7 @@ async def extract_entities(request: EntitiesRequest):
             "success": False,
             "source": "huggingface",
             "error": "Entity extraction failed",
-            "details": str(e)
+            "details": str(e),
         }
 
 
@@ -229,17 +229,18 @@ async def extract_entities(request: EntitiesRequest):
 # ZERO-SHOT CLASSIFICATION
 # ============================================================================
 
+
 @router.post("/classify")
 async def classify_text(request: ClassifyRequest):
     """
     Zero-shot text classification with custom labels.
-    
+
     Classify text into any categories without training.
-    
+
     Returns:
     - Classifications with scores
     - Best matching label
-    
+
     Example request body:
     ```json
     {
@@ -249,12 +250,10 @@ async def classify_text(request: ClassifyRequest):
     ```
     """
     provider = get_hf_provider()
-    
+
     try:
         result = await provider.classify_text(
-            text=request.text,
-            candidate_labels=request.labels,
-            model=request.model
+            text=request.text, candidate_labels=request.labels, model=request.model
         )
         return result
     except Exception as e:
@@ -263,7 +262,7 @@ async def classify_text(request: ClassifyRequest):
             "success": False,
             "source": "huggingface",
             "error": "Classification failed",
-            "details": str(e)
+            "details": str(e),
         }
 
 
@@ -271,15 +270,14 @@ async def classify_text(request: ClassifyRequest):
 # CONVENIENCE ENDPOINTS
 # ============================================================================
 
+
 @router.post("/analyze")
-async def full_analysis(
-    text: str = Body(..., embed=True, min_length=10, max_length=1000)
-):
+async def full_analysis(text: str = Body(..., embed=True, min_length=10, max_length=1000)):
     """
     Perform full analysis on text: sentiment + entities.
-    
+
     Convenience endpoint that combines multiple analyses.
-    
+
     Example request body:
     ```json
     {
@@ -288,24 +286,38 @@ async def full_analysis(
     ```
     """
     provider = get_hf_provider()
-    
+
     try:
         # Run sentiment and entity extraction
         sentiment_result = await provider.analyze_sentiment(text)
         entities_result = await provider.extract_entities(text)
-        
+
         return {
             "success": True,
             "source": "huggingface",
             "data": {
                 "text": text[:100] + "..." if len(text) > 100 else text,
-                "sentiment": sentiment_result.get("data", {}).get("sentiment") if sentiment_result.get("success") else None,
-                "entities": entities_result.get("data", {}).get("entities") if entities_result.get("success") else None,
+                "sentiment": (
+                    sentiment_result.get("data", {}).get("sentiment")
+                    if sentiment_result.get("success")
+                    else None
+                ),
+                "entities": (
+                    entities_result.get("data", {}).get("entities")
+                    if entities_result.get("success")
+                    else None
+                ),
                 "errors": {
-                    "sentiment": sentiment_result.get("error") if not sentiment_result.get("success") else None,
-                    "entities": entities_result.get("error") if not entities_result.get("success") else None
-                }
-            }
+                    "sentiment": (
+                        sentiment_result.get("error")
+                        if not sentiment_result.get("success")
+                        else None
+                    ),
+                    "entities": (
+                        entities_result.get("error") if not entities_result.get("success") else None
+                    ),
+                },
+            },
         }
     except Exception as e:
         logger.error(f"Full analysis error: {e}")
@@ -313,28 +325,23 @@ async def full_analysis(
             "success": False,
             "source": "huggingface",
             "error": "Full analysis failed",
-            "details": str(e)
+            "details": str(e),
         }
 
 
 @router.get("/crypto-sentiment")
-async def crypto_sentiment(
-    text: str = Query(..., description="Crypto-related text to analyze")
-):
+async def crypto_sentiment(text: str = Query(..., description="Crypto-related text to analyze")):
     """
     Analyze sentiment specifically for cryptocurrency text.
-    
+
     Uses FinBERT model optimized for financial/crypto content.
-    
+
     Example: /api/v1/hf/crypto-sentiment?text=Bitcoin breaks $100k resistance
     """
     provider = get_hf_provider()
-    
+
     try:
-        result = await provider.analyze_sentiment(
-            text=text,
-            use_financial_model=True
-        )
+        result = await provider.analyze_sentiment(text=text, use_financial_model=True)
         return result
     except Exception as e:
         logger.error(f"Crypto sentiment error: {e}")
@@ -342,7 +349,7 @@ async def crypto_sentiment(
             "success": False,
             "source": "huggingface",
             "error": "Crypto sentiment analysis failed",
-            "details": str(e)
+            "details": str(e),
         }
 
 
@@ -350,11 +357,12 @@ async def crypto_sentiment(
 # MODEL INFO
 # ============================================================================
 
+
 @router.get("/models")
 async def get_available_models():
     """
     Get list of available AI models for each task.
-    
+
     Returns default models used for:
     - Sentiment analysis
     - Summarization
@@ -362,7 +370,7 @@ async def get_available_models():
     - Classification
     """
     provider = get_hf_provider()
-    
+
     try:
         result = await provider.get_available_models()
         return result
@@ -372,7 +380,7 @@ async def get_available_models():
             "success": False,
             "source": "huggingface",
             "error": "Failed to get models info",
-            "details": str(e)
+            "details": str(e),
         }
 
 
@@ -380,18 +388,19 @@ async def get_available_models():
 # HEALTH CHECK
 # ============================================================================
 
+
 @router.get("/health")
 async def hf_health():
     """Check health status of HuggingFace provider"""
     provider = get_hf_provider()
-    
+
     return {
         "success": True,
         "provider": {
             "name": provider.name,
             "baseUrl": provider.base_url,
             "timeout": provider.timeout,
-            "models": provider.MODELS
+            "models": provider.MODELS,
         },
         "endpoints": [
             "POST /api/v1/hf/sentiment",
@@ -401,6 +410,6 @@ async def hf_health():
             "POST /api/v1/hf/classify",
             "POST /api/v1/hf/analyze",
             "GET /api/v1/hf/crypto-sentiment",
-            "GET /api/v1/hf/models"
-        ]
+            "GET /api/v1/hf/models",
+        ],
     }

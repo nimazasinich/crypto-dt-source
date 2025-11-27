@@ -2,6 +2,7 @@
 Integrated API Router
 Combines all services for a comprehensive backend API
 """
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
 from typing import Optional, List, Dict, Any
@@ -34,6 +35,7 @@ def set_services(config, scheduler, persistence, websocket):
 # WebSocket Endpoint
 # ============================================================================
 
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time updates"""
@@ -41,17 +43,18 @@ async def websocket_endpoint(websocket: WebSocket):
 
     try:
         await websocket_service.connection_manager.connect(
-            websocket,
-            client_id,
-            metadata={'connected_at': datetime.now().isoformat()}
+            websocket, client_id, metadata={"connected_at": datetime.now().isoformat()}
         )
 
         # Send welcome message
-        await websocket_service.connection_manager.send_personal_message({
-            'type': 'connected',
-            'client_id': client_id,
-            'message': 'Connected to crypto data tracker'
-        }, client_id)
+        await websocket_service.connection_manager.send_personal_message(
+            {
+                "type": "connected",
+                "client_id": client_id,
+                "message": "Connected to crypto data tracker",
+            },
+            client_id,
+        )
 
         # Handle messages
         while True:
@@ -69,13 +72,11 @@ async def websocket_endpoint(websocket: WebSocket):
 # Configuration Endpoints
 # ============================================================================
 
+
 @router.get("/config/apis")
 async def get_all_apis():
     """Get all configured APIs"""
-    return {
-        'apis': config_loader.get_all_apis(),
-        'total': len(config_loader.apis)
-    }
+    return {"apis": config_loader.get_all_apis(), "total": len(config_loader.apis)}
 
 
 @router.get("/config/apis/{api_id}")
@@ -97,15 +98,9 @@ async def get_categories():
     category_stats = {}
     for category in categories:
         apis = config_loader.get_apis_by_category(category)
-        category_stats[category] = {
-            'count': len(apis),
-            'apis': list(apis.keys())
-        }
+        category_stats[category] = {"count": len(apis), "apis": list(apis.keys())}
 
-    return {
-        'categories': categories,
-        'stats': category_stats
-    }
+    return {"categories": categories, "stats": category_stats}
 
 
 @router.get("/config/apis/category/{category}")
@@ -113,11 +108,7 @@ async def get_apis_by_category(category: str):
     """Get APIs by category"""
     apis = config_loader.get_apis_by_category(category)
 
-    return {
-        'category': category,
-        'apis': apis,
-        'count': len(apis)
-    }
+    return {"category": category, "apis": apis, "count": len(apis)}
 
 
 @router.post("/config/apis")
@@ -127,7 +118,7 @@ async def add_custom_api(api_data: Dict[str, Any]):
         success = config_loader.add_custom_api(api_data)
 
         if success:
-            return {'status': 'success', 'message': 'API added successfully'}
+            return {"status": "success", "message": "API added successfully"}
         else:
             raise HTTPException(status_code=400, detail="Failed to add API")
 
@@ -141,7 +132,7 @@ async def remove_api(api_id: str):
     success = config_loader.remove_api(api_id)
 
     if success:
-        return {'status': 'success', 'message': 'API removed successfully'}
+        return {"status": "success", "message": "API removed successfully"}
     else:
         raise HTTPException(status_code=404, detail="API not found")
 
@@ -155,15 +146,14 @@ async def export_config():
     config_loader.export_config(filepath)
 
     return FileResponse(
-        filepath,
-        media_type='application/json',
-        filename=os.path.basename(filepath)
+        filepath, media_type="application/json", filename=os.path.basename(filepath)
     )
 
 
 # ============================================================================
 # Scheduler Endpoints
 # ============================================================================
+
 
 @router.get("/schedule/tasks")
 async def get_all_schedules():
@@ -183,22 +173,22 @@ async def get_schedule(api_id: str):
 
 
 @router.put("/schedule/tasks/{api_id}")
-async def update_schedule(api_id: str, interval: Optional[int] = None, enabled: Optional[bool] = None):
+async def update_schedule(
+    api_id: str, interval: Optional[int] = None, enabled: Optional[bool] = None
+):
     """Update schedule for an API"""
     try:
         scheduler_service.update_task_schedule(api_id, interval, enabled)
 
         # Notify WebSocket clients
-        await websocket_service.notify_schedule_update({
-            'api_id': api_id,
-            'interval': interval,
-            'enabled': enabled
-        })
+        await websocket_service.notify_schedule_update(
+            {"api_id": api_id, "interval": interval, "enabled": enabled}
+        )
 
         return {
-            'status': 'success',
-            'message': 'Schedule updated',
-            'task': scheduler_service.get_task_status(api_id)
+            "status": "success",
+            "message": "Schedule updated",
+            "task": scheduler_service.get_task_status(api_id),
         }
 
     except Exception as e:
@@ -213,9 +203,9 @@ async def force_update(api_id: str):
 
         if success:
             return {
-                'status': 'success',
-                'message': 'Update completed',
-                'task': scheduler_service.get_task_status(api_id)
+                "status": "success",
+                "message": "Update completed",
+                "task": scheduler_service.get_task_status(api_id),
             }
         else:
             raise HTTPException(status_code=500, detail="Update failed")
@@ -233,15 +223,14 @@ async def export_schedules():
     scheduler_service.export_schedules(filepath)
 
     return FileResponse(
-        filepath,
-        media_type='application/json',
-        filename=os.path.basename(filepath)
+        filepath, media_type="application/json", filename=os.path.basename(filepath)
     )
 
 
 # ============================================================================
 # Data Endpoints
 # ============================================================================
+
 
 @router.get("/data/cached")
 async def get_all_cached_data():
@@ -265,11 +254,7 @@ async def get_history(api_id: str, limit: int = 100):
     """Get historical data for an API"""
     history = persistence_service.get_history(api_id, limit)
 
-    return {
-        'api_id': api_id,
-        'history': history,
-        'count': len(history)
-    }
+    return {"api_id": api_id, "history": history, "count": len(history)}
 
 
 @router.get("/data/statistics")
@@ -282,24 +267,25 @@ async def get_data_statistics():
 # Export/Import Endpoints
 # ============================================================================
 
+
 @router.post("/export/json")
 async def export_to_json(
     api_ids: Optional[List[str]] = None,
     include_history: bool = False,
-    background_tasks: BackgroundTasks = None
+    background_tasks: BackgroundTasks = None,
 ):
     """Export data to JSON"""
     try:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filepath = f"data/exports/data_export_{timestamp}.json"
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         await persistence_service.export_to_json(filepath, api_ids, include_history)
 
         return {
-            'status': 'success',
-            'filepath': filepath,
-            'download_url': f"/api/v2/download?file={filepath}"
+            "status": "success",
+            "filepath": filepath,
+            "download_url": f"/api/v2/download?file={filepath}",
         }
 
     except Exception as e:
@@ -310,16 +296,16 @@ async def export_to_json(
 async def export_to_csv(api_ids: Optional[List[str]] = None, flatten: bool = True):
     """Export data to CSV"""
     try:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filepath = f"data/exports/data_export_{timestamp}.csv"
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         await persistence_service.export_to_csv(filepath, api_ids, flatten)
 
         return {
-            'status': 'success',
-            'filepath': filepath,
-            'download_url': f"/api/v2/download?file={filepath}"
+            "status": "success",
+            "filepath": filepath,
+            "download_url": f"/api/v2/download?file={filepath}",
         }
 
     except Exception as e:
@@ -330,16 +316,16 @@ async def export_to_csv(api_ids: Optional[List[str]] = None, flatten: bool = Tru
 async def export_history(api_id: str):
     """Export historical data for an API to CSV"""
     try:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filepath = f"data/exports/{api_id}_history_{timestamp}.csv"
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         await persistence_service.export_history_to_csv(filepath, api_id)
 
         return {
-            'status': 'success',
-            'filepath': filepath,
-            'download_url': f"/api/v2/download?file={filepath}"
+            "status": "success",
+            "filepath": filepath,
+            "download_url": f"/api/v2/download?file={filepath}",
         }
 
     except Exception as e:
@@ -353,9 +339,7 @@ async def download_file(file: str):
         raise HTTPException(status_code=404, detail="File not found")
 
     return FileResponse(
-        file,
-        media_type='application/octet-stream',
-        filename=os.path.basename(file)
+        file, media_type="application/octet-stream", filename=os.path.basename(file)
     )
 
 
@@ -366,9 +350,9 @@ async def create_backup():
         backup_file = await persistence_service.backup_all_data()
 
         return {
-            'status': 'success',
-            'backup_file': backup_file,
-            'download_url': f"/api/v2/download?file={backup_file}"
+            "status": "success",
+            "backup_file": backup_file,
+            "download_url": f"/api/v2/download?file={backup_file}",
         }
 
     except Exception as e:
@@ -382,7 +366,7 @@ async def restore_from_backup(backup_file: str):
         success = await persistence_service.restore_from_backup(backup_file)
 
         if success:
-            return {'status': 'success', 'message': 'Data restored successfully'}
+            return {"status": "success", "message": "Data restored successfully"}
         else:
             raise HTTPException(status_code=500, detail="Restore failed")
 
@@ -394,30 +378,31 @@ async def restore_from_backup(backup_file: str):
 # Status Endpoints
 # ============================================================================
 
+
 @router.get("/status")
 async def get_system_status():
     """Get overall system status"""
     return {
-        'timestamp': datetime.now().isoformat(),
-        'services': {
-            'config_loader': {
-                'apis_loaded': len(config_loader.apis),
-                'categories': len(config_loader.get_categories()),
-                'schedules': len(config_loader.schedules)
+        "timestamp": datetime.now().isoformat(),
+        "services": {
+            "config_loader": {
+                "apis_loaded": len(config_loader.apis),
+                "categories": len(config_loader.get_categories()),
+                "schedules": len(config_loader.schedules),
             },
-            'scheduler': {
-                'running': scheduler_service.running,
-                'total_tasks': len(scheduler_service.tasks),
-                'realtime_tasks': len(scheduler_service.realtime_tasks),
-                'cache_size': len(scheduler_service.data_cache)
+            "scheduler": {
+                "running": scheduler_service.running,
+                "total_tasks": len(scheduler_service.tasks),
+                "realtime_tasks": len(scheduler_service.realtime_tasks),
+                "cache_size": len(scheduler_service.data_cache),
             },
-            'persistence': {
-                'cached_apis': len(persistence_service.cache),
-                'apis_with_history': len(persistence_service.history),
-                'total_history_records': sum(len(h) for h in persistence_service.history.values())
+            "persistence": {
+                "cached_apis": len(persistence_service.cache),
+                "apis_with_history": len(persistence_service.history),
+                "total_history_records": sum(len(h) for h in persistence_service.history.values()),
             },
-            'websocket': websocket_service.get_stats()
-        }
+            "websocket": websocket_service.get_stats(),
+        },
     }
 
 
@@ -425,14 +410,14 @@ async def get_system_status():
 async def health_check():
     """Health check endpoint"""
     return {
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'services': {
-            'config': config_loader is not None,
-            'scheduler': scheduler_service is not None and scheduler_service.running,
-            'persistence': persistence_service is not None,
-            'websocket': websocket_service is not None
-        }
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "services": {
+            "config": config_loader is not None,
+            "scheduler": scheduler_service is not None and scheduler_service.running,
+            "persistence": persistence_service is not None,
+            "websocket": websocket_service is not None,
+        },
     }
 
 
@@ -440,11 +425,12 @@ async def health_check():
 # Cleanup Endpoints
 # ============================================================================
 
+
 @router.post("/cleanup/cache")
 async def clear_cache():
     """Clear all cached data"""
     persistence_service.clear_cache()
-    return {'status': 'success', 'message': 'Cache cleared'}
+    return {"status": "success", "message": "Cache cleared"}
 
 
 @router.post("/cleanup/history")
@@ -453,9 +439,9 @@ async def clear_history(api_id: Optional[str] = None):
     persistence_service.clear_history(api_id)
 
     if api_id:
-        return {'status': 'success', 'message': f'History cleared for {api_id}'}
+        return {"status": "success", "message": f"History cleared for {api_id}"}
     else:
-        return {'status': 'success', 'message': 'All history cleared'}
+        return {"status": "success", "message": "All history cleared"}
 
 
 @router.post("/cleanup/old-data")
@@ -464,7 +450,7 @@ async def cleanup_old_data(days: int = 7):
     removed = await persistence_service.cleanup_old_data(days)
 
     return {
-        'status': 'success',
-        'message': f'Cleaned up {removed} old records',
-        'removed_count': removed
+        "status": "success",
+        "message": f"Cleaned up {removed} old records",
+        "removed_count": removed,
     }

@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class APIRequest(BaseModel):
     """Model for API proxy requests"""
+
     url: str
     method: str = "GET"
     headers: Optional[Dict[str, str]] = None
@@ -29,15 +30,13 @@ class CryptoAPIHubService:
         self.services_file = Path(__file__).parent / "crypto_api_hub_services.json"
         self.services = self._load_services()
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Crypto-API-Hub/1.0'
-        })
+        self.session.headers.update({"User-Agent": "Crypto-API-Hub/1.0"})
 
     def _load_services(self) -> Dict[str, Any]:
         """Load services from JSON file"""
         try:
             if self.services_file.exists():
-                with open(self.services_file, 'r', encoding='utf-8') as f:
+                with open(self.services_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     logger.info(f"Loaded {len(data.get('services', {}))} service categories")
                     return data
@@ -55,15 +54,15 @@ class CryptoAPIHubService:
                 "version": "1.0.0",
                 "last_updated": "2025-11-27",
                 "total_services": 74,
-                "total_categories": 5
+                "total_categories": 5,
             },
             "services": {
                 "explorer": [],
                 "market": [],
                 "news": [],
                 "sentiment": [],
-                "analytics": []
-            }
+                "analytics": [],
+            },
         }
 
     async def get_services(self) -> Dict[str, Any]:
@@ -82,7 +81,8 @@ class CryptoAPIHubService:
 
         for category, services in self.services.get("services", {}).items():
             filtered = [
-                service for service in services
+                service
+                for service in services
                 if query_lower in service.get("name", "").lower()
                 or query_lower in service.get("url", "").lower()
                 or query_lower in category.lower()
@@ -97,7 +97,7 @@ class CryptoAPIHubService:
         url: str,
         method: str = "GET",
         headers: Optional[Dict[str, str]] = None,
-        body: Optional[str] = None
+        body: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Test an API endpoint through a proxy to avoid CORS issues
@@ -121,23 +121,20 @@ class CryptoAPIHubService:
                 json=request_body if isinstance(request_body, dict) else None,
                 data=request_body if isinstance(request_body, str) else None,
                 timeout=30,
-                allow_redirects=True
+                allow_redirects=True,
             )
 
             # Parse response
             try:
                 response_data = response.json()
             except json.JSONDecodeError:
-                response_data = {
-                    "text": response.text,
-                    "status_code": response.status_code
-                }
+                response_data = {"text": response.text, "status_code": response.status_code}
 
             return {
                 "success": True,
                 "status_code": response.status_code,
                 "data": response_data,
-                "headers": dict(response.headers)
+                "headers": dict(response.headers),
             }
 
         except requests.Timeout:
@@ -145,24 +142,16 @@ class CryptoAPIHubService:
             return {
                 "success": False,
                 "error": "Request timeout",
-                "details": f"The request to {url} timed out after 30 seconds"
+                "details": f"The request to {url} timed out after 30 seconds",
             }
 
         except requests.RequestException as e:
             logger.error(f"HTTP error testing endpoint {url}: {e}")
-            return {
-                "success": False,
-                "error": "HTTP error",
-                "details": str(e)
-            }
+            return {"success": False, "error": "HTTP error", "details": str(e)}
 
         except Exception as e:
             logger.error(f"Error testing endpoint {url}: {e}")
-            return {
-                "success": False,
-                "error": "Unexpected error",
-                "details": str(e)
-            }
+            return {"success": False, "error": "Unexpected error", "details": str(e)}
 
     async def get_service_stats(self) -> Dict[str, Any]:
         """Get statistics about all services"""
@@ -178,17 +167,14 @@ class CryptoAPIHubService:
                 if service.get("key"):
                     total_keys += 1
 
-        category_stats = {
-            category: len(svc_list)
-            for category, svc_list in services.items()
-        }
+        category_stats = {category: len(svc_list) for category, svc_list in services.items()}
 
         return {
             "total_services": total_services,
             "total_endpoints": total_endpoints,
             "total_keys": total_keys,
             "categories": category_stats,
-            "metadata": self.services.get("metadata", {})
+            "metadata": self.services.get("metadata", {}),
         }
 
     async def validate_service(self, service_name: str) -> Dict[str, Any]:
@@ -227,11 +213,7 @@ class CryptoAPIHubService:
             full_url = full_url.replace("{address}", "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb")
 
             test_result = await self.test_endpoint(full_url)
-            results.append({
-                "endpoint": endpoint,
-                "full_url": full_url,
-                "result": test_result
-            })
+            results.append({"endpoint": endpoint, "full_url": full_url, "result": test_result})
 
         return {
             "service": found_service.get("name"),
@@ -240,7 +222,7 @@ class CryptoAPIHubService:
             "has_key": bool(api_key),
             "total_endpoints": len(found_service.get("endpoints", [])),
             "tested_endpoints": len(results),
-            "test_results": results
+            "test_results": results,
         }
 
     async def close(self):

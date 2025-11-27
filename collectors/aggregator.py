@@ -22,7 +22,9 @@ settings = get_settings()
 class CollectorError(RuntimeError):
     """Raised when a provider fails to return data."""
 
-    def __init__(self, message: str, provider: Optional[str] = None, status_code: Optional[int] = None):
+    def __init__(
+        self, message: str, provider: Optional[str] = None, status_code: Optional[int] = None
+    ):
         super().__init__(message)
         self.provider = provider
         self.status_code = status_code
@@ -85,11 +87,15 @@ class MarketDataCollector:
     def __init__(self, registry: Optional[ProvidersRegistry] = None) -> None:
         self.registry = registry or ProvidersRegistry()
         self.cache = TTLCache(settings.cache_ttl)
-        self._symbol_map = {symbol.lower(): coin_id for coin_id, symbol in COIN_SYMBOL_MAPPING.items()}
+        self._symbol_map = {
+            symbol.lower(): coin_id for coin_id, symbol in COIN_SYMBOL_MAPPING.items()
+        }
         self.headers = {"User-Agent": settings.user_agent or USER_AGENT}
         self.timeout = 15.0
 
-    async def _request(self, provider_key: str, path: str, params: Optional[Dict[str, Any]] = None) -> Any:
+    async def _request(
+        self, provider_key: str, path: str, params: Optional[Dict[str, Any]] = None
+    ) -> Any:
         provider = self.registry.providers.get(provider_key)
         if not provider:
             raise CollectorError(f"Provider {provider_key} not configured", provider=provider_key)
@@ -264,7 +270,9 @@ class MarketDataCollector:
         await self.cache.set(cache_key, prices)
         return prices
 
-    async def get_ohlcv(self, symbol: str, interval: str = "1h", limit: int = 100) -> List[Dict[str, Any]]:
+    async def get_ohlcv(
+        self, symbol: str, interval: str = "1h", limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """Return OHLCV data from Binance with caching and validation."""
 
         cache_key = f"ohlcv:{symbol.upper()}:{interval}:{limit}"
@@ -280,7 +288,9 @@ class MarketDataCollector:
             try:
                 candles.append(
                     {
-                        "timestamp": datetime.fromtimestamp(item[0] / 1000, tz=timezone.utc).isoformat(),
+                        "timestamp": datetime.fromtimestamp(
+                            item[0] / 1000, tz=timezone.utc
+                        ).isoformat(),
                         "open": float(item[1]),
                         "high": float(item[2]),
                         "low": float(item[3]),
@@ -349,7 +359,9 @@ class ProviderStatusCollector:
         self.headers = {"User-Agent": settings.user_agent or USER_AGENT}
         self.timeout = 8.0
 
-    async def _check_provider(self, client: httpx.AsyncClient, provider_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _check_provider(
+        self, client: httpx.AsyncClient, provider_id: str, data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         url = data.get("health_check") or data.get("base_url")
         start = time.perf_counter()
         try:

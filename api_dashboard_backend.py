@@ -267,7 +267,12 @@ async def analyze_chart(request: ChartAnalysisRequest) -> Dict[str, Any]:
     if request.indicators:
         insights["indicators"] = request.indicators
 
-    return {"success": True, "symbol": request.symbol.upper(), "timeframe": request.timeframe, "insights": insights}
+    return {
+        "success": True,
+        "symbol": request.symbol.upper(),
+        "timeframe": request.timeframe,
+        "insights": insights,
+    }
 
 
 @app.post("/api/sentiment/analyze", response_model=Dict[str, Any])
@@ -338,7 +343,9 @@ async def process_query(request: QueryRequest) -> QueryResponse:
             "financial": analyze_financial_sentiment(request.query),
             "social": analyze_social_sentiment(request.query),
         }
-        return QueryResponse(success=True, type="sentiment", message="Sentiment analysis", data=sentiment)
+        return QueryResponse(
+            success=True, type="sentiment", message="Sentiment analysis", data=sentiment
+        )
 
     if task == "summary":
         summary = summarize_text(request.query)
@@ -356,7 +363,9 @@ async def process_query(request: QueryRequest) -> QueryResponse:
             "news": latest_news,
             "analysis": sentiment,
         }
-        return QueryResponse(success=True, type="decision", message="Composite decision support", data=data)
+        return QueryResponse(
+            success=True, type="decision", message="Composite decision support", data=data
+        )
 
     sentiment = analyze_market_text(request.query)
     return QueryResponse(success=True, type="general", message="General analysis", data=sentiment)
@@ -388,7 +397,9 @@ class WebSocketManager:
                 coins = await market_collector.get_top_coins(limit=5)
                 stats = await market_collector.get_market_stats()
                 news = await news_collector.get_latest_news(limit=3)
-                sentiment = analyze_crypto_sentiment(" ".join(item.get("title", "") for item in news))
+                sentiment = analyze_crypto_sentiment(
+                    " ".join(item.get("title", "") for item in news)
+                )
                 payload = {
                     "market_data": coins,
                     "stats": stats,

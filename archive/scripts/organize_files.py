@@ -132,44 +132,45 @@ ARCHIVE_MAP = {
     ],
 }
 
+
 def main():
     """Main function to organize files"""
     moved_count = 0
     skipped_count = 0
-    
+
     print("🚀 Starting file organization...")
     print(f"📁 Root directory: {ROOT.absolute()}\n")
-    
+
     # Create archive directories
     for archive_dir in ARCHIVE_MAP.keys():
         archive_path = ROOT / archive_dir
         archive_path.mkdir(parents=True, exist_ok=True)
         print(f"✅ Created directory: {archive_dir}")
-    
+
     # Move files
     for archive_dir, files in ARCHIVE_MAP.items():
         archive_path = ROOT / archive_dir
-        
+
         for filename in files:
             source = ROOT / filename
-            
+
             if not source.exists():
                 print(f"⚠️  File not found: {filename}")
                 skipped_count += 1
                 continue
-            
+
             # Skip if file is essential
             if filename in ESSENTIAL_FILES:
                 print(f"⏭️  Skipping essential file: {filename}")
                 skipped_count += 1
                 continue
-            
+
             dest = archive_path / filename
-            
+
             try:
                 # Create parent directory if needed
                 dest.parent.mkdir(parents=True, exist_ok=True)
-                
+
                 # Move file
                 shutil.move(str(source), str(dest))
                 print(f"✅ Moved: {filename} → {archive_dir}")
@@ -177,12 +178,12 @@ def main():
             except Exception as e:
                 print(f"❌ Error moving {filename}: {e}")
                 skipped_count += 1
-    
+
     print(f"\n📊 Summary:")
     print(f"   ✅ Files moved: {moved_count}")
     print(f"   ⏭️  Files skipped: {skipped_count}")
     print(f"\n✨ File organization complete!")
 
+
 if __name__ == "__main__":
     main()
-

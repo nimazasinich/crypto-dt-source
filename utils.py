@@ -24,7 +24,7 @@ def setup_logging() -> logging.Logger:
         logging.Logger: Configured logger instance
     """
     # Create logger
-    logger = logging.getLogger('crypto_aggregator')
+    logger = logging.getLogger("crypto_aggregator")
     logger.setLevel(getattr(logging, config.LOG_LEVEL.upper(), logging.INFO))
 
     # Prevent duplicate handlers if function is called multiple times
@@ -37,9 +37,7 @@ def setup_logging() -> logging.Logger:
     try:
         # Setup RotatingFileHandler for file output
         file_handler = RotatingFileHandler(
-            config.LOG_FILE,
-            maxBytes=config.LOG_MAX_BYTES,
-            backupCount=config.LOG_BACKUP_COUNT
+            config.LOG_FILE, maxBytes=config.LOG_MAX_BYTES, backupCount=config.LOG_BACKUP_COUNT
         )
         file_handler.setLevel(getattr(logging, config.LOG_LEVEL.upper(), logging.INFO))
         file_handler.setFormatter(formatter)
@@ -72,6 +70,7 @@ def cache_with_ttl(ttl_seconds: int = 300) -> Callable:
         def expensive_function(arg1, arg2):
             return result
     """
+
     def decorator(func: Callable) -> Callable:
         cache = {}
 
@@ -84,7 +83,7 @@ def cache_with_ttl(ttl_seconds: int = 300) -> Callable:
             if cache_key in cache:
                 cached_value, timestamp = cache[cache_key]
                 if time.time() - timestamp < ttl_seconds:
-                    logger = logging.getLogger('crypto_aggregator')
+                    logger = logging.getLogger("crypto_aggregator")
                     logger.debug(f"Cache hit for {func.__name__} (TTL: {ttl_seconds}s)")
                     return cached_value
 
@@ -117,18 +116,18 @@ def validate_price_data(price_data: Dict) -> bool:
     Returns:
         bool: True if data is valid, False otherwise
     """
-    logger = logging.getLogger('crypto_aggregator')
+    logger = logging.getLogger("crypto_aggregator")
 
     try:
         # Check if all required fields exist
-        required_fields = ['price_usd', 'volume_24h', 'market_cap']
+        required_fields = ["price_usd", "volume_24h", "market_cap"]
         for field in required_fields:
             if field not in price_data:
                 logger.warning(f"Missing required field: {field}")
                 return False
 
         # Validate price_usd
-        price_usd = float(price_data['price_usd'])
+        price_usd = float(price_data["price_usd"])
         if not (config.MIN_PRICE <= price_usd <= config.MAX_PRICE):
             logger.warning(
                 f"Price ${price_usd} outside valid range "
@@ -137,19 +136,15 @@ def validate_price_data(price_data: Dict) -> bool:
             return False
 
         # Validate volume_24h
-        volume_24h = float(price_data['volume_24h'])
+        volume_24h = float(price_data["volume_24h"])
         if volume_24h < config.MIN_VOLUME:
-            logger.warning(
-                f"Volume ${volume_24h} below minimum ${config.MIN_VOLUME}"
-            )
+            logger.warning(f"Volume ${volume_24h} below minimum ${config.MIN_VOLUME}")
             return False
 
         # Validate market_cap
-        market_cap = float(price_data['market_cap'])
+        market_cap = float(price_data["market_cap"])
         if market_cap < config.MIN_MARKET_CAP:
-            logger.warning(
-                f"Market cap ${market_cap} below minimum ${config.MIN_MARKET_CAP}"
-            )
+            logger.warning(f"Market cap ${market_cap} below minimum ${config.MIN_MARKET_CAP}")
             return False
 
         return True
@@ -216,7 +211,7 @@ def calculate_moving_average(prices: List[float], period: int) -> Optional[float
     Returns:
         float: Moving average value, or None if calculation not possible
     """
-    logger = logging.getLogger('crypto_aggregator')
+    logger = logging.getLogger("crypto_aggregator")
 
     try:
         # Handle edge cases
@@ -229,9 +224,7 @@ def calculate_moving_average(prices: List[float], period: int) -> Optional[float
             return None
 
         if len(prices) < period:
-            logger.warning(
-                f"Not enough data points ({len(prices)}) for period {period}"
-            )
+            logger.warning(f"Not enough data points ({len(prices)}) for period {period}")
             return None
 
         # Calculate moving average from the last 'period' prices
@@ -259,7 +252,7 @@ def calculate_rsi(prices: List[float], period: int = 14) -> Optional[float]:
     Returns:
         float: RSI value between 0-100, or None if calculation not possible
     """
-    logger = logging.getLogger('crypto_aggregator')
+    logger = logging.getLogger("crypto_aggregator")
 
     try:
         # Handle edge cases
@@ -334,7 +327,8 @@ def extract_coins_from_text(text: str) -> List[str]:
 
         # Also check for common patterns like $BTC or #BTC
         import re
-        pattern = r'[$#]?([A-Z]{2,10})\b'
+
+        pattern = r"[$#]?([A-Z]{2,10})\b"
         matches = re.findall(pattern, text_upper)
 
         for match in matches:
@@ -347,7 +341,7 @@ def extract_coins_from_text(text: str) -> List[str]:
         return sorted(list(set(found_coins)))  # Remove duplicates and sort
 
     except Exception as e:
-        logger = logging.getLogger('crypto_aggregator')
+        logger = logging.getLogger("crypto_aggregator")
         logger.error(f"Error extracting coins from text: {e}")
         return []
 
@@ -363,7 +357,7 @@ def export_to_csv(data: List[Dict], filename: str) -> bool:
     Returns:
         bool: True if export successful, False otherwise
     """
-    logger = logging.getLogger('crypto_aggregator')
+    logger = logging.getLogger("crypto_aggregator")
 
     if not data:
         logger.warning("No data to export to CSV")
@@ -371,8 +365,8 @@ def export_to_csv(data: List[Dict], filename: str) -> bool:
 
     try:
         # Ensure filename ends with .csv
-        if not filename.endswith('.csv'):
-            filename += '.csv'
+        if not filename.endswith(".csv"):
+            filename += ".csv"
 
         # Get all unique keys from all dictionaries
         fieldnames = set()
@@ -381,7 +375,7 @@ def export_to_csv(data: List[Dict], filename: str) -> bool:
         fieldnames = sorted(list(fieldnames))
 
         # Write to CSV
-        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(filename, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(data)
@@ -408,7 +402,7 @@ def is_data_stale(timestamp_str: str, max_age_minutes: int = 30) -> bool:
     Returns:
         bool: True if data is stale (older than max_age_minutes), False otherwise
     """
-    logger = logging.getLogger('crypto_aggregator')
+    logger = logging.getLogger("crypto_aggregator")
 
     try:
         # Try to parse as Unix timestamp (float/int)
@@ -432,7 +426,7 @@ def is_data_stale(timestamp_str: str, max_age_minutes: int = 30) -> bool:
                     continue
             else:
                 # If no format matched, try fromisoformat
-                data_time = datetime.datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                data_time = datetime.datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
 
         # Calculate age
         current_time = datetime.datetime.now()
@@ -456,7 +450,7 @@ def is_data_stale(timestamp_str: str, max_age_minutes: int = 30) -> bool:
 
 
 # Utility function to get logger easily
-def get_logger(name: str = 'crypto_aggregator') -> logging.Logger:
+def get_logger(name: str = "crypto_aggregator") -> logging.Logger:
     """
     Get or create logger instance.
 
@@ -521,7 +515,7 @@ def truncate_string(text: str, max_length: int = 100, suffix: str = "...") -> st
     """
     if not text or len(text) <= max_length:
         return text
-    return text[:max_length - len(suffix)] + suffix
+    return text[: max_length - len(suffix)] + suffix
 
 
 def percentage_change(old_value: float, new_value: float) -> Optional[float]:
@@ -574,11 +568,7 @@ if __name__ == "__main__":
     print(f"\nExtracted coins from text: {coins}")
 
     # Test data validation
-    valid_data = {
-        'price_usd': 45000.0,
-        'volume_24h': 1000000.0,
-        'market_cap': 800000000.0
-    }
+    valid_data = {"price_usd": 45000.0, "volume_24h": 1000000.0, "market_cap": 800000000.0}
     is_valid = validate_price_data(valid_data)
     print(f"\nPrice data validation: {is_valid}")
 

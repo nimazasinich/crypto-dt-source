@@ -25,7 +25,7 @@ class CryptoDataBank:
     @contextmanager
     def get_connection(self):
         """Get thread-safe database connection"""
-        if not hasattr(self._local, 'conn'):
+        if not hasattr(self._local, "conn"):
             self._local.conn = sqlite3.connect(self.db_path, check_same_thread=False)
             self._local.conn.row_factory = sqlite3.Row
 
@@ -41,7 +41,8 @@ class CryptoDataBank:
             cursor = conn.cursor()
 
             # جدول قیمت‌های لحظه‌ای
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS prices (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     symbol TEXT NOT NULL,
@@ -57,10 +58,12 @@ class CryptoDataBank:
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(symbol, timestamp)
                 )
-            """)
+            """
+            )
 
             # جدول OHLCV (کندل‌ها)
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS ohlcv (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     symbol TEXT NOT NULL,
@@ -75,10 +78,12 @@ class CryptoDataBank:
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(symbol, interval, timestamp)
                 )
-            """)
+            """
+            )
 
             # جدول اخبار
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS news (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL,
@@ -91,10 +96,12 @@ class CryptoDataBank:
                     category TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # جدول احساسات بازار
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS market_sentiment (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     fear_greed_value INTEGER,
@@ -105,10 +112,12 @@ class CryptoDataBank:
                     source TEXT NOT NULL,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # جدول داده‌های on-chain
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS onchain_data (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     chain TEXT NOT NULL,
@@ -119,10 +128,12 @@ class CryptoDataBank:
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(chain, metric_name, timestamp)
                 )
-            """)
+            """
+            )
 
             # جدول social media metrics
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS social_metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     symbol TEXT NOT NULL,
@@ -135,10 +146,12 @@ class CryptoDataBank:
                     source TEXT NOT NULL,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # جدول DeFi metrics
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS defi_metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     protocol TEXT NOT NULL,
@@ -150,10 +163,12 @@ class CryptoDataBank:
                     source TEXT NOT NULL,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # جدول پیش‌بینی‌ها (از مدل‌های ML)
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS predictions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     symbol TEXT NOT NULL,
@@ -165,10 +180,12 @@ class CryptoDataBank:
                     features TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # جدول تحلیل‌های هوش مصنوعی
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS ai_analysis (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     symbol TEXT,
@@ -179,10 +196,12 @@ class CryptoDataBank:
                     confidence REAL,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # جدول کش API
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS api_cache (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     endpoint TEXT NOT NULL,
@@ -193,14 +212,19 @@ class CryptoDataBank:
                     expires_at DATETIME,
                     UNIQUE(endpoint, params)
                 )
-            """)
+            """
+            )
 
             # Indexes برای بهبود کارایی
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_prices_symbol ON prices(symbol)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_prices_timestamp ON prices(timestamp)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ohlcv_symbol_interval ON ohlcv(symbol, interval)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_ohlcv_symbol_interval ON ohlcv(symbol, interval)"
+            )
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_news_published ON news(published_at)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_sentiment_timestamp ON market_sentiment(timestamp)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_sentiment_timestamp ON market_sentiment(timestamp)"
+            )
 
             conn.commit()
 
@@ -210,33 +234,38 @@ class CryptoDataBank:
         """ذخیره قیمت"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO prices
                 (symbol, price, price_usd, change_1h, change_24h, change_7d,
                  volume_24h, market_cap, rank, source, timestamp)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                symbol,
-                price_data.get('price', 0),
-                price_data.get('priceUsd', price_data.get('price', 0)),
-                price_data.get('change1h'),
-                price_data.get('change24h'),
-                price_data.get('change7d'),
-                price_data.get('volume24h'),
-                price_data.get('marketCap'),
-                price_data.get('rank'),
-                source,
-                datetime.now()
-            ))
+            """,
+                (
+                    symbol,
+                    price_data.get("price", 0),
+                    price_data.get("priceUsd", price_data.get("price", 0)),
+                    price_data.get("change1h"),
+                    price_data.get("change24h"),
+                    price_data.get("change7d"),
+                    price_data.get("volume24h"),
+                    price_data.get("marketCap"),
+                    price_data.get("rank"),
+                    source,
+                    datetime.now(),
+                ),
+            )
             conn.commit()
 
-    def get_latest_prices(self, symbols: Optional[List[str]] = None, limit: int = 100) -> List[Dict]:
+    def get_latest_prices(
+        self, symbols: Optional[List[str]] = None, limit: int = 100
+    ) -> List[Dict]:
         """دریافت آخرین قیمت‌ها"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
             if symbols:
-                placeholders = ','.join('?' * len(symbols))
+                placeholders = ",".join("?" * len(symbols))
                 query = f"""
                     SELECT * FROM prices
                     WHERE symbol IN ({placeholders})
@@ -249,7 +278,8 @@ class CryptoDataBank:
                 """
                 cursor.execute(query, (*symbols, limit))
             else:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM prices
                     WHERE timestamp = (
                         SELECT MAX(timestamp) FROM prices p2
@@ -257,7 +287,9 @@ class CryptoDataBank:
                     )
                     ORDER BY market_cap DESC
                     LIMIT ?
-                """, (limit,))
+                """,
+                    (limit,),
+                )
 
             return [dict(row) for row in cursor.fetchall()]
 
@@ -267,37 +299,45 @@ class CryptoDataBank:
             cursor = conn.cursor()
             since = datetime.now() - timedelta(hours=hours)
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM prices
                 WHERE symbol = ? AND timestamp >= ?
                 ORDER BY timestamp ASC
-            """, (symbol, since))
+            """,
+                (symbol, since),
+            )
 
             return [dict(row) for row in cursor.fetchall()]
 
     # === OHLCV OPERATIONS ===
 
-    def save_ohlcv_batch(self, symbol: str, interval: str, candles: List[Dict], source: str = "auto"):
+    def save_ohlcv_batch(
+        self, symbol: str, interval: str, candles: List[Dict], source: str = "auto"
+    ):
         """ذخیره دسته‌ای کندل‌ها"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
             for candle in candles:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT OR REPLACE INTO ohlcv
                     (symbol, interval, timestamp, open, high, low, close, volume, source)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    symbol,
-                    interval,
-                    candle['timestamp'],
-                    candle['open'],
-                    candle['high'],
-                    candle['low'],
-                    candle['close'],
-                    candle['volume'],
-                    source
-                ))
+                """,
+                    (
+                        symbol,
+                        interval,
+                        candle["timestamp"],
+                        candle["open"],
+                        candle["high"],
+                        candle["low"],
+                        candle["close"],
+                        candle["volume"],
+                        source,
+                    ),
+                )
 
             conn.commit()
 
@@ -305,12 +345,15 @@ class CryptoDataBank:
         """دریافت کندل‌ها"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM ohlcv
                 WHERE symbol = ? AND interval = ?
                 ORDER BY timestamp DESC
                 LIMIT ?
-            """, (symbol, interval, limit))
+            """,
+                (symbol, interval, limit),
+            )
 
             results = [dict(row) for row in cursor.fetchall()]
             results.reverse()  # برگشت به ترتیب صعودی
@@ -322,20 +365,23 @@ class CryptoDataBank:
         """ذخیره خبر"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR IGNORE INTO news
                 (title, description, url, source, published_at, sentiment, coins, category)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                news_data.get('title'),
-                news_data.get('description'),
-                news_data['url'],
-                news_data.get('source', 'unknown'),
-                news_data.get('published_at'),
-                news_data.get('sentiment'),
-                json.dumps(news_data.get('coins', [])),
-                news_data.get('category')
-            ))
+            """,
+                (
+                    news_data.get("title"),
+                    news_data.get("description"),
+                    news_data["url"],
+                    news_data.get("source", "unknown"),
+                    news_data.get("published_at"),
+                    news_data.get("sentiment"),
+                    json.dumps(news_data.get("coins", [])),
+                    news_data.get("category"),
+                ),
+            )
             conn.commit()
 
     def get_latest_news(self, limit: int = 50, category: Optional[str] = None) -> List[Dict]:
@@ -344,24 +390,30 @@ class CryptoDataBank:
             cursor = conn.cursor()
 
             if category:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM news
                     WHERE category = ?
                     ORDER BY published_at DESC
                     LIMIT ?
-                """, (category, limit))
+                """,
+                    (category, limit),
+                )
             else:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM news
                     ORDER BY published_at DESC
                     LIMIT ?
-                """, (limit,))
+                """,
+                    (limit,),
+                )
 
             results = []
             for row in cursor.fetchall():
                 result = dict(row)
-                if result.get('coins'):
-                    result['coins'] = json.loads(result['coins'])
+                if result.get("coins"):
+                    result["coins"] = json.loads(result["coins"])
                 results.append(result)
 
             return results
@@ -372,30 +424,35 @@ class CryptoDataBank:
         """ذخیره احساسات بازار"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO market_sentiment
                 (fear_greed_value, fear_greed_classification, overall_sentiment,
                  sentiment_score, confidence, source)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (
-                sentiment_data.get('fear_greed_value'),
-                sentiment_data.get('fear_greed_classification'),
-                sentiment_data.get('overall_sentiment'),
-                sentiment_data.get('sentiment_score'),
-                sentiment_data.get('confidence'),
-                source
-            ))
+            """,
+                (
+                    sentiment_data.get("fear_greed_value"),
+                    sentiment_data.get("fear_greed_classification"),
+                    sentiment_data.get("overall_sentiment"),
+                    sentiment_data.get("sentiment_score"),
+                    sentiment_data.get("confidence"),
+                    source,
+                ),
+            )
             conn.commit()
 
     def get_latest_sentiment(self) -> Optional[Dict]:
         """دریافت آخرین احساسات"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM market_sentiment
                 ORDER BY timestamp DESC
                 LIMIT 1
-            """)
+            """
+            )
 
             row = cursor.fetchone()
             return dict(row) if row else None
@@ -406,18 +463,21 @@ class CryptoDataBank:
         """ذخیره تحلیل هوش مصنوعی"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO ai_analysis
                 (symbol, analysis_type, model_used, input_data, output_data, confidence)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (
-                analysis_data.get('symbol'),
-                analysis_data['analysis_type'],
-                analysis_data['model_used'],
-                json.dumps(analysis_data['input_data']),
-                json.dumps(analysis_data['output_data']),
-                analysis_data.get('confidence')
-            ))
+            """,
+                (
+                    analysis_data.get("symbol"),
+                    analysis_data["analysis_type"],
+                    analysis_data["model_used"],
+                    json.dumps(analysis_data["input_data"]),
+                    json.dumps(analysis_data["output_data"]),
+                    analysis_data.get("confidence"),
+                ),
+            )
             conn.commit()
 
     def get_ai_analyses(self, symbol: Optional[str] = None, limit: int = 50) -> List[Dict]:
@@ -426,24 +486,30 @@ class CryptoDataBank:
             cursor = conn.cursor()
 
             if symbol:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM ai_analysis
                     WHERE symbol = ?
                     ORDER BY timestamp DESC
                     LIMIT ?
-                """, (symbol, limit))
+                """,
+                    (symbol, limit),
+                )
             else:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT * FROM ai_analysis
                     ORDER BY timestamp DESC
                     LIMIT ?
-                """, (limit,))
+                """,
+                    (limit,),
+                )
 
             results = []
             for row in cursor.fetchall():
                 result = dict(row)
-                result['input_data'] = json.loads(result['input_data'])
-                result['output_data'] = json.loads(result['output_data'])
+                result["input_data"] = json.loads(result["input_data"])
+                result["output_data"] = json.loads(result["output_data"])
                 results.append(result)
 
             return results
@@ -456,11 +522,14 @@ class CryptoDataBank:
             cursor = conn.cursor()
             expires_at = datetime.now() + timedelta(seconds=ttl)
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO api_cache
                 (endpoint, params, response, ttl, expires_at)
                 VALUES (?, ?, ?, ?, ?)
-            """, (endpoint, params, json.dumps(response), ttl, expires_at))
+            """,
+                (endpoint, params, json.dumps(response), ttl, expires_at),
+            )
 
             conn.commit()
 
@@ -468,14 +537,17 @@ class CryptoDataBank:
         """دریافت از کش"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT response FROM api_cache
                 WHERE endpoint = ? AND params = ? AND expires_at > ?
-            """, (endpoint, params, datetime.now()))
+            """,
+                (endpoint, params, datetime.now()),
+            )
 
             row = cursor.fetchone()
             if row:
-                return json.loads(row['response'])
+                return json.loads(row["response"])
             return None
 
     def cache_clear_expired(self):
@@ -495,29 +567,29 @@ class CryptoDataBank:
             stats = {}
 
             # تعداد رکوردها
-            tables = ['prices', 'ohlcv', 'news', 'market_sentiment',
-                     'ai_analysis', 'predictions']
+            tables = ["prices", "ohlcv", "news", "market_sentiment", "ai_analysis", "predictions"]
 
             for table in tables:
                 cursor.execute(f"SELECT COUNT(*) as count FROM {table}")
-                stats[f'{table}_count'] = cursor.fetchone()['count']
+                stats[f"{table}_count"] = cursor.fetchone()["count"]
 
             # تعداد سمبل‌های یونیک
             cursor.execute("SELECT COUNT(DISTINCT symbol) as count FROM prices")
-            stats['unique_symbols'] = cursor.fetchone()['count']
+            stats["unique_symbols"] = cursor.fetchone()["count"]
 
             # آخرین به‌روزرسانی
             cursor.execute("SELECT MAX(timestamp) as last_update FROM prices")
-            stats['last_price_update'] = cursor.fetchone()['last_update']
+            stats["last_price_update"] = cursor.fetchone()["last_update"]
 
             # حجم دیتابیس
-            stats['database_size'] = Path(self.db_path).stat().st_size
+            stats["database_size"] = Path(self.db_path).stat().st_size
 
             return stats
 
 
 # سینگلتون برای استفاده در کل برنامه
 _db_instance = None
+
 
 def get_db() -> CryptoDataBank:
     """دریافت instance دیتابیس"""

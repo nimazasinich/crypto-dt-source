@@ -25,7 +25,7 @@ class AsyncAPIClient:
         self,
         timeout: int = config.REQUEST_TIMEOUT,
         max_retries: int = config.MAX_RETRIES,
-        retry_delay: float = 2.0
+        retry_delay: float = 2.0,
     ):
         """
         Initialize async API client
@@ -54,7 +54,7 @@ class AsyncAPIClient:
         self,
         url: str,
         params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None
+        headers: Optional[Dict[str, str]] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Make async GET request with retry logic
@@ -87,21 +87,21 @@ class AsyncAPIClient:
                     return None
                 # Retry on server errors (5xx)
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                    await asyncio.sleep(self.retry_delay * (2**attempt))
                     continue
                 return None
 
             except aiohttp.ClientConnectionError as e:
                 logger.warning(f"Connection error on {url}: {e}")
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                    await asyncio.sleep(self.retry_delay * (2**attempt))
                     continue
                 return None
 
             except asyncio.TimeoutError:
                 logger.warning(f"Timeout on {url} (attempt {attempt + 1})")
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                    await asyncio.sleep(self.retry_delay * (2**attempt))
                     continue
                 return None
 
@@ -116,7 +116,7 @@ class AsyncAPIClient:
         url: str,
         data: Optional[Dict[str, Any]] = None,
         json: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None
+        headers: Optional[Dict[str, str]] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Make async POST request with retry logic
@@ -150,23 +150,21 @@ class AsyncAPIClient:
                 if e.status in (404, 400, 401, 403):
                     return None
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                    await asyncio.sleep(self.retry_delay * (2**attempt))
                     continue
                 return None
 
             except Exception as e:
                 logger.error(f"Error on POST {url}: {e}")
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                    await asyncio.sleep(self.retry_delay * (2**attempt))
                     continue
                 return None
 
         return None
 
     async def gather_requests(
-        self,
-        urls: List[str],
-        params_list: Optional[List[Optional[Dict[str, Any]]]] = None
+        self, urls: List[str], params_list: Optional[List[Optional[Dict[str, Any]]]] = None
     ) -> List[Optional[Dict[str, Any]]]:
         """
         Make multiple async GET requests in parallel
@@ -181,18 +179,12 @@ class AsyncAPIClient:
         if params_list is None:
             params_list = [None] * len(urls)
 
-        tasks = [
-            self.get(url, params=params)
-            for url, params in zip(urls, params_list)
-        ]
+        tasks = [self.get(url, params=params) for url, params in zip(urls, params_list)]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Convert exceptions to None
-        return [
-            result if not isinstance(result, Exception) else None
-            for result in results
-        ]
+        return [result if not isinstance(result, Exception) else None for result in results]
 
 
 # ==================== CONVENIENCE FUNCTIONS ====================
@@ -202,7 +194,7 @@ async def safe_api_call(
     url: str,
     params: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
-    timeout: int = config.REQUEST_TIMEOUT
+    timeout: int = config.REQUEST_TIMEOUT,
 ) -> Optional[Dict[str, Any]]:
     """
     Convenience function for single async API call
@@ -223,7 +215,7 @@ async def safe_api_call(
 async def parallel_api_calls(
     urls: List[str],
     params_list: Optional[List[Optional[Dict[str, Any]]]] = None,
-    timeout: int = config.REQUEST_TIMEOUT
+    timeout: int = config.REQUEST_TIMEOUT,
 ) -> List[Optional[Dict[str, Any]]]:
     """
     Convenience function for parallel async API calls

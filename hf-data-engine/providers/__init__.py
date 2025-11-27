@@ -29,7 +29,7 @@ from .base import create_success_response, create_error_response
 __all__ = [
     # Original providers
     "BinanceProvider",
-    "CoinGeckoProvider", 
+    "CoinGeckoProvider",
     "KrakenProvider",
     "CoinCapProvider",
     # New REST providers

@@ -5,7 +5,7 @@ Complete implementation with authentication, real data endpoints, and background
 
 ═══════════════════════════════════════════════════════════════
               ⚠️ ABSOLUTELY NO FAKE DATA ⚠️
-                    
+
     ❌ NO mock data
     ❌ NO placeholder data
     ❌ NO hardcoded responses
@@ -13,14 +13,14 @@ Complete implementation with authentication, real data endpoints, and background
     ❌ NO fake timestamps
     ❌ NO invented prices
     ❌ NO simulated responses
-    
+
     ✅ ONLY real data from database cache
     ✅ ONLY real data from free APIs (via background workers)
     ✅ ONLY real AI model inference
     ✅ If data not available → return error
     ✅ If cache empty → return error
     ✅ If model fails → return error
-    
+
     NO EXCEPTIONS TO THIS RULE
 ═══════════════════════════════════════════════════════════════
 """
@@ -69,11 +69,11 @@ async def lifespan(app: FastAPI):
     """
     global app_start_time
     app_start_time = time.time()
-    
+
     logger.info("=" * 80)
     logger.info("🚀 Starting HuggingFace Space API Server - REAL DATA ONLY")
     logger.info("=" * 80)
-    
+
     # Phase 1: Initialize database
     logger.info("📊 Phase 1: Initializing database...")
     try:
@@ -84,18 +84,18 @@ async def lifespan(app: FastAPI):
         else:
             logger.error("❌ Failed to initialize database tables")
             raise Exception("Database initialization failed")
-        
+
         # Test database connection
         health = db_manager.health_check()
         if health.get("status") == "healthy":
             logger.info(f"✅ Database connection healthy: {health}")
         else:
             logger.warning(f"⚠️  Database health check warning: {health}")
-    
+
     except Exception as e:
         logger.error(f"❌ Database initialization error: {e}", exc_info=True)
         raise
-    
+
     # Phase 2: Initialize AI models
     logger.info("🤖 Phase 2: Initializing AI models...")
     try:
@@ -107,7 +107,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"❌ AI model initialization error: {e}", exc_info=True)
         # Don't fail on model errors - continue with fallback
-    
+
     # Phase 3: Start background workers
     logger.info("⚙️  Phase 3: Starting background workers...")
     try:
@@ -134,7 +134,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"❌ Worker startup error: {e}", exc_info=True)
         # Don't fail on worker errors - they will retry
-    
+
     # Phase 4: Ready
     logger.info("=" * 80)
     logger.info("✅ HuggingFace Space API Server is READY")
@@ -142,13 +142,13 @@ async def lifespan(app: FastAPI):
     logger.info(f"📖 API Documentation: http://0.0.0.0:7860/docs")
     logger.info(f"🔒 Authentication: Required (HF_TOKEN)")
     logger.info("=" * 80)
-    
+
     # Store start time in app state
     app.state.start_time = app_start_time
-    
+
     # Yield control back to FastAPI
     yield
-    
+
     # Shutdown
     logger.info("🛑 Shutting down HuggingFace Space API Server...")
 
@@ -175,7 +175,7 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # Add CORS middleware
@@ -192,6 +192,7 @@ app.add_middleware(
 # Root Endpoint
 # ============================================================================
 
+
 @app.get("/")
 async def root():
     """Root endpoint - API information"""
@@ -207,14 +208,14 @@ async def root():
             "market_history": "/api/market/history",
             "sentiment_analysis": "/api/sentiment/analyze",
             "health_check": "/api/health",
-            "documentation": "/docs"
+            "documentation": "/docs",
         },
         "data_sources": {
             "market_prices": "CoinGecko (FREE API)",
             "ohlcv_data": "Binance (FREE API)",
-            "ai_models": "HuggingFace Transformers"
+            "ai_models": "HuggingFace Transformers",
         },
-        "timestamp": int(time.time() * 1000)
+        "timestamp": int(time.time() * 1000),
     }
 
 
@@ -233,6 +234,7 @@ app.include_router(hf_hub_router)
 # Error Handlers
 # ============================================================================
 
+
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
     """Handle 404 errors"""
@@ -247,11 +249,11 @@ async def not_found_handler(request, exc):
                 "/api/market/history",
                 "/api/sentiment/analyze",
                 "/api/health",
-                "/docs"
+                "/docs",
             ],
             "source": "hf_engine",
-            "timestamp": int(time.time() * 1000)
-        }
+            "timestamp": int(time.time() * 1000),
+        },
     )
 
 
@@ -266,8 +268,8 @@ async def internal_error_handler(request, exc):
             "error": "Internal server error",
             "message": str(exc),
             "source": "hf_engine",
-            "timestamp": int(time.time() * 1000)
-        }
+            "timestamp": int(time.time() * 1000),
+        },
     )
 
 
@@ -277,17 +279,11 @@ async def internal_error_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     # Get port from environment (HuggingFace Spaces uses 7860)
     port = int(os.getenv("PORT", "7860"))
-    
+
     logger.info(f"🚀 Starting server on port {port}")
-    
+
     # Run server
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=port,
-        log_level="info",
-        access_log=True
-    )
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info", access_log=True)

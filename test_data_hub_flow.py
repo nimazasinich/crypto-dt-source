@@ -20,23 +20,22 @@ print("=" * 80)
 print("\n📋 Test 1: Checking for HuggingFace Dataset Upload functionality...")
 try:
     from huggingface_hub import HfApi, upload_file, create_repo
+
     print("✅ huggingface_hub library is available")
 
     # Check if we have upload functionality in our codebase
     import importlib.util
+
     has_upload = False
 
     # Check workers for upload functionality
-    worker_files = [
-        "workers/market_data_worker.py",
-        "workers/ohlc_data_worker.py"
-    ]
+    worker_files = ["workers/market_data_worker.py", "workers/ohlc_data_worker.py"]
 
     for worker_file in worker_files:
         if Path(worker_file).exists():
-            with open(worker_file, 'r') as f:
+            with open(worker_file, "r") as f:
                 content = f.read()
-                if 'push_to_hub' in content or 'upload_file' in content or 'HfApi' in content:
+                if "push_to_hub" in content or "upload_file" in content or "HfApi" in content:
                     print(f"✅ Found HuggingFace upload code in {worker_file}")
                     has_upload = True
                 else:
@@ -88,14 +87,14 @@ try:
     # Check worker source code
     worker_path = Path("workers/market_data_worker.py")
     if worker_path.exists():
-        with open(worker_path, 'r') as f:
+        with open(worker_path, "r") as f:
             lines = f.readlines()
             # Find save function
             for i, line in enumerate(lines):
-                if 'def save' in line or 'save_market_data' in line:
+                if "def save" in line or "save_market_data" in line:
                     print(f"\n   Found save function at line {i+1}:")
                     # Print next 5 lines
-                    for j in range(i, min(i+10, len(lines))):
+                    for j in range(i, min(i + 10, len(lines))):
                         print(f"      {lines[j].rstrip()}")
                     break
 
@@ -106,13 +105,14 @@ except Exception as e:
 print("\n📋 Test 4: Checking HuggingFace Space API endpoints...")
 try:
     from api.hf_endpoints import router
+
     print("✅ HuggingFace endpoints router available")
 
     # List routes
-    routes = [route for route in router.routes if hasattr(route, 'path')]
+    routes = [route for route in router.routes if hasattr(route, "path")]
     print(f"   Available endpoints ({len(routes)}):")
     for route in routes:
-        methods = ','.join(route.methods) if hasattr(route, 'methods') else 'N/A'
+        methods = ",".join(route.methods) if hasattr(route, "methods") else "N/A"
         print(f"      {methods:6s} {route.path}")
 
 except Exception as e:
@@ -144,6 +144,7 @@ except Exception as e:
 
 # Test 6: Actual data flow test
 print("\n📋 Test 6: Testing actual data flow...")
+
 
 async def test_data_flow():
     """Test the complete data flow"""
@@ -188,7 +189,9 @@ async def test_data_flow():
     except Exception as e:
         print(f"❌ Error testing data flow: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 # Run async test
 try:
@@ -200,7 +203,8 @@ except Exception as e:
 print("\n" + "=" * 80)
 print("📊 SUMMARY")
 print("=" * 80)
-print("""
+print(
+    """
 Current Implementation:
   1. ✅ External APIs (CoinGecko, Binance) fetch REAL data
   2. ✅ Background workers poll every 60 seconds
@@ -218,5 +222,6 @@ Recommended Next Steps:
   2. Create periodic sync: SQLite → HuggingFace Datasets
   3. Update API to fetch FROM HuggingFace Datasets
   4. Add fallback: HuggingFace Datasets → SQLite → External APIs
-""")
+"""
+)
 print("=" * 80)

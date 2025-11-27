@@ -16,6 +16,7 @@ from datetime import datetime
 @dataclass
 class APIResource:
     """Represents a single API resource"""
+
     id: str
     name: str
     category: str
@@ -35,9 +36,9 @@ class APIResource:
 
     def get_full_url(self, endpoint: str = "") -> str:
         """Get full URL with endpoint"""
-        base = self.base_url.rstrip('/')
+        base = self.base_url.rstrip("/")
         if endpoint:
-            endpoint = endpoint.lstrip('/')
+            endpoint = endpoint.lstrip("/")
             return f"{base}/{endpoint}"
         return base
 
@@ -53,7 +54,11 @@ class APIResource:
     def get_query_params(self) -> Dict[str, str]:
         """Get query parameters for API request"""
         params = {}
-        if self.auth_type in ["apiKeyQuery", "apiKeyQueryOptional"] and self.api_key and self.auth_param:
+        if (
+            self.auth_type in ["apiKeyQuery", "apiKeyQueryOptional"]
+            and self.api_key
+            and self.auth_param
+        ):
             params[self.auth_param] = self.api_key
         return params
 
@@ -79,7 +84,7 @@ class UnifiedResourceLoader:
                 print(f"❌ Config file not found: {self.config_file}")
                 return False
 
-            with open(self.config_file, 'r', encoding='utf-8') as f:
+            with open(self.config_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # Extract registry
@@ -110,13 +115,16 @@ class UnifiedResourceLoader:
 
             self.loaded = True
 
-            print(f"✅ Loaded {len(self.resources)} resources from {len(self.categories)} categories")
+            print(
+                f"✅ Loaded {len(self.resources)} resources from {len(self.categories)} categories"
+            )
 
             return True
 
         except Exception as e:
             print(f"❌ Error loading config: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -151,7 +159,7 @@ class UnifiedResourceLoader:
                 auth_header=auth_header,
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=1
+                priority=1,
             )
             self.resources[resource.id] = resource
 
@@ -176,7 +184,7 @@ class UnifiedResourceLoader:
                 endpoints=item.get("endpoints", {}),
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=priority
+                priority=priority,
             )
             self.resources[resource.id] = resource
 
@@ -207,7 +215,7 @@ class UnifiedResourceLoader:
                 endpoints=item.get("endpoints", {}),
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=priority
+                priority=priority,
             )
             self.resources[resource.id] = resource
 
@@ -232,7 +240,7 @@ class UnifiedResourceLoader:
                 endpoints=item.get("endpoints", {}),
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=priority
+                priority=priority,
             )
             self.resources[resource.id] = resource
 
@@ -257,7 +265,7 @@ class UnifiedResourceLoader:
                 endpoints=item.get("endpoints", {}),
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=priority
+                priority=priority,
             )
             self.resources[resource.id] = resource
 
@@ -279,7 +287,7 @@ class UnifiedResourceLoader:
                 endpoints=item.get("endpoints", {}),
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=2
+                priority=2,
             )
             self.resources[resource.id] = resource
 
@@ -304,7 +312,7 @@ class UnifiedResourceLoader:
                 endpoints=item.get("endpoints", {}),
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=priority
+                priority=priority,
             )
             self.resources[resource.id] = resource
 
@@ -326,7 +334,7 @@ class UnifiedResourceLoader:
                 endpoints=item.get("endpoints", {}),
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=2
+                priority=2,
             )
             self.resources[resource.id] = resource
 
@@ -350,7 +358,7 @@ class UnifiedResourceLoader:
                 endpoints=item.get("endpoints", {}),
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=1
+                priority=1,
             )
             self.resources[resource.id] = resource
 
@@ -373,7 +381,7 @@ class UnifiedResourceLoader:
                 auth_header=auth_header,
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=1
+                priority=1,
             )
             self.resources[resource.id] = resource
 
@@ -389,7 +397,7 @@ class UnifiedResourceLoader:
                 auth_type="none",
                 docs_url=item.get("docs_url"),
                 notes=item.get("notes"),
-                priority=2
+                priority=2,
             )
             self.resources[resource.id] = resource
 
@@ -442,7 +450,7 @@ class UnifiedResourceLoader:
             "total_categories": len(self.categories),
             "categories": {},
             "auth_required": 0,
-            "free_resources": 0
+            "free_resources": 0,
         }
 
         for category, resource_ids in self.categories.items():
@@ -469,13 +477,13 @@ class UnifiedResourceLoader:
                     "category": resource.category,
                     "base_url": resource.base_url,
                     "requires_auth": resource.requires_auth(),
-                    "priority": resource.priority
+                    "priority": resource.priority,
                 }
                 for resource_id, resource in self.resources.items()
-            }
+            },
         }
 
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(summary, f, indent=2)
 
         print(f"✅ Exported summary to {output_file}")
@@ -483,6 +491,7 @@ class UnifiedResourceLoader:
 
 # Global instance
 _loader = None
+
 
 def get_loader() -> UnifiedResourceLoader:
     """Get global loader instance (singleton)"""
@@ -505,7 +514,7 @@ if __name__ == "__main__":
         print(f"  Auth Required: {stats['auth_required']}")
 
         print("\n📁 Categories:")
-        for cat, count in stats['categories'].items():
+        for cat, count in stats["categories"].items():
             print(f"  - {cat}: {count} resources")
 
         # Export summary

@@ -38,6 +38,7 @@ last_check_time = None
 # TAB 1: Real-Time Dashboard
 # =============================================================================
 
+
 def refresh_dashboard(category_filter="All", status_filter="All", tier_filter="All"):
     """Refresh the main dashboard with filters"""
     global current_results, last_check_time
@@ -58,25 +59,29 @@ def refresh_dashboard(category_filter="All", status_filter="All", tier_filter="A
             filtered_results = [r for r in filtered_results if r.category == category_filter]
 
         if status_filter != "All":
-            filtered_results = [r for r in filtered_results if r.status.value == status_filter.lower()]
+            filtered_results = [
+                r for r in filtered_results if r.status.value == status_filter.lower()
+            ]
 
         if tier_filter != "All":
             tier_num = int(tier_filter.split()[1])
             tier_resources = config.get_by_tier(tier_num)
-            tier_names = [r['name'] for r in tier_resources]
+            tier_names = [r["name"] for r in tier_resources]
             filtered_results = [r for r in filtered_results if r.provider_name in tier_names]
 
         # Create DataFrame
         df_data = []
         for result in filtered_results:
-            df_data.append({
-                'Status': f"{result.get_badge()} {result.status.value.upper()}",
-                'Provider': result.provider_name,
-                'Category': result.category,
-                'Response Time': f"{result.response_time:.0f} ms",
-                'Last Check': datetime.fromtimestamp(result.timestamp).strftime('%H:%M:%S'),
-                'Code': result.status_code or 'N/A'
-            })
+            df_data.append(
+                {
+                    "Status": f"{result.get_badge()} {result.status.value.upper()}",
+                    "Provider": result.provider_name,
+                    "Category": result.category,
+                    "Response Time": f"{result.response_time:.0f} ms",
+                    "Last Check": datetime.fromtimestamp(result.timestamp).strftime("%H:%M:%S"),
+                    "Code": result.status_code or "N/A",
+                }
+            )
 
         df = pd.DataFrame(df_data)
 
@@ -121,21 +126,23 @@ def export_current_status():
         return None
 
     try:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"api_status_{timestamp}.csv"
         filepath = f"data/{filename}"
 
         df_data = []
         for result in current_results:
-            df_data.append({
-                'Provider': result.provider_name,
-                'Category': result.category,
-                'Status': result.status.value,
-                'Response_Time_ms': result.response_time,
-                'Status_Code': result.status_code,
-                'Error': result.error_message or '',
-                'Timestamp': datetime.fromtimestamp(result.timestamp).isoformat()
-            })
+            df_data.append(
+                {
+                    "Provider": result.provider_name,
+                    "Category": result.category,
+                    "Status": result.status.value,
+                    "Response_Time_ms": result.response_time,
+                    "Status_Code": result.status_code,
+                    "Error": result.error_message or "",
+                    "Timestamp": datetime.fromtimestamp(result.timestamp).isoformat(),
+                }
+            )
 
         df = pd.DataFrame(df_data)
         df.to_csv(filepath, index=False)
@@ -151,6 +158,7 @@ def export_current_status():
 # TAB 2: Category View
 # =============================================================================
 
+
 def get_category_overview():
     """Get overview of all categories"""
     global current_results
@@ -163,7 +171,7 @@ def get_category_overview():
     html_output = "<div style='padding: 20px;'>"
 
     for category, stats in category_stats.items():
-        online_pct = stats['online_percentage']
+        online_pct = stats["online_percentage"]
 
         # Color based on health
         if online_pct >= 80:
@@ -219,39 +227,43 @@ def get_category_chart():
     category_stats = monitor.get_category_stats(current_results)
 
     categories = list(category_stats.keys())
-    online_pcts = [stats['online_percentage'] for stats in category_stats.values()]
-    avg_times = [stats['avg_response_time'] for stats in category_stats.values()]
+    online_pcts = [stats["online_percentage"] for stats in category_stats.values()]
+    avg_times = [stats["avg_response_time"] for stats in category_stats.values()]
 
     fig = go.Figure()
 
-    fig.add_trace(go.Bar(
-        name='Availability %',
-        x=categories,
-        y=online_pcts,
-        marker_color='lightblue',
-        text=[f"{pct:.1f}%" for pct in online_pcts],
-        textposition='auto',
-        yaxis='y1'
-    ))
+    fig.add_trace(
+        go.Bar(
+            name="Availability %",
+            x=categories,
+            y=online_pcts,
+            marker_color="lightblue",
+            text=[f"{pct:.1f}%" for pct in online_pcts],
+            textposition="auto",
+            yaxis="y1",
+        )
+    )
 
-    fig.add_trace(go.Scatter(
-        name='Avg Response Time (ms)',
-        x=categories,
-        y=avg_times,
-        mode='lines+markers',
-        marker=dict(size=10, color='red'),
-        line=dict(width=2, color='red'),
-        yaxis='y2'
-    ))
+    fig.add_trace(
+        go.Scatter(
+            name="Avg Response Time (ms)",
+            x=categories,
+            y=avg_times,
+            mode="lines+markers",
+            marker=dict(size=10, color="red"),
+            line=dict(width=2, color="red"),
+            yaxis="y2",
+        )
+    )
 
     fig.update_layout(
-        title='Category Health Overview',
-        xaxis=dict(title='Category'),
-        yaxis=dict(title='Availability %', side='left', range=[0, 100]),
-        yaxis2=dict(title='Response Time (ms)', side='right', overlaying='y'),
-        hovermode='x unified',
-        template='plotly_white',
-        height=500
+        title="Category Health Overview",
+        xaxis=dict(title="Category"),
+        yaxis=dict(title="Availability %", side="left", range=[0, 100]),
+        yaxis2=dict(title="Response Time (ms)", side="right", overlaying="y"),
+        hovermode="x unified",
+        template="plotly_white",
+        height=500,
     )
 
     return fig
@@ -260,6 +272,7 @@ def get_category_chart():
 # =============================================================================
 # TAB 3: Health History
 # =============================================================================
+
 
 def get_uptime_chart(provider_name=None, hours=24):
     """Get uptime chart for provider(s)"""
@@ -271,49 +284,54 @@ def get_uptime_chart(provider_name=None, hours=24):
             fig = go.Figure()
             fig.add_annotation(
                 text="No historical data available. Data will accumulate over time.",
-                xref="paper", yref="paper",
-                x=0.5, y=0.5, showarrow=False,
-                font=dict(size=16)
+                xref="paper",
+                yref="paper",
+                x=0.5,
+                y=0.5,
+                showarrow=False,
+                font=dict(size=16),
             )
             return fig
 
         # Convert to DataFrame
         df = pd.DataFrame(status_data)
-        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
-        df['uptime_value'] = df['status'].apply(lambda x: 100 if x == 'online' else 0)
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
+        df["uptime_value"] = df["status"].apply(lambda x: 100 if x == "online" else 0)
 
         # Group by provider and time
         if provider_name:
             providers = [provider_name]
         else:
-            providers = df['provider_name'].unique()[:10]  # Limit to 10 providers
+            providers = df["provider_name"].unique()[:10]  # Limit to 10 providers
 
         fig = go.Figure()
 
         for provider in providers:
-            provider_df = df[df['provider_name'] == provider]
+            provider_df = df[df["provider_name"] == provider]
 
             # Resample to hourly average
-            provider_df = provider_df.set_index('timestamp')
-            resampled = provider_df['uptime_value'].resample('1H').mean()
+            provider_df = provider_df.set_index("timestamp")
+            resampled = provider_df["uptime_value"].resample("1H").mean()
 
-            fig.add_trace(go.Scatter(
-                name=provider,
-                x=resampled.index,
-                y=resampled.values,
-                mode='lines+markers',
-                line=dict(width=2),
-                marker=dict(size=6)
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    name=provider,
+                    x=resampled.index,
+                    y=resampled.values,
+                    mode="lines+markers",
+                    line=dict(width=2),
+                    marker=dict(size=6),
+                )
+            )
 
         fig.update_layout(
-            title=f'Uptime History - Last {hours} Hours',
-            xaxis_title='Time',
-            yaxis_title='Uptime %',
-            hovermode='x unified',
-            template='plotly_white',
+            title=f"Uptime History - Last {hours} Hours",
+            xaxis_title="Time",
+            yaxis_title="Uptime %",
+            hovermode="x unified",
+            template="plotly_white",
             height=500,
-            yaxis=dict(range=[0, 105])
+            yaxis=dict(range=[0, 105]),
         )
 
         return fig
@@ -322,9 +340,7 @@ def get_uptime_chart(provider_name=None, hours=24):
         logger.error(f"Error creating uptime chart: {e}")
         fig = go.Figure()
         fig.add_annotation(
-            text=f"Error: {str(e)}",
-            xref="paper", yref="paper",
-            x=0.5, y=0.5, showarrow=False
+            text=f"Error: {str(e)}", xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False
         )
         return fig
 
@@ -338,33 +354,35 @@ def get_response_time_chart(provider_name=None, hours=24):
             return go.Figure()
 
         df = pd.DataFrame(status_data)
-        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
 
         if provider_name:
             providers = [provider_name]
         else:
-            providers = df['provider_name'].unique()[:10]
+            providers = df["provider_name"].unique()[:10]
 
         fig = go.Figure()
 
         for provider in providers:
-            provider_df = df[df['provider_name'] == provider]
+            provider_df = df[df["provider_name"] == provider]
 
-            fig.add_trace(go.Scatter(
-                name=provider,
-                x=provider_df['timestamp'],
-                y=provider_df['response_time'],
-                mode='lines',
-                line=dict(width=2)
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    name=provider,
+                    x=provider_df["timestamp"],
+                    y=provider_df["response_time"],
+                    mode="lines",
+                    line=dict(width=2),
+                )
+            )
 
         fig.update_layout(
-            title=f'Response Time Trends - Last {hours} Hours',
-            xaxis_title='Time',
-            yaxis_title='Response Time (ms)',
-            hovermode='x unified',
-            template='plotly_white',
-            height=500
+            title=f"Response Time Trends - Last {hours} Hours",
+            xaxis_title="Time",
+            yaxis_title="Response Time (ms)",
+            hovermode="x unified",
+            template="plotly_white",
+            height=500,
         )
 
         return fig
@@ -380,37 +398,44 @@ def get_incident_log(hours=24):
         incidents = db.get_incident_history(hours=hours)
 
         if not incidents:
-            return pd.DataFrame({'Message': ['No incidents in the selected period']})
+            return pd.DataFrame({"Message": ["No incidents in the selected period"]})
 
         df_data = []
         for incident in incidents:
-            df_data.append({
-                'Timestamp': incident['start_time'],
-                'Provider': incident['provider_name'],
-                'Category': incident['category'],
-                'Type': incident['incident_type'],
-                'Severity': incident['severity'],
-                'Description': incident['description'],
-                'Duration': f"{incident.get('duration_seconds', 0)} sec" if incident.get('resolved') else 'Ongoing',
-                'Status': '✅ Resolved' if incident.get('resolved') else '⚠️ Active'
-            })
+            df_data.append(
+                {
+                    "Timestamp": incident["start_time"],
+                    "Provider": incident["provider_name"],
+                    "Category": incident["category"],
+                    "Type": incident["incident_type"],
+                    "Severity": incident["severity"],
+                    "Description": incident["description"],
+                    "Duration": (
+                        f"{incident.get('duration_seconds', 0)} sec"
+                        if incident.get("resolved")
+                        else "Ongoing"
+                    ),
+                    "Status": "✅ Resolved" if incident.get("resolved") else "⚠️ Active",
+                }
+            )
 
         return pd.DataFrame(df_data)
 
     except Exception as e:
         logger.error(f"Error getting incident log: {e}")
-        return pd.DataFrame({'Error': [str(e)]})
+        return pd.DataFrame({"Error": [str(e)]})
 
 
 # =============================================================================
 # TAB 4: Test Endpoint
 # =============================================================================
 
+
 def test_endpoint(provider_name, custom_endpoint="", use_proxy=False):
     """Test a specific endpoint"""
     try:
         resources = config.get_all_resources()
-        resource = next((r for r in resources if r['name'] == provider_name), None)
+        resource = next((r for r in resources if r["name"] == provider_name), None)
 
         if not resource:
             return "Provider not found", ""
@@ -418,7 +443,7 @@ def test_endpoint(provider_name, custom_endpoint="", use_proxy=False):
         # Override endpoint if provided
         if custom_endpoint:
             resource = resource.copy()
-            resource['endpoint'] = custom_endpoint
+            resource["endpoint"] = custom_endpoint
 
         # Run check
         result = asyncio.run(monitor.check_endpoint(resource, use_proxy=use_proxy))
@@ -446,7 +471,9 @@ def test_endpoint(provider_name, custom_endpoint="", use_proxy=False):
         if result.status != HealthStatus.ONLINE:
             status_text += "\n### Troubleshooting Hints\n"
             if result.status_code == 403:
-                status_text += "- Check API key validity\n- Verify rate limits\n- Try using CORS proxy\n"
+                status_text += (
+                    "- Check API key validity\n- Verify rate limits\n- Try using CORS proxy\n"
+                )
             elif result.status_code == 429:
                 status_text += "- Rate limit exceeded\n- Wait before retrying\n- Consider using backup provider\n"
             elif result.error_message and "timeout" in result.error_message.lower():
@@ -463,18 +490,18 @@ def test_endpoint(provider_name, custom_endpoint="", use_proxy=False):
 def get_example_query(provider_name):
     """Get example query for a provider"""
     resources = config.get_all_resources()
-    resource = next((r for r in resources if r['name'] == provider_name), None)
+    resource = next((r for r in resources if r["name"] == provider_name), None)
 
     if not resource:
         return ""
 
-    example = resource.get('example', '')
+    example = resource.get("example", "")
     if example:
         return f"Example:\n{example}"
 
     # Generate generic example based on endpoint
-    endpoint = resource.get('endpoint', '')
-    url = resource.get('url', '')
+    endpoint = resource.get("endpoint", "")
+    url = resource.get("url", "")
 
     if endpoint:
         return f"Example URL:\n{url}{endpoint}"
@@ -485,6 +512,7 @@ def get_example_query(provider_name):
 # =============================================================================
 # TAB 5: Configuration
 # =============================================================================
+
 
 def update_refresh_interval(interval_minutes):
     """Update background refresh interval"""
@@ -536,6 +564,7 @@ def get_config_info():
 # Build Gradio Interface
 # =============================================================================
 
+
 def build_interface():
     """Build the complete Gradio interface"""
 
@@ -546,14 +575,16 @@ def build_interface():
         .gradio-container {
             max-width: 1400px !important;
         }
-        """
+        """,
     ) as app:
 
-        gr.Markdown("""
+        gr.Markdown(
+            """
         # 📊 Cryptocurrency API Monitor
         ### Real-time health monitoring for 162+ crypto API endpoints
         *Production-ready | Auto-refreshing | Persistent metrics | Multi-tier monitoring*
-        """)
+        """
+        )
 
         # TAB 1: Real-Time Dashboard
         with gr.Tab("📊 Real-Time Dashboard"):
@@ -565,36 +596,33 @@ def build_interface():
                 category_filter = gr.Dropdown(
                     choices=["All"] + config.get_categories(),
                     value="All",
-                    label="Filter by Category"
+                    label="Filter by Category",
                 )
                 status_filter = gr.Dropdown(
                     choices=["All", "Online", "Degraded", "Offline"],
                     value="All",
-                    label="Filter by Status"
+                    label="Filter by Status",
                 )
                 tier_filter = gr.Dropdown(
                     choices=["All", "Tier 1", "Tier 2", "Tier 3"],
                     value="All",
-                    label="Filter by Tier"
+                    label="Filter by Tier",
                 )
 
             summary_cards = gr.HTML()
             status_table = gr.DataFrame(
                 headers=["Status", "Provider", "Category", "Response Time", "Last Check", "Code"],
-                wrap=True
+                wrap=True,
             )
             download_file = gr.File(label="Download CSV", visible=False)
 
             refresh_btn.click(
                 fn=refresh_dashboard,
                 inputs=[category_filter, status_filter, tier_filter],
-                outputs=[status_table, summary_cards]
+                outputs=[status_table, summary_cards],
             )
 
-            export_btn.click(
-                fn=export_current_status,
-                outputs=download_file
-            )
+            export_btn.click(fn=export_current_status, outputs=download_file)
 
         # TAB 2: Category View
         with gr.Tab("📁 Category View"):
@@ -606,15 +634,9 @@ def build_interface():
             category_overview = gr.HTML()
             category_chart = gr.Plot()
 
-            refresh_cat_btn.click(
-                fn=get_category_overview,
-                outputs=category_overview
-            )
+            refresh_cat_btn.click(fn=get_category_overview, outputs=category_overview)
 
-            refresh_cat_btn.click(
-                fn=get_category_chart,
-                outputs=category_chart
-            )
+            refresh_cat_btn.click(fn=get_category_chart, outputs=category_chart)
 
         # TAB 3: Health History
         with gr.Tab("📈 Health History"):
@@ -622,16 +644,12 @@ def build_interface():
 
             with gr.Row():
                 history_provider = gr.Dropdown(
-                    choices=["All"] + [r['name'] for r in config.get_all_resources()],
+                    choices=["All"] + [r["name"] for r in config.get_all_resources()],
                     value="All",
-                    label="Select Provider"
+                    label="Select Provider",
                 )
                 history_hours = gr.Slider(
-                    minimum=1,
-                    maximum=168,
-                    value=24,
-                    step=1,
-                    label="Time Range (hours)"
+                    minimum=1, maximum=168, value=24, step=1, label="Time Range (hours)"
                 )
                 refresh_history_btn = gr.Button("🔄 Refresh", variant="primary")
 
@@ -649,7 +667,7 @@ def build_interface():
             refresh_history_btn.click(
                 fn=update_history,
                 inputs=[history_provider, history_hours],
-                outputs=[uptime_chart, response_chart, incident_table]
+                outputs=[uptime_chart, response_chart, incident_table],
             )
 
         # TAB 4: Test Endpoint
@@ -658,15 +676,13 @@ def build_interface():
 
             with gr.Row():
                 test_provider = gr.Dropdown(
-                    choices=[r['name'] for r in config.get_all_resources()],
-                    label="Select Provider"
+                    choices=[r["name"] for r in config.get_all_resources()], label="Select Provider"
                 )
                 test_btn = gr.Button("▶️ Run Test", variant="primary")
 
             with gr.Row():
                 custom_endpoint = gr.Textbox(
-                    label="Custom Endpoint (optional)",
-                    placeholder="/api/endpoint"
+                    label="Custom Endpoint (optional)", placeholder="/api/endpoint"
                 )
                 use_proxy_check = gr.Checkbox(label="Use CORS Proxy", value=False)
 
@@ -674,16 +690,12 @@ def build_interface():
             test_result = gr.Markdown()
             test_json = gr.Code(label="JSON Response", language="json")
 
-            test_provider.change(
-                fn=get_example_query,
-                inputs=test_provider,
-                outputs=example_query
-            )
+            test_provider.change(fn=get_example_query, inputs=test_provider, outputs=example_query)
 
             test_btn.click(
                 fn=test_endpoint,
                 inputs=[test_provider, custom_endpoint, use_proxy_check],
-                outputs=[test_result, test_json]
+                outputs=[test_result, test_json],
             )
 
         # TAB 5: Configuration
@@ -694,11 +706,7 @@ def build_interface():
 
             with gr.Row():
                 refresh_interval = gr.Slider(
-                    minimum=1,
-                    maximum=60,
-                    value=5,
-                    step=1,
-                    label="Auto-refresh Interval (minutes)"
+                    minimum=1, maximum=60, value=5, step=1, label="Auto-refresh Interval (minutes)"
                 )
                 update_interval_btn = gr.Button("💾 Update Interval")
 
@@ -709,7 +717,8 @@ def build_interface():
                 cache_status = gr.Textbox(label="Cache Status", interactive=False)
 
             gr.Markdown("### API Keys Management")
-            gr.Markdown("""
+            gr.Markdown(
+                """
             API keys are loaded from environment variables in Hugging Face Spaces.
             Go to **Settings > Repository secrets** to add keys:
             - `ETHERSCAN_KEY`
@@ -717,27 +726,23 @@ def build_interface():
             - `TRONSCAN_KEY`
             - `CMC_KEY` (CoinMarketCap)
             - `CRYPTOCOMPARE_KEY`
-            """)
+            """
+            )
 
             # Load config info on tab open
             app.load(fn=get_config_info, outputs=config_info)
 
             update_interval_btn.click(
-                fn=update_refresh_interval,
-                inputs=refresh_interval,
-                outputs=interval_status
+                fn=update_refresh_interval, inputs=refresh_interval, outputs=interval_status
             )
 
-            clear_cache_btn.click(
-                fn=clear_all_cache,
-                outputs=cache_status
-            )
+            clear_cache_btn.click(fn=clear_all_cache, outputs=cache_status)
 
         # Initial load
         app.load(
             fn=refresh_dashboard,
             inputs=[category_filter, status_filter, tier_filter],
-            outputs=[status_table, summary_cards]
+            outputs=[status_table, summary_cards],
         )
 
     return app
@@ -757,9 +762,4 @@ if __name__ == "__main__":
     app = build_interface()
 
     # Launch with sharing for HF Spaces
-    app.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        share=False,
-        show_error=True
-    )
+    app.launch(server_name="0.0.0.0", server_port=7860, share=False, show_error=True)

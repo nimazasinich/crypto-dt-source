@@ -1,4 +1,5 @@
 """Caching layer for HuggingFace Crypto Data Engine"""
+
 from __future__ import annotations
 from typing import Optional, Any
 from datetime import datetime, timedelta
@@ -10,6 +11,7 @@ from dataclasses import dataclass
 @dataclass
 class CacheEntry:
     """Cache entry with TTL"""
+
     value: Any
     expires_at: float
 
@@ -64,15 +66,14 @@ class MemoryCache:
             "size": len(self._cache),
             "hits": self._hits,
             "misses": self._misses,
-            "hitRate": round(hit_rate, 2)
+            "hitRate": round(hit_rate, 2),
         }
 
     def cleanup_expired(self):
         """Remove expired entries"""
         current_time = time.time()
         expired_keys = [
-            key for key, entry in self._cache.items()
-            if current_time > entry.expires_at
+            key for key, entry in self._cache.items() if current_time > entry.expires_at
         ]
 
         for key in expired_keys:
@@ -89,11 +90,7 @@ def cache_key(prefix: str, **kwargs) -> str:
     return f"{prefix}:{params}" if params else prefix
 
 
-async def get_or_set(
-    key: str,
-    ttl: int,
-    factory: callable
-) -> Any:
+async def get_or_set(key: str, ttl: int, factory: callable) -> Any:
     """Get from cache or compute and store"""
     # Try to get from cache
     cached = cache.get(key)

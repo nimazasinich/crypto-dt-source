@@ -44,7 +44,7 @@ async def get_lunarcrush_global() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -61,13 +61,13 @@ async def get_lunarcrush_global() -> Dict[str, Any]:
                         "Galaxy Score (social activity metric)",
                         "AltRank (relative social dominance)",
                         "Influencer tracking",
-                        "Social volume and engagement metrics"
-                    ]
+                        "Social volume and engagement metrics",
+                    ],
                 },
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": True,
                 "error": None,
-                "is_placeholder": True
+                "is_placeholder": True,
             }
 
         # Extract data
@@ -79,7 +79,7 @@ async def get_lunarcrush_global() -> Dict[str, Any]:
                 "social_volume": data.get("social_volume"),
                 "social_score": data.get("social_score"),
                 "market_sentiment": data.get("sentiment"),
-                "timestamp": data.get("timestamp")
+                "timestamp": data.get("timestamp"),
             }
 
         logger.info(f"{provider} - {endpoint} - Retrieved sentiment data")
@@ -91,7 +91,7 @@ async def get_lunarcrush_global() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -100,14 +100,11 @@ async def get_lunarcrush_global() -> Dict[str, Any]:
         return {
             "provider": provider,
             "category": category,
-            "data": {
-                "status": "placeholder",
-                "message": f"LunarCrush integration error: {str(e)}"
-            },
+            "data": {"status": "placeholder", "message": f"LunarCrush integration error: {str(e)}"},
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
 
@@ -142,9 +139,9 @@ async def get_santiment_metrics() -> Dict[str, Any]:
                 "MVRV ratio",
                 "Daily active addresses",
                 "Token age consumed",
-                "Crowd sentiment"
+                "Crowd sentiment",
             ],
-            "note": "Requires Santiment API key and SAN tokens for full access"
+            "note": "Requires Santiment API key and SAN tokens for full access",
         }
 
         logger.info(f"{provider} - {endpoint} - Placeholder data returned")
@@ -156,7 +153,7 @@ async def get_santiment_metrics() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
     except Exception as e:
@@ -169,7 +166,7 @@ async def get_santiment_metrics() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -199,8 +196,8 @@ async def get_cryptoquant_sentiment() -> Dict[str, Any]:
                 "Whale transactions",
                 "Stablecoin supply ratio",
                 "Funding rates",
-                "Open interest"
-            ]
+                "Open interest",
+            ],
         }
 
         return {
@@ -210,7 +207,7 @@ async def get_cryptoquant_sentiment() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
     except Exception as e:
@@ -221,7 +218,7 @@ async def get_cryptoquant_sentiment() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": str(e),
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -249,8 +246,8 @@ async def get_augmento_signals() -> Dict[str, Any]:
                 "AI-powered sentiment signals",
                 "Topic extraction from social media",
                 "Emerging trend detection",
-                "Sentiment momentum indicators"
-            ]
+                "Sentiment momentum indicators",
+            ],
         }
 
         return {
@@ -260,7 +257,7 @@ async def get_augmento_signals() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
     except Exception as e:
@@ -271,7 +268,7 @@ async def get_augmento_signals() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": str(e),
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -299,8 +296,8 @@ async def get_thetie_sentiment() -> Dict[str, Any]:
                 "Twitter sentiment scores",
                 "Social media momentum",
                 "Influencer tracking",
-                "Sentiment trends over time"
-            ]
+                "Sentiment trends over time",
+            ],
         }
 
         return {
@@ -310,7 +307,7 @@ async def get_thetie_sentiment() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
     except Exception as e:
@@ -321,7 +318,7 @@ async def get_thetie_sentiment() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": str(e),
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -344,11 +341,7 @@ async def get_coinmarketcal_events() -> Dict[str, Any]:
         # CoinMarketCal API
         url = "https://developers.coinmarketcal.com/v1/events"
 
-        params = {
-            "page": 1,
-            "max": 20,
-            "showOnly": "hot_events"  # Only hot/important events
-        }
+        params = {"page": 1, "max": 20, "showOnly": "hot_events"}  # Only hot/important events
 
         # Make request (may require API key for full access)
         response = await client.get(url, params=params, timeout=10)
@@ -360,7 +353,7 @@ async def get_coinmarketcal_events() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -376,13 +369,13 @@ async def get_coinmarketcal_events() -> Dict[str, Any]:
                         "Upcoming crypto events calendar",
                         "Project updates and announcements",
                         "Conferences and meetups",
-                        "Hard forks and mainnet launches"
-                    ]
+                        "Hard forks and mainnet launches",
+                    ],
                 },
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": True,
                 "error": None,
-                "is_placeholder": True
+                "is_placeholder": True,
             }
 
         # Extract data
@@ -400,13 +393,15 @@ async def get_coinmarketcal_events() -> Dict[str, Any]:
                         "coins": [coin.get("symbol") for coin in event.get("coins", [])],
                         "date": event.get("date_event"),
                         "proof": event.get("proof"),
-                        "source": event.get("source")
+                        "source": event.get("source"),
                     }
                     for event in (events[:10] if isinstance(events, list) else [])
-                ]
+                ],
             }
 
-        logger.info(f"{provider} - {endpoint} - Retrieved {events_data.get('total_events', 0)} events")
+        logger.info(
+            f"{provider} - {endpoint} - Retrieved {events_data.get('total_events', 0)} events"
+        )
 
         return {
             "provider": provider,
@@ -415,7 +410,7 @@ async def get_coinmarketcal_events() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -426,12 +421,12 @@ async def get_coinmarketcal_events() -> Dict[str, Any]:
             "category": category,
             "data": {
                 "status": "placeholder",
-                "message": f"CoinMarketCal integration error: {str(e)}"
+                "message": f"CoinMarketCal integration error: {str(e)}",
             },
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "is_placeholder": True
+            "is_placeholder": True,
         }
 
 
@@ -452,7 +447,7 @@ async def collect_extended_sentiment_data() -> List[Dict[str, Any]]:
         get_augmento_signals(),
         get_thetie_sentiment(),
         get_coinmarketcal_events(),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     # Process results
@@ -460,15 +455,17 @@ async def collect_extended_sentiment_data() -> List[Dict[str, Any]]:
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"Collector failed with exception: {str(result)}")
-            processed_results.append({
-                "provider": "Unknown",
-                "category": "sentiment",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed_results.append(
+                {
+                    "provider": "Unknown",
+                    "category": "sentiment",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed_results.append(result)
 
@@ -486,6 +483,7 @@ async def collect_extended_sentiment_data() -> List[Dict[str, Any]]:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         results = await collect_extended_sentiment_data()
 
@@ -495,10 +493,10 @@ if __name__ == "__main__":
             print(f"Success: {result['success']}")
             print(f"Is Placeholder: {result.get('is_placeholder', False)}")
 
-            if result['success']:
-                data = result.get('data', {})
+            if result["success"]:
+                data = result.get("data", {})
                 if isinstance(data, dict):
-                    if data.get('status') == 'placeholder':
+                    if data.get("status") == "placeholder":
                         print(f"Status: {data.get('message', 'N/A')}")
                     else:
                         print(f"Data keys: {list(data.keys())}")

@@ -32,8 +32,10 @@ hf_client = get_hf_client()
 # Pydantic Models
 # ============================================================================
 
+
 class PredictRequest(BaseModel):
     """Model prediction request"""
+
     symbol: str
     context: Optional[str] = None
     params: Optional[Dict[str, Any]] = None
@@ -41,6 +43,7 @@ class PredictRequest(BaseModel):
 
 class SentimentRequest(BaseModel):
     """Sentiment analysis request"""
+
     text: str
     mode: Optional[str] = "crypto"
 
@@ -49,10 +52,11 @@ class SentimentRequest(BaseModel):
 # Market Data Endpoints - از HuggingFace فقط
 # ============================================================================
 
+
 @router.get("/api/market")
 async def get_market_snapshot(
     limit: int = Query(100, description="Number of symbols"),
-    symbols: Optional[str] = Query(None, description="Comma-separated symbols (e.g., BTC,ETH)")
+    symbols: Optional[str] = Query(None, description="Comma-separated symbols (e.g., BTC,ETH)"),
 ):
     """
     دریافت داده‌های بازار از HuggingFace Space
@@ -64,17 +68,13 @@ async def get_market_snapshot(
     try:
         symbol_list = None
         if symbols:
-            symbol_list = [s.strip() for s in symbols.split(',')]
+            symbol_list = [s.strip() for s in symbols.split(",")]
 
-        result = await hf_client.get_market_prices(
-            symbols=symbol_list,
-            limit=limit
-        )
+        result = await hf_client.get_market_prices(symbols=symbol_list, limit=limit)
 
         if not result.get("success"):
             raise HTTPException(
-                status_code=503,
-                detail=result.get("error", "HuggingFace Space returned error")
+                status_code=503, detail=result.get("error", "HuggingFace Space returned error")
             )
 
         logger.info(f"✅ Market data from HF: {len(result.get('data', []))} symbols")
@@ -85,8 +85,7 @@ async def get_market_snapshot(
     except Exception as e:
         logger.error(f"❌ Market data failed: {e}")
         raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch market data from HuggingFace: {str(e)}"
+            status_code=503, detail=f"Failed to fetch market data from HuggingFace: {str(e)}"
         )
 
 
@@ -94,7 +93,7 @@ async def get_market_snapshot(
 async def get_market_history(
     symbol: str = Query(..., description="Symbol (e.g., BTCUSDT)"),
     timeframe: str = Query("1h", description="Timeframe (1m, 5m, 15m, 1h, 4h, 1d)"),
-    limit: int = Query(1000, description="Number of candles")
+    limit: int = Query(1000, description="Number of candles"),
 ):
     """
     دریافت داده‌های OHLCV از HuggingFace Space
@@ -103,19 +102,16 @@ async def get_market_history(
     ❌ بدون CoinMarketCap یا Binance
     """
     try:
-        result = await hf_client.get_market_history(
-            symbol=symbol,
-            timeframe=timeframe,
-            limit=limit
-        )
+        result = await hf_client.get_market_history(symbol=symbol, timeframe=timeframe, limit=limit)
 
         if not result.get("success"):
             raise HTTPException(
-                status_code=404,
-                detail=result.get("error", "OHLCV data not available")
+                status_code=404, detail=result.get("error", "OHLCV data not available")
             )
 
-        logger.info(f"✅ OHLCV from HF: {symbol} {timeframe} ({len(result.get('data', []))} candles)")
+        logger.info(
+            f"✅ OHLCV from HF: {symbol} {timeframe} ({len(result.get('data', []))} candles)"
+        )
         return result
 
     except HTTPException:
@@ -123,8 +119,7 @@ async def get_market_history(
     except Exception as e:
         logger.error(f"❌ OHLCV data failed: {e}")
         raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch OHLCV data from HuggingFace: {str(e)}"
+            status_code=503, detail=f"Failed to fetch OHLCV data from HuggingFace: {str(e)}"
         )
 
 
@@ -147,13 +142,15 @@ async def get_trading_pairs():
         for item in market_data.get("data", []):
             symbol = item.get("symbol", "")
             if symbol:
-                pairs.append({
-                    "pair": f"{symbol}/USDT",
-                    "base": symbol,
-                    "quote": "USDT",
-                    "tick_size": 0.01,
-                    "min_qty": 0.001
-                })
+                pairs.append(
+                    {
+                        "pair": f"{symbol}/USDT",
+                        "base": symbol,
+                        "quote": "USDT",
+                        "tick_size": 0.01,
+                        "min_qty": 0.001,
+                    }
+                )
 
         return {
             "success": True,
@@ -161,24 +158,21 @@ async def get_trading_pairs():
             "meta": {
                 "cache_ttl_seconds": 300,
                 "generated_at": datetime.utcnow().isoformat(),
-                "source": "hf_engine"
-            }
+                "source": "hf_engine",
+            },
         }
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"❌ Trading pairs failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch trading pairs: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Failed to fetch trading pairs: {str(e)}")
 
 
 @router.get("/api/market/tickers")
 async def get_tickers(
     limit: int = Query(100, description="Number of tickers"),
-    sort: str = Query("market_cap", description="Sort by: market_cap, volume, change")
+    sort: str = Query("market_cap", description="Sort by: market_cap, volume, change"),
 ):
     """
     دریافت tickers مرتب‌شده از HuggingFace
@@ -191,13 +185,15 @@ async def get_tickers(
 
         tickers = []
         for item in market_data.get("data", []):
-            tickers.append({
-                "symbol": item.get("symbol", ""),
-                "price": item.get("price", 0),
-                "change_24h": item.get("change_24h", 0),
-                "volume_24h": item.get("volume_24h", 0),
-                "market_cap": item.get("market_cap", 0)
-            })
+            tickers.append(
+                {
+                    "symbol": item.get("symbol", ""),
+                    "price": item.get("price", 0),
+                    "change_24h": item.get("change_24h", 0),
+                    "volume_24h": item.get("volume_24h", 0),
+                    "market_cap": item.get("market_cap", 0),
+                }
+            )
 
         # Sort tickers
         if sort == "volume":
@@ -214,23 +210,21 @@ async def get_tickers(
                 "cache_ttl_seconds": 60,
                 "generated_at": datetime.utcnow().isoformat(),
                 "source": "hf_engine",
-                "sort": sort
-            }
+                "sort": sort,
+            },
         }
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"❌ Tickers failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch tickers: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Failed to fetch tickers: {str(e)}")
 
 
 # ============================================================================
 # Sentiment Analysis - از HuggingFace فقط
 # ============================================================================
+
 
 @router.post("/api/sentiment/analyze")
 async def analyze_sentiment(request: SentimentRequest):
@@ -245,8 +239,7 @@ async def analyze_sentiment(request: SentimentRequest):
 
         if not result.get("success"):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Sentiment analysis failed")
+                status_code=500, detail=result.get("error", "Sentiment analysis failed")
             )
 
         logger.info(f"✅ Sentiment from HF: {result.get('data', {}).get('sentiment')}")
@@ -256,20 +249,18 @@ async def analyze_sentiment(request: SentimentRequest):
         raise
     except Exception as e:
         logger.error(f"❌ Sentiment analysis failed: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to analyze sentiment: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to analyze sentiment: {str(e)}")
 
 
 # ============================================================================
 # News - از HuggingFace فقط
 # ============================================================================
 
+
 @router.get("/api/news")
 async def get_news(
     limit: int = Query(20, description="Number of articles"),
-    source: Optional[str] = Query(None, description="Filter by source")
+    source: Optional[str] = Query(None, description="Filter by source"),
 ):
     """
     دریافت اخبار از HuggingFace Space
@@ -286,15 +277,14 @@ async def get_news(
     except Exception as e:
         logger.error(f"❌ News failed: {e}")
         raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch news from HuggingFace: {str(e)}"
+            status_code=503, detail=f"Failed to fetch news from HuggingFace: {str(e)}"
         )
 
 
 @router.get("/api/news/latest")
 async def get_latest_news(
     symbol: str = Query("BTC", description="Crypto symbol"),
-    limit: int = Query(10, description="Number of articles")
+    limit: int = Query(10, description="Number of articles"),
 ):
     """
     دریافت آخرین اخبار برای سمبل خاص
@@ -310,26 +300,22 @@ async def get_latest_news(
             "meta": {
                 "total": len(result.get("articles", [])),
                 "source": "hf_engine",
-                "timestamp": datetime.utcnow().isoformat()
-            }
+                "timestamp": datetime.utcnow().isoformat(),
+            },
         }
 
     except Exception as e:
         logger.error(f"❌ Latest news failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch latest news: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Failed to fetch latest news: {str(e)}")
 
 
 # ============================================================================
 # Blockchain Data - از HuggingFace فقط
 # ============================================================================
 
+
 @router.get("/api/blockchain/gas")
-async def get_gas_prices(
-    chain: str = Query("ethereum", description="Blockchain network")
-):
+async def get_gas_prices(chain: str = Query("ethereum", description="Blockchain network")):
     """
     دریافت قیمت گس از HuggingFace Space
 
@@ -345,15 +331,14 @@ async def get_gas_prices(
     except Exception as e:
         logger.error(f"❌ Gas prices failed: {e}")
         raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch gas prices from HuggingFace: {str(e)}"
+            status_code=503, detail=f"Failed to fetch gas prices from HuggingFace: {str(e)}"
         )
 
 
 @router.get("/api/blockchain/stats")
 async def get_blockchain_stats(
     chain: str = Query("ethereum", description="Blockchain network"),
-    hours: int = Query(24, description="Time window in hours")
+    hours: int = Query(24, description="Time window in hours"),
 ):
     """
     دریافت آمار بلاکچین از HuggingFace Space
@@ -367,8 +352,7 @@ async def get_blockchain_stats(
     except Exception as e:
         logger.error(f"❌ Blockchain stats failed: {e}")
         raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch blockchain stats from HuggingFace: {str(e)}"
+            status_code=503, detail=f"Failed to fetch blockchain stats from HuggingFace: {str(e)}"
         )
 
 
@@ -376,20 +360,19 @@ async def get_blockchain_stats(
 # Whale Tracking - از HuggingFace فقط
 # ============================================================================
 
+
 @router.get("/api/whales/transactions")
 async def get_whale_transactions(
     limit: int = Query(50, description="Number of transactions"),
     chain: Optional[str] = Query(None, description="Filter by blockchain"),
-    min_amount_usd: float = Query(100000, description="Minimum amount in USD")
+    min_amount_usd: float = Query(100000, description="Minimum amount in USD"),
 ):
     """
     دریافت تراکنش‌های نهنگ‌ها از HuggingFace Space
     """
     try:
         result = await hf_client.get_whale_transactions(
-            limit=limit,
-            chain=chain,
-            min_amount_usd=min_amount_usd
+            limit=limit, chain=chain, min_amount_usd=min_amount_usd
         )
 
         logger.info(f"✅ Whale transactions from HF: {len(result.get('transactions', []))}")
@@ -398,15 +381,12 @@ async def get_whale_transactions(
     except Exception as e:
         logger.error(f"❌ Whale transactions failed: {e}")
         raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch whale transactions from HuggingFace: {str(e)}"
+            status_code=503, detail=f"Failed to fetch whale transactions from HuggingFace: {str(e)}"
         )
 
 
 @router.get("/api/whales/stats")
-async def get_whale_stats(
-    hours: int = Query(24, description="Time window in hours")
-):
+async def get_whale_stats(hours: int = Query(24, description="Time window in hours")):
     """
     دریافت آمار نهنگ‌ها از HuggingFace Space
     """
@@ -419,14 +399,14 @@ async def get_whale_stats(
     except Exception as e:
         logger.error(f"❌ Whale stats failed: {e}")
         raise HTTPException(
-            status_code=503,
-            detail=f"Failed to fetch whale stats from HuggingFace: {str(e)}"
+            status_code=503, detail=f"Failed to fetch whale stats from HuggingFace: {str(e)}"
         )
 
 
 # ============================================================================
 # Health & Status
 # ============================================================================
+
 
 @router.get("/api/health")
 async def health_check():
@@ -443,8 +423,8 @@ async def health_check():
             "checks": {
                 "hf_space_connection": hf_health.get("success", False),
                 "hf_database": hf_health.get("database", "unknown"),
-                "hf_ai_models": hf_health.get("ai_models", {})
-            }
+                "hf_ai_models": hf_health.get("ai_models", {}),
+            },
         }
 
     except Exception as e:
@@ -453,9 +433,7 @@ async def health_check():
             "status": "unhealthy",
             "timestamp": datetime.utcnow().isoformat(),
             "error": str(e),
-            "checks": {
-                "hf_space_connection": False
-            }
+            "checks": {"hf_space_connection": False},
         }
 
 
@@ -475,7 +453,7 @@ async def get_system_status():
             "direct_api_calls": False,
             "all_via_huggingface": True,
             "huggingface_space": hf_status,
-            "version": "3.0.0-unified-hf"
+            "version": "3.0.0-unified-hf",
         }
 
     except Exception as e:
@@ -484,7 +462,7 @@ async def get_system_status():
             "status": "degraded",
             "timestamp": datetime.utcnow().isoformat(),
             "error": str(e),
-            "mode": "UNIFIED_HUGGINGFACE_ONLY"
+            "mode": "UNIFIED_HUGGINGFACE_ONLY",
         }
 
 
@@ -506,10 +484,10 @@ async def get_providers():
                 "news",
                 "blockchain_stats",
                 "whale_tracking",
-                "ai_models"
+                "ai_models",
             ],
             "has_api_token": True,
-            "endpoint": hf_client.base_url
+            "endpoint": hf_client.base_url,
         }
     ]
 
@@ -520,8 +498,8 @@ async def get_providers():
         "meta": {
             "timestamp": datetime.utcnow().isoformat(),
             "unified_source": "huggingface_space",
-            "no_direct_api_calls": True
-        }
+            "no_direct_api_calls": True,
+        },
     }
 
 

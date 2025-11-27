@@ -42,7 +42,7 @@ async def get_rss_feed(provider: str, feed_url: str) -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -55,7 +55,7 @@ async def get_rss_feed(provider: str, feed_url: str) -> Dict[str, Any]:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "success": False,
                 "error": error_msg,
-                "error_type": response.get("error_type")
+                "error_type": response.get("error_type"),
             }
 
         # Parse RSS feed
@@ -67,7 +67,7 @@ async def get_rss_feed(provider: str, feed_url: str) -> Dict[str, Any]:
         feed = feedparser.parse(raw_data)
 
         news_data = None
-        if feed and hasattr(feed, 'entries'):
+        if feed and hasattr(feed, "entries"):
             entries = feed.entries[:10]  # Get top 10 articles
 
             articles = []
@@ -76,17 +76,21 @@ async def get_rss_feed(provider: str, feed_url: str) -> Dict[str, Any]:
                     "title": entry.get("title", ""),
                     "link": entry.get("link", ""),
                     "published": entry.get("published", ""),
-                    "summary": entry.get("summary", "")[:200] if "summary" in entry else None
+                    "summary": entry.get("summary", "")[:200] if "summary" in entry else None,
                 }
                 articles.append(article)
 
             news_data = {
-                "feed_title": feed.feed.get("title", provider) if hasattr(feed, 'feed') else provider,
+                "feed_title": (
+                    feed.feed.get("title", provider) if hasattr(feed, "feed") else provider
+                ),
                 "total_entries": len(feed.entries),
-                "articles": articles
+                "articles": articles,
             }
 
-        logger.info(f"{provider} - {endpoint} - Retrieved {len(feed.entries) if feed else 0} articles")
+        logger.info(
+            f"{provider} - {endpoint} - Retrieved {len(feed.entries) if feed else 0} articles"
+        )
 
         return {
             "provider": provider,
@@ -95,7 +99,7 @@ async def get_rss_feed(provider: str, feed_url: str) -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -108,7 +112,7 @@ async def get_rss_feed(provider: str, feed_url: str) -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": False,
             "error": error_msg,
-            "error_type": "exception"
+            "error_type": "exception",
         }
 
 
@@ -181,10 +185,7 @@ async def get_cryptoslate_news() -> Dict[str, Any]:
         # CryptoSlate API endpoint (if available)
         url = "https://cryptoslate.com/wp-json/cs/v1/posts"
 
-        params = {
-            "per_page": 10,
-            "orderby": "date"
-        }
+        params = {"per_page": 10, "orderby": "date"}
 
         # Make request
         response = await client.get(url, params=params, timeout=10)
@@ -196,7 +197,7 @@ async def get_cryptoslate_news() -> Dict[str, Any]:
             endpoint,
             response.get("response_time_ms", 0),
             "success" if response["success"] else "error",
-            response.get("status_code")
+            response.get("status_code"),
         )
 
         if not response["success"]:
@@ -214,17 +215,16 @@ async def get_cryptoslate_news() -> Dict[str, Any]:
                     "title": article.get("title", {}).get("rendered", ""),
                     "link": article.get("link", ""),
                     "published": article.get("date", ""),
-                    "excerpt": article.get("excerpt", {}).get("rendered", "")[:200]
+                    "excerpt": article.get("excerpt", {}).get("rendered", "")[:200],
                 }
                 for article in data
             ]
 
-            news_data = {
-                "total_entries": len(articles),
-                "articles": articles
-            }
+            news_data = {"total_entries": len(articles), "articles": articles}
 
-        logger.info(f"{provider} - {endpoint} - Retrieved {len(data) if isinstance(data, list) else 0} articles")
+        logger.info(
+            f"{provider} - {endpoint} - Retrieved {len(data) if isinstance(data, list) else 0} articles"
+        )
 
         return {
             "provider": provider,
@@ -233,7 +233,7 @@ async def get_cryptoslate_news() -> Dict[str, Any]:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": True,
             "error": None,
-            "response_time_ms": response.get("response_time_ms", 0)
+            "response_time_ms": response.get("response_time_ms", 0),
         }
 
     except Exception as e:
@@ -303,7 +303,7 @@ async def collect_extended_news() -> List[Dict[str, Any]]:
         get_coinjournal_news(),
         get_beincrypto_news(),
         get_cryptobriefing_news(),
-        return_exceptions=True
+        return_exceptions=True,
     )
 
     # Process results
@@ -311,15 +311,17 @@ async def collect_extended_news() -> List[Dict[str, Any]]:
     for result in results:
         if isinstance(result, Exception):
             logger.error(f"Collector failed with exception: {str(result)}")
-            processed_results.append({
-                "provider": "Unknown",
-                "category": "news",
-                "data": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "success": False,
-                "error": str(result),
-                "error_type": "exception"
-            })
+            processed_results.append(
+                {
+                    "provider": "Unknown",
+                    "category": "news",
+                    "data": None,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "success": False,
+                    "error": str(result),
+                    "error_type": "exception",
+                }
+            )
         else:
             processed_results.append(result)
 
@@ -341,6 +343,7 @@ async def collect_extended_news() -> List[Dict[str, Any]]:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         results = await collect_extended_news()
 
@@ -349,11 +352,11 @@ if __name__ == "__main__":
             print(f"\nProvider: {result['provider']}")
             print(f"Success: {result['success']}")
 
-            if result['success']:
-                data = result.get('data', {})
+            if result["success"]:
+                data = result.get("data", {})
                 if data:
                     print(f"Total Articles: {data.get('total_entries', 'N/A')}")
-                    articles = data.get('articles', [])
+                    articles = data.get("articles", [])
                     if articles:
                         print(f"Latest: {articles[0].get('title', 'N/A')[:60]}...")
             else:

@@ -37,7 +37,7 @@ class HealthChecker:
             default_timeout=10,
             max_connections=50,
             retry_attempts=1,  # We'll handle retries ourselves
-            retry_delay=1.0
+            retry_delay=1.0,
         )
         self.db = Database(db_path)
         self.consecutive_failures: Dict[str, int] = defaultdict(int)
@@ -54,7 +54,7 @@ class HealthChecker:
                 rate_limiter.configure_limit(
                     provider=provider.name,
                     limit_type=provider.rate_limit_type,
-                    limit_value=provider.rate_limit_value
+                    limit_value=provider.rate_limit_value,
                 )
                 logger.info(
                     f"Configured rate limit for {provider.name}: "
@@ -90,7 +90,7 @@ class HealthChecker:
                 status_code=None,
                 error_message=f"Rate limited: {reason}",
                 timestamp=time.time(),
-                endpoint_tested=provider.health_check_endpoint
+                endpoint_tested=provider.health_check_endpoint,
             )
 
             # Save to database
@@ -123,7 +123,7 @@ class HealthChecker:
                 status_code=result.status_code,
                 error_message=f"3+ consecutive failures (count: {self.consecutive_failures[provider.name]})",
                 timestamp=result.timestamp,
-                endpoint_tested=result.endpoint_tested
+                endpoint_tested=result.endpoint_tested,
             )
 
         # Save to database
@@ -137,7 +137,7 @@ class HealthChecker:
             duration_ms=result.response_time,
             status=result.status.value,
             http_code=result.status_code,
-            level="INFO" if result.status == HealthStatus.ONLINE else "WARNING"
+            level="INFO" if result.status == HealthStatus.ONLINE else "WARNING",
         )
 
         return result
@@ -180,7 +180,7 @@ class HealthChecker:
                     status_code=None,
                     error_message=f"Exception: {str(result)[:200]}",
                     timestamp=time.time(),
-                    endpoint_tested=provider.health_check_endpoint
+                    endpoint_tested=provider.health_check_endpoint,
                 )
                 self.db.save_health_check(failed_result)
                 valid_results.append(failed_result)
@@ -254,19 +254,19 @@ class HealthChecker:
 
         # Add API key to headers or query params based on provider
         if provider.requires_key and provider.api_key:
-            if 'coinmarketcap' in provider.name.lower():
-                headers['X-CMC_PRO_API_KEY'] = provider.api_key
-            elif 'cryptocompare' in provider.name.lower():
-                headers['authorization'] = f'Apikey {provider.api_key}'
-            elif 'newsapi' in provider.name.lower() or 'newsdata' in endpoint.lower():
-                params['apikey'] = provider.api_key
-            elif 'etherscan' in provider.name.lower() or 'bscscan' in provider.name.lower():
-                params['apikey'] = provider.api_key
-            elif 'tronscan' in provider.name.lower():
-                headers['TRON-PRO-API-KEY'] = provider.api_key
+            if "coinmarketcap" in provider.name.lower():
+                headers["X-CMC_PRO_API_KEY"] = provider.api_key
+            elif "cryptocompare" in provider.name.lower():
+                headers["authorization"] = f"Apikey {provider.api_key}"
+            elif "newsapi" in provider.name.lower() or "newsdata" in endpoint.lower():
+                params["apikey"] = provider.api_key
+            elif "etherscan" in provider.name.lower() or "bscscan" in provider.name.lower():
+                params["apikey"] = provider.api_key
+            elif "tronscan" in provider.name.lower():
+                headers["TRON-PRO-API-KEY"] = provider.api_key
             else:
                 # Generic API key in query param
-                params['apikey'] = provider.api_key
+                params["apikey"] = provider.api_key
 
         # Calculate timeout in seconds (convert from ms if needed)
         timeout = (provider.timeout_ms or 10000) / 1000.0
@@ -274,27 +274,27 @@ class HealthChecker:
         # Make the HTTP request
         start_time = time.time()
         response = await self.api_client.request(
-            method='GET',
+            method="GET",
             url=endpoint,
             headers=headers if headers else None,
             params=params if params else None,
             timeout=int(timeout),
-            retry=False  # We handle retries at a higher level
+            retry=False,  # We handle retries at a higher level
         )
 
         # Extract response data
-        success = response.get('success', False)
-        status_code = response.get('status_code', 0)
-        response_time_ms = response.get('response_time_ms', 0)
-        error_type = response.get('error_type')
-        error_message = response.get('error_message')
+        success = response.get("success", False)
+        status_code = response.get("status_code", 0)
+        response_time_ms = response.get("response_time_ms", 0)
+        error_type = response.get("error_type")
+        error_message = response.get("error_message")
 
         # Determine health status based on response
         status = self._determine_health_status(
             success=success,
             status_code=status_code,
             response_time_ms=response_time_ms,
-            error_type=error_type
+            error_type=error_type,
         )
 
         # Build error message if applicable
@@ -303,7 +303,9 @@ class HealthChecker:
             if error_message:
                 final_error_message = error_message
             elif error_type:
-                final_error_message = f"{error_type}: HTTP {status_code}" if status_code else error_type
+                final_error_message = (
+                    f"{error_type}: HTTP {status_code}" if status_code else error_type
+                )
             else:
                 final_error_message = f"Request failed with status {status_code}"
 
@@ -316,17 +318,13 @@ class HealthChecker:
             status_code=status_code if status_code > 0 else None,
             error_message=final_error_message,
             timestamp=time.time(),
-            endpoint_tested=endpoint
+            endpoint_tested=endpoint,
         )
 
         return result
 
     def _determine_health_status(
-        self,
-        success: bool,
-        status_code: int,
-        response_time_ms: float,
-        error_type: Optional[str]
+        self, success: bool, status_code: int, response_time_ms: float, error_type: Optional[str]
     ) -> HealthStatus:
         """
         Determine health status based on response metrics
@@ -346,7 +344,7 @@ class HealthChecker:
             HealthStatus enum value
         """
         # Offline conditions
-        if error_type == 'timeout':
+        if error_type == "timeout":
             return HealthStatus.OFFLINE
 
         if status_code == 0:  # Network error, connection failed
@@ -484,13 +482,14 @@ def check_category_sync(category: str) -> List[HealthCheckResult]:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         """Example usage of HealthChecker"""
         checker = HealthChecker()
 
         # Check single provider
         print("\n=== Checking single provider: CoinGecko ===")
-        result = await checker.check_provider('CoinGecko')
+        result = await checker.check_provider("CoinGecko")
         if result:
             print(f"Status: {result.status.value}")
             print(f"Response Time: {result.response_time:.2f}ms")
@@ -505,7 +504,7 @@ if __name__ == "__main__":
 
         # Check by category
         print("\n=== Checking market_data category ===")
-        market_results = await checker.check_category('market_data')
+        market_results = await checker.check_category("market_data")
         for r in market_results:
             print(f"{r.provider_name}: {r.status.value} ({r.response_time:.2f}ms)")
 

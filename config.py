@@ -27,12 +27,16 @@ SELF_HEALING_CONFIG = {
 # IMPORTANT: Set HF_API_TOKEN environment variable with your token
 HF_SPACE_PRIMARY = {
     "api_token": os.getenv("HF_API_TOKEN"),  # Required: Set this in environment
-    "base_url": os.getenv("HF_SPACE_BASE_URL", "https://really-amin-datasourceforcryptocurrency.hf.space"),
-    "ws_url": os.getenv("HF_SPACE_WS_URL", "wss://really-amin-datasourceforcryptocurrency.hf.space/ws"),
+    "base_url": os.getenv(
+        "HF_SPACE_BASE_URL", "https://really-amin-datasourceforcryptocurrency.hf.space"
+    ),
+    "ws_url": os.getenv(
+        "HF_SPACE_WS_URL", "wss://really-amin-datasourceforcryptocurrency.hf.space/ws"
+    ),
     "priority": 1,
     "timeout": 8.0,
     "retry_attempts": 2,
-    "enabled": True
+    "enabled": True,
 }
 
 # External Providers Configuration (Fallback System - Priority 2-3)
@@ -44,10 +48,7 @@ EXTERNAL_PROVIDERS = {
         "timeout": 10.0,
         "priority": 3,
         "category": "blockchain_explorer",
-        "rate_limit": {
-            "requests_per_second": 5,
-            "requests_per_day": 5000
-        }
+        "rate_limit": {"requests_per_second": 5, "requests_per_day": 5000},
     },
     "bscscan": {
         "enabled": True,
@@ -56,10 +57,7 @@ EXTERNAL_PROVIDERS = {
         "timeout": 10.0,
         "priority": 3,
         "category": "blockchain_explorer",
-        "rate_limit": {
-            "requests_per_second": 5,
-            "requests_per_day": 10000
-        }
+        "rate_limit": {"requests_per_second": 5, "requests_per_day": 10000},
     },
     "etherscan": {
         "enabled": True,
@@ -68,10 +66,7 @@ EXTERNAL_PROVIDERS = {
         "timeout": 10.0,
         "priority": 3,
         "category": "blockchain_explorer",
-        "rate_limit": {
-            "requests_per_second": 5,
-            "requests_per_day": 100000
-        }
+        "rate_limit": {"requests_per_second": 5, "requests_per_day": 100000},
     },
     "coinmarketcap": {
         "enabled": True,
@@ -80,10 +75,7 @@ EXTERNAL_PROVIDERS = {
         "timeout": 15.0,
         "priority": 2,
         "category": "market_data",
-        "rate_limit": {
-            "requests_per_minute": 30,
-            "requests_per_day": 10000
-        }
+        "rate_limit": {"requests_per_minute": 30, "requests_per_day": 10000},
     },
     "newsapi": {
         "enabled": True,
@@ -92,11 +84,8 @@ EXTERNAL_PROVIDERS = {
         "timeout": 10.0,
         "priority": 2,
         "category": "news",
-        "rate_limit": {
-            "requests_per_hour": 100,
-            "requests_per_day": 1000
-        }
-    }
+        "rate_limit": {"requests_per_hour": 100, "requests_per_day": 1000},
+    },
 }
 
 # Model Configuration
@@ -110,15 +99,23 @@ MODEL_CONFIG = {
 # Gap Filling Configuration
 GAP_FILLING_CONFIG = {
     "enabled": os.getenv("GAP_FILL_ENABLED", "true").lower() == "true",
-    "max_gap_size": int(os.getenv("MAX_GAP_SIZE", "100")),  # Maximum number of missing data points to fill
-    "interpolation_method": os.getenv("INTERPOLATION_METHOD", "linear"),  # linear, cubic, polynomial
-    "confidence_decay_factor": float(os.getenv("CONFIDENCE_DECAY_FACTOR", "0.95")),  # Confidence decreases with gap size
+    "max_gap_size": int(
+        os.getenv("MAX_GAP_SIZE", "100")
+    ),  # Maximum number of missing data points to fill
+    "interpolation_method": os.getenv(
+        "INTERPOLATION_METHOD", "linear"
+    ),  # linear, cubic, polynomial
+    "confidence_decay_factor": float(
+        os.getenv("CONFIDENCE_DECAY_FACTOR", "0.95")
+    ),  # Confidence decreases with gap size
     "use_ai_synthesis": os.getenv("USE_AI_SYNTHESIS", "true").lower() == "true",
     "fallback_to_external": os.getenv("FALLBACK_TO_EXTERNAL", "true").lower() == "true",
 }
 
+
 class Settings:
     """Application settings."""
+
     def __init__(self):
         self.hf_token: Optional[str] = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
         # Self-healing settings
@@ -128,9 +125,10 @@ class Settings:
         self.health_enable_auto_reinit: bool = SELF_HEALING_CONFIG["enable_auto_reinit"]
         self.health_reinit_cooldown_seconds: int = SELF_HEALING_CONFIG["reinit_cooldown_seconds"]
 
+
 _settings = Settings()
+
 
 def get_settings() -> Settings:
     """Get application settings instance."""
     return _settings
-

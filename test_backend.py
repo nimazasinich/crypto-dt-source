@@ -6,6 +6,7 @@ Test script for Crypto API Monitor Backend
 from database.db import SessionLocal
 from database.models import Provider
 
+
 def test_database():
     """Test database and providers"""
     db = SessionLocal()
@@ -33,6 +34,7 @@ def test_database():
         return False
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     print("=" * 60)

@@ -42,6 +42,7 @@ HF_UPLOAD_ENABLED = bool(os.getenv("HF_TOKEN") or os.getenv("HF_API_TOKEN"))
 if HF_UPLOAD_ENABLED:
     try:
         from hf_dataset_uploader import get_dataset_uploader
+
         hf_uploader = get_dataset_uploader()
         logger.info("✅ HuggingFace Dataset upload ENABLED for comprehensive worker")
     except Exception as e:
@@ -56,6 +57,7 @@ else:
 # ============================================================================
 # NEWS DATA WORKER
 # ============================================================================
+
 
 async def fetch_news_data() -> List[Dict[str, Any]]:
     """
@@ -93,18 +95,17 @@ async def fetch_news_data() -> List[Dict[str, Any]]:
             # Special handling for different news APIs
             if "newsapi" in resource.id:
                 url = f"{resource.base_url}/everything"
-                params.update({
-                    "q": "cryptocurrency OR bitcoin OR ethereum",
-                    "language": "en",
-                    "sortBy": "publishedAt",
-                    "pageSize": 20
-                })
+                params.update(
+                    {
+                        "q": "cryptocurrency OR bitcoin OR ethereum",
+                        "language": "en",
+                        "sortBy": "publishedAt",
+                        "pageSize": 20,
+                    }
+                )
             elif "cryptopanic" in resource.id:
                 url = f"{resource.base_url}/posts"
-                params.update({
-                    "filter": "rising",
-                    "public": "true"
-                })
+                params.update({"filter": "rising", "public": "true"})
             elif "cryptocontrol" in resource.id:
                 url = f"{resource.base_url}/news"
 
@@ -131,11 +132,14 @@ async def fetch_news_data() -> List[Dict[str, Any]]:
                             "title": article.get("title", article.get("name", "")),
                             "description": article.get("description", article.get("summary", "")),
                             "url": article.get("url", article.get("link", "")),
-                            "published_at": article.get("publishedAt", article.get("published_at", article.get("created_at", ""))),
+                            "published_at": article.get(
+                                "publishedAt",
+                                article.get("published_at", article.get("created_at", "")),
+                            ),
                             "source": resource.name,
                             "source_id": resource.id,
                             "category": "news",
-                            "fetched_at": datetime.utcnow().isoformat() + "Z"
+                            "fetched_at": datetime.utcnow().isoformat() + "Z",
                         }
                         news_data.append(normalized)
                     except Exception as e:
@@ -156,6 +160,7 @@ async def fetch_news_data() -> List[Dict[str, Any]]:
 # ============================================================================
 # SENTIMENT DATA WORKER
 # ============================================================================
+
 
 async def fetch_sentiment_data() -> List[Dict[str, Any]]:
     """
@@ -207,31 +212,38 @@ async def fetch_sentiment_data() -> List[Dict[str, Any]]:
                 # Parse based on source
                 if "alternative.me" in resource.id:
                     fng_data = data.get("data", [{}])[0]
-                    sentiment_data.append({
-                        "metric": "fear_greed_index",
-                        "value": float(fng_data.get("value", 0)),
-                        "classification": fng_data.get("value_classification", ""),
-                        "source": resource.name,
-                        "source_id": resource.id,
-                        "timestamp": datetime.fromtimestamp(int(fng_data.get("timestamp", time.time()))).isoformat() + "Z",
-                        "fetched_at": datetime.utcnow().isoformat() + "Z"
-                    })
+                    sentiment_data.append(
+                        {
+                            "metric": "fear_greed_index",
+                            "value": float(fng_data.get("value", 0)),
+                            "classification": fng_data.get("value_classification", ""),
+                            "source": resource.name,
+                            "source_id": resource.id,
+                            "timestamp": datetime.fromtimestamp(
+                                int(fng_data.get("timestamp", time.time()))
+                            ).isoformat()
+                            + "Z",
+                            "fetched_at": datetime.utcnow().isoformat() + "Z",
+                        }
+                    )
                     logger.info(f"✅ {resource.name}: FNG = {fng_data.get('value')}")
 
                 elif "lunarcrush" in resource.id:
                     assets = data.get("data", [])
                     for asset in assets:
-                        sentiment_data.append({
-                            "symbol": asset.get("symbol", ""),
-                            "metric": "galaxy_score",
-                            "value": float(asset.get("galaxy_score", 0)),
-                            "alt_rank": asset.get("alt_rank"),
-                            "social_volume": asset.get("social_volume"),
-                            "source": resource.name,
-                            "source_id": resource.id,
-                            "timestamp": datetime.utcnow().isoformat() + "Z",
-                            "fetched_at": datetime.utcnow().isoformat() + "Z"
-                        })
+                        sentiment_data.append(
+                            {
+                                "symbol": asset.get("symbol", ""),
+                                "metric": "galaxy_score",
+                                "value": float(asset.get("galaxy_score", 0)),
+                                "alt_rank": asset.get("alt_rank"),
+                                "social_volume": asset.get("social_volume"),
+                                "source": resource.name,
+                                "source_id": resource.id,
+                                "timestamp": datetime.utcnow().isoformat() + "Z",
+                                "fetched_at": datetime.utcnow().isoformat() + "Z",
+                            }
+                        )
                     logger.info(f"✅ {resource.name}: {len(assets)} assets")
 
         except httpx.HTTPError as e:
@@ -246,6 +258,7 @@ async def fetch_sentiment_data() -> List[Dict[str, Any]]:
 # ============================================================================
 # ON-CHAIN ANALYTICS WORKER
 # ============================================================================
+
 
 async def fetch_onchain_data() -> List[Dict[str, Any]]:
     """
@@ -287,12 +300,14 @@ async def fetch_onchain_data() -> List[Dict[str, Any]]:
                 data = response.json()
 
                 # Store raw data
-                onchain_data.append({
-                    "source": resource.name,
-                    "source_id": resource.id,
-                    "data": data,
-                    "fetched_at": datetime.utcnow().isoformat() + "Z"
-                })
+                onchain_data.append(
+                    {
+                        "source": resource.name,
+                        "source_id": resource.id,
+                        "data": data,
+                        "fetched_at": datetime.utcnow().isoformat() + "Z",
+                    }
+                )
                 logger.info(f"✅ {resource.name}: Data received")
 
         except httpx.HTTPError as e:
@@ -307,6 +322,7 @@ async def fetch_onchain_data() -> List[Dict[str, Any]]:
 # ============================================================================
 # WHALE TRACKING WORKER
 # ============================================================================
+
 
 async def fetch_whale_data() -> List[Dict[str, Any]]:
     """
@@ -351,12 +367,14 @@ async def fetch_whale_data() -> List[Dict[str, Any]]:
                 transactions = data.get("transactions", []) if isinstance(data, dict) else data
 
                 for tx in transactions[:20]:  # Limit per source
-                    whale_data.append({
-                        "source": resource.name,
-                        "source_id": resource.id,
-                        "transaction": tx,
-                        "fetched_at": datetime.utcnow().isoformat() + "Z"
-                    })
+                    whale_data.append(
+                        {
+                            "source": resource.name,
+                            "source_id": resource.id,
+                            "transaction": tx,
+                            "fetched_at": datetime.utcnow().isoformat() + "Z",
+                        }
+                    )
 
                 logger.info(f"✅ {resource.name}: {len(transactions[:20])} transactions")
 
@@ -372,6 +390,7 @@ async def fetch_whale_data() -> List[Dict[str, Any]]:
 # ============================================================================
 # BLOCK EXPLORER DATA WORKER
 # ============================================================================
+
 
 async def fetch_block_explorer_data() -> List[Dict[str, Any]]:
     """
@@ -411,14 +430,16 @@ async def fetch_block_explorer_data() -> List[Dict[str, Any]]:
 
                 if data.get("status") == "1":
                     result = data.get("result", {})
-                    explorer_data.append({
-                        "chain": resource.chain if hasattr(resource, 'chain') else "unknown",
-                        "source": resource.name,
-                        "source_id": resource.id,
-                        "price_usd": result.get("ethusd"),
-                        "price_btc": result.get("ethbtc"),
-                        "fetched_at": datetime.utcnow().isoformat() + "Z"
-                    })
+                    explorer_data.append(
+                        {
+                            "chain": resource.chain if hasattr(resource, "chain") else "unknown",
+                            "source": resource.name,
+                            "source_id": resource.id,
+                            "price_usd": result.get("ethusd"),
+                            "price_btc": result.get("ethbtc"),
+                            "fetched_at": datetime.utcnow().isoformat() + "Z",
+                        }
+                    )
                     logger.info(f"✅ {resource.name}: Price data received")
 
         except httpx.HTTPError as e:
@@ -433,6 +454,7 @@ async def fetch_block_explorer_data() -> List[Dict[str, Any]]:
 # ============================================================================
 # SAVE AND UPLOAD FUNCTIONS
 # ============================================================================
+
 
 async def save_and_upload_news(news_data: List[Dict[str, Any]]) -> bool:
     """Save news data and upload to HuggingFace"""
@@ -569,6 +591,7 @@ async def save_and_upload_explorer(explorer_data: List[Dict[str, Any]]) -> bool:
 # MAIN WORKER LOOP
 # ============================================================================
 
+
 async def comprehensive_worker_loop():
     """
     Main worker loop - Fetch ALL data from ALL sources
@@ -596,7 +619,7 @@ async def comprehensive_worker_loop():
                 fetch_onchain_data(),
                 fetch_whale_data(),
                 fetch_block_explorer_data(),
-                return_exceptions=True
+                return_exceptions=True,
             )
 
             news_data, sentiment_data, onchain_data, whale_data, explorer_data = results
@@ -604,21 +627,29 @@ async def comprehensive_worker_loop():
             # Save and upload ALL data types
             await asyncio.gather(
                 save_and_upload_news(news_data if not isinstance(news_data, Exception) else []),
-                save_and_upload_sentiment(sentiment_data if not isinstance(sentiment_data, Exception) else []),
-                save_and_upload_onchain(onchain_data if not isinstance(onchain_data, Exception) else []),
+                save_and_upload_sentiment(
+                    sentiment_data if not isinstance(sentiment_data, Exception) else []
+                ),
+                save_and_upload_onchain(
+                    onchain_data if not isinstance(onchain_data, Exception) else []
+                ),
                 save_and_upload_whale(whale_data if not isinstance(whale_data, Exception) else []),
-                save_and_upload_explorer(explorer_data if not isinstance(explorer_data, Exception) else []),
-                return_exceptions=True
+                save_and_upload_explorer(
+                    explorer_data if not isinstance(explorer_data, Exception) else []
+                ),
+                return_exceptions=True,
             )
 
             elapsed = time.time() - start_time
-            total_records = sum([
-                len(news_data) if not isinstance(news_data, Exception) else 0,
-                len(sentiment_data) if not isinstance(sentiment_data, Exception) else 0,
-                len(onchain_data) if not isinstance(onchain_data, Exception) else 0,
-                len(whale_data) if not isinstance(whale_data, Exception) else 0,
-                len(explorer_data) if not isinstance(explorer_data, Exception) else 0,
-            ])
+            total_records = sum(
+                [
+                    len(news_data) if not isinstance(news_data, Exception) else 0,
+                    len(sentiment_data) if not isinstance(sentiment_data, Exception) else 0,
+                    len(onchain_data) if not isinstance(onchain_data, Exception) else 0,
+                    len(whale_data) if not isinstance(whale_data, Exception) else 0,
+                    len(explorer_data) if not isinstance(explorer_data, Exception) else 0,
+                ]
+            )
 
             logger.info(f"\n{'='*80}")
             logger.info(f"[Iteration {iteration}] Completed in {elapsed:.2f}s")
@@ -649,6 +680,7 @@ async def start_comprehensive_worker():
 
 # For testing
 if __name__ == "__main__":
+
     async def test():
         """Test the worker"""
         logger.info("Testing comprehensive data worker...")

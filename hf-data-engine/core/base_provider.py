@@ -1,4 +1,5 @@
 """Base provider interface for data sources"""
+
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Optional
@@ -7,6 +8,7 @@ import time
 import httpx
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from core.models import OHLCV, Price, ProviderHealth
@@ -123,6 +125,8 @@ class BaseProvider(ABC):
             name=self.name,
             status=status,
             latency=self.last_latency,
-            lastCheck=self.last_check.isoformat() if self.last_check else datetime.now().isoformat(),
-            errorMessage=self.last_error
+            lastCheck=(
+                self.last_check.isoformat() if self.last_check else datetime.now().isoformat()
+            ),
+            errorMessage=self.last_error,
         )

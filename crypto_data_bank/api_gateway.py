@@ -33,7 +33,7 @@ app = FastAPI(
     description="🏦 Powerful Crypto Data Bank - FREE data aggregation from 200+ sources",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # CORS Middleware
@@ -54,10 +54,7 @@ sentiment_collector = SentimentCollector()
 ai_analyzer = get_analyzer()
 
 # Application state
-app_state = {
-    "startup_time": datetime.now(),
-    "background_collection_enabled": False
-}
+app_state = {"startup_time": datetime.now(), "background_collection_enabled": False}
 
 
 # Pydantic Models
@@ -101,6 +98,7 @@ class HealthResponse(BaseModel):
 
 # === ROOT ENDPOINT ===
 
+
 @app.get("/")
 async def root():
     """معلومات API - API Information"""
@@ -114,7 +112,7 @@ async def root():
             "Market sentiment analysis",
             "AI-powered news sentiment (HuggingFace models)",
             "Intelligent caching and database storage",
-            "No API keys required for basic data"
+            "No API keys required for basic data",
         ],
         "endpoints": {
             "health": "/api/health",
@@ -124,20 +122,30 @@ async def root():
             "market_overview": "/api/market/overview",
             "trending_coins": "/api/trending",
             "ai_analysis": "/api/ai/analysis",
-            "documentation": "/docs"
+            "documentation": "/docs",
         },
         "data_sources": {
             "price_sources": ["CoinCap", "CoinGecko", "Binance Public", "Kraken", "CryptoCompare"],
-            "news_sources": ["CoinTelegraph", "CoinDesk", "Bitcoin Magazine", "Decrypt", "The Block", "CryptoPotato", "NewsBTC", "Bitcoinist"],
+            "news_sources": [
+                "CoinTelegraph",
+                "CoinDesk",
+                "Bitcoin Magazine",
+                "Decrypt",
+                "The Block",
+                "CryptoPotato",
+                "NewsBTC",
+                "Bitcoinist",
+            ],
             "sentiment_sources": ["Fear & Greed Index", "BTC Dominance", "Global Market Stats"],
-            "ai_models": ["FinBERT (sentiment)", "BART (classification)"]
+            "ai_models": ["FinBERT (sentiment)", "BART (classification)"],
         },
         "github": "https://github.com/nimazasinich/crypto-dt-source",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
 # === HEALTH & STATUS ===
+
 
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check():
@@ -154,9 +162,9 @@ async def health_check():
             database_status="connected",
             background_collection=app_state["background_collection_enabled"],
             uptime_seconds=uptime,
-            total_prices=stats.get('prices_count', 0),
-            total_news=stats.get('news_count', 0),
-            last_update=status['last_collection'].get('prices')
+            total_prices=stats.get("prices_count", 0),
+            total_news=stats.get("news_count", 0),
+            last_update=status["last_collection"].get("prices"),
         )
 
     except Exception as e:
@@ -175,7 +183,7 @@ async def get_statistics():
             "database": db_stats,
             "collection": collection_status,
             "uptime_seconds": (datetime.now() - app_state["startup_time"]).total_seconds(),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -184,11 +192,12 @@ async def get_statistics():
 
 # === PRICE ENDPOINTS ===
 
+
 @app.get("/api/prices")
 async def get_prices(
     symbols: Optional[str] = Query(None, description="Comma-separated symbols (e.g., BTC,ETH,SOL)"),
     limit: int = Query(100, ge=1, le=500, description="Number of results"),
-    force_refresh: bool = Query(False, description="Force fresh data collection")
+    force_refresh: bool = Query(False, description="Force fresh data collection"),
 ):
     """
     دریافت قیمت‌های رمزارز - Get cryptocurrency prices
@@ -198,7 +207,7 @@ async def get_prices(
     - Supports multiple symbols
     """
     try:
-        symbol_list = symbols.split(',') if symbols else None
+        symbol_list = symbols.split(",") if symbols else None
 
         # Check cache first (unless force_refresh)
         if not force_refresh:
@@ -211,7 +220,7 @@ async def get_prices(
                     "source": "database_cache",
                     "count": len(cached_prices),
                     "data": cached_prices,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
 
         # Force refresh or no cache - collect fresh data
@@ -222,7 +231,7 @@ async def get_prices(
         # Save to database
         for price_data in aggregated:
             try:
-                db.save_price(price_data['symbol'], price_data, 'api_request')
+                db.save_price(price_data["symbol"], price_data, "api_request")
             except:
                 pass
 
@@ -231,7 +240,7 @@ async def get_prices(
             "source": "live_collection",
             "count": len(aggregated),
             "data": aggregated,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -241,8 +250,7 @@ async def get_prices(
 
 @app.get("/api/prices/{symbol}")
 async def get_price_single(
-    symbol: str,
-    history_hours: int = Query(24, ge=1, le=168, description="Hours of price history")
+    symbol: str, history_hours: int = Query(24, ge=1, le=168, description="Hours of price history")
 ):
     """دریافت قیمت و تاریخچه یک رمزارز - Get single crypto price and history"""
     try:
@@ -268,7 +276,7 @@ async def get_price_single(
             "current": latest[0],
             "history": history,
             "history_hours": history_hours,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except HTTPException:
@@ -280,12 +288,13 @@ async def get_price_single(
 
 # === NEWS ENDPOINTS ===
 
+
 @app.get("/api/news")
 async def get_news(
     limit: int = Query(50, ge=1, le=200, description="Number of news items"),
     category: Optional[str] = Query(None, description="Filter by category"),
     coin: Optional[str] = Query(None, description="Filter by coin symbol"),
-    force_refresh: bool = Query(False, description="Force fresh data collection")
+    force_refresh: bool = Query(False, description="Force fresh data collection"),
 ):
     """
     دریافت اخبار رمزارز - Get cryptocurrency news
@@ -303,8 +312,9 @@ async def get_news(
                 # Filter by coin if specified
                 if coin:
                     cached_news = [
-                        n for n in cached_news
-                        if coin.upper() in [c.upper() for c in n.get('coins', [])]
+                        n
+                        for n in cached_news
+                        if coin.upper() in [c.upper() for c in n.get("coins", [])]
                     ]
 
                 logger.info(f"✅ Returning {len(cached_news)} news from cache")
@@ -313,7 +323,7 @@ async def get_news(
                     "source": "database_cache",
                     "count": len(cached_news),
                     "data": cached_news,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
 
         # Collect fresh news
@@ -337,7 +347,7 @@ async def get_news(
             "source": "live_collection",
             "count": len(unique_news[:limit]),
             "data": unique_news[:limit],
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -364,7 +374,7 @@ async def get_trending_coins():
             "success": True,
             "trending_coins": trending,
             "based_on_news": len(recent_news),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -372,6 +382,7 @@ async def get_trending_coins():
 
 
 # === SENTIMENT ENDPOINTS ===
+
 
 @app.get("/api/sentiment", response_model=Dict[str, Any])
 async def get_market_sentiment(
@@ -396,7 +407,7 @@ async def get_market_sentiment(
                     "success": True,
                     "source": "database_cache",
                     "data": cached_sentiment,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
 
         # Collect fresh sentiment
@@ -404,14 +415,14 @@ async def get_market_sentiment(
         sentiment_data = await sentiment_collector.collect_all_sentiment_data()
 
         # Save to database
-        if sentiment_data.get('overall_sentiment'):
-            db.save_sentiment(sentiment_data['overall_sentiment'], 'api_request')
+        if sentiment_data.get("overall_sentiment"):
+            db.save_sentiment(sentiment_data["overall_sentiment"], "api_request")
 
         return {
             "success": True,
             "source": "live_collection",
             "data": sentiment_data,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -420,6 +431,7 @@ async def get_market_sentiment(
 
 
 # === MARKET OVERVIEW ===
+
 
 @app.get("/api/market/overview")
 async def get_market_overview():
@@ -438,14 +450,14 @@ async def get_market_overview():
 
         if not sentiment:
             sentiment_data = await sentiment_collector.collect_all_sentiment_data()
-            sentiment = sentiment_data.get('overall_sentiment')
+            sentiment = sentiment_data.get("overall_sentiment")
 
         # Get latest news
         latest_news = db.get_latest_news(10)
 
         # Calculate market summary
-        total_market_cap = sum(p.get('marketCap', 0) for p in top_prices)
-        total_volume_24h = sum(p.get('volume24h', 0) for p in top_prices)
+        total_market_cap = sum(p.get("marketCap", 0) for p in top_prices)
+        total_volume_24h = sum(p.get("volume24h", 0) for p in top_prices)
 
         return {
             "success": True,
@@ -457,7 +469,7 @@ async def get_market_overview():
             "top_prices": top_prices[:10],
             "sentiment": sentiment,
             "latest_news": latest_news[:5],
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -466,10 +478,11 @@ async def get_market_overview():
 
 # === AI ANALYSIS ENDPOINTS ===
 
+
 @app.get("/api/ai/analysis")
 async def get_ai_analysis(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
-    limit: int = Query(50, ge=1, le=200)
+    limit: int = Query(50, ge=1, le=200),
 ):
     """تحلیل‌های هوش مصنوعی - Get AI analyses"""
     try:
@@ -479,7 +492,7 @@ async def get_ai_analysis(
             "success": True,
             "count": len(analyses),
             "data": analyses,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -487,18 +500,12 @@ async def get_ai_analysis(
 
 
 @app.post("/api/ai/analyze/news")
-async def analyze_news_with_ai(
-    text: str = Query(..., description="News text to analyze")
-):
+async def analyze_news_with_ai(text: str = Query(..., description="News text to analyze")):
     """تحلیل احساسات یک خبر با AI - Analyze news sentiment with AI"""
     try:
         result = await ai_analyzer.analyze_news_sentiment(text)
 
-        return {
-            "success": True,
-            "analysis": result,
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"success": True, "analysis": result, "timestamp": datetime.now().isoformat()}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -506,14 +513,12 @@ async def analyze_news_with_ai(
 
 # === BACKGROUND COLLECTION CONTROL ===
 
+
 @app.post("/api/collection/start")
 async def start_background_collection(background_tasks: BackgroundTasks):
     """شروع جمع‌آوری پس‌زمینه - Start background data collection"""
     if app_state["background_collection_enabled"]:
-        return {
-            "success": False,
-            "message": "Background collection already running"
-        }
+        return {"success": False, "message": "Background collection already running"}
 
     background_tasks.add_task(orchestrator.start_background_collection)
     app_state["background_collection_enabled"] = True
@@ -522,7 +527,7 @@ async def start_background_collection(background_tasks: BackgroundTasks):
         "success": True,
         "message": "Background collection started",
         "intervals": orchestrator.intervals,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -530,10 +535,7 @@ async def start_background_collection(background_tasks: BackgroundTasks):
 async def stop_background_collection():
     """توقف جمع‌آوری پس‌زمینه - Stop background data collection"""
     if not app_state["background_collection_enabled"]:
-        return {
-            "success": False,
-            "message": "Background collection not running"
-        }
+        return {"success": False, "message": "Background collection not running"}
 
     await orchestrator.stop_background_collection()
     app_state["background_collection_enabled"] = False
@@ -541,7 +543,7 @@ async def stop_background_collection():
     return {
         "success": True,
         "message": "Background collection stopped",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
 
 
@@ -552,6 +554,7 @@ async def get_collection_status():
 
 
 # === STARTUP & SHUTDOWN ===
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -582,18 +585,12 @@ async def shutdown_event():
 if __name__ == "__main__":
     import uvicorn
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🏦 Crypto Data Bank API Gateway")
-    print("="*70)
+    print("=" * 70)
     print("\n🚀 Starting server...")
     print("📍 URL: http://localhost:8888")
     print("📖 Docs: http://localhost:8888/docs")
-    print("\n" + "="*70 + "\n")
+    print("\n" + "=" * 70 + "\n")
 
-    uvicorn.run(
-        "api_gateway:app",
-        host="0.0.0.0",
-        port=8888,
-        reload=False,
-        log_level="info"
-    )
+    uvicorn.run("api_gateway:app", host="0.0.0.0", port=8888, reload=False, log_level="info")

@@ -21,8 +21,7 @@ sys.path.insert(0, str(project_root))
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -30,6 +29,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # Lifespan context manager
 # ============================================================================
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,24 +39,24 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 80)
     logger.info("📊 Mode: REAL DATA ONLY (NO MOCK DATA)")
     logger.info("=" * 80)
-    
+
     # Check environment variables
     hf_token = os.getenv("HF_API_TOKEN", "")
     newsapi_key = os.getenv("NEWSAPI_KEY", "")
     cryptopanic_token = os.getenv("CRYPTOPANIC_TOKEN", "")
-    
+
     logger.info("🔑 API Keys Status:")
     logger.info(f"  - HuggingFace API Token: {'✅ Set' if hf_token else '⚠️ Not set'}")
     logger.info(f"  - NewsAPI Key: {'✅ Set' if newsapi_key else '⚠️ Not set'}")
     logger.info(f"  - CryptoPanic Token: {'✅ Set' if cryptopanic_token else '⚠️ Not set'}")
-    
+
     logger.info("")
     logger.info("📡 Data Sources:")
     logger.info("  - CoinGecko API: https://api.coingecko.com/api/v3")
     logger.info("  - Binance Public API: https://api.binance.com/api/v3")
     logger.info("  - HuggingFace Inference: https://api-inference.huggingface.co")
     logger.info("  - NewsAPI: https://newsapi.org/v2")
-    
+
     logger.info("")
     logger.info("🎯 Available Endpoints:")
     logger.info("  - GET  /api/health           - Health check")
@@ -66,13 +66,13 @@ async def lifespan(app: FastAPI):
     logger.info("  - GET  /api/trending         - Trending coins (CoinGecko)")
     logger.info("  - POST /api/sentiment/analyze - Sentiment analysis (HuggingFace)")
     logger.info("  - GET  /api/news/latest      - Latest crypto news")
-    
+
     logger.info("")
     logger.info("✅ Server started successfully!")
     logger.info("=" * 80)
-    
+
     yield
-    
+
     # Shutdown
     logger.info("🛑 Shutting down Cryptocurrency Data Engine Server")
 
@@ -92,7 +92,7 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
 )
 
 
@@ -115,12 +115,9 @@ app.add_middleware(
 
 try:
     from backend.routers.crypto_data_engine_api import router as data_engine_router
-    
-    app.include_router(
-        data_engine_router,
-        tags=["Crypto Data Engine"]
-    )
-    
+
+    app.include_router(data_engine_router, tags=["Crypto Data Engine"])
+
     logger.info("✅ Crypto Data Engine router loaded successfully")
 
 except ImportError as e:
@@ -131,6 +128,7 @@ except ImportError as e:
 # ============================================================================
 # Root endpoint
 # ============================================================================
+
 
 @app.get("/")
 async def root():
@@ -148,20 +146,21 @@ async def root():
             "ohlcv_history": "/api/market/history",
             "trending_coins": "/api/trending",
             "sentiment_analysis": "/api/sentiment/analyze",
-            "latest_news": "/api/news/latest"
+            "latest_news": "/api/news/latest",
         },
         "data_sources": {
             "coingecko": "Market prices, trending coins",
             "binance": "OHLCV historical data",
             "huggingface": "Sentiment analysis",
-            "newsapi": "Cryptocurrency news"
-        }
+            "newsapi": "Cryptocurrency news",
+        },
     }
 
 
 # ============================================================================
 # Error handlers
 # ============================================================================
+
 
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
@@ -171,8 +170,8 @@ async def not_found_handler(request, exc):
         content={
             "error": "Endpoint not found",
             "detail": f"The endpoint {request.url.path} does not exist",
-            "documentation": "/docs"
-        }
+            "documentation": "/docs",
+        },
     )
 
 
@@ -185,8 +184,8 @@ async def internal_error_handler(request, exc):
         content={
             "error": "Internal server error",
             "detail": "An unexpected error occurred",
-            "timestamp": int(Path(__file__).stat().st_mtime)
-        }
+            "timestamp": int(Path(__file__).stat().st_mtime),
+        },
     )
 
 
@@ -196,13 +195,9 @@ async def internal_error_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     port = int(os.getenv("PORT", "8000"))
-    
+
     uvicorn.run(
-        "crypto_data_engine_server:app",
-        host="0.0.0.0",
-        port=port,
-        reload=True,
-        log_level="info"
+        "crypto_data_engine_server:app", host="0.0.0.0", port=port, reload=True, log_level="info"
     )

@@ -19,11 +19,11 @@ except (AttributeError, ImportError) as e:
     # Fallback logging setup if utils.setup_logging() is not available
     print(f"Warning: Could not import utils.setup_logging(): {e}")
     import logging
+
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    logger = logging.getLogger('dashboard_live')
+    logger = logging.getLogger("dashboard_live")
 
 # Initialize database
 db = database.get_database()
@@ -68,16 +68,14 @@ def get_live_dashboard(search_filter: str = "") -> pd.DataFrame:
             return _empty_dashboard_dataframe()
 
         # Sort by rank
-        df = df.sort_values('Rank')
+        df = df.sort_values("Rank")
 
         logger.info(f"Dashboard loaded with {len(df)} cryptocurrencies")
         return df
 
     except Exception as e:
         logger.error(f"Error in get_live_dashboard: {e}\n{traceback.format_exc()}")
-        return pd.DataFrame({
-            "Error": [f"Failed to load dashboard: {str(e)}"]
-        })
+        return pd.DataFrame({"Error": [f"Failed to load dashboard: {str(e)}"]})
 
 
 def refresh_price_data() -> Tuple[pd.DataFrame, str]:
@@ -113,15 +111,17 @@ def refresh_price_data() -> Tuple[pd.DataFrame, str]:
 
 def _empty_dashboard_dataframe() -> pd.DataFrame:
     """Create empty DataFrame with proper column structure"""
-    return pd.DataFrame({
-        "Rank": [],
-        "Name": [],
-        "Symbol": [],
-        "Price (USD)": [],
-        "24h Change (%)": [],
-        "Volume": [],
-        "Market Cap": []
-    })
+    return pd.DataFrame(
+        {
+            "Rank": [],
+            "Name": [],
+            "Symbol": [],
+            "Price (USD)": [],
+            "24h Change (%)": [],
+            "Volume": [],
+            "Market Cap": [],
+        }
+    )
 
 
 def _matches_filter(price: dict, search_filter: str) -> bool:
@@ -136,8 +136,8 @@ def _matches_filter(price: dict, search_filter: str) -> bool:
         True if matches, False otherwise
     """
     search_lower = search_filter.lower()
-    name_lower = (price.get('name') or '').lower()
-    symbol_lower = (price.get('symbol') or '').lower()
+    name_lower = (price.get("name") or "").lower()
+    symbol_lower = (price.get("symbol") or "").lower()
 
     return search_lower in name_lower or search_lower in symbol_lower
 
@@ -153,11 +153,15 @@ def _format_price_row(price: dict) -> dict:
         Formatted dictionary with display-friendly values
     """
     return {
-        "Rank": price.get('rank', 999),
-        "Name": price.get('name', 'Unknown'),
-        "Symbol": price.get('symbol', 'N/A').upper(),
-        "Price (USD)": f"${price.get('price_usd', 0):,.2f}" if price.get('price_usd') else "N/A",
-        "24h Change (%)": f"{price.get('percent_change_24h', 0):+.2f}%" if price.get('percent_change_24h') is not None else "N/A",
-        "Volume": utils.format_number(price.get('volume_24h', 0)),
-        "Market Cap": utils.format_number(price.get('market_cap', 0))
+        "Rank": price.get("rank", 999),
+        "Name": price.get("name", "Unknown"),
+        "Symbol": price.get("symbol", "N/A").upper(),
+        "Price (USD)": f"${price.get('price_usd', 0):,.2f}" if price.get("price_usd") else "N/A",
+        "24h Change (%)": (
+            f"{price.get('percent_change_24h', 0):+.2f}%"
+            if price.get("percent_change_24h") is not None
+            else "N/A"
+        ),
+        "Volume": utils.format_number(price.get("volume_24h", 0)),
+        "Market Cap": utils.format_number(price.get("market_cap", 0)),
     }

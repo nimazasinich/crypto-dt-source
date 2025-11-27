@@ -21,7 +21,7 @@ class SentimentCollector:
         self.timeout = httpx.Timeout(15.0)
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
 
     async def collect_fear_greed_index(self) -> Optional[Dict]:
@@ -46,10 +46,12 @@ class SentimentCollector:
                             "fear_greed_classification": fng.get("value_classification", "Neutral"),
                             "timestamp_fng": fng.get("timestamp"),
                             "source": "alternative.me",
-                            "timestamp": datetime.now().isoformat()
+                            "timestamp": datetime.now().isoformat(),
                         }
 
-                        logger.info(f"✅ Fear & Greed: {result['fear_greed_value']} ({result['fear_greed_classification']})")
+                        logger.info(
+                            f"✅ Fear & Greed: {result['fear_greed_value']} ({result['fear_greed_classification']})"
+                        )
                         return result
                     else:
                         logger.warning("⚠️ Fear & Greed API returned no data")
@@ -96,14 +98,16 @@ class SentimentCollector:
                     btc_market_cap = float(btc.get("marketCapUsd", 0))
 
                     # Calculate dominance
-                    btc_dominance = (btc_market_cap / total_market_cap * 100) if total_market_cap > 0 else 0
+                    btc_dominance = (
+                        (btc_market_cap / total_market_cap * 100) if total_market_cap > 0 else 0
+                    )
 
                     result = {
                         "btc_dominance": round(btc_dominance, 2),
                         "btc_market_cap": btc_market_cap,
                         "total_market_cap": total_market_cap,
                         "source": "coincap.io",
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": datetime.now().isoformat(),
                     }
 
                     logger.info(f"✅ BTC Dominance: {result['btc_dominance']}%")
@@ -135,18 +139,24 @@ class SentimentCollector:
                         return None
 
                     result = {
-                        "total_market_cap_usd": global_data.get("total_market_cap", {}).get("usd", 0),
+                        "total_market_cap_usd": global_data.get("total_market_cap", {}).get(
+                            "usd", 0
+                        ),
                         "total_volume_24h_usd": global_data.get("total_volume", {}).get("usd", 0),
                         "btc_dominance": global_data.get("market_cap_percentage", {}).get("btc", 0),
                         "eth_dominance": global_data.get("market_cap_percentage", {}).get("eth", 0),
                         "active_cryptocurrencies": global_data.get("active_cryptocurrencies", 0),
                         "markets": global_data.get("markets", 0),
-                        "market_cap_change_24h": global_data.get("market_cap_change_percentage_24h_usd", 0),
+                        "market_cap_change_24h": global_data.get(
+                            "market_cap_change_percentage_24h_usd", 0
+                        ),
                         "source": "coingecko.com",
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": datetime.now().isoformat(),
                     }
 
-                    logger.info(f"✅ Global Stats: ${result['total_market_cap_usd']:,.0f} market cap")
+                    logger.info(
+                        f"✅ Global Stats: ${result['total_market_cap_usd']:,.0f} market cap"
+                    )
                     return result
                 else:
                     logger.warning(f"⚠️ CoinGecko global returned status {response.status_code}")
@@ -160,7 +170,7 @@ class SentimentCollector:
         self,
         fear_greed: Optional[Dict],
         btc_dominance: Optional[Dict],
-        global_stats: Optional[Dict]
+        global_stats: Optional[Dict],
     ) -> Dict:
         """
         محاسبه احساسات کلی بازار
@@ -179,11 +189,13 @@ class SentimentCollector:
             confidence += 0.4
             indicators_count += 1
 
-            sentiment_signals.append({
-                "indicator": "fear_greed",
-                "value": fg_value,
-                "signal": fear_greed.get("fear_greed_classification")
-            })
+            sentiment_signals.append(
+                {
+                    "indicator": "fear_greed",
+                    "value": fg_value,
+                    "signal": fear_greed.get("fear_greed_classification"),
+                }
+            )
 
         # BTC Dominance contribution (30% weight)
         if btc_dominance:
@@ -196,11 +208,13 @@ class SentimentCollector:
             confidence += 0.3
             indicators_count += 1
 
-            sentiment_signals.append({
-                "indicator": "btc_dominance",
-                "value": dom_value,
-                "signal": "Defensive" if dom_value > 50 else "Risk-On"
-            })
+            sentiment_signals.append(
+                {
+                    "indicator": "btc_dominance",
+                    "value": dom_value,
+                    "signal": "Defensive" if dom_value > 50 else "Risk-On",
+                }
+            )
 
         # Market Cap Change contribution (30% weight)
         if global_stats:
@@ -214,11 +228,13 @@ class SentimentCollector:
             confidence += 0.3
             indicators_count += 1
 
-            sentiment_signals.append({
-                "indicator": "market_cap_change_24h",
-                "value": mc_change,
-                "signal": "Bullish" if mc_change > 0 else "Bearish"
-            })
+            sentiment_signals.append(
+                {
+                    "indicator": "market_cap_change_24h",
+                    "value": mc_change,
+                    "signal": "Bullish" if mc_change > 0 else "Bearish",
+                }
+            )
 
         # Normalize sentiment score to 0-100
         sentiment_score = max(0, min(100, sentiment_score))
@@ -242,11 +258,15 @@ class SentimentCollector:
             "indicators_used": indicators_count,
             "signals": sentiment_signals,
             "fear_greed_value": fear_greed.get("fear_greed_value") if fear_greed else None,
-            "fear_greed_classification": fear_greed.get("fear_greed_classification") if fear_greed else None,
+            "fear_greed_classification": (
+                fear_greed.get("fear_greed_classification") if fear_greed else None
+            ),
             "btc_dominance": btc_dominance.get("btc_dominance") if btc_dominance else None,
-            "market_cap_change_24h": global_stats.get("market_cap_change_24h") if global_stats else None,
+            "market_cap_change_24h": (
+                global_stats.get("market_cap_change_24h") if global_stats else None
+            ),
             "source": "aggregated",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     async def collect_all_sentiment_data(self) -> Dict:
@@ -261,7 +281,7 @@ class SentimentCollector:
             self.collect_fear_greed_index(),
             self.collect_bitcoin_dominance(),
             self.collect_global_market_stats(),
-            return_exceptions=True
+            return_exceptions=True,
         )
 
         # Handle exceptions
@@ -270,17 +290,13 @@ class SentimentCollector:
         global_stats = global_stats if not isinstance(global_stats, Exception) else None
 
         # Calculate overall sentiment
-        overall_sentiment = await self.calculate_market_sentiment(
-            fear_greed,
-            btc_dom,
-            global_stats
-        )
+        overall_sentiment = await self.calculate_market_sentiment(fear_greed, btc_dom, global_stats)
 
         return {
             "fear_greed": fear_greed,
             "btc_dominance": btc_dom,
             "global_stats": global_stats,
-            "overall_sentiment": overall_sentiment
+            "overall_sentiment": overall_sentiment,
         }
 
 
@@ -288,9 +304,9 @@ async def main():
     """Test the sentiment collectors"""
     collector = SentimentCollector()
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 Testing FREE Sentiment Collectors")
-    print("="*70)
+    print("=" * 70)
 
     # Test individual collectors
     print("\n1️⃣ Testing Fear & Greed Index...")
@@ -313,9 +329,9 @@ async def main():
         print(f"   24h Change: {global_stats['market_cap_change_24h']:.2f}%")
 
     # Test comprehensive sentiment
-    print("\n\n" + "="*70)
+    print("\n\n" + "=" * 70)
     print("📊 Testing Comprehensive Sentiment Analysis")
-    print("="*70)
+    print("=" * 70)
 
     all_data = await collector.collect_all_sentiment_data()
 

@@ -27,9 +27,9 @@ def check_file_exists(filepath: str, description: str) -> bool:
 
 def verify_hf_data_engine():
     """Verify HF Data Engine implementation"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🔍 بررسی HF Data Engine")
-    print("="*70)
+    print("=" * 70)
 
     checks = {
         "main.py": "hf-data-engine/main.py",
@@ -115,9 +115,9 @@ def verify_hf_data_engine():
 
 def verify_gradio_dashboard():
     """Verify Gradio Dashboard implementation"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🔍 بررسی Gradio Dashboard")
-    print("="*70)
+    print("=" * 70)
 
     checks = {
         "gradio_dashboard.py": "gradio_dashboard.py",
@@ -166,9 +166,9 @@ def verify_gradio_dashboard():
 
 def verify_api_resources():
     """Verify API resources are loaded"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🔍 بررسی API Resources")
-    print("="*70)
+    print("=" * 70)
 
     resources = [
         "api-resources/crypto_resources_unified_2025-11-11.json",
@@ -190,13 +190,13 @@ def verify_api_resources():
                     data = json.load(f)
 
                     if isinstance(data, dict):
-                        if 'registry' in data:
+                        if "registry" in data:
                             count = sum(
                                 len(v) if isinstance(v, list) else 1
-                                for v in data['registry'].values()
+                                for v in data["registry"].values()
                             )
-                        elif 'providers' in data:
-                            count = len(data['providers'])
+                        elif "providers" in data:
+                            count = len(data["providers"])
                         else:
                             count = len(data)
                     elif isinstance(data, list):
@@ -221,9 +221,9 @@ def verify_api_resources():
 
 def verify_code_structure():
     """Verify overall code structure"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🔍 بررسی ساختار کد")
-    print("="*70)
+    print("=" * 70)
 
     # Check HF Data Engine structure
     print("\n📦 HF Data Engine Structure:")
@@ -274,9 +274,9 @@ def verify_code_structure():
 
 def verify_documentation():
     """Verify documentation completeness"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🔍 بررسی مستندات")
-    print("="*70)
+    print("=" * 70)
 
     docs = [
         "hf-data-engine/README.md",
@@ -304,10 +304,10 @@ def verify_documentation():
 
 def main():
     """Main verification"""
-    print("\n" + "🎯"*35)
+    print("\n" + "🎯" * 35)
     print("بررسی کامل پیاده‌سازی")
     print("COMPLETE IMPLEMENTATION VERIFICATION")
-    print("🎯"*35)
+    print("🎯" * 35)
 
     results = {}
 
@@ -319,9 +319,9 @@ def main():
     verify_documentation()
 
     # Final Summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("📊 نتیجه نهایی / FINAL RESULTS")
-    print("="*70)
+    print("=" * 70)
 
     for component, passed in results.items():
         status = "✅ COMPLETE" if passed else "⚠️  INCOMPLETE"
@@ -329,7 +329,7 @@ def main():
 
     all_passed = all(results.values())
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     if all_passed:
         print("✅ همه چیز پیاده‌سازی شده!")
         print("✅ ALL COMPONENTS IMPLEMENTED!")
@@ -340,7 +340,7 @@ def main():
         print("⚠️  برخی بخش‌ها ناقص هستند")
         print("⚠️  SOME COMPONENTS INCOMPLETE")
 
-    print("="*70)
+    print("=" * 70)
 
     # Recommendations
     print("\n💡 توصیه‌ها / RECOMMENDATIONS:")

@@ -66,7 +66,7 @@ class UltimateCryptoMonitor:
         method: str = "GET",
         headers: Optional[Dict] = None,
         retry_count: int = 3,
-        timeout: int = 10
+        timeout: int = 10,
     ) -> Dict:
         """Force test an endpoint with retries and detailed results"""
         results = {
@@ -75,14 +75,14 @@ class UltimateCryptoMonitor:
             "attempts": [],
             "success": False,
             "total_time": 0,
-            "final_status": "Failed"
+            "final_status": "Failed",
         }
 
         for attempt in range(retry_count):
             attempt_result = {
                 "attempt": attempt + 1,
                 "timestamp": datetime.now().isoformat(),
-                "success": False
+                "success": False,
             }
 
             start_time = time.time()
@@ -96,13 +96,15 @@ class UltimateCryptoMonitor:
 
                     elapsed = (time.time() - start_time) * 1000
 
-                    attempt_result.update({
-                        "success": response.status_code < 400,
-                        "status_code": response.status_code,
-                        "latency_ms": elapsed,
-                        "response_size": len(response.content),
-                        "headers": dict(response.headers)
-                    })
+                    attempt_result.update(
+                        {
+                            "success": response.status_code < 400,
+                            "status_code": response.status_code,
+                            "latency_ms": elapsed,
+                            "response_size": len(response.content),
+                            "headers": dict(response.headers),
+                        }
+                    )
 
                     if response.status_code < 400:
                         results["success"] = True
@@ -171,10 +173,12 @@ class UltimateCryptoMonitor:
         overview += "## 📊 Loaded Resources\n\n"
         for name, data in self.api_resources.items():
             if isinstance(data, dict):
-                if 'registry' in data:
-                    count = sum(len(v) if isinstance(v, list) else 1 for v in data['registry'].values())
-                elif 'providers' in data:
-                    count = len(data['providers'])
+                if "registry" in data:
+                    count = sum(
+                        len(v) if isinstance(v, list) else 1 for v in data["registry"].values()
+                    )
+                elif "providers" in data:
+                    count = len(data["providers"])
                 else:
                     count = len(data)
             elif isinstance(data, list):
@@ -193,8 +197,8 @@ class UltimateCryptoMonitor:
 
         # Count total sources
         for resource_name, resource_data in self.api_resources.items():
-            if isinstance(resource_data, dict) and 'registry' in resource_data:
-                for sources in resource_data['registry'].values():
+            if isinstance(resource_data, dict) and "registry" in resource_data:
+                for sources in resource_data["registry"].values():
                     if isinstance(sources, list):
                         total_sources += len(sources)
 
@@ -203,8 +207,8 @@ class UltimateCryptoMonitor:
 
         # Test unified resources with force
         for resource_name, resource_data in self.api_resources.items():
-            if isinstance(resource_data, dict) and 'registry' in resource_data:
-                registry = resource_data['registry']
+            if isinstance(resource_data, dict) and "registry" in resource_data:
+                registry = resource_data["registry"]
 
                 for source_type, sources in registry.items():
                     if not isinstance(sources, list):
@@ -212,10 +216,10 @@ class UltimateCryptoMonitor:
 
                     for source in sources:
                         current += 1
-                        name = source.get('name', source.get('id', 'Unknown'))
+                        name = source.get("name", source.get("id", "Unknown"))
                         progress(current / max(total_sources, 1), desc=f"Force testing {name}...")
 
-                        base_url = source.get('base_url', source.get('url', ''))
+                        base_url = source.get("base_url", source.get("url", ""))
                         if not base_url:
                             continue
 
@@ -224,28 +228,36 @@ class UltimateCryptoMonitor:
 
                         status = "✅ ONLINE" if result["success"] else "❌ OFFLINE"
                         best_latency = min(
-                            [a.get("latency_ms", 99999) for a in result["attempts"] if a.get("success")],
-                            default=None
+                            [
+                                a.get("latency_ms", 99999)
+                                for a in result["attempts"]
+                                if a.get("success")
+                            ],
+                            default=None,
                         )
 
-                        all_results.append({
-                            "Name": name,
-                            "Source": resource_name,
-                            "Category": source.get('category', source.get('chain', source.get('role', 'unknown'))),
-                            "Status": status,
-                            "Attempts": len(result["attempts"]),
-                            "Best Latency": f"{best_latency:.0f}ms" if best_latency else "-",
-                            "URL": base_url[:60] + "..." if len(base_url) > 60 else base_url,
-                            "Final Result": result["final_status"]
-                        })
+                        all_results.append(
+                            {
+                                "Name": name,
+                                "Source": resource_name,
+                                "Category": source.get(
+                                    "category", source.get("chain", source.get("role", "unknown"))
+                                ),
+                                "Status": status,
+                                "Attempts": len(result["attempts"]),
+                                "Best Latency": f"{best_latency:.0f}ms" if best_latency else "-",
+                                "URL": base_url[:60] + "..." if len(base_url) > 60 else base_url,
+                                "Final Result": result["final_status"],
+                            }
+                        )
 
                         self.force_test_results[name] = result
                         await asyncio.sleep(0.2)  # Rate limiting
 
         df = pd.DataFrame(all_results) if all_results else pd.DataFrame()
 
-        online = len([r for r in all_results if '✅' in r['Status']])
-        offline = len([r for r in all_results if '❌' in r['Status']])
+        online = len([r for r in all_results if "✅" in r["Status"]])
+        offline = len([r for r in all_results if "❌" in r["Status"]])
 
         summary = f"""
 # 🧪 FORCE TEST COMPLETE
@@ -266,19 +278,18 @@ class UltimateCryptoMonitor:
         results = []
 
         for endpoint in endpoints:
-            result = {
-                "endpoint": endpoint,
-                "attempts": []
-            }
+            result = {"endpoint": endpoint, "attempts": []}
 
             # First attempt
             try:
                 response = httpx.get(endpoint, timeout=10)
-                result["attempts"].append({
-                    "status": "success" if response.status_code < 400 else "error",
-                    "code": response.status_code,
-                    "time": response.elapsed.total_seconds()
-                })
+                result["attempts"].append(
+                    {
+                        "status": "success" if response.status_code < 400 else "error",
+                        "code": response.status_code,
+                        "time": response.elapsed.total_seconds(),
+                    }
+                )
 
                 if response.status_code >= 400 and self.auto_heal_enabled:
                     # Attempt auto-heal: retry with different strategies
@@ -293,21 +304,20 @@ class UltimateCryptoMonitor:
                         else:
                             response = httpx.get(endpoint, timeout=10, follow_redirects=True)
 
-                        result["attempts"].append({
-                            "strategy": strategy,
-                            "status": "success" if response.status_code < 400 else "error",
-                            "code": response.status_code,
-                            "time": response.elapsed.total_seconds()
-                        })
+                        result["attempts"].append(
+                            {
+                                "strategy": strategy,
+                                "status": "success" if response.status_code < 400 else "error",
+                                "code": response.status_code,
+                                "time": response.elapsed.total_seconds(),
+                            }
+                        )
 
                         if response.status_code < 400:
                             break
 
             except Exception as e:
-                result["attempts"].append({
-                    "status": "failed",
-                    "error": str(e)
-                })
+                result["attempts"].append({"status": "failed", "error": str(e)})
 
             results.append(result)
 
@@ -320,13 +330,13 @@ class UltimateCryptoMonitor:
 
         found = False
         for source_file, data in self.api_resources.items():
-            if isinstance(data, dict) and 'registry' in data:
-                for source_type, sources in data['registry'].items():
+            if isinstance(data, dict) and "registry" in data:
+                for source_type, sources in data["registry"].items():
                     if not isinstance(sources, list):
                         continue
 
                     for source in sources:
-                        if source.get('name') == resource_name or source.get('id') == resource_name:
+                        if source.get("name") == resource_name or source.get("id") == resource_name:
                             found = True
                             info += f"## Source File: `{source_file}`\n"
                             info += f"## Source Type: `{source_type}`\n\n"
@@ -343,14 +353,14 @@ class UltimateCryptoMonitor:
                                 info += f"- **Total Attempts:** {len(test_result['attempts'])}\n\n"
 
                                 info += "#### Attempt Details\n"
-                                for attempt in test_result['attempts']:
+                                for attempt in test_result["attempts"]:
                                     info += f"\n**Attempt {attempt['attempt']}:**\n"
                                     info += f"- Success: {attempt.get('success', False)}\n"
-                                    if 'latency_ms' in attempt:
+                                    if "latency_ms" in attempt:
                                         info += f"- Latency: {attempt['latency_ms']:.0f}ms\n"
-                                    if 'status_code' in attempt:
+                                    if "status_code" in attempt:
                                         info += f"- Status Code: {attempt['status_code']}\n"
-                                    if 'error' in attempt:
+                                    if "error" in attempt:
                                         info += f"- Error: {attempt['error']}\n"
 
                             return info
@@ -393,10 +403,11 @@ with gr.Blocks(
     .output-markdown h2 {
         color: #3b82f6;
     }
-    """
+    """,
 ) as demo:
 
-    gr.Markdown("""
+    gr.Markdown(
+        """
 # 🚀 ULTIMATE Crypto Data Sources Monitor
 
 **Advanced Real-Time Monitoring with Force Testing & Auto-Healing**
@@ -404,7 +415,8 @@ with gr.Blocks(
 Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backends.
 
 ---
-    """)
+    """
+    )
 
     # Global settings
     with gr.Row():
@@ -422,8 +434,12 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
     auto_heal_status = gr.Markdown()
     monitoring_status = gr.Markdown()
 
-    auto_heal_toggle.change(fn=toggle_auto_heal, inputs=[auto_heal_toggle], outputs=[auto_heal_status])
-    monitoring_toggle.change(fn=toggle_monitoring, inputs=[monitoring_toggle], outputs=[monitoring_status])
+    auto_heal_toggle.change(
+        fn=toggle_auto_heal, inputs=[auto_heal_toggle], outputs=[auto_heal_status]
+    )
+    monitoring_toggle.change(
+        fn=toggle_monitoring, inputs=[monitoring_toggle], outputs=[monitoring_status]
+    )
 
     # Main Tabs
     with gr.Tabs():
@@ -435,25 +451,25 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
                 export_btn = gr.Button("💾 Export Report", variant="secondary", size="sm")
 
             refresh_btn.click(
-                fn=lambda: monitor.get_comprehensive_overview(),
-                outputs=[overview_md]
+                fn=lambda: monitor.get_comprehensive_overview(), outputs=[overview_md]
             )
 
         # Tab 2: Force Test All
         with gr.Tab("🧪 Force Test"):
-            gr.Markdown("""
+            gr.Markdown(
+                """
             ### 💪 Force Test All Sources
             Test all data sources with multiple retry attempts and detailed diagnostics.
             This will test **every single API endpoint** with force retries.
-            """)
+            """
+            )
 
             force_test_btn = gr.Button("⚡ START FORCE TEST", variant="primary", size="lg")
             force_summary = gr.Markdown()
             force_table = gr.Dataframe(wrap=True, interactive=False)
 
             force_test_btn.click(
-                fn=monitor.force_test_all_sources,
-                outputs=[force_summary, force_table]
+                fn=monitor.force_test_all_sources, outputs=[force_summary, force_table]
             )
 
         # Tab 3: Resource Explorer
@@ -463,11 +479,11 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
             # Get all resource names
             all_names = []
             for resource_data in monitor.api_resources.values():
-                if isinstance(resource_data, dict) and 'registry' in resource_data:
-                    for sources in resource_data['registry'].values():
+                if isinstance(resource_data, dict) and "registry" in resource_data:
+                    for sources in resource_data["registry"].values():
                         if isinstance(sources, list):
                             for source in sources:
-                                name = source.get('name', source.get('id'))
+                                name = source.get("name", source.get("id"))
                                 if name:
                                     all_names.append(name)
 
@@ -475,14 +491,14 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
                 choices=sorted(set(all_names)),
                 label="🔎 Search Resource",
                 interactive=True,
-                allow_custom_value=True
+                allow_custom_value=True,
             )
             resource_detail = gr.Markdown()
 
             resource_search.change(
                 fn=monitor.get_detailed_resource_info,
                 inputs=[resource_search],
-                outputs=[resource_detail]
+                outputs=[resource_detail],
             )
 
         # Tab 4: FastAPI Monitor
@@ -493,9 +509,14 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
 
             def test_fastapi_full():
                 endpoints = [
-                    "/health", "/api/status", "/api/providers",
-                    "/api/pools", "/api/hf/health", "/api/feature-flags",
-                    "/api/data/market", "/api/data/news"
+                    "/health",
+                    "/api/status",
+                    "/api/providers",
+                    "/api/pools",
+                    "/api/hf/health",
+                    "/api/feature-flags",
+                    "/api/data/market",
+                    "/api/data/news",
                 ]
 
                 results = []
@@ -503,34 +524,35 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
                     try:
                         url = f"{monitor.fastapi_url}{endpoint}"
                         response = httpx.get(url, timeout=10)
-                        results.append({
-                            "Endpoint": endpoint,
-                            "Status": "✅ Working" if response.status_code < 400 else "⚠️ Error",
-                            "Code": response.status_code,
-                            "Time": f"{response.elapsed.total_seconds() * 1000:.0f}ms",
-                            "Size": f"{len(response.content)} bytes"
-                        })
+                        results.append(
+                            {
+                                "Endpoint": endpoint,
+                                "Status": "✅ Working" if response.status_code < 400 else "⚠️ Error",
+                                "Code": response.status_code,
+                                "Time": f"{response.elapsed.total_seconds() * 1000:.0f}ms",
+                                "Size": f"{len(response.content)} bytes",
+                            }
+                        )
                     except Exception as e:
-                        results.append({
-                            "Endpoint": endpoint,
-                            "Status": "❌ Failed",
-                            "Code": "-",
-                            "Time": "-",
-                            "Size": str(e)[:50]
-                        })
+                        results.append(
+                            {
+                                "Endpoint": endpoint,
+                                "Status": "❌ Failed",
+                                "Code": "-",
+                                "Time": "-",
+                                "Size": str(e)[:50],
+                            }
+                        )
 
                 df = pd.DataFrame(results)
-                working = len([r for r in results if '✅' in r['Status']])
+                working = len([r for r in results if "✅" in r["Status"]])
                 summary = f"**{working}/{len(results)} endpoints working**"
                 return summary, df
 
             fastapi_summary = gr.Markdown()
             fastapi_df = gr.Dataframe()
 
-            fastapi_test_btn.click(
-                fn=test_fastapi_full,
-                outputs=[fastapi_summary, fastapi_df]
-            )
+            fastapi_test_btn.click(fn=test_fastapi_full, outputs=[fastapi_summary, fastapi_df])
 
         # Tab 5: HF Engine Monitor
         with gr.Tab("🤗 HF Data Engine"):
@@ -556,34 +578,35 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
                         response = httpx.get(url, timeout=30)
                         latency = (time.time() - start) * 1000
 
-                        results.append({
-                            "Endpoint": name,
-                            "URL": endpoint.split("?")[0],
-                            "Status": "✅ Working" if response.status_code < 400 else "⚠️ Error",
-                            "Latency": f"{latency:.0f}ms",
-                            "Size": f"{len(response.content)} bytes"
-                        })
+                        results.append(
+                            {
+                                "Endpoint": name,
+                                "URL": endpoint.split("?")[0],
+                                "Status": "✅ Working" if response.status_code < 400 else "⚠️ Error",
+                                "Latency": f"{latency:.0f}ms",
+                                "Size": f"{len(response.content)} bytes",
+                            }
+                        )
                     except Exception as e:
-                        results.append({
-                            "Endpoint": name,
-                            "URL": endpoint.split("?")[0],
-                            "Status": "❌ Failed",
-                            "Latency": "-",
-                            "Size": str(e)[:50]
-                        })
+                        results.append(
+                            {
+                                "Endpoint": name,
+                                "URL": endpoint.split("?")[0],
+                                "Status": "❌ Failed",
+                                "Latency": "-",
+                                "Size": str(e)[:50],
+                            }
+                        )
 
                 df = pd.DataFrame(results)
-                working = len([r for r in results if '✅' in r['Status']])
+                working = len([r for r in results if "✅" in r["Status"]])
                 summary = f"**{working}/{len(results)} endpoints working**"
                 return summary, df
 
             hf_summary = gr.Markdown()
             hf_df = gr.Dataframe()
 
-            hf_test_btn.click(
-                fn=test_hf_full,
-                outputs=[hf_summary, hf_df]
-            )
+            hf_test_btn.click(fn=test_hf_full, outputs=[hf_summary, hf_df])
 
         # Tab 6: Custom API Test
         with gr.Tab("🎯 Custom Test"):
@@ -592,26 +615,18 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
             with gr.Row():
                 with gr.Column():
                     custom_url = gr.Textbox(
-                        label="URL",
-                        placeholder="https://api.example.com/endpoint",
-                        lines=1
+                        label="URL", placeholder="https://api.example.com/endpoint", lines=1
                     )
                     custom_method = gr.Radio(
-                        choices=["GET", "POST", "PUT", "DELETE"],
-                        label="Method",
-                        value="GET"
+                        choices=["GET", "POST", "PUT", "DELETE"], label="Method", value="GET"
                     )
                     custom_headers = gr.Textbox(
                         label="Headers (JSON)",
                         placeholder='{"Authorization": "Bearer token"}',
-                        lines=3
+                        lines=3,
                     )
                     custom_retry = gr.Slider(
-                        minimum=1,
-                        maximum=5,
-                        value=3,
-                        step=1,
-                        label="Retry Attempts"
+                        minimum=1, maximum=5, value=3, step=1, label="Retry Attempts"
                     )
                     custom_test_btn = gr.Button("🚀 Test", variant="primary", size="lg")
 
@@ -625,17 +640,14 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
                     headers = None
 
                 result = await monitor.force_test_endpoint(
-                    url,
-                    method=method,
-                    headers=headers,
-                    retry_count=int(retries)
+                    url, method=method, headers=headers, retry_count=int(retries)
                 )
                 return result
 
             custom_test_btn.click(
                 fn=test_custom,
                 inputs=[custom_url, custom_method, custom_headers, custom_retry],
-                outputs=[custom_result]
+                outputs=[custom_result],
             )
 
         # Tab 7: Statistics & Analytics
@@ -650,12 +662,15 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
                 for filename, data in monitor.api_resources.items():
                     file_count = 0
 
-                    if isinstance(data, dict) and 'registry' in data:
-                        for sources in data['registry'].values():
+                    if isinstance(data, dict) and "registry" in data:
+                        for sources in data["registry"].values():
                             if isinstance(sources, list):
                                 file_count += len(sources)
                                 for source in sources:
-                                    cat = source.get('category', source.get('chain', source.get('role', 'unknown')))
+                                    cat = source.get(
+                                        "category",
+                                        source.get("chain", source.get("role", "unknown")),
+                                    )
                                     by_category[cat] += 1
 
                     by_source_file[filename] = file_count
@@ -670,7 +685,9 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
 
 ### By Source File
 """
-                for filename, count in sorted(by_source_file.items(), key=lambda x: x[1], reverse=True):
+                for filename, count in sorted(
+                    by_source_file.items(), key=lambda x: x[1], reverse=True
+                ):
                     analytics += f"- **{filename}:** {count} resources\n"
 
                 analytics += "\n### By Category\n"
@@ -682,7 +699,10 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
                     {"Metric": "Total Resources", "Value": total_resources},
                     {"Metric": "Source Files", "Value": len(by_source_file)},
                     {"Metric": "Categories", "Value": len(by_category)},
-                    {"Metric": "Avg per File", "Value": f"{total_resources / max(len(by_source_file), 1):.0f}"},
+                    {
+                        "Metric": "Avg per File",
+                        "Value": f"{total_resources / max(len(by_source_file), 1):.0f}",
+                    },
                 ]
 
                 return analytics, pd.DataFrame(df_data)
@@ -691,29 +711,22 @@ Monitor, test, and auto-heal 200+ cryptocurrency data sources, APIs, and backend
             analytics_df = gr.Dataframe()
 
             refresh_analytics_btn = gr.Button("🔄 Refresh Analytics", variant="primary")
-            refresh_analytics_btn.click(
-                fn=get_analytics,
-                outputs=[analytics_md, analytics_df]
-            )
+            refresh_analytics_btn.click(fn=get_analytics, outputs=[analytics_md, analytics_df])
 
             # Auto-load on tab open
             demo.load(fn=get_analytics, outputs=[analytics_md, analytics_df])
 
     # Footer
-    gr.Markdown("""
+    gr.Markdown(
+        """
 ---
 **ULTIMATE Crypto Data Sources Monitor** • v2.0 • Built with ❤️ using Gradio
-    """)
+    """
+    )
 
 
 if __name__ == "__main__":
     print("🚀 Starting ULTIMATE Crypto Monitor Dashboard...")
     print(f"📊 Loaded {len(monitor.api_resources)} resource files")
 
-    demo.launch(
-        server_name="0.0.0.0",
-        server_port=7861,
-        share=False,
-        show_error=True,
-        quiet=False
-    )
+    demo.launch(server_name="0.0.0.0", server_port=7861, share=False, show_error=True, quiet=False)

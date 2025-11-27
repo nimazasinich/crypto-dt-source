@@ -46,7 +46,7 @@ class TestRateLimitHistory:
 
                 # Validate timestamp format
                 try:
-                    datetime.fromisoformat(point["t"].replace('Z', '+00:00'))
+                    datetime.fromisoformat(point["t"].replace("Z", "+00:00"))
                 except ValueError:
                     pytest.fail(f"Invalid timestamp format: {point['t']}")
 
@@ -59,7 +59,7 @@ class TestRateLimitHistory:
         """Test rate limit history with custom time range and provider selection"""
         r = R.get(
             f"{BASE}/api/charts/rate-limit-history",
-            params={"hours": 48, "providers": "coingecko,cmc"}
+            params={"hours": 48, "providers": "coingecko,cmc"},
         )
         r.raise_for_status()
         data = r.json()
@@ -85,8 +85,7 @@ class TestRateLimitHistory:
     def test_rate_limit_invalid_provider(self):
         """Test rejection of invalid provider names"""
         r = R.get(
-            f"{BASE}/api/charts/rate-limit-history",
-            params={"providers": "invalid_provider_xyz"}
+            f"{BASE}/api/charts/rate-limit-history", params={"providers": "invalid_provider_xyz"}
         )
 
         # Should return 400 for invalid provider
@@ -96,10 +95,7 @@ class TestRateLimitHistory:
         """Test that provider list is limited to max 5"""
         # Request more than 5 providers
         providers_list = ",".join([f"provider{i}" for i in range(10)])
-        r = R.get(
-            f"{BASE}/api/charts/rate-limit-history",
-            params={"providers": providers_list}
-        )
+        r = R.get(f"{BASE}/api/charts/rate-limit-history", params={"providers": providers_list})
 
         # Should either succeed with max 5 or reject invalid providers
         if r.status_code == 200:
@@ -109,6 +105,7 @@ class TestRateLimitHistory:
     def test_rate_limit_response_time(self):
         """Test that endpoint responds within performance target (< 200ms for 24h)"""
         import time
+
         start = time.time()
         r = R.get(f"{BASE}/api/charts/rate-limit-history")
         duration_ms = (time.time() - start) * 1000
@@ -154,11 +151,15 @@ class TestFreshnessHistory:
 
                 assert point["staleness_min"] >= 0, "Staleness should be non-negative"
                 assert point["ttl_min"] > 0, "TTL should be positive"
-                assert point["status"] in ["fresh", "aging", "stale"], f"Invalid status: {point['status']}"
+                assert point["status"] in [
+                    "fresh",
+                    "aging",
+                    "stale",
+                ], f"Invalid status: {point['status']}"
 
                 # Validate timestamp format
                 try:
-                    datetime.fromisoformat(point["t"].replace('Z', '+00:00'))
+                    datetime.fromisoformat(point["t"].replace("Z", "+00:00"))
                 except ValueError:
                     pytest.fail(f"Invalid timestamp format: {point['t']}")
 
@@ -171,7 +172,7 @@ class TestFreshnessHistory:
         """Test freshness history with custom time range and provider selection"""
         r = R.get(
             f"{BASE}/api/charts/freshness-history",
-            params={"hours": 72, "providers": "coingecko,binance"}
+            params={"hours": 72, "providers": "coingecko,binance"},
         )
         r.raise_for_status()
         data = r.json()
@@ -196,10 +197,7 @@ class TestFreshnessHistory:
 
     def test_freshness_invalid_provider(self):
         """Test rejection of invalid provider names"""
-        r = R.get(
-            f"{BASE}/api/charts/freshness-history",
-            params={"providers": "foo,bar"}
-        )
+        r = R.get(f"{BASE}/api/charts/freshness-history", params={"providers": "foo,bar"})
 
         # Should return 400 for invalid providers
         assert r.status_code in [400, 404], "Should reject invalid provider names"
@@ -230,11 +228,14 @@ class TestFreshnessHistory:
                     if staleness == 999.0:
                         assert status == "stale", "No data should be marked as stale"
                     else:
-                        assert status == expected, f"Status mismatch: staleness={staleness}, ttl={ttl}, expected={expected}, got={status}"
+                        assert (
+                            status == expected
+                        ), f"Status mismatch: staleness={staleness}, ttl={ttl}, expected={expected}, got={status}"
 
     def test_freshness_response_time(self):
         """Test that endpoint responds within performance target (< 200ms for 24h)"""
         import time
+
         start = time.time()
         r = R.get(f"{BASE}/api/charts/freshness-history")
         duration_ms = (time.time() - start) * 1000
@@ -251,8 +252,7 @@ class TestSecurityValidation:
         """Test that SQL injection attempts are safely handled"""
         malicious_providers = "'; DROP TABLE providers; --"
         r = R.get(
-            f"{BASE}/api/charts/rate-limit-history",
-            params={"providers": malicious_providers}
+            f"{BASE}/api/charts/rate-limit-history", params={"providers": malicious_providers}
         )
 
         # Should reject or safely handle malicious input
@@ -262,8 +262,7 @@ class TestSecurityValidation:
         """Test that XSS attempts are safely handled"""
         malicious_providers = "<script>alert('xss')</script>"
         r = R.get(
-            f"{BASE}/api/charts/rate-limit-history",
-            params={"providers": malicious_providers}
+            f"{BASE}/api/charts/rate-limit-history", params={"providers": malicious_providers}
         )
 
         # Should reject or safely handle malicious input
@@ -272,10 +271,7 @@ class TestSecurityValidation:
     def test_parameter_type_validation(self):
         """Test that invalid parameter types are rejected"""
         # Test invalid hours type
-        r = R.get(
-            f"{BASE}/api/charts/rate-limit-history",
-            params={"hours": "invalid"}
-        )
+        r = R.get(f"{BASE}/api/charts/rate-limit-history", params={"hours": "invalid"})
         assert r.status_code == 422, "Should reject invalid parameter type"
 
 
@@ -284,10 +280,7 @@ class TestEdgeCases:
 
     def test_empty_provider_list(self):
         """Test behavior with empty provider list"""
-        r = R.get(
-            f"{BASE}/api/charts/rate-limit-history",
-            params={"providers": ""}
-        )
+        r = R.get(f"{BASE}/api/charts/rate-limit-history", params={"providers": ""})
         r.raise_for_status()
         data = r.json()
 
@@ -297,15 +290,16 @@ class TestEdgeCases:
     def test_whitespace_handling(self):
         """Test that whitespace in provider names is properly handled"""
         r = R.get(
-            f"{BASE}/api/charts/rate-limit-history",
-            params={"providers": " coingecko , cmc "}
+            f"{BASE}/api/charts/rate-limit-history", params={"providers": " coingecko , cmc "}
         )
 
         # Should handle whitespace gracefully
         if r.status_code == 200:
             data = r.json()
             for series in data:
-                assert series["provider"].strip() == series["provider"], "Provider names should be trimmed"
+                assert (
+                    series["provider"].strip() == series["provider"]
+                ), "Provider names should be trimmed"
 
     def test_concurrent_requests(self):
         """Test that endpoint handles concurrent requests safely"""

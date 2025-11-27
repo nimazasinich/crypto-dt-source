@@ -21,9 +21,9 @@ from crypto_data_bank.orchestrator import get_orchestrator
 
 async def test_price_collectors():
     """Test price collectors"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("💰 Testing Price Collectors")
-    print("="*70)
+    print("=" * 70)
 
     collector = FreePriceCollector()
 
@@ -60,16 +60,18 @@ async def test_price_collectors():
     if aggregated:
         print("\nSample prices:")
         for price in aggregated[:3]:
-            print(f"  {price['symbol']}: ${price['price']:,.2f} (from {price.get('sources_count', 0)} sources)")
+            print(
+                f"  {price['symbol']}: ${price['price']:,.2f} (from {price.get('sources_count', 0)} sources)"
+            )
 
     return len(aggregated) > 0
 
 
 async def test_news_collectors():
     """Test news collectors"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("📰 Testing News Collectors")
-    print("="*70)
+    print("=" * 70)
 
     collector = RSSNewsCollector()
 
@@ -115,9 +117,9 @@ async def test_news_collectors():
 
 async def test_sentiment_collectors():
     """Test sentiment collectors"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("😊 Testing Sentiment Collectors")
-    print("="*70)
+    print("=" * 70)
 
     collector = SentimentCollector()
 
@@ -126,7 +128,9 @@ async def test_sentiment_collectors():
     try:
         fg = await collector.collect_fear_greed_index()
         if fg:
-            print(f"✅ Fear & Greed: {fg['fear_greed_value']}/100 ({fg['fear_greed_classification']})")
+            print(
+                f"✅ Fear & Greed: {fg['fear_greed_value']}/100 ({fg['fear_greed_classification']})"
+            )
         else:
             print("⚠️  Fear & Greed: No data")
     except Exception as e:
@@ -136,20 +140,20 @@ async def test_sentiment_collectors():
     print("\nTesting all sentiment sources...")
     all_sentiment = await collector.collect_all_sentiment_data()
 
-    if all_sentiment.get('overall_sentiment'):
-        overall = all_sentiment['overall_sentiment']
+    if all_sentiment.get("overall_sentiment"):
+        overall = all_sentiment["overall_sentiment"]
         print(f"\n✅ Overall Sentiment: {overall['overall_sentiment']}")
         print(f"   Score: {overall['sentiment_score']}/100")
         print(f"   Confidence: {overall['confidence']:.2%}")
 
-    return all_sentiment.get('overall_sentiment') is not None
+    return all_sentiment.get("overall_sentiment") is not None
 
 
 async def test_ai_models():
     """Test AI models"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🤖 Testing AI Models")
-    print("="*70)
+    print("=" * 70)
 
     analyzer = get_analyzer()
 
@@ -158,7 +162,7 @@ async def test_ai_models():
     test_texts = [
         "Bitcoin surges past $50,000 as institutional adoption accelerates",
         "SEC delays crypto ETF decision, causing market uncertainty",
-        "Ethereum successfully completes major network upgrade"
+        "Ethereum successfully completes major network upgrade",
     ]
 
     for i, text in enumerate(test_texts, 1):
@@ -172,24 +176,24 @@ async def test_ai_models():
 
 async def test_database():
     """Test database operations"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("💾 Testing Database")
-    print("="*70)
+    print("=" * 70)
 
     db = get_db()
 
     # Test saving price
     print("\nTesting price storage...")
     test_price = {
-        'price': 50000.0,
-        'priceUsd': 50000.0,
-        'change24h': 2.5,
-        'volume24h': 25000000000,
-        'marketCap': 980000000000,
+        "price": 50000.0,
+        "priceUsd": 50000.0,
+        "change24h": 2.5,
+        "volume24h": 25000000000,
+        "marketCap": 980000000000,
     }
 
     try:
-        db.save_price('BTC', test_price, 'test')
+        db.save_price("BTC", test_price, "test")
         print("✅ Price saved successfully")
     except Exception as e:
         print(f"❌ Failed to save price: {e}")
@@ -198,7 +202,7 @@ async def test_database():
     # Test retrieving prices
     print("\nTesting price retrieval...")
     try:
-        latest_prices = db.get_latest_prices(['BTC'], 1)
+        latest_prices = db.get_latest_prices(["BTC"], 1)
         print(f"✅ Retrieved {len(latest_prices)} prices")
     except Exception as e:
         print(f"❌ Failed to retrieve prices: {e}")
@@ -217,9 +221,9 @@ async def test_database():
 
 async def test_orchestrator():
     """Test orchestrator"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🎯 Testing Orchestrator")
-    print("="*70)
+    print("=" * 70)
 
     orchestrator = get_orchestrator()
 
@@ -228,17 +232,17 @@ async def test_orchestrator():
     results = await orchestrator.collect_all_data_once()
 
     print(f"\n✅ Collection Results:")
-    if results.get('prices', {}).get('success'):
+    if results.get("prices", {}).get("success"):
         print(f"   Prices: {results['prices'].get('prices_saved', 0)} saved")
     else:
         print(f"   Prices: ⚠️  {results.get('prices', {}).get('error', 'Failed')}")
 
-    if results.get('news', {}).get('success'):
+    if results.get("news", {}).get("success"):
         print(f"   News: {results['news'].get('news_saved', 0)} saved")
     else:
         print(f"   News: ⚠️  {results.get('news', {}).get('error', 'Failed')}")
 
-    if results.get('sentiment', {}).get('success'):
+    if results.get("sentiment", {}).get("success"):
         print(f"   Sentiment: ✅ Success")
     else:
         print(f"   Sentiment: ⚠️  Failed")
@@ -249,59 +253,59 @@ async def test_orchestrator():
     print(f"   Running: {status['is_running']}")
     print(f"   Last collection: {status.get('last_collection', {})}")
 
-    return results.get('prices', {}).get('success', False)
+    return results.get("prices", {}).get("success", False)
 
 
 async def main():
     """Run all tests"""
-    print("\n" + "🧪"*35)
+    print("\n" + "🧪" * 35)
     print("CRYPTO DATA BANK - COMPREHENSIVE TEST SUITE")
     print("تست جامع بانک اطلاعاتی رمزارز")
-    print("🧪"*35)
+    print("🧪" * 35)
 
     results = {}
 
     # Run all tests
     try:
-        results['price_collectors'] = await test_price_collectors()
+        results["price_collectors"] = await test_price_collectors()
     except Exception as e:
         print(f"\n❌ Price collectors test failed: {e}")
-        results['price_collectors'] = False
+        results["price_collectors"] = False
 
     try:
-        results['news_collectors'] = await test_news_collectors()
+        results["news_collectors"] = await test_news_collectors()
     except Exception as e:
         print(f"\n❌ News collectors test failed: {e}")
-        results['news_collectors'] = False
+        results["news_collectors"] = False
 
     try:
-        results['sentiment_collectors'] = await test_sentiment_collectors()
+        results["sentiment_collectors"] = await test_sentiment_collectors()
     except Exception as e:
         print(f"\n❌ Sentiment collectors test failed: {e}")
-        results['sentiment_collectors'] = False
+        results["sentiment_collectors"] = False
 
     try:
-        results['ai_models'] = await test_ai_models()
+        results["ai_models"] = await test_ai_models()
     except Exception as e:
         print(f"\n❌ AI models test failed: {e}")
-        results['ai_models'] = False
+        results["ai_models"] = False
 
     try:
-        results['database'] = await test_database()
+        results["database"] = await test_database()
     except Exception as e:
         print(f"\n❌ Database test failed: {e}")
-        results['database'] = False
+        results["database"] = False
 
     try:
-        results['orchestrator'] = await test_orchestrator()
+        results["orchestrator"] = await test_orchestrator()
     except Exception as e:
         print(f"\n❌ Orchestrator test failed: {e}")
-        results['orchestrator'] = False
+        results["orchestrator"] = False
 
     # Summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("📊 TEST SUMMARY | خلاصه تست‌ها")
-    print("="*70)
+    print("=" * 70)
 
     passed = sum(1 for v in results.values() if v)
     total = len(results)
@@ -310,9 +314,9 @@ async def main():
         status = "✅ PASSED" if success else "❌ FAILED"
         print(f"{status} - {test_name.replace('_', ' ').title()}")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print(f"Results: {passed}/{total} tests passed ({passed/total*100:.0f}%)")
-    print("="*70)
+    print("=" * 70)
 
     if passed == total:
         print("\n🎉 ALL TESTS PASSED! System is ready to use!")

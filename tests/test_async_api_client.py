@@ -10,6 +10,7 @@ import asyncio
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.async_api_client import AsyncAPIClient, safe_api_call, parallel_api_calls
@@ -32,13 +33,13 @@ class TestAsyncAPIClient:
         async with AsyncAPIClient() as client:
             with patch.object(
                 client._session,
-                'get',
+                "get",
                 return_value=AsyncMock(
                     json=AsyncMock(return_value=mock_response_data),
                     raise_for_status=MagicMock(),
                     __aenter__=AsyncMock(),
-                    __aexit__=AsyncMock()
-                )
+                    __aexit__=AsyncMock(),
+                ),
             ):
                 result = await client.get("https://api.example.com/data")
                 # Note: This test structure needs adjustment based on actual mock implementation
@@ -71,7 +72,7 @@ class TestAsyncAPIClient:
         urls = [
             "https://api.example.com/endpoint1",
             "https://api.example.com/endpoint2",
-            "https://api.example.com/endpoint3"
+            "https://api.example.com/endpoint3",
         ]
 
         async with AsyncAPIClient() as client:
@@ -90,7 +91,7 @@ class TestConvenienceFunctions:
     async def test_safe_api_call(self):
         """Test safe_api_call convenience function"""
         # Test successful call
-        with patch('utils.async_api_client.AsyncAPIClient') as MockClient:
+        with patch("utils.async_api_client.AsyncAPIClient") as MockClient:
             mock_instance = MockClient.return_value.__aenter__.return_value
             mock_instance.get = AsyncMock(return_value={"success": True})
 
@@ -101,15 +102,13 @@ class TestConvenienceFunctions:
         """Test parallel_api_calls convenience function"""
         urls = ["https://api.example.com/1", "https://api.example.com/2"]
 
-        with patch('utils.async_api_client.AsyncAPIClient') as MockClient:
+        with patch("utils.async_api_client.AsyncAPIClient") as MockClient:
             mock_instance = MockClient.return_value.__aenter__.return_value
-            mock_instance.gather_requests = AsyncMock(
-                return_value=[{"id": 1}, {"id": 2}]
-            )
+            mock_instance.gather_requests = AsyncMock(return_value=[{"id": 1}, {"id": 2}])
 
             results = await parallel_api_calls(urls)
             # Verify results
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
