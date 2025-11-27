@@ -11,6 +11,17 @@ import { Loading } from '../../shared/js/components/loading.js';
 import { ChartComponent, loadChartJS } from '../../shared/js/components/chart.js';
 import { formatNumber } from '../../shared/js/utils/formatters.js';
 
+// SVG Icons
+const ICONS = {
+  package: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`,
+  gift: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>`,
+  cpu: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>`,
+  power: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"></path><path d="M18.4 6.6a9 9 0 1 1-12.77.04"></path></svg>`,
+  checkCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+  alertTriangle: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+  xCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
+};
+
 /**
  * Dashboard Page Class
  */
@@ -130,28 +141,28 @@ class DashboardPage {
 
     grid.innerHTML = `
       <div class="stat-card">
-        <div class="stat-icon">📦</div>
+        <div class="stat-icon">${ICONS.package}</div>
         <div class="stat-content">
           <div class="stat-value">${formatNumber(resources.total || 0)}</div>
           <div class="stat-label">Total Resources</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">🆓</div>
+        <div class="stat-icon">${ICONS.gift}</div>
         <div class="stat-content">
           <div class="stat-value">${formatNumber(resources.free || 0)}</div>
           <div class="stat-label">Free Resources</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">🤖</div>
+        <div class="stat-icon">${ICONS.cpu}</div>
         <div class="stat-content">
           <div class="stat-value">${formatNumber(resources.models || 0)}</div>
           <div class="stat-label">AI Models</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">🔌</div>
+        <div class="stat-icon">${ICONS.power}</div>
         <div class="stat-content">
           <div class="stat-value">${formatNumber(resources.providers || 0)}</div>
           <div class="stat-label">Active Providers</div>
@@ -170,8 +181,8 @@ class DashboardPage {
     const alertClass = status.health === 'healthy' ? 'alert-success' :
                        status.health === 'degraded' ? 'alert-warning' : 'alert-error';
 
-    const icon = status.health === 'healthy' ? '✅' :
-                 status.health === 'degraded' ? '⚠️' : '❌';
+    const icon = status.health === 'healthy' ? ICONS.checkCircle :
+                 status.health === 'degraded' ? ICONS.alertTriangle : ICONS.xCircle;
 
     container.innerHTML = `
       <div class="alert ${alertClass}" role="alert">
@@ -281,9 +292,9 @@ class DashboardPage {
   async updateApiStatus() {
     try {
       const health = await api.getHealth();
-      LayoutManager.updateApiStatus('online', '✅ System Active');
+      LayoutManager.updateApiStatus('online', 'System Active');
     } catch (error) {
-      LayoutManager.updateApiStatus('offline', '❌ Connection Failed');
+      LayoutManager.updateApiStatus('offline', 'Connection Failed');
     }
   }
 
