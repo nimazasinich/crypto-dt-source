@@ -752,7 +752,7 @@
             }
 
             .services-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             }
         }
 
@@ -766,13 +766,31 @@
                 border-radius: 20px;
             }
 
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+
+            .logo svg {
+                width: 32px;
+                height: 32px;
+            }
+
             .brand-text h1 {
                 font-size: 1.5rem;
+            }
+
+            .brand-text p {
+                font-size: 0.875rem;
             }
 
             .stats-row {
                 flex-direction: column;
                 gap: 1.5rem;
+            }
+
+            .stat-value {
+                font-size: 2rem;
             }
 
             .header-actions {
@@ -783,6 +801,11 @@
             .btn-gradient {
                 width: 100%;
                 justify-content: center;
+                padding: 0.75rem 1.5rem;
+            }
+
+            .controls {
+                padding: 1.25rem;
             }
 
             .filter-tabs {
@@ -792,6 +815,8 @@
             .filter-tab {
                 padding: 0.625rem 1rem;
                 font-size: 0.75rem;
+                flex: 1;
+                min-width: 0;
             }
 
             .services-grid {
@@ -803,20 +828,117 @@
                 padding: 1.5rem;
             }
 
+            .service-icon {
+                width: 50px;
+                height: 50px;
+            }
+
+            .service-icon svg {
+                width: 28px;
+                height: 28px;
+            }
+
+            .service-name {
+                font-size: 1.125rem;
+            }
+
             .modal {
-                padding: 1rem;
+                padding: 0.5rem;
+                align-items: flex-end;
+            }
+
+            .modal-content {
+                border-radius: 20px 20px 0 0;
+                max-height: 85vh;
             }
 
             .modal-header {
-                padding: 1.5rem;
+                padding: 1.25rem;
+            }
+
+            .modal-header h2 {
+                font-size: 1.5rem;
             }
 
             .modal-body {
-                padding: 1.5rem;
+                padding: 1.25rem;
             }
 
             .method-buttons {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .response-container {
+                max-height: 250px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.75rem;
+            }
+
+            .header {
+                padding: 1.25rem;
+            }
+
+            .brand-text h1 {
+                font-size: 1.25rem;
+            }
+
+            .stat-value {
+                font-size: 1.75rem;
+            }
+
+            .stat-label {
+                font-size: 0.6875rem;
+            }
+
+            .search-input {
+                font-size: 0.9375rem;
+                padding: 0.875rem 1rem 0.875rem 3rem;
+            }
+
+            .filter-tab {
+                font-size: 0.6875rem;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .service-card {
+                padding: 1.25rem;
+                border-radius: 18px;
+            }
+
+            .endpoint-item {
+                padding: 1rem;
+            }
+
+            .endpoint-path {
+                font-size: 0.75rem;
+            }
+
+            .btn-sm {
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
+            }
+
+            .toast {
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+                padding: 1rem 1.25rem;
+            }
+        }
+
+        /* Improve touch targets on mobile */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-gradient,
+            .btn-sm,
+            .filter-tab,
+            .method-btn,
+            .modal-close {
+                min-height: 44px;
+                min-width: 44px;
             }
         }
 
@@ -843,11 +965,83 @@
             text-align: center;
             padding: 4rem;
             color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
         }
 
-        .loading::after {
-            content: '⏳ Loading services...';
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(79, 172, 254, 0.1);
+            border-top-color: #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
             font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* Skeleton Loading for Cards */
+        .skeleton-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+            height: 300px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 4rem;
+            color: var(--error);
+        }
+
+        .error-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1.5rem;
+        }
+
+        .error-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .error-state p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .retry-btn {
+            padding: 0.875rem 1.75rem;
+            background: var(--gradient-3);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(79, 172, 254, 0.4);
         }
     </style>
 </head>
@@ -926,16 +1120,19 @@
 
         <!-- Services Grid -->
         <div class="services-grid" id="servicesGrid">
-            <div class="loading"></div>
+            <div class="loading" style="grid-column: 1/-1;">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading services...</div>
+            </div>
         </div>
     </div>
 
     <!-- Modal -->
-    <div class="modal" id="testerModal">
+    <div class="modal" id="testerModal" role="dialog" aria-labelledby="testerModalTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>API Tester</h2>
-                <button class="modal-close" onclick="closeTester()">×</button>
+                <h2 id="testerModalTitle">API Tester</h2>
+                <button class="modal-close" onclick="closeTester()" aria-label="Close API Tester">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
