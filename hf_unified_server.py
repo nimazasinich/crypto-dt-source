@@ -19,6 +19,7 @@ from backend.routers.unified_service_api import router as service_router
 from backend.routers.real_data_api import router as real_data_router
 from backend.routers.direct_api import router as direct_api_router
 from backend.routers.crypto_api_hub_router import router as crypto_hub_router
+from backend.routers.crypto_api_hub_self_healing import router as self_healing_router
 
 # Import rate limiter
 from utils.rate_limiter_simple import rate_limiter
@@ -89,6 +90,7 @@ app.include_router(service_router)  # Main unified service
 app.include_router(real_data_router, prefix="/real")  # Existing real data endpoints
 app.include_router(direct_api_router)  # NEW: Direct API with external services and HF models
 app.include_router(crypto_hub_router)  # Crypto API Hub Dashboard API
+app.include_router(self_healing_router)  # Self-Healing Crypto API Hub
 
 # ============================================================================
 # STATIC FILES
