@@ -2210,26 +2210,35 @@ async function loadAPIRegistry() {
 // Theme Toggle
 function toggleTheme() {
     const body = document.body;
-    const themeIcon = document.querySelector('.theme-toggle i');
-    
+    const themeToggle = document.querySelector('.theme-toggle');
+
     if (body.classList.contains('light-theme')) {
         body.classList.remove('light-theme');
-        themeIcon.className = 'fas fa-moon';
         localStorage.setItem('theme', 'dark');
+        // Update icon to moon (dark mode)
+        if (themeToggle) {
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        }
     } else {
         body.classList.add('light-theme');
-        themeIcon.className = 'fas fa-sun';
         localStorage.setItem('theme', 'light');
+        // Update icon to sun (light mode)
+        if (themeToggle) {
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
     }
 }
 
 // Load theme preference
 document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme');
+    const themeToggle = document.querySelector('.theme-toggle');
+
     if (savedTheme === 'light') {
         document.body.classList.add('light-theme');
-        const themeIcon = document.querySelector('.theme-toggle i');
-        if (themeIcon) themeIcon.className = 'fas fa-sun';
+        if (themeToggle) {
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
     }
 });
 
