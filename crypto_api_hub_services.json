@@ -1,0 +1,616 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "total_services": 74,
+    "total_endpoints": 150,
+    "api_keys_count": 10,
+    "last_updated": "2025-11-27",
+    "description": "Comprehensive collection of cryptocurrency APIs for explorers, market data, news, sentiment, and analytics"
+  },
+  "categories": {
+    "explorer": {
+      "name": "Blockchain Explorers",
+      "description": "APIs for blockchain data and transaction information",
+      "icon": "chain",
+      "services": [
+        {
+          "name": "Etherscan",
+          "url": "https://api.etherscan.io/api",
+          "key": "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
+          "description": "Ethereum blockchain explorer API",
+          "endpoints": [
+            {
+              "path": "?module=account&action=balance&address={address}&apikey={KEY}",
+              "method": "GET",
+              "description": "Get ETH balance for an address"
+            },
+            {
+              "path": "?module=gastracker&action=gasoracle&apikey={KEY}",
+              "method": "GET",
+              "description": "Get current gas prices"
+            }
+          ]
+        },
+        {
+          "name": "Etherscan Backup",
+          "url": "https://api.etherscan.io/api",
+          "key": "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45",
+          "description": "Backup Etherscan API key",
+          "endpoints": []
+        },
+        {
+          "name": "BscScan",
+          "url": "https://api.bscscan.com/api",
+          "key": "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT",
+          "description": "Binance Smart Chain explorer API",
+          "endpoints": [
+            {
+              "path": "?module=account&action=balance&address={address}&apikey={KEY}",
+              "method": "GET",
+              "description": "Get BNB balance for an address"
+            }
+          ]
+        },
+        {
+          "name": "TronScan",
+          "url": "https://apilist.tronscanapi.com/api",
+          "key": "7ae72726-bffe-4e74-9c33-97b761eeea21",
+          "description": "Tron blockchain explorer API",
+          "endpoints": [
+            {
+              "path": "/account?address={address}",
+              "method": "GET",
+              "description": "Get account information"
+            }
+          ]
+        },
+        {
+          "name": "Blockchair ETH",
+          "url": "https://api.blockchair.com/ethereum/dashboards/address/{address}",
+          "key": "",
+          "description": "Multi-blockchain explorer",
+          "endpoints": []
+        },
+        {
+          "name": "Ethplorer",
+          "url": "https://api.ethplorer.io",
+          "key": "freekey",
+          "description": "Ethereum token explorer API",
+          "endpoints": [
+            {
+              "path": "/getAddressInfo/{address}?apiKey=freekey",
+              "method": "GET",
+              "description": "Get address token holdings"
+            }
+          ]
+        },
+        {
+          "name": "TronGrid",
+          "url": "https://api.trongrid.io",
+          "key": "",
+          "description": "Official Tron API",
+          "endpoints": [
+            {
+              "path": "/wallet/getaccount",
+              "method": "POST",
+              "description": "Get account details"
+            }
+          ]
+        },
+        {
+          "name": "Ankr",
+          "url": "https://rpc.ankr.com/multichain",
+          "key": "",
+          "description": "Multi-chain RPC provider",
+          "endpoints": []
+        },
+        {
+          "name": "1inch BSC",
+          "url": "https://api.1inch.io/v5.0/56",
+          "key": "",
+          "description": "1inch DEX aggregator for BSC",
+          "endpoints": []
+        }
+      ]
+    },
+    "market": {
+      "name": "Market Data",
+      "description": "Real-time cryptocurrency prices and market information",
+      "icon": "chart",
+      "services": [
+        {
+          "name": "CoinGecko",
+          "url": "https://api.coingecko.com/api/v3",
+          "key": "",
+          "description": "Comprehensive cryptocurrency market data",
+          "endpoints": [
+            {
+              "path": "/simple/price?ids=bitcoin,ethereum&vs_currencies=usd",
+              "method": "GET",
+              "description": "Get current prices"
+            },
+            {
+              "path": "/coins/markets?vs_currency=usd&per_page=100",
+              "method": "GET",
+              "description": "Get market data for top coins"
+            }
+          ]
+        },
+        {
+          "name": "CoinMarketCap",
+          "url": "https://pro-api.coinmarketcap.com/v1",
+          "key": "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1",
+          "description": "Leading cryptocurrency market cap rankings",
+          "endpoints": [
+            {
+              "path": "/cryptocurrency/quotes/latest?symbol=BTC&convert=USD",
+              "method": "GET",
+              "description": "Get latest quotes for a symbol"
+            }
+          ]
+        },
+        {
+          "name": "CoinMarketCap Alt",
+          "url": "https://pro-api.coinmarketcap.com/v1",
+          "key": "b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c",
+          "description": "Backup CoinMarketCap API key",
+          "endpoints": []
+        },
+        {
+          "name": "CryptoCompare",
+          "url": "https://min-api.cryptocompare.com/data",
+          "key": "e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f",
+          "description": "Real-time and historical cryptocurrency data",
+          "endpoints": [
+            {
+              "path": "/pricemulti?fsyms=BTC,ETH&tsyms=USD",
+              "method": "GET",
+              "description": "Get multiple prices"
+            }
+          ]
+        },
+        {
+          "name": "CoinPaprika",
+          "url": "https://api.coinpaprika.com/v1",
+          "key": "",
+          "description": "Free cryptocurrency market data API",
+          "endpoints": [
+            {
+              "path": "/tickers",
+              "method": "GET",
+              "description": "Get all tickers"
+            },
+            {
+              "path": "/coins",
+              "method": "GET",
+              "description": "List all coins"
+            }
+          ]
+        },
+        {
+          "name": "CoinCap",
+          "url": "https://api.coincap.io/v2",
+          "key": "",
+          "description": "Real-time cryptocurrency pricing",
+          "endpoints": [
+            {
+              "path": "/assets",
+              "method": "GET",
+              "description": "Get all assets"
+            },
+            {
+              "path": "/assets/bitcoin",
+              "method": "GET",
+              "description": "Get Bitcoin data"
+            }
+          ]
+        },
+        {
+          "name": "Binance",
+          "url": "https://api.binance.com/api/v3",
+          "key": "",
+          "description": "Binance exchange API",
+          "endpoints": [
+            {
+              "path": "/ticker/price?symbol=BTCUSDT",
+              "method": "GET",
+              "description": "Get current price for a symbol"
+            }
+          ]
+        },
+        {
+          "name": "CoinDesk",
+          "url": "https://api.coindesk.com/v1",
+          "key": "",
+          "description": "Bitcoin Price Index API",
+          "endpoints": [
+            {
+              "path": "/bpi/currentprice.json",
+              "method": "GET",
+              "description": "Get current BPI"
+            }
+          ]
+        },
+        {
+          "name": "Nomics",
+          "url": "https://api.nomics.com/v1",
+          "key": "",
+          "description": "Professional cryptocurrency market data",
+          "endpoints": []
+        },
+        {
+          "name": "Messari",
+          "url": "https://data.messari.io/api/v1",
+          "key": "",
+          "description": "Crypto research and data platform",
+          "endpoints": [
+            {
+              "path": "/assets/bitcoin/metrics",
+              "method": "GET",
+              "description": "Get asset metrics"
+            }
+          ]
+        },
+        {
+          "name": "CoinLore",
+          "url": "https://api.coinlore.net/api",
+          "key": "",
+          "description": "Free cryptocurrency API",
+          "endpoints": [
+            {
+              "path": "/tickers/",
+              "method": "GET",
+              "description": "Get all tickers"
+            }
+          ]
+        },
+        {
+          "name": "CoinStats",
+          "url": "https://api.coinstats.app/public/v1",
+          "key": "",
+          "description": "Cryptocurrency portfolio tracker API",
+          "endpoints": [
+            {
+              "path": "/coins",
+              "method": "GET",
+              "description": "Get all coins"
+            }
+          ]
+        },
+        {
+          "name": "Mobula",
+          "url": "https://api.mobula.io/api/1",
+          "key": "",
+          "description": "DeFi and NFT market data",
+          "endpoints": []
+        },
+        {
+          "name": "TokenMetrics",
+          "url": "https://api.tokenmetrics.com/v2",
+          "key": "",
+          "description": "AI-driven crypto analytics",
+          "endpoints": []
+        },
+        {
+          "name": "DIA Data",
+          "url": "https://api.diadata.org/v1",
+          "key": "",
+          "description": "Decentralized financial data",
+          "endpoints": []
+        }
+      ]
+    },
+    "news": {
+      "name": "News & Media",
+      "description": "Cryptocurrency news and updates from various sources",
+      "icon": "news",
+      "services": [
+        {
+          "name": "CryptoPanic",
+          "url": "https://cryptopanic.com/api/v1",
+          "key": "",
+          "description": "Cryptocurrency news aggregator",
+          "endpoints": [
+            {
+              "path": "/posts/?auth_token={KEY}",
+              "method": "GET",
+              "description": "Get latest news posts"
+            }
+          ]
+        },
+        {
+          "name": "NewsAPI",
+          "url": "https://newsapi.org/v2",
+          "key": "pub_346789abc123def456789ghi012345jkl",
+          "description": "Global news API",
+          "endpoints": [
+            {
+              "path": "/everything?q=crypto&apiKey={KEY}",
+              "method": "GET",
+              "description": "Search crypto news"
+            }
+          ]
+        },
+        {
+          "name": "CryptoControl",
+          "url": "https://cryptocontrol.io/api/v1/public",
+          "key": "",
+          "description": "Cryptocurrency news aggregator",
+          "endpoints": [
+            {
+              "path": "/news/local?language=EN",
+              "method": "GET",
+              "description": "Get local news"
+            }
+          ]
+        },
+        {
+          "name": "CoinDesk RSS",
+          "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+          "key": "",
+          "description": "CoinDesk news RSS feed",
+          "endpoints": []
+        },
+        {
+          "name": "CoinTelegraph",
+          "url": "https://cointelegraph.com/api/v1",
+          "key": "",
+          "description": "Cryptocurrency news platform",
+          "endpoints": []
+        },
+        {
+          "name": "CryptoSlate",
+          "url": "https://cryptoslate.com/api",
+          "key": "",
+          "description": "Crypto news and analysis",
+          "endpoints": []
+        },
+        {
+          "name": "The Block",
+          "url": "https://api.theblock.co/v1",
+          "key": "",
+          "description": "Crypto research and news",
+          "endpoints": []
+        },
+        {
+          "name": "Bitcoin Magazine",
+          "url": "https://bitcoinmagazine.com/.rss/full/",
+          "key": "",
+          "description": "Bitcoin news RSS feed",
+          "endpoints": []
+        },
+        {
+          "name": "Decrypt",
+          "url": "https://decrypt.co/feed",
+          "key": "",
+          "description": "Crypto news feed",
+          "endpoints": []
+        },
+        {
+          "name": "Reddit Crypto",
+          "url": "https://www.reddit.com/r/CryptoCurrency/new.json",
+          "key": "",
+          "description": "Reddit cryptocurrency subreddit",
+          "endpoints": []
+        }
+      ]
+    },
+    "sentiment": {
+      "name": "Sentiment Analysis",
+      "description": "Market sentiment and social metrics",
+      "icon": "brain",
+      "services": [
+        {
+          "name": "Fear & Greed",
+          "url": "https://api.alternative.me/fng/",
+          "key": "",
+          "description": "Crypto Fear & Greed Index",
+          "endpoints": [
+            {
+              "path": "?limit=1",
+              "method": "GET",
+              "description": "Get current index"
+            },
+            {
+              "path": "?limit=30",
+              "method": "GET",
+              "description": "Get 30-day history"
+            }
+          ]
+        },
+        {
+          "name": "LunarCrush",
+          "url": "https://api.lunarcrush.com/v2",
+          "key": "",
+          "description": "Social media analytics for crypto",
+          "endpoints": [
+            {
+              "path": "?data=assets&key={KEY}",
+              "method": "GET",
+              "description": "Get asset social data"
+            }
+          ]
+        },
+        {
+          "name": "Santiment",
+          "url": "https://api.santiment.net/graphql",
+          "key": "",
+          "description": "On-chain and social metrics",
+          "endpoints": []
+        },
+        {
+          "name": "The TIE",
+          "url": "https://api.thetie.io",
+          "key": "",
+          "description": "Alternative data for crypto",
+          "endpoints": []
+        },
+        {
+          "name": "CryptoQuant",
+          "url": "https://api.cryptoquant.com/v1",
+          "key": "",
+          "description": "On-chain market intelligence",
+          "endpoints": []
+        },
+        {
+          "name": "Glassnode Social",
+          "url": "https://api.glassnode.com/v1/metrics/social",
+          "key": "",
+          "description": "Social metrics from Glassnode",
+          "endpoints": []
+        },
+        {
+          "name": "Augmento",
+          "url": "https://api.augmento.ai/v1",
+          "key": "",
+          "description": "AI-powered crypto sentiment",
+          "endpoints": []
+        }
+      ]
+    },
+    "analytics": {
+      "name": "Analytics & Intelligence",
+      "description": "Advanced blockchain analytics and intelligence platforms",
+      "icon": "analytics",
+      "services": [
+        {
+          "name": "Whale Alert",
+          "url": "https://api.whale-alert.io/v1",
+          "key": "",
+          "description": "Large crypto transaction tracker",
+          "endpoints": [
+            {
+              "path": "/transactions?api_key={KEY}&min_value=1000000",
+              "method": "GET",
+              "description": "Get whale transactions"
+            }
+          ]
+        },
+        {
+          "name": "Nansen",
+          "url": "https://api.nansen.ai/v1",
+          "key": "",
+          "description": "Blockchain analytics platform",
+          "endpoints": []
+        },
+        {
+          "name": "DeBank",
+          "url": "https://api.debank.com",
+          "key": "",
+          "description": "DeFi portfolio tracker",
+          "endpoints": []
+        },
+        {
+          "name": "Zerion",
+          "url": "https://api.zerion.io",
+          "key": "",
+          "description": "DeFi wallet and portfolio",
+          "endpoints": []
+        },
+        {
+          "name": "WhaleMap",
+          "url": "https://whalemap.io",
+          "key": "",
+          "description": "Whale cluster analytics",
+          "endpoints": []
+        },
+        {
+          "name": "The Graph",
+          "url": "https://api.thegraph.com/subgraphs",
+          "key": "",
+          "description": "Decentralized indexing protocol",
+          "endpoints": []
+        },
+        {
+          "name": "Glassnode",
+          "url": "https://api.glassnode.com/v1",
+          "key": "",
+          "description": "On-chain market intelligence",
+          "endpoints": []
+        },
+        {
+          "name": "IntoTheBlock",
+          "url": "https://api.intotheblock.com/v1",
+          "key": "",
+          "description": "AI-driven crypto analytics",
+          "endpoints": []
+        },
+        {
+          "name": "Dune",
+          "url": "https://api.dune.com/api/v1",
+          "key": "",
+          "description": "Blockchain data analytics",
+          "endpoints": []
+        },
+        {
+          "name": "Covalent",
+          "url": "https://api.covalenthq.com/v1",
+          "key": "",
+          "description": "Multi-chain data API",
+          "endpoints": [
+            {
+              "path": "/1/address/{address}/balances_v2/",
+              "method": "GET",
+              "description": "Get address balances"
+            }
+          ]
+        },
+        {
+          "name": "Moralis",
+          "url": "https://deep-index.moralis.io/api/v2",
+          "key": "",
+          "description": "Web3 development platform",
+          "endpoints": []
+        },
+        {
+          "name": "Transpose",
+          "url": "https://api.transpose.io",
+          "key": "",
+          "description": "SQL-based blockchain data",
+          "endpoints": []
+        },
+        {
+          "name": "Footprint",
+          "url": "https://api.footprint.network",
+          "key": "",
+          "description": "Blockchain analytics platform",
+          "endpoints": []
+        },
+        {
+          "name": "Bitquery",
+          "url": "https://graphql.bitquery.io",
+          "key": "",
+          "description": "GraphQL blockchain API",
+          "endpoints": []
+        },
+        {
+          "name": "Arkham",
+          "url": "https://api.arkham.com",
+          "key": "",
+          "description": "Blockchain intelligence platform",
+          "endpoints": []
+        },
+        {
+          "name": "Clank",
+          "url": "https://clankapp.com/api",
+          "key": "",
+          "description": "On-chain analytics tool",
+          "endpoints": []
+        },
+        {
+          "name": "Hugging Face",
+          "url": "https://api-inference.huggingface.co/models",
+          "key": "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",
+          "description": "AI models for crypto analysis",
+          "endpoints": [
+            {
+              "path": "/ElKulako/cryptobert",
+              "method": "POST",
+              "description": "CryptoBERT sentiment analysis"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
