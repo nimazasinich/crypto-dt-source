@@ -694,7 +694,20 @@ async def get_trading_pairs():
 # ===== HTML UI Endpoints =====
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """Serve main dashboard"""
+    """Serve main dashboard - prefers new multi-page architecture"""
+    # Try new multi-page dashboard first
+    new_dashboard = WORKSPACE_ROOT / "static" / "pages" / "dashboard" / "index.html"
+    if new_dashboard.exists():
+        content = new_dashboard.read_text(encoding="utf-8", errors="ignore")
+        return HTMLResponse(
+            content=content,
+            media_type="text/html",
+            headers={
+                "Content-Type": "text/html; charset=utf-8",
+                "X-Content-Type-Options": "nosniff"
+            }
+        )
+    # Fallback to legacy index.html
     index_path = WORKSPACE_ROOT / "index.html"
     if index_path.exists():
         content = index_path.read_text(encoding="utf-8", errors="ignore")
@@ -755,6 +768,77 @@ async def ai_tools_page(request: Request):
         "<h1>AI Tools page not found</h1>",
         headers={"Content-Type": "text/html; charset=utf-8"}
     )
+
+
+# ===== Multi-Page Architecture Routes =====
+def serve_page(page_name: str) -> HTMLResponse:
+    """Helper function to serve pages from /static/pages/"""
+    page_path = WORKSPACE_ROOT / "static" / "pages" / page_name / "index.html"
+    if page_path.exists():
+        content = page_path.read_text(encoding="utf-8", errors="ignore")
+        return HTMLResponse(
+            content=content,
+            media_type="text/html",
+            headers={
+                "Content-Type": "text/html; charset=utf-8",
+                "X-Content-Type-Options": "nosniff"
+            }
+        )
+    return HTMLResponse(
+        f"<h1>Page '{page_name}' not found</h1><p><a href='/'>Return to Dashboard</a></p>",
+        status_code=404,
+        headers={"Content-Type": "text/html; charset=utf-8"}
+    )
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page():
+    """Serve dashboard page"""
+    return serve_page("dashboard")
+
+@app.get("/market", response_class=HTMLResponse)
+async def market_page():
+    """Serve market page"""
+    return serve_page("market")
+
+@app.get("/models", response_class=HTMLResponse)
+async def models_page():
+    """Serve AI models page"""
+    return serve_page("models")
+
+@app.get("/sentiment", response_class=HTMLResponse)
+async def sentiment_page():
+    """Serve sentiment analysis page"""
+    return serve_page("sentiment")
+
+@app.get("/ai-analyst", response_class=HTMLResponse)
+async def ai_analyst_page():
+    """Serve AI analyst page"""
+    return serve_page("ai-analyst")
+
+@app.get("/trading-assistant", response_class=HTMLResponse)
+async def trading_assistant_page():
+    """Serve trading assistant page"""
+    return serve_page("trading-assistant")
+
+@app.get("/news", response_class=HTMLResponse)
+async def news_page():
+    """Serve news page"""
+    return serve_page("news")
+
+@app.get("/providers", response_class=HTMLResponse)
+async def providers_page():
+    """Serve providers page"""
+    return serve_page("providers")
+
+@app.get("/diagnostics", response_class=HTMLResponse)
+async def diagnostics_page():
+    """Serve diagnostics page"""
+    return serve_page("diagnostics")
+
+@app.get("/api-explorer", response_class=HTMLResponse)
+async def api_explorer_page():
+    """Serve API explorer page"""
+    return serve_page("api-explorer")
 
 
 # ===== Health & Status Endpoints =====
