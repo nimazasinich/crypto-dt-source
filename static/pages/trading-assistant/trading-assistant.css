@@ -1,0 +1,310 @@
+/* Trading Assistant Page Styles */
+
+.trading-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  grid-template-rows: auto auto 1fr;
+  gap: var(--space-4);
+}
+
+.signal-form {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.watchlist {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.signal-results {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+}
+
+.panel-card {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel-header h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.panel-body {
+  padding: var(--space-4);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.form-group {
+  margin-bottom: var(--space-3);
+}
+
+.form-group label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.btn-block {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.watchlist-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.watchlist-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-3);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.watchlist-item:hover {
+  background: var(--color-primary-alpha);
+  border-color: var(--color-primary);
+}
+
+.watchlist-item .symbol {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-strong);
+}
+
+.watchlist-item .name {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.empty-state,
+.loading-container,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-10);
+  color: var(--text-muted);
+  min-height: 300px;
+}
+
+/* Signals Content */
+.signals-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.overall-signal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--surface-elevated);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--text-muted);
+}
+
+.overall-signal.bullish {
+  border-left-color: var(--color-success);
+}
+
+.overall-signal.bearish {
+  border-left-color: var(--color-danger);
+}
+
+.signal-symbol {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-strong);
+}
+
+.signal-direction {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.bullish .signal-direction {
+  color: var(--color-success);
+}
+
+.bearish .signal-direction {
+  color: var(--color-danger);
+}
+
+.signal-strength {
+  margin-left: auto;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.signals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.signal-card {
+  background: var(--surface-elevated);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  border-left: 3px solid var(--text-muted);
+}
+
+.signal-card.bullish { border-left-color: var(--color-success); }
+.signal-card.bearish { border-left-color: var(--color-danger); }
+.signal-card.neutral { border-left-color: var(--color-warning); }
+
+.signal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.signal-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-strong);
+}
+
+.signal-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.bullish .signal-value { color: var(--color-success); }
+.bearish .signal-value { color: var(--color-danger); }
+
+.signal-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.signal-weight {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-2);
+}
+
+.key-levels,
+.trade-setup {
+  background: var(--surface-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.key-levels h4,
+.trade-setup h4 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-strong);
+  margin: 0 0 var(--space-3);
+}
+
+.levels-grid,
+.setup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+
+.level,
+.setup-item {
+  text-align: center;
+  padding: var(--space-3);
+  background: var(--surface-base);
+  border-radius: var(--radius-md);
+}
+
+.level-label,
+.setup-item span {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+
+.level-value,
+.setup-item strong {
+  font-size: var(--font-size-lg);
+  color: var(--text-strong);
+}
+
+.level.resistance .level-value { color: var(--color-success); }
+.level.support .level-value { color: var(--color-danger); }
+.setup-item.stop strong { color: var(--color-danger); }
+.setup-item.take strong { color: var(--color-success); }
+
+.risk-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-warning-alpha);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  color: var(--color-warning);
+}
+
+.risk-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@media (max-width: 1024px) {
+  .trading-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .signal-results {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  
+  .watchlist-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
