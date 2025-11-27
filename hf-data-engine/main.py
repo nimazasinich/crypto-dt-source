@@ -2,6 +2,7 @@
 from __future__ import annotations
 import time
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,12 +19,28 @@ from core.models import (
     MarketOverviewResponse, HealthResponse, ErrorResponse, ErrorDetail, CacheInfo
 )
 
+# Import new REST API routers (no WebSockets)
+from routers.blockchain import router as blockchain_router
+from routers.market import router as market_router
+from routers.news import router as news_router
+from routers.hf_inference import router as hf_inference_router
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Setup provider error logging
+logs_dir = os.path.join(os.path.dirname(__file__), "logs")
+os.makedirs(logs_dir, exist_ok=True)
+provider_log_file = os.path.join(logs_dir, "provider_errors.log")
+file_handler = logging.FileHandler(provider_log_file)
+file_handler.setLevel(logging.ERROR)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logging.getLogger("providers").addHandler(file_handler)
+logging.getLogger("routers").addHandler(file_handler)
 
 
 # Rate limiter
@@ -68,6 +85,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register REST API routers (no WebSockets - pure HTTP endpoints)
+app.include_router(blockchain_router)
+app.include_router(market_router)
+app.include_router(news_router)
+app.include_router(hf_inference_router)
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -100,6 +123,35 @@ async def root():
             "sentiment": "/api/sentiment",
             "market": "/api/market/overview",
             "docs": "/docs"
+        },
+        "rest_api_v1": {
+            "blockchain": {
+                "eth_transactions": "/api/v1/blockchain/eth/transactions",
+                "bsc_transactions": "/api/v1/blockchain/bsc/transactions",
+                "tron_transactions": "/api/v1/blockchain/tron/transactions",
+                "eth_balance": "/api/v1/blockchain/eth/balance",
+                "bsc_balance": "/api/v1/blockchain/bsc/balance",
+                "tron_account": "/api/v1/blockchain/tron/account"
+            },
+            "market": {
+                "latest": "/api/v1/market/latest",
+                "quotes": "/api/v1/market/quotes",
+                "global": "/api/v1/market/global",
+                "ohlcv": "/api/v1/market/ohlcv",
+                "price": "/api/v1/market/price/{symbol}"
+            },
+            "news": {
+                "latest": "/api/v1/news/latest",
+                "crypto": "/api/v1/news/crypto",
+                "search": "/api/v1/news/search",
+                "sentiment": "/api/v1/news/sentiment"
+            },
+            "hf_ai": {
+                "sentiment": "POST /api/v1/hf/sentiment",
+                "summarize": "POST /api/v1/hf/summarize",
+                "entities": "POST /api/v1/hf/entities",
+                "classify": "POST /api/v1/hf/classify"
+            }
         }
     }
 
