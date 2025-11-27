@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Crypto Monitor ULTIMATE - System Dashboard">
+  <meta name="description" content="Crypto Monitor ULTIMATE - Comprehensive Dashboard with Real-time Market Data, AI Analysis, and Sentiment Tracking">
   <title>Dashboard | Crypto Monitor ULTIMATE</title>
-  
+
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/static/assets/icons/favicon.svg">
-  
+
   <!-- Shared CSS (in order) -->
   <link rel="stylesheet" href="/static/shared/css/design-system.css">
   <link rel="stylesheet" href="/static/shared/css/global.css">
   <link rel="stylesheet" href="/static/shared/css/components.css">
   <link rel="stylesheet" href="/static/shared/css/layout.css">
   <link rel="stylesheet" href="/static/shared/css/utilities.css">
-  
+
   <!-- Page-specific CSS -->
   <link rel="stylesheet" href="./dashboard.css">
-  
+
   <!-- Preload Chart.js (will be loaded by JS when needed) -->
   <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js">
 </head>
@@ -26,12 +26,12 @@
   <div class="app-container">
     <!-- Sidebar Navigation (injected by LayoutManager) -->
     <aside id="sidebar-container"></aside>
-    
+
     <!-- Main Content Area -->
     <main class="main-content">
       <!-- Header (injected by LayoutManager) -->
       <header id="header-container"></header>
-      
+
       <!-- Dashboard Content -->
       <div class="page-content">
         <!-- Page Header -->
@@ -43,10 +43,10 @@
               </span>
               Dashboard
             </h1>
-            <p class="page-subtitle">System Overview & Statistics</p>
+            <p class="page-subtitle">Real-time System Overview, Market Data & AI Analysis</p>
           </div>
           <div class="page-actions">
-            <button id="refresh-btn" class="btn-icon" title="Refresh data" aria-label="Refresh data">
+            <button id="refresh-btn" class="btn-icon" title="Refresh all data" aria-label="Refresh data">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
             </button>
             <span id="last-update" class="last-update" aria-live="polite">Loading...</span>
@@ -97,13 +97,91 @@
         <!-- System Status Alert -->
         <div id="system-alert" class="alert-container" role="region" aria-label="System status"></div>
 
-        <!-- Categories Chart -->
-        <div class="chart-container">
-          <div class="chart-header">
-            <h2>Resources by Category</h2>
+        <!-- Market Data Section -->
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+              Trending Cryptocurrencies
+            </h2>
+            <div class="section-controls">
+              <input type="text" id="market-search" class="search-input" placeholder="Search coins..." aria-label="Search cryptocurrencies">
+              <select id="market-sort" class="select-control" aria-label="Sort by">
+                <option value="rank">Rank</option>
+                <option value="price">Price</option>
+                <option value="volume">Volume</option>
+                <option value="change">24h Change</option>
+              </select>
+            </div>
           </div>
-          <div class="chart-body">
-            <canvas id="categories-chart" width="800" height="400" aria-label="Resources by category chart"></canvas>
+          <div class="table-container" id="market-table-container">
+            <div class="loading-spinner">Loading market data...</div>
+          </div>
+        </div>
+
+        <!-- Sentiment Analysis Section -->
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              Market Sentiment Analysis
+            </h2>
+            <div class="section-controls">
+              <div class="timeframe-selector" id="sentiment-timeframe">
+                <button class="timeframe-btn active" data-timeframe="1D">1D</button>
+                <button class="timeframe-btn" data-timeframe="7D">7D</button>
+                <button class="timeframe-btn" data-timeframe="30D">30D</button>
+                <button class="timeframe-btn" data-timeframe="1Y">1Y</button>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-body">
+              <canvas id="sentiment-chart" aria-label="Market sentiment over time"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resources by Category Chart -->
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+              API Resources by Category
+            </h2>
+          </div>
+          <div class="chart-container">
+            <div class="chart-body">
+              <canvas id="categories-chart" aria-label="Resources by category chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Stats Grid -->
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+              System Performance
+            </h2>
+          </div>
+          <div class="performance-grid" id="performance-grid">
+            <div class="performance-card">
+              <div class="performance-label">API Response Time</div>
+              <div class="performance-value" id="avg-response-time">-- ms</div>
+            </div>
+            <div class="performance-card">
+              <div class="performance-label">Cache Hit Rate</div>
+              <div class="performance-value" id="cache-hit-rate">-- %</div>
+            </div>
+            <div class="performance-card">
+              <div class="performance-label">Active Sessions</div>
+              <div class="performance-value" id="active-sessions">--</div>
+            </div>
+            <div class="performance-card">
+              <div class="performance-label">Data Refresh Rate</div>
+              <div class="performance-value" id="refresh-rate">30s</div>
+            </div>
           </div>
         </div>
       </div>

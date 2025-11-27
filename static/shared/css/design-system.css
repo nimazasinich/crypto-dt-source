@@ -103,6 +103,9 @@
   --border-heavy: rgba(255, 255, 255, 0.40);
   --border-strong: rgba(255, 255, 255, 0.50);
 
+  /* Legacy border aliases */
+  --border-default: var(--border-light);
+
   /* ━━━ SHADOWS (Depth System) ━━━ */
   --shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.20);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.26);
@@ -186,6 +189,36 @@
   --tracking-wide: 0.2px;
   --tracking-wider: 0.4px;
   --tracking-widest: 0.8px;
+
+  /* ━━━ LEGACY ALIASES (for backwards compatibility) ━━━ */
+  --font-family-base: var(--font-main);
+  --font-family-mono: var(--font-mono);
+
+  --font-size-xs: var(--fs-xs);
+  --font-size-sm: var(--fs-sm);
+  --font-size-base: var(--fs-base);
+  --font-size-md: var(--fs-md);
+  --font-size-lg: var(--fs-lg);
+  --font-size-xl: var(--fs-xl);
+  --font-size-2xl: var(--fs-2xl);
+  --font-size-3xl: var(--fs-3xl);
+  --font-size-4xl: var(--fs-4xl);
+  --font-size-5xl: var(--fs-5xl);
+
+  --font-weight-light: var(--fw-light);
+  --font-weight-normal: var(--fw-regular);
+  --font-weight-regular: var(--fw-regular);
+  --font-weight-medium: var(--fw-medium);
+  --font-weight-semibold: var(--fw-semibold);
+  --font-weight-bold: var(--fw-bold);
+  --font-weight-extrabold: var(--fw-extrabold);
+  --font-weight-black: var(--fw-black);
+
+  --line-height-tight: var(--lh-tight);
+  --line-height-snug: var(--lh-snug);
+  --line-height-normal: var(--lh-normal);
+  --line-height-relaxed: var(--lh-relaxed);
+  --line-height-loose: var(--lh-loose);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -262,6 +295,8 @@
   --z-dropdown: 1000;
   --z-sticky: 1100;
   --z-fixed: 1200;
+  --z-sidebar: 200;
+  --z-header: 100;
   --z-overlay: 8000;
   --z-modal: 9000;
   --z-toast: 9500;
