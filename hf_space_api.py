@@ -67,6 +67,9 @@ from utils.logger import setup_logger
 from api.hf_endpoints import router as hf_router
 from api.hf_data_hub_endpoints import router as hf_hub_router
 
+# Import smart fallback and data collection
+from workers.data_collection_agent import get_data_collection_agent, start_data_collection_agent
+
 # Setup logging
 logger = setup_logger("hf_space_api", level="INFO")
 
@@ -135,14 +138,24 @@ async def lifespan(app: FastAPI):
         # Start comprehensive data worker (fetches from ALL sources)
         await start_comprehensive_worker()
         logger.info("✅ Comprehensive data worker started")
-        logger.info("   📊 Collecting from 148+ data sources:")
-        logger.info("      - 23 Market Data APIs")
+        
+        # NEW: Start Smart Data Collection Agent with 305+ resources
+        logger.info("🤖 Starting Smart Data Collection Agent...")
+        asyncio.create_task(start_data_collection_agent())
+        logger.info("✅ Smart Data Collection Agent started")
+        logger.info("   📊 Collecting from 305+ FREE resources:")
+        logger.info("      - 21 Market Data APIs")
         logger.info("      - 15 News APIs")
         logger.info("      - 12 Sentiment APIs")
         logger.info("      - 13 On-chain Analytics APIs")
         logger.info("      - 9 Whale Tracking APIs")
-        logger.info("      - 18 Block Explorers")
-        logger.info("      - And more...")
+        logger.info("      - 24 RPC Nodes")
+        logger.info("      - 40+ Block Explorers")
+        logger.info("      - 106 Local Backend Routes")
+        logger.info("      - 7 CORS Proxies")
+        logger.info("      - Smart fallback (NEVER 404)")
+        logger.info("      - Auto proxy for sanctioned exchanges")
+        logger.info("      - Continuous 24/7 collection")
 
     except Exception as e:
         logger.error(f"❌ Worker startup error: {e}", exc_info=True)
@@ -222,6 +235,7 @@ async def root():
             "health_check": "/api/health",
             "alphavantage": "/api/alphavantage/*",
             "massive": "/api/massive/*",
+            "smart_fallback": "/api/smart/* (305+ resources, NEVER 404)",
             "documentation": "/docs"
         },
         "data_sources": {
@@ -276,6 +290,14 @@ try:
     logger.info("✅ Massive.com router loaded")
 except Exception as e:
     logger.warning(f"⚠️ Massive.com router not available: {e}")
+
+# NEW: Smart Fallback endpoints (305+ resources, NEVER 404)
+try:
+    from api.smart_data_endpoints import router as smart_router
+    app.include_router(smart_router)
+    logger.info("✅ Smart Fallback router loaded (305+ resources)")
+except Exception as e:
+    logger.warning(f"⚠️ Smart Fallback router not available: {e}")
 
 
 # ============================================================================
