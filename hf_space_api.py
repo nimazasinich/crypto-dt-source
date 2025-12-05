@@ -34,6 +34,19 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
+# Load environment variables from .env files
+try:
+    from dotenv import load_dotenv
+    # Try loading from multiple .env file locations
+    for env_file in ['.env', '.env.local', '.env.production']:
+        env_path = Path(env_file)
+        if env_path.exists():
+            load_dotenv(env_path)
+            print(f"✅ Loaded environment from {env_file}")
+except ImportError:
+    print("⚠️  python-dotenv not installed. Using system environment variables only.")
+    print("   Install with: pip install python-dotenv")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -227,6 +240,22 @@ app.include_router(hf_router)
 
 # NEW: Data Hub endpoints (serves FROM HuggingFace Datasets)
 app.include_router(hf_hub_router)
+
+# Technical Analysis endpoints
+try:
+    from api.technical_analysis import router as technical_router
+    app.include_router(technical_router)
+    logger.info("✅ Technical Analysis router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Technical Analysis router not available: {e}")
+
+# Technical Analysis Modes endpoints
+try:
+    from api.technical_modes import router as technical_modes_router
+    app.include_router(technical_modes_router)
+    logger.info("✅ Technical Analysis Modes router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Technical Analysis Modes router not available: {e}")
 
 
 # ============================================================================

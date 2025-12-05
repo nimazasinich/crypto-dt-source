@@ -247,11 +247,87 @@ async def get_providers() -> Dict[str, Any]:
     return {"success": True, "providers": providers, "total": len(providers)}
 
 
+@app.get("/api/resources", response_model=Dict[str, Any])
+async def get_resources() -> Dict[str, Any]:
+    """Compatibility endpoint for frontend `api.getResources()`.
+
+    Returns a lightweight resources summary that matches the frontend
+    shape: { total, free, models, providers, categories }
+    """
+    try:
+        providers = await provider_collector.get_providers_status()
+    except CollectorError as exc:
+        _handle_collector_error(exc)
+
+    # Basic models registry info (may be dict or simple status)
+    try:
+        models_info = registry_status() or {}
+        models_count = models_info.get("count", 0) if isinstance(models_info, dict) else 0
+    except Exception:
+        models_count = 0
+
+    categories = [
+        {"name": "Providers", "count": len(providers)},
+        {"name": "AI Models", "count": models_count},
+    ]
+
+    total_resources = len(providers) + models_count
+
+    return {
+        "total": total_resources,
+        "free": 0,
+        "models": models_count,
+        "providers": len(providers),
+        "categories": categories,
+    }
+
+
 @app.get("/api/charts/price/{symbol}", response_model=Dict[str, Any])
 async def get_price_history(symbol: str, timeframe: str = "7d") -> Dict[str, Any]:
     try:
         history = await market_collector.get_price_history(symbol, timeframe)
         return {"success": True, "symbol": symbol.upper(), "timeframe": timeframe, "data": history}
+
+
+    @app.get("/api/trending", response_model=Dict[str, Any])
+    async def get_trending(limit: int = 10) -> Dict[str, Any]:
+        """Compatibility endpoint for frontend `/trending`.
+
+        Returns a simple `{'coins': [...]}` payload used by the dashboard.
+        """
+        try:
+            coins = await market_collector.get_top_coins(limit=limit)
+            return {"coins": coins}
+        except CollectorError as exc:
+            _handle_collector_error(exc)
+
+
+    @app.get("/api/sentiment/global", response_model=Dict[str, Any])
+    async def get_global_sentiment(timeframe: str = "1D") -> Dict[str, Any]:
+        """Compatibility endpoint for `/sentiment/global` used by the dashboard.
+
+        Builds a simple history from recent news items and returns `{'history': [...]}`.
+        """
+        try:
+            news = await news_collector.get_latest_news(limit=30)
+        except CollectorError as exc:
+            _handle_collector_error(exc)
+
+        history = []
+        for item in news:
+            # published_at may be a datetime or iso string
+            ts = item.get("published_at") or datetime.utcnow().isoformat()
+            try:
+                sentiment = analyze_social_sentiment((item.get("title", "") or "") + " " + (item.get("body", "") or ""))
+                score = sentiment.get("score") if isinstance(sentiment, dict) and "score" in sentiment else (
+                    sentiment if isinstance(sentiment, (int, float)) else 50
+                )
+            except Exception:
+                score = 50
+
+            history.append({"timestamp": ts, "sentiment": score, "volume": 0})
+
+        return {"history": history}
     except CollectorError as exc:
         _handle_collector_error(exc)
 

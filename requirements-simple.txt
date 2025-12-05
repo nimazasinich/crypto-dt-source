@@ -1,0 +1,16 @@
+# Minimal requirements for running simple_server.py (UI only)
+# This is for local development to view the dashboard UI
+
+# Core FastAPI stack
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+pydantic==2.9.0
+python-multipart==0.0.9
+
+# HTTP client
+requests==2.32.3
+aiohttp==3.10.5
+
+# Utilities
+python-dotenv==1.0.1
+

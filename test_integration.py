@@ -1,187 +1,257 @@
 #!/usr/bin/env python3
 """
-Integration Test Script
-Tests the seamless backend-frontend integration
+Integration Test Suite
+Tests backend-frontend integration
 """
 
-import requests
-import json
+import asyncio
+import httpx
+import sys
 from pathlib import Path
 
-BASE_URL = "http://localhost:8000"
+# Test configuration
+BASE_URL = "http://localhost:7860"
+API_BASE = f"{BASE_URL}/api"
 
-def test_static_file_exists():
-    """Test if static files are accessible"""
-    print("🧪 Testing static file access...")
-    
-    files_to_check = [
-        "/static/pages/crypto-api-hub-integrated/index.html",
-        "/static/pages/crypto-api-hub-integrated/crypto-api-hub-integrated.css",
-        "/static/js/crypto-api-hub-enhanced.js",
-        "/static/shared/css/design-system.css",
-        "/static/shared/js/components/table.js",
-    ]
-    
-    for file_path in files_to_check:
-        full_path = Path(f".{file_path}")
-        if full_path.exists():
-            print(f"  ✅ {file_path} exists")
-        else:
-            print(f"  ❌ {file_path} NOT FOUND")
+class Colors:
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    END = '\033[0m'
 
-def test_services_json():
-    """Test if services JSON file exists and is valid"""
-    print("\n🧪 Testing services JSON file...")
-    
-    json_path = Path("./crypto_api_hub_services.json")
-    
-    if not json_path.exists():
-        print("  ❌ crypto_api_hub_services.json NOT FOUND")
-        return False
-    
+def print_test(name: str):
+    print(f"\n{Colors.BLUE}Testing: {name}{Colors.END}")
+
+def print_pass(msg: str):
+    print(f"  {Colors.GREEN}✓ {msg}{Colors.END}")
+
+def print_fail(msg: str):
+    print(f"  {Colors.RED}✗ {msg}{Colors.END}")
+
+def print_warn(msg: str):
+    print(f"  {Colors.YELLOW}⚠ {msg}{Colors.END}")
+
+async def test_health():
+    """Test health endpoint"""
+    print_test("Health Endpoint")
     try:
-        with open(json_path, 'r') as f:
-            data = json.load(f)
-        
-        print("  ✅ JSON file is valid")
-        
-        # Check structure
-        if "metadata" in data and "categories" in data:
-            print("  ✅ JSON structure is correct")
-            
-            metadata = data["metadata"]
-            print(f"  📊 Total services: {metadata.get('total_services', 'N/A')}")
-            print(f"  📊 Total endpoints: {metadata.get('total_endpoints', 'N/A')}")
-            print(f"  📊 API keys: {metadata.get('api_keys_count', 'N/A')}")
-            
-            categories = data["categories"]
-            print(f"  📊 Categories: {', '.join(categories.keys())}")
-            
-            return True
-        else:
-            print("  ❌ JSON structure is incorrect")
-            return False
-            
-    except json.JSONDecodeError as e:
-        print(f"  ❌ Invalid JSON: {e}")
-        return False
-
-def test_backend_endpoint(endpoint, method="GET", description=""):
-    """Test a backend endpoint"""
-    print(f"\n🧪 Testing {method} {endpoint}")
-    if description:
-        print(f"   {description}")
-    
-    try:
-        if method == "GET":
-            response = requests.get(f"{BASE_URL}{endpoint}", timeout=5)
-        elif method == "POST":
-            response = requests.post(f"{BASE_URL}{endpoint}", json={}, timeout=5)
-        
-        if response.status_code == 200:
-            print(f"  ✅ Status: {response.status_code}")
-            try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{API_BASE}/health", timeout=5.0)
+            if response.status_code == 200:
                 data = response.json()
-                print(f"  ✅ Valid JSON response")
-                return True
-            except:
-                print(f"  ⚠️  Non-JSON response")
-                return True
-        else:
-            print(f"  ❌ Status: {response.status_code}")
-            return False
-            
-    except requests.exceptions.ConnectionError:
-        print(f"  ⚠️  Backend not running (connection refused)")
-        print(f"     This is normal if you haven't started the server yet")
-        return None
-    except requests.exceptions.Timeout:
-        print(f"  ❌ Request timeout")
-        return False
-    except Exception as e:
-        print(f"  ❌ Error: {e}")
-        return False
-
-def test_cors_proxy():
-    """Test the CORS proxy endpoint"""
-    print("\n🧪 Testing CORS proxy endpoint...")
-    
-    try:
-        # Test with a simple external API
-        response = requests.post(
-            f"{BASE_URL}/api/crypto-hub/test",
-            json={
-                "url": "https://api.coingecko.com/api/v3/ping",
-                "method": "GET",
-                "headers": {},
-                "body": None
-            },
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("success"):
-                print("  ✅ CORS proxy works")
+                print_pass(f"Backend is {data.get('status', 'unknown')}")
                 return True
             else:
-                print("  ❌ CORS proxy returned failure")
+                print_fail(f"Health check failed: HTTP {response.status_code}")
                 return False
-        else:
-            print(f"  ❌ Status: {response.status_code}")
-            return False
-            
-    except requests.exceptions.ConnectionError:
-        print("  ⚠️  Backend not running")
-        return None
     except Exception as e:
-        print(f"  ❌ Error: {e}")
+        print_fail(f"Health check failed: {e}")
         return False
 
-def main():
+async def test_static_files():
+    """Test static file serving"""
+    print_test("Static Files")
+    paths = [
+        "/",
+        "/static/index.html",
+        "/static/pages/dashboard/index.html",
+        "/static/shared/js/core/api-client.js",
+        "/static/shared/js/core/config.js"
+    ]
+    
+    passed = 0
+    async with httpx.AsyncClient() as client:
+        for path in paths:
+            try:
+                response = await client.get(f"{BASE_URL}{path}", timeout=5.0)
+                if response.status_code == 200:
+                    print_pass(f"{path}")
+                    passed += 1
+                else:
+                    print_fail(f"{path} - HTTP {response.status_code}")
+            except Exception as e:
+                print_fail(f"{path} - {e}")
+    
+    return passed == len(paths)
+
+async def test_models_endpoints():
+    """Test AI models endpoints"""
+    print_test("AI Models Endpoints")
+    
+    endpoints = [
+        "/models/status",
+        "/models/list",
+        "/models/summary",
+        "/hf/health"
+    ]
+    
+    passed = 0
+    async with httpx.AsyncClient() as client:
+        for endpoint in endpoints:
+            try:
+                response = await client.get(f"{API_BASE}{endpoint}", timeout=10.0)
+                if response.status_code == 200:
+                    data = response.json()
+                    print_pass(f"{endpoint} - OK")
+                    passed += 1
+                else:
+                    print_warn(f"{endpoint} - HTTP {response.status_code}")
+            except Exception as e:
+                print_warn(f"{endpoint} - {e}")
+    
+    return passed > 0  # At least some endpoints should work
+
+async def test_market_endpoints():
+    """Test market data endpoints"""
+    print_test("Market Data Endpoints")
+    
+    endpoints = [
+        "/market",
+        "/trending",
+        "/sentiment",
+        "/coins/top?limit=10"
+    ]
+    
+    passed = 0
+    async with httpx.AsyncClient() as client:
+        for endpoint in endpoints:
+            try:
+                response = await client.get(f"{API_BASE}{endpoint}", timeout=10.0)
+                if response.status_code == 200:
+                    print_pass(f"{endpoint}")
+                    passed += 1
+                else:
+                    print_warn(f"{endpoint} - HTTP {response.status_code}")
+            except Exception as e:
+                print_warn(f"{endpoint} - {e}")
+    
+    return passed > 0
+
+async def test_providers_endpoints():
+    """Test providers endpoints"""
+    print_test("Providers Endpoints")
+    
+    endpoints = [
+        "/providers",
+        "/providers/summary",
+        "/resources",
+        "/resources/count"
+    ]
+    
+    passed = 0
+    async with httpx.AsyncClient() as client:
+        for endpoint in endpoints:
+            try:
+                response = await client.get(f"{API_BASE}{endpoint}", timeout=10.0)
+                if response.status_code == 200:
+                    data = response.json()
+                    print_pass(f"{endpoint}")
+                    passed += 1
+                else:
+                    print_warn(f"{endpoint} - HTTP {response.status_code}")
+            except Exception as e:
+                print_warn(f"{endpoint} - {e}")
+    
+    return passed > 0
+
+async def test_sentiment_analysis():
+    """Test sentiment analysis"""
+    print_test("Sentiment Analysis")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{API_BASE}/sentiment/analyze",
+                json={
+                    "text": "Bitcoin is showing strong bullish momentum!",
+                    "mode": "crypto"
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                sentiment = data.get("sentiment", {})
+                label = sentiment.get("label", "unknown")
+                confidence = sentiment.get("confidence", 0)
+                print_pass(f"Sentiment: {label} (confidence: {confidence:.2f})")
+                return True
+            else:
+                print_warn(f"Sentiment analysis returned HTTP {response.status_code}")
+                return False
+    except Exception as e:
+        print_warn(f"Sentiment analysis failed: {e}")
+        return False
+
+async def test_system_info():
+    """Test system info endpoint"""
+    print_test("System Information")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{API_BASE}/system/info", timeout=5.0)
+            if response.status_code == 200:
+                data = response.json()
+                system = data.get("system", {})
+                env = data.get("environment", {})
+                
+                print_pass(f"Platform: {system.get('platform')}")
+                print_pass(f"Python: {system.get('python_version')}")
+                print_pass(f"Docker: {system.get('is_docker')}")
+                print_pass(f"HF Mode: {env.get('hf_mode')}")
+                return True
+            else:
+                print_warn(f"System info returned HTTP {response.status_code}")
+                return False
+    except Exception as e:
+        print_warn(f"System info failed: {e}")
+        return False
+
+async def main():
     """Run all tests"""
-    print("=" * 60)
-    print("🚀 SEAMLESS INTEGRATION TEST SUITE")
-    print("=" * 60)
+    print(f"\n{Colors.BLUE}{'='*60}{Colors.END}")
+    print(f"{Colors.BLUE}Crypto Intelligence Hub - Integration Tests{Colors.END}")
+    print(f"{Colors.BLUE}{'='*60}{Colors.END}")
     
-    # Test static files
-    test_static_file_exists()
+    tests = [
+        ("Health Check", test_health),
+        ("Static Files", test_static_files),
+        ("AI Models", test_models_endpoints),
+        ("Market Data", test_market_endpoints),
+        ("Providers", test_providers_endpoints),
+        ("Sentiment Analysis", test_sentiment_analysis),
+        ("System Info", test_system_info)
+    ]
     
-    # Test services JSON
-    json_valid = test_services_json()
+    passed = 0
+    failed = 0
     
-    # Test backend endpoints (only if backend is running)
-    print("\n" + "=" * 60)
-    print("🌐 BACKEND API TESTS")
-    print("=" * 60)
-    
-    test_backend_endpoint(
-        "/api/crypto-hub/services",
-        method="GET",
-        description="Get all crypto services"
-    )
-    
-    test_cors_proxy()
+    for name, test_func in tests:
+        try:
+            result = await test_func()
+            if result:
+                passed += 1
+            else:
+                failed += 1
+        except Exception as e:
+            print_fail(f"Test crashed: {e}")
+            failed += 1
     
     # Summary
-    print("\n" + "=" * 60)
-    print("📊 TEST SUMMARY")
-    print("=" * 60)
-    print("""
-✅ Static files checked
-✅ JSON data validated
-⚠️  Backend tests require running server
-
-To start the backend:
-  python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-Then access the page at:
-  http://localhost:8000/static/pages/crypto-api-hub-integrated/
-    """)
+    print(f"\n{Colors.BLUE}{'='*60}{Colors.END}")
+    print(f"{Colors.BLUE}Test Summary{Colors.END}")
+    print(f"{Colors.BLUE}{'='*60}{Colors.END}")
+    print(f"{Colors.GREEN}Passed: {passed}{Colors.END}")
+    print(f"{Colors.RED}Failed: {failed}{Colors.END}")
     
-    print("=" * 60)
-    print("✨ Integration is ready!")
-    print("=" * 60)
+    if failed == 0:
+        print(f"\n{Colors.GREEN}✓ All tests passed!{Colors.END}\n")
+        return 0
+    else:
+        print(f"\n{Colors.YELLOW}⚠ Some tests failed{Colors.END}\n")
+        return 1
 
 if __name__ == "__main__":
-    main()
+    exit_code = asyncio.run(main())
+    sys.exit(exit_code)
