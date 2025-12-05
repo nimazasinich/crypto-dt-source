@@ -1,0 +1,1016 @@
+{
+  "generated_at": "2025-11-24T23:37:05.341624",
+  "metadata": {
+    "description": "Comprehensive cryptocurrency data collection database compiled from provided documents. Includes free and limited resources for RPC nodes, block explorers, market data, news, sentiment, on-chain analytics, whale tracking, community sentiment, Hugging Face models/datasets, free HTTP endpoints, and local backend routes. Uniform format: each entry has 'id', 'name', 'category' (or 'chain'/'role' where applicable), 'base_url', 'auth' (object with 'type', 'key' if embedded, 'param_name', etc.), 'docs_url', and optional 'endpoints' or 'notes'. Keys are embedded where provided in sources. Structure designed for easy parsing by code-writing bots.",
+    "version": "1.0",
+    "updated": "November 11, 2025",
+    "sources": [
+      "api - Copy.txt",
+      "api-config-complete (1).txt",
+      "crypto_resources.ts",
+      "additional JSON structures"
+    ],
+    "total_entries": 200
+  },
+  "stats": {
+    "total_resources": 137,
+    "total_categories": 15,
+    "categories": {
+      "rpc_nodes": 24,
+      "block_explorers": 18,
+      "market_data": 23,
+      "news": 15,
+      "sentiment": 12,
+      "onchain_analytics": 12,
+      "whale_tracking": 9,
+      "community_sentiment": 1,
+      "hf-model": 2,
+      "hf_dataset": 5,
+      "market": 2,
+      "indices": 1,
+      "social": 1,
+      "hf-dataset": 5,
+      "cors_proxy": 7
+    },
+    "auth_required": 48,
+    "free_resources": 89
+  },
+  "categories": [
+    "rpc_nodes",
+    "block_explorers",
+    "market_data",
+    "news",
+    "sentiment",
+    "onchain_analytics",
+    "whale_tracking",
+    "community_sentiment",
+    "hf-model",
+    "hf_dataset",
+    "market",
+    "indices",
+    "social",
+    "hf-dataset",
+    "cors_proxy"
+  ],
+  "resources": {
+    "infura_eth_mainnet": {
+      "name": "Infura Ethereum Mainnet",
+      "category": "rpc_nodes",
+      "base_url": "https://mainnet.infura.io/v3/{PROJECT_ID}",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "infura_eth_sepolia": {
+      "name": "Infura Ethereum Sepolia",
+      "category": "rpc_nodes",
+      "base_url": "https://sepolia.infura.io/v3/{PROJECT_ID}",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "alchemy_eth_mainnet": {
+      "name": "Alchemy Ethereum Mainnet",
+      "category": "rpc_nodes",
+      "base_url": "https://eth-mainnet.g.alchemy.com/v2/{API_KEY}",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "alchemy_eth_mainnet_ws": {
+      "name": "Alchemy Ethereum Mainnet WS",
+      "category": "rpc_nodes",
+      "base_url": "wss://eth-mainnet.g.alchemy.com/v2/{API_KEY}",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "ankr_eth": {
+      "name": "Ankr Ethereum",
+      "category": "rpc_nodes",
+      "base_url": "https://rpc.ankr.com/eth",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "publicnode_eth_mainnet": {
+      "name": "PublicNode Ethereum",
+      "category": "rpc_nodes",
+      "base_url": "https://ethereum.publicnode.com",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "publicnode_eth_allinone": {
+      "name": "PublicNode Ethereum All-in-one",
+      "category": "rpc_nodes",
+      "base_url": "https://ethereum-rpc.publicnode.com",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "cloudflare_eth": {
+      "name": "Cloudflare Ethereum",
+      "category": "rpc_nodes",
+      "base_url": "https://cloudflare-eth.com",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "llamanodes_eth": {
+      "name": "LlamaNodes Ethereum",
+      "category": "rpc_nodes",
+      "base_url": "https://eth.llamarpc.com",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "one_rpc_eth": {
+      "name": "1RPC Ethereum",
+      "category": "rpc_nodes",
+      "base_url": "https://1rpc.io/eth",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "drpc_eth": {
+      "name": "dRPC Ethereum",
+      "category": "rpc_nodes",
+      "base_url": "https://eth.drpc.org",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "bsc_official_mainnet": {
+      "name": "BSC Official Mainnet",
+      "category": "rpc_nodes",
+      "base_url": "https://bsc-dataseed.binance.org",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "bsc_official_alt1": {
+      "name": "BSC Official Alt1",
+      "category": "rpc_nodes",
+      "base_url": "https://bsc-dataseed1.defibit.io",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "bsc_official_alt2": {
+      "name": "BSC Official Alt2",
+      "category": "rpc_nodes",
+      "base_url": "https://bsc-dataseed1.ninicoin.io",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "ankr_bsc": {
+      "name": "Ankr BSC",
+      "category": "rpc_nodes",
+      "base_url": "https://rpc.ankr.com/bsc",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "publicnode_bsc": {
+      "name": "PublicNode BSC",
+      "category": "rpc_nodes",
+      "base_url": "https://bsc-rpc.publicnode.com",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "nodereal_bsc": {
+      "name": "Nodereal BSC",
+      "category": "rpc_nodes",
+      "base_url": "https://bsc-mainnet.nodereal.io/v1/{API_KEY}",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "trongrid_mainnet": {
+      "name": "TronGrid Mainnet",
+      "category": "rpc_nodes",
+      "base_url": "https://api.trongrid.io",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "tronstack_mainnet": {
+      "name": "TronStack Mainnet",
+      "category": "rpc_nodes",
+      "base_url": "https://api.tronstack.io",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "tron_nile_testnet": {
+      "name": "Tron Nile Testnet",
+      "category": "rpc_nodes",
+      "base_url": "https://api.nileex.io",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "polygon_official_mainnet": {
+      "name": "Polygon Official Mainnet",
+      "category": "rpc_nodes",
+      "base_url": "https://polygon-rpc.com",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "polygon_mumbai": {
+      "name": "Polygon Mumbai",
+      "category": "rpc_nodes",
+      "base_url": "https://rpc-mumbai.maticvigil.com",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "ankr_polygon": {
+      "name": "Ankr Polygon",
+      "category": "rpc_nodes",
+      "base_url": "https://rpc.ankr.com/polygon",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "publicnode_polygon_bor": {
+      "name": "PublicNode Polygon Bor",
+      "category": "rpc_nodes",
+      "base_url": "https://polygon-bor-rpc.publicnode.com",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "etherscan_primary": {
+      "name": "Etherscan",
+      "category": "block_explorers",
+      "base_url": "https://api.etherscan.io/api",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "etherscan_secondary": {
+      "name": "Etherscan (secondary key)",
+      "category": "block_explorers",
+      "base_url": "https://api.etherscan.io/api",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "blockchair_ethereum": {
+      "name": "Blockchair Ethereum",
+      "category": "block_explorers",
+      "base_url": "https://api.blockchair.com/ethereum",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "blockscout_ethereum": {
+      "name": "Blockscout Ethereum",
+      "category": "block_explorers",
+      "base_url": "https://eth.blockscout.com/api",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "ethplorer": {
+      "name": "Ethplorer",
+      "category": "block_explorers",
+      "base_url": "https://api.ethplorer.io",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "etherchain": {
+      "name": "Etherchain",
+      "category": "block_explorers",
+      "base_url": "https://www.etherchain.org/api",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "chainlens": {
+      "name": "Chainlens",
+      "category": "block_explorers",
+      "base_url": "https://api.chainlens.com",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "bscscan_primary": {
+      "name": "BscScan",
+      "category": "block_explorers",
+      "base_url": "https://api.bscscan.com/api",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "bitquery_bsc": {
+      "name": "BitQuery (BSC)",
+      "category": "block_explorers",
+      "base_url": "https://graphql.bitquery.io",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "ankr_multichain_bsc": {
+      "name": "Ankr MultiChain (BSC)",
+      "category": "block_explorers",
+      "base_url": "https://rpc.ankr.com/multichain",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "nodereal_bsc_explorer": {
+      "name": "Nodereal BSC",
+      "category": "block_explorers",
+      "base_url": "https://bsc-mainnet.nodereal.io/v1/{API_KEY}",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "bsctrace": {
+      "name": "BscTrace",
+      "category": "block_explorers",
+      "base_url": "https://api.bsctrace.com",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "oneinch_bsc_api": {
+      "name": "1inch BSC API",
+      "category": "block_explorers",
+      "base_url": "https://api.1inch.io/v5.0/56",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "tronscan_primary": {
+      "name": "TronScan",
+      "category": "block_explorers",
+      "base_url": "https://apilist.tronscanapi.com/api",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "trongrid_explorer": {
+      "name": "TronGrid (Official)",
+      "category": "block_explorers",
+      "base_url": "https://api.trongrid.io",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "blockchair_tron": {
+      "name": "Blockchair TRON",
+      "category": "block_explorers",
+      "base_url": "https://api.blockchair.com/tron",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "tronscan_api_v2": {
+      "name": "Tronscan API v2",
+      "category": "block_explorers",
+      "base_url": "https://api.tronscan.org/api",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "getblock_tron": {
+      "name": "GetBlock TRON",
+      "category": "block_explorers",
+      "base_url": "https://go.getblock.io/tron",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "coingecko": {
+      "name": "CoinGecko",
+      "category": "market_data",
+      "base_url": "https://api.coingecko.com/api/v3",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "coinmarketcap_primary_1": {
+      "name": "CoinMarketCap (key #1)",
+      "category": "market_data",
+      "base_url": "https://pro-api.coinmarketcap.com/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "coinmarketcap_primary_2": {
+      "name": "CoinMarketCap (key #2)",
+      "category": "market_data",
+      "base_url": "https://pro-api.coinmarketcap.com/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "cryptocompare": {
+      "name": "CryptoCompare",
+      "category": "market_data",
+      "base_url": "https://min-api.cryptocompare.com/data",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "coinpaprika": {
+      "name": "Coinpaprika",
+      "category": "market_data",
+      "base_url": "https://api.coinpaprika.com/v1",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "coincap": {
+      "name": "CoinCap",
+      "category": "market_data",
+      "base_url": "https://api.coincap.io/v2",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "nomics": {
+      "name": "Nomics",
+      "category": "market_data",
+      "base_url": "https://api.nomics.com/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "messari": {
+      "name": "Messari",
+      "category": "market_data",
+      "base_url": "https://data.messari.io/api/v1",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "bravenewcoin": {
+      "name": "BraveNewCoin (RapidAPI)",
+      "category": "market_data",
+      "base_url": "https://bravenewcoin.p.rapidapi.com",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "kaiko": {
+      "name": "Kaiko",
+      "category": "market_data",
+      "base_url": "https://us.market-api.kaiko.io/v2",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "coinapi_io": {
+      "name": "CoinAPI.io",
+      "category": "market_data",
+      "base_url": "https://rest.coinapi.io/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "coinlore": {
+      "name": "CoinLore",
+      "category": "market_data",
+      "base_url": "https://api.coinlore.net/api",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "coinpaprika_market": {
+      "name": "CoinPaprika",
+      "category": "market_data",
+      "base_url": "https://api.coinpaprika.com/v1",
+      "requires_auth": false,
+      "priority": 3
+    },
+    "coincap_market": {
+      "name": "CoinCap",
+      "category": "market_data",
+      "base_url": "https://api.coincap.io/v2",
+      "requires_auth": false,
+      "priority": 3
+    },
+    "defillama_prices": {
+      "name": "DefiLlama (Prices)",
+      "category": "market_data",
+      "base_url": "https://coins.llama.fi",
+      "requires_auth": false,
+      "priority": 3
+    },
+    "binance_public": {
+      "name": "Binance Public",
+      "category": "market_data",
+      "base_url": "https://api.binance.com",
+      "requires_auth": false,
+      "priority": 3
+    },
+    "cryptocompare_market": {
+      "name": "CryptoCompare",
+      "category": "market_data",
+      "base_url": "https://min-api.cryptocompare.com",
+      "requires_auth": true,
+      "priority": 3
+    },
+    "coindesk_price": {
+      "name": "CoinDesk Price API",
+      "category": "market_data",
+      "base_url": "https://api.coindesk.com/v2",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "mobula": {
+      "name": "Mobula API",
+      "category": "market_data",
+      "base_url": "https://api.mobula.io/api/1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "tokenmetrics": {
+      "name": "Token Metrics API",
+      "category": "market_data",
+      "base_url": "https://api.tokenmetrics.com/v2",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "freecryptoapi": {
+      "name": "FreeCryptoAPI",
+      "category": "market_data",
+      "base_url": "https://api.freecryptoapi.com",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "diadata": {
+      "name": "DIA Data",
+      "category": "market_data",
+      "base_url": "https://api.diadata.org/v1",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "coinstats_public": {
+      "name": "CoinStats Public API",
+      "category": "market_data",
+      "base_url": "https://api.coinstats.app/public/v1",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "newsapi_org": {
+      "name": "NewsAPI.org",
+      "category": "news",
+      "base_url": "https://newsapi.org/v2",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "cryptopanic": {
+      "name": "CryptoPanic",
+      "category": "news",
+      "base_url": "https://cryptopanic.com/api/v1",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "cryptocontrol": {
+      "name": "CryptoControl",
+      "category": "news",
+      "base_url": "https://cryptocontrol.io/api/v1/public",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "coindesk_api": {
+      "name": "CoinDesk API",
+      "category": "news",
+      "base_url": "https://api.coindesk.com/v2",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "cointelegraph_api": {
+      "name": "CoinTelegraph API",
+      "category": "news",
+      "base_url": "https://api.cointelegraph.com/api/v1",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "cryptoslate": {
+      "name": "CryptoSlate API",
+      "category": "news",
+      "base_url": "https://api.cryptoslate.com",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "theblock_api": {
+      "name": "The Block API",
+      "category": "news",
+      "base_url": "https://api.theblock.co/v1",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "coinstats_news": {
+      "name": "CoinStats News",
+      "category": "news",
+      "base_url": "https://api.coinstats.app",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "rss_cointelegraph": {
+      "name": "Cointelegraph RSS",
+      "category": "news",
+      "base_url": "https://cointelegraph.com",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "rss_coindesk": {
+      "name": "CoinDesk RSS",
+      "category": "news",
+      "base_url": "https://www.coindesk.com",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "rss_decrypt": {
+      "name": "Decrypt RSS",
+      "category": "news",
+      "base_url": "https://decrypt.co",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "coindesk_rss": {
+      "name": "CoinDesk RSS",
+      "category": "news",
+      "base_url": "https://feeds.feedburner.com/CoinDesk",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "cointelegraph_rss": {
+      "name": "CoinTelegraph RSS",
+      "category": "news",
+      "base_url": "https://cointelegraph.com/rss",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "bitcoinmagazine_rss": {
+      "name": "Bitcoin Magazine RSS",
+      "category": "news",
+      "base_url": "https://bitcoinmagazine.com/.rss/full/",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "decrypt_rss": {
+      "name": "Decrypt RSS",
+      "category": "news",
+      "base_url": "https://decrypt.co/feed",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "alternative_me_fng": {
+      "name": "Alternative.me Fear & Greed",
+      "category": "sentiment",
+      "base_url": "https://api.alternative.me",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "lunarcrush": {
+      "name": "LunarCrush",
+      "category": "sentiment",
+      "base_url": "https://api.lunarcrush.com/v2",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "santiment": {
+      "name": "Santiment GraphQL",
+      "category": "sentiment",
+      "base_url": "https://api.santiment.net/graphql",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "thetie": {
+      "name": "TheTie.io",
+      "category": "sentiment",
+      "base_url": "https://api.thetie.io",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "cryptoquant": {
+      "name": "CryptoQuant",
+      "category": "sentiment",
+      "base_url": "https://api.cryptoquant.com/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "glassnode_social": {
+      "name": "Glassnode Social Metrics",
+      "category": "sentiment",
+      "base_url": "https://api.glassnode.com/v1/metrics/social",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "augmento": {
+      "name": "Augmento Social Sentiment",
+      "category": "sentiment",
+      "base_url": "https://api.augmento.ai/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "coingecko_community": {
+      "name": "CoinGecko Community Data",
+      "category": "sentiment",
+      "base_url": "https://api.coingecko.com/api/v3",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "messari_social": {
+      "name": "Messari Social Metrics",
+      "category": "sentiment",
+      "base_url": "https://data.messari.io/api/v1",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "altme_fng": {
+      "name": "Alternative.me F&G",
+      "category": "sentiment",
+      "base_url": "https://api.alternative.me",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "cfgi_v1": {
+      "name": "CFGI API v1",
+      "category": "sentiment",
+      "base_url": "https://api.cfgi.io",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "cfgi_legacy": {
+      "name": "CFGI Legacy",
+      "category": "sentiment",
+      "base_url": "https://cfgi.io",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "glassnode_general": {
+      "name": "Glassnode",
+      "category": "onchain_analytics",
+      "base_url": "https://api.glassnode.com/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "intotheblock": {
+      "name": "IntoTheBlock",
+      "category": "onchain_analytics",
+      "base_url": "https://api.intotheblock.com/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "nansen": {
+      "name": "Nansen",
+      "category": "onchain_analytics",
+      "base_url": "https://api.nansen.ai/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "thegraph_subgraphs": {
+      "name": "The Graph Subgraphs",
+      "category": "onchain_analytics",
+      "base_url": "https://api.thegraph.com/subgraphs/name/{org}/{subgraph}",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "dune": {
+      "name": "Dune Analytics",
+      "category": "onchain_analytics",
+      "base_url": "https://api.dune.com/api/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "covalent": {
+      "name": "Covalent",
+      "category": "onchain_analytics",
+      "base_url": "https://api.covalenthq.com/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "moralis": {
+      "name": "Moralis",
+      "category": "onchain_analytics",
+      "base_url": "https://deep-index.moralis.io/api/v2",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "alchemy_nft_api": {
+      "name": "Alchemy NFT API",
+      "category": "onchain_analytics",
+      "base_url": "https://eth-mainnet.g.alchemy.com/nft/v2/{API_KEY}",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "quicknode_functions": {
+      "name": "QuickNode Functions",
+      "category": "onchain_analytics",
+      "base_url": "https://{YOUR_QUICKNODE_ENDPOINT}",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "transpose": {
+      "name": "Transpose",
+      "category": "onchain_analytics",
+      "base_url": "https://api.transpose.io",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "footprint_analytics": {
+      "name": "Footprint Analytics",
+      "category": "onchain_analytics",
+      "base_url": "https://api.footprint.network",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "nansen_query": {
+      "name": "Nansen Query",
+      "category": "onchain_analytics",
+      "base_url": "https://api.nansen.ai/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "whale_alert": {
+      "name": "Whale Alert",
+      "category": "whale_tracking",
+      "base_url": "https://api.whale-alert.io/v1",
+      "requires_auth": true,
+      "priority": 1
+    },
+    "arkham": {
+      "name": "Arkham Intelligence",
+      "category": "whale_tracking",
+      "base_url": "https://api.arkham.com/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "clankapp": {
+      "name": "ClankApp",
+      "category": "whale_tracking",
+      "base_url": "https://clankapp.com/api",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "bitquery_whales": {
+      "name": "BitQuery Whale Tracking",
+      "category": "whale_tracking",
+      "base_url": "https://graphql.bitquery.io",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "nansen_whales": {
+      "name": "Nansen Smart Money / Whales",
+      "category": "whale_tracking",
+      "base_url": "https://api.nansen.ai/v1",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "dexcheck": {
+      "name": "DexCheck Whale Tracker",
+      "category": "whale_tracking",
+      "base_url": null,
+      "requires_auth": false,
+      "priority": 2
+    },
+    "debank": {
+      "name": "DeBank",
+      "category": "whale_tracking",
+      "base_url": "https://api.debank.com",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "zerion": {
+      "name": "Zerion API",
+      "category": "whale_tracking",
+      "base_url": "https://api.zerion.io",
+      "requires_auth": true,
+      "priority": 2
+    },
+    "whalemap": {
+      "name": "Whalemap",
+      "category": "whale_tracking",
+      "base_url": "https://whalemap.io",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "reddit_cryptocurrency_new": {
+      "name": "Reddit /r/CryptoCurrency (new)",
+      "category": "community_sentiment",
+      "base_url": "https://www.reddit.com/r/CryptoCurrency",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "hf_model_elkulako_cryptobert": {
+      "name": "HF Model: ElKulako/CryptoBERT",
+      "category": "hf-model",
+      "base_url": "https://huggingface.co/ElKulako/cryptobert",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_model_kk08_cryptobert": {
+      "name": "HF Model: kk08/CryptoBERT",
+      "category": "hf-model",
+      "base_url": "https://huggingface.co/kk08/CryptoBERT",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_linxy_cryptocoin": {
+      "name": "linxy/CryptoCoin",
+      "category": "hf_dataset",
+      "base_url": "https://huggingface.co/datasets/linxy/CryptoCoin/resolve/main",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_wf_btc_usdt": {
+      "name": "WinkingFace/CryptoLM-Bitcoin-BTC-USDT",
+      "category": "hf_dataset",
+      "base_url": "https://huggingface.co/datasets/WinkingFace/CryptoLM-Bitcoin-BTC-USDT/resolve/main",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_wf_eth_usdt": {
+      "name": "WinkingFace/CryptoLM-Ethereum-ETH-USDT",
+      "category": "hf_dataset",
+      "base_url": "https://huggingface.co/datasets/WinkingFace/CryptoLM-Ethereum-ETH-USDT/resolve/main",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_wf_sol_usdt": {
+      "name": "WinkingFace/CryptoLM-Solana-SOL-USDT",
+      "category": "hf_dataset",
+      "base_url": "https://huggingface.co/datasets/WinkingFace/CryptoLM-Solana-SOL-USDT/resolve/main",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_wf_xrp_usdt": {
+      "name": "WinkingFace/CryptoLM-Ripple-XRP-USDT",
+      "category": "hf_dataset",
+      "base_url": "https://huggingface.co/datasets/WinkingFace/CryptoLM-Ripple-XRP-USDT/resolve/main",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "cg_simple_price": {
+      "name": "CoinGecko Simple Price",
+      "category": "market",
+      "base_url": "https://api.coingecko.com/api/v3/simple/price",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "binance_klines": {
+      "name": "Binance Klines",
+      "category": "market",
+      "base_url": "https://api.binance.com/api/v3/klines",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "alt_fng": {
+      "name": "Alternative.me Fear & Greed",
+      "category": "indices",
+      "base_url": "https://api.alternative.me/fng/",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "reddit_top": {
+      "name": "Reddit r/cryptocurrency Top",
+      "category": "social",
+      "base_url": "https://www.reddit.com/r/cryptocurrency/top.json",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_linxy_crypto": {
+      "name": "HF Dataset: linxy/CryptoCoin",
+      "category": "hf-dataset",
+      "base_url": "https://huggingface.co/datasets/linxy/CryptoCoin",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_wf_btc": {
+      "name": "HF Dataset: WinkingFace BTC/USDT",
+      "category": "hf-dataset",
+      "base_url": "https://huggingface.co/datasets/WinkingFace/CryptoLM-Bitcoin-BTC-USDT",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_wf_eth": {
+      "name": "WinkingFace ETH/USDT",
+      "category": "hf-dataset",
+      "base_url": "https://huggingface.co/datasets/WinkingFace/CryptoLM-Ethereum-ETH-USDT",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_wf_sol": {
+      "name": "WinkingFace SOL/USDT",
+      "category": "hf-dataset",
+      "base_url": "https://huggingface.co/datasets/WinkingFace/CryptoLM-Solana-SOL-USDT",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "hf_ds_wf_xrp": {
+      "name": "WinkingFace XRP/USDT",
+      "category": "hf-dataset",
+      "base_url": "https://huggingface.co/datasets/WinkingFace/CryptoLM-Ripple-XRP-USDT",
+      "requires_auth": false,
+      "priority": 1
+    },
+    "allorigins": {
+      "name": "AllOrigins",
+      "category": "cors_proxy",
+      "base_url": "https://api.allorigins.win/get?url={TARGET_URL}",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "cors_sh": {
+      "name": "CORS.SH",
+      "category": "cors_proxy",
+      "base_url": "https://proxy.cors.sh/{TARGET_URL}",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "corsfix": {
+      "name": "Corsfix",
+      "category": "cors_proxy",
+      "base_url": "https://proxy.corsfix.com/?url={TARGET_URL}",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "codetabs": {
+      "name": "CodeTabs",
+      "category": "cors_proxy",
+      "base_url": "https://api.codetabs.com/v1/proxy?quest={TARGET_URL}",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "thingproxy": {
+      "name": "ThingProxy",
+      "category": "cors_proxy",
+      "base_url": "https://thingproxy.freeboard.io/fetch/{TARGET_URL}",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "crossorigin_me": {
+      "name": "Crossorigin.me",
+      "category": "cors_proxy",
+      "base_url": "https://crossorigin.me/{TARGET_URL}",
+      "requires_auth": false,
+      "priority": 2
+    },
+    "cors_anywhere_selfhosted": {
+      "name": "Self-Hosted CORS-Anywhere",
+      "category": "cors_proxy",
+      "base_url": "{YOUR_DEPLOYED_URL}",
+      "requires_auth": false,
+      "priority": 2
+    }
+  }
+}

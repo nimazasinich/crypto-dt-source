@@ -15,24 +15,16 @@ const CONFIG = (() => {
 
     // Get base API URL based on environment
     const getApiBaseUrl = () => {
-        // If running on HuggingFace Spaces, use relative URLs
-        if (isHuggingFaceSpaces) {
-            return window.location.origin;
-        }
-
-        // If running locally, use localhost with port 7860
-        if (isLocalhost) {
-            return 'http://localhost:7860';
-        }
-
-        // For custom deployments, use the current origin
+        // Always use current origin - works in all environments (local, HF Spaces, production)
+        // The backend should be served from the same origin
         return window.location.origin;
     };
 
     // Get WebSocket URL based on environment
     const getWebSocketUrl = () => {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = isLocalhost ? 'localhost:7860' : window.location.host;
+        // Always use current host - works in all environments
+        const host = window.location.host;
         return `${protocol}//${host}`;
     };
 
