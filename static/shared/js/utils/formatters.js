@@ -3,112 +3,98 @@
  */
 
 /**
- * Format large numbers with suffixes (K, M, B, T)
+ * Format number with K/M/B suffix
  */
-export function formatNumber(num, decimals = 2) {
-  if (num === null || num === undefined) return '--';
-  if (num === 0) return '0';
-
-  const abs = Math.abs(num);
+export function formatNumber(num) {
+  if (num === null || num === undefined) return '—';
   
-  if (abs >= 1e12) {
-    return (num / 1e12).toFixed(decimals) + 'T';
+  const absNum = Math.abs(num);
+  
+  if (absNum >= 1e9) {
+    return (num / 1e9).toFixed(2) + 'B';
   }
-  if (abs >= 1e9) {
-    return (num / 1e9).toFixed(decimals) + 'B';
+  if (absNum >= 1e6) {
+    return (num / 1e6).toFixed(2) + 'M';
   }
-  if (abs >= 1e6) {
-    return (num / 1e6).toFixed(decimals) + 'M';
-  }
-  if (abs >= 1e3) {
-    return (num / 1e3).toFixed(decimals) + 'K';
+  if (absNum >= 1e3) {
+    return (num / 1e3).toFixed(2) + 'K';
   }
   
-  return num.toFixed(decimals);
+  return num.toFixed(0);
 }
 
 /**
- * Format currency (USD)
+ * Format as currency (USD)
  */
-export function formatCurrency(value, decimals = 2) {
-  if (value === null || value === undefined) return '--';
+export function formatCurrency(num, decimals = 2) {
+  if (num === null || num === undefined) return '$—';
   
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(value);
+  const absNum = Math.abs(num);
+  
+  if (absNum >= 1e9) {
+    return '$' + (num / 1e9).toFixed(2) + 'B';
+  }
+  if (absNum >= 1e6) {
+    return '$' + (num / 1e6).toFixed(2) + 'M';
+  }
+  if (absNum >= 1e3) {
+    return '$' + (num / 1e3).toFixed(2) + 'K';
+  }
+  
+  return '$' + num.toFixed(decimals);
 }
 
 /**
- * Format percentage
+ * Format as percentage
  */
-export function formatPercent(value, decimals = 2) {
-  if (value === null || value === undefined) return '--';
-  
-  const sign = value >= 0 ? '+' : '';
-  return sign + value.toFixed(decimals) + '%';
+export function formatPercentage(num, decimals = 2) {
+  if (num === null || num === undefined) return '—%';
+  return (num >= 0 ? '+' : '') + num.toFixed(decimals) + '%';
 }
 
 /**
- * Format date/time
+ * Format date
  */
-export function formatDate(timestamp, options = {}) {
-  if (!timestamp) return '--';
-  
-  const date = new Date(timestamp);
-  
-  return new Intl.DateTimeFormat('en-US', {
+export function formatDate(date) {
+  if (!date) return '—';
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
+    day: 'numeric'
+  });
+}
+
+/**
+ * Format time
+ */
+export function formatTime(date) {
+  if (!date) return '—';
+  const d = new Date(date);
+  return d.toLocaleTimeString('en-US', {
     hour: '2-digit',
-    minute: '2-digit',
-    ...options,
-  }).format(date);
+    minute: '2-digit'
+  });
 }
 
 /**
  * Format relative time (e.g., "2 hours ago")
  */
-export function formatRelativeTime(timestamp) {
-  if (!timestamp) return '--';
+export function formatRelativeTime(date) {
+  if (!date) return '—';
   
-  const now = Date.now();
-  const diff = now - timestamp;
-  const seconds = Math.floor(diff / 1000);
+  const now = new Date();
+  const d = new Date(date);
+  const diffMs = now - d;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
   
-  if (seconds < 60) return `${seconds}s ago`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
+  if (diffSec < 60) return 'just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHour < 24) return `${diffHour}h ago`;
+  if (diffDay < 7) return `${diffDay}d ago`;
+  
+  return formatDate(date);
 }
-
-/**
- * Escape HTML to prevent XSS
- */
-export function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-/**
- * Truncate text with ellipsis
- */
-export function truncate(text, maxLength = 50) {
-  if (!text) return '';
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + '...';
-}
-
-export default {
-  formatNumber,
-  formatCurrency,
-  formatPercent,
-  formatDate,
-  formatRelativeTime,
-  escapeHtml,
-  truncate,
-};

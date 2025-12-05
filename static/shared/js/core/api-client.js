@@ -34,12 +34,19 @@ class APIClient {
     const method = options.method || 'GET';
     const startTime = performance.now();
 
-    // Check cache for GET requests
+    // Check cache for GET requests (but skip cache for models/status to get fresh data)
     if (method === 'GET' && !options.skipCache) {
-      const cached = this._getFromCache(endpoint);
-      if (cached) {
-        console.log(`[APIClient] Cache hit: ${endpoint}`);
-        return cached;
+      // Don't cache models status/summary - always get fresh data
+      const shouldSkipCache = endpoint.includes('/models/status') || 
+                             endpoint.includes('/models/summary') ||
+                             options.forceRefresh;
+      
+      if (!shouldSkipCache) {
+        const cached = this._getFromCache(endpoint);
+        if (cached) {
+          console.log(`[APIClient] Cache hit: ${endpoint}`);
+          return cached;
+        }
       }
     }
 
@@ -64,8 +71,8 @@ class APIClient {
         const data = await response.json();
         const duration = performance.now() - startTime;
 
-        // Cache successful GET responses
-        if (method === 'GET') {
+        // Cache successful GET responses (but not models status/summary)
+        if (method === 'GET' && !endpoint.includes('/models/status') && !endpoint.includes('/models/summary')) {
           this._saveToCache(endpoint, data);
         }
 
@@ -82,7 +89,21 @@ class APIClient {
 
       } catch (error) {
         lastError = error;
+        const errorDetails = {
+          attempt,
+          maxRetries: this.maxRetries,
+          endpoint,
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        };
+        
         console.warn(`[APIClient] Attempt ${attempt}/${this.maxRetries} failed for ${endpoint}:`, error.message);
+        
+        // Log detailed error info for debugging
+        if (attempt === this.maxRetries) {
+          console.error('[APIClient] All retries exhausted. Error details:', errorDetails);
+        }
 
         if (attempt < this.maxRetries) {
           await this._sleep(this.retryDelay);
@@ -90,17 +111,18 @@ class APIClient {
       }
     }
 
-    // All retries failed
+    // All retries failed - return fallback data instead of throwing
     const duration = performance.now() - startTime;
     this._logError({
       method,
       endpoint,
-      message: lastError.message,
+      message: lastError?.message || lastError?.toString() || 'Unknown error',
       duration: Math.round(duration),
       timestamp: Date.now(),
     });
 
-    throw new Error(`Failed after ${this.maxRetries} attempts: ${lastError.message}`);
+    // Return fallback data based on endpoint type
+    return this._getFallbackData(endpoint, lastError);
   }
 
   /**
@@ -203,13 +225,29 @@ class APIClient {
   }
 
   /**
-   * Log error
+   * Log error with enhanced details
    */
   _logError(entry) {
+    // Add timestamp if not present
+    if (!entry.timestamp) {
+      entry.timestamp = Date.now();
+    }
+    
+    // Add formatted time for readability
+    entry.time = new Date(entry.timestamp).toISOString();
+    
     this.errorLog.unshift(entry);
     if (this.errorLog.length > this.maxLogSize) {
       this.errorLog.pop();
     }
+    
+    // Also log to console for immediate visibility
+    console.error('[APIClient] Error logged:', {
+      endpoint: entry.endpoint,
+      method: entry.method,
+      message: entry.message,
+      duration: entry.duration
+    });
   }
 
   /**
@@ -235,6 +273,81 @@ class APIClient {
    */
   _sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Get fallback data for failed requests
+   * @private
+   */
+  _getFallbackData(endpoint, error) {
+    // Return appropriate fallback based on endpoint
+    if (endpoint.includes('/resources/summary')) {
+      return {
+        success: false,
+        error: error.message,
+        summary: {
+          total_resources: 0,
+          free_resources: 0,
+          models_available: 0,
+          local_routes_count: 0,
+          total_api_keys: 0,
+          categories: {}
+        },
+        fallback: true,
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    if (endpoint.includes('/models/status')) {
+      return {
+        success: false,
+        error: error.message,
+        status: 'error',
+        status_message: `Error: ${error.message}`,
+        models_loaded: 0,
+        models_failed: 0,
+        hf_mode: 'unknown',
+        transformers_available: false,
+        fallback: true,
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    if (endpoint.includes('/models/summary')) {
+      return {
+        ok: false,
+        error: error.message,
+        summary: {
+          total_models: 0,
+          loaded_models: 0,
+          failed_models: 0,
+          hf_mode: 'error',
+          transformers_available: false
+        },
+        categories: {},
+        health_registry: [],
+        fallback: true,
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    if (endpoint.includes('/health') || endpoint.includes('/status')) {
+      return {
+        status: 'offline',
+        healthy: false,
+        error: error.message,
+        fallback: true,
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    // Generic fallback
+    return {
+      error: error.message,
+      fallback: true,
+      data: null,
+      timestamp: new Date().toISOString()
+    };
   }
 }
 
@@ -466,6 +579,38 @@ export class CryptoMonitorAPI extends APIClient {
   async resetFeatureFlags() {
     return this.post(API_ENDPOINTS.FEATURE_FLAGS_RESET);
   }
+
+  // ========================================================================
+  // SETTINGS
+  // ========================================================================
+
+  async getSettings() {
+    return this.get(API_ENDPOINTS.SETTINGS);
+  }
+
+  async saveTokens(tokens) {
+    return this.post(API_ENDPOINTS.SETTINGS_TOKENS, tokens);
+  }
+
+  async saveTelegramSettings(settings) {
+    return this.post(API_ENDPOINTS.SETTINGS_TELEGRAM, settings);
+  }
+
+  async saveSignalSettings(settings) {
+    return this.post(API_ENDPOINTS.SETTINGS_SIGNALS, settings);
+  }
+
+  async saveSchedulingSettings(settings) {
+    return this.post(API_ENDPOINTS.SETTINGS_SCHEDULING, settings);
+  }
+
+  async saveNotificationSettings(settings) {
+    return this.post(API_ENDPOINTS.SETTINGS_NOTIFICATIONS, settings);
+  }
+
+  async saveAppearanceSettings(settings) {
+    return this.post(API_ENDPOINTS.SETTINGS_APPEARANCE, settings);
+  }
 }
 
 // ============================================================================
@@ -474,5 +619,51 @@ export class CryptoMonitorAPI extends APIClient {
 
 export const api = new CryptoMonitorAPI();
 export default api;
+
+/**
+ * Export apiClient alias with fetch method for compatibility
+ * This allows files to use apiClient.fetch() pattern
+ */
+export const apiClient = {
+  async fetch(url, options = {}) {
+    // Convert fetch-style call to api method
+    const method = (options.method || 'GET').toUpperCase();
+    const endpoint = url.replace(/^.*\/api/, '/api');
+    
+    try {
+      let data;
+      if (method === 'GET') {
+        data = await api.get(endpoint, { skipCache: options.skipCache, forceRefresh: options.forceRefresh });
+      } else if (method === 'POST') {
+        const body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
+        data = await api.post(endpoint, body);
+      } else if (method === 'PUT') {
+        const body = options.body ? (typeof options.body === 'string' ? JSON.parse(options.body) : options.body) : {};
+        data = await api.put(endpoint, body);
+      } else if (method === 'DELETE') {
+        data = await api.delete(endpoint);
+      } else {
+        data = await api.get(endpoint);
+      }
+      
+      // Return a Response-like object
+      return new Response(JSON.stringify(data), {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      // Return error response
+      return new Response(JSON.stringify({ 
+        error: error.message || 'Request failed',
+        success: false 
+      }), {
+        status: error.status || 500,
+        statusText: error.statusText || 'Internal Server Error',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+};
 
 console.log('[APIClient] Initialized (HTTP-only, no WebSocket)');
