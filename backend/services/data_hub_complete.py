@@ -47,7 +47,7 @@ class DataHubConfiguration:
     NEWSAPI_BASE_URL = "https://newsapi.org/v2"
     
     # HuggingFace
-    HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
+    HF_API_TOKEN = os.getenv("HF_API_TOKEN", "").strip()
     HF_SPACE_BASE_URL = "https://really-amin-datasourceforcryptocurrency.hf.space"
     
     # Additional Sources
@@ -402,7 +402,10 @@ class DataHubComplete:
         if source in ["auto", "huggingface"]:
             try:
                 async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    headers = {"Authorization": f"Bearer {self.config.HF_API_TOKEN}"}
+                    _token = self.config.HF_API_TOKEN or os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
+                    headers = {}
+                    if _token:
+                        headers["Authorization"] = f"Bearer {_token}"
                     response = await client.get(
                         f"{self.config.HF_SPACE_BASE_URL}/api/market/history",
                         headers=headers,
@@ -491,7 +494,10 @@ class DataHubComplete:
         """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                headers = {"Authorization": f"Bearer {self.config.HF_API_TOKEN}"}
+                _token = self.config.HF_API_TOKEN or os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
+                headers = {}
+                if _token:
+                    headers["Authorization"] = f"Bearer {_token}"
                 response = await client.post(
                     f"{self.config.HF_SPACE_BASE_URL}/api/sentiment/analyze",
                     headers=headers,
@@ -852,7 +858,10 @@ class DataHubComplete:
         # برای ساده‌سازی، از HuggingFace استفاده می‌کنیم
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                headers = {"Authorization": f"Bearer {self.config.HF_API_TOKEN}"}
+                _token = self.config.HF_API_TOKEN or os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
+                headers = {}
+                if _token:
+                    headers["Authorization"] = f"Bearer {_token}"
                 response = await client.get(
                     f"{self.config.HF_SPACE_BASE_URL}/api/crypto/whales/transactions",
                     headers=headers,
@@ -981,7 +990,10 @@ class DataHubComplete:
         """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                headers = {"Authorization": f"Bearer {self.config.HF_API_TOKEN}"}
+                _token = self.config.HF_API_TOKEN or os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
+                headers = {}
+                if _token:
+                    headers["Authorization"] = f"Bearer {_token}"
                 
                 # Get recent price data for context
                 price_data = await self.get_market_prices(symbols=[symbol], limit=1)
@@ -1070,9 +1082,13 @@ class DataHubComplete:
         # Check HuggingFace
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
+                _token = self.config.HF_API_TOKEN or os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
+                headers = {}
+                if _token:
+                    headers["Authorization"] = f"Bearer {_token}"
                 response = await client.get(
                     f"{self.config.HF_SPACE_BASE_URL}/api/health",
-                    headers={"Authorization": f"Bearer {self.config.HF_API_TOKEN}"}
+                    headers=headers
                 )
                 health_status["huggingface"] = "operational" if response.status_code == 200 else "degraded"
         except:

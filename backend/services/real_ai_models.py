@@ -33,40 +33,79 @@ class RealAIModelsRegistry:
         self.models = {}
         self.loaded = False
         import os
-        self.hf_api_token = os.getenv("HF_API_TOKEN", RealAPIConfiguration.HF_API_TOKEN)
-        self.hf_api_url = "https://api-inference.huggingface.co/models"
+        # Strip whitespace from token to avoid "Illegal header value" errors
+        token_raw = os.getenv("HF_API_TOKEN") or os.getenv("HF_TOKEN") or RealAPIConfiguration.HF_API_TOKEN or ""
+        token = str(token_raw).strip() if token_raw else ""
+        self.hf_api_token = token if token else None
+        self.hf_api_url = "https://router.huggingface.co/models"
         
-        # Model configurations - REAL HuggingFace models
+        # Model configurations - REAL HuggingFace models with fallback chain
+        # Each task has at least 3 fallback models
         self.model_configs = {
             "sentiment_crypto": {
                 "model_id": "ElKulako/cryptobert",
                 "task": "sentiment-analysis",
-                "description": "CryptoBERT for crypto sentiment analysis"
+                "description": "CryptoBERT for crypto sentiment analysis",
+                "fallbacks": [
+                    "kk08/CryptoBERT",
+                    "ProsusAI/finbert",
+                    "cardiffnlp/twitter-roberta-base-sentiment-latest",
+                    "distilbert-base-uncased-finetuned-sst-2-english"
+                ]
             },
             "sentiment_twitter": {
-                "model_id": "cardiffnlp/twitter-roberta-base-sentiment",
+                "model_id": "cardiffnlp/twitter-roberta-base-sentiment-latest",
                 "task": "sentiment-analysis",
-                "description": "Twitter sentiment analysis"
+                "description": "Twitter sentiment analysis",
+                "fallbacks": [
+                    "cardiffnlp/twitter-roberta-base-sentiment",
+                    "ProsusAI/finbert",
+                    "distilbert-base-uncased-finetuned-sst-2-english",
+                    "nlptown/bert-base-multilingual-uncased-sentiment"
+                ]
             },
             "sentiment_financial": {
                 "model_id": "ProsusAI/finbert",
                 "task": "sentiment-analysis",
-                "description": "FinBERT for financial sentiment"
+                "description": "FinBERT for financial sentiment",
+                "fallbacks": [
+                    "yiyanghkust/finbert-tone",
+                    "mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis",
+                    "cardiffnlp/twitter-roberta-base-sentiment-latest",
+                    "distilbert-base-uncased-finetuned-sst-2-english"
+                ]
             },
             "text_generation": {
                 "model_id": "OpenC/crypto-gpt-o3-mini",
                 "task": "text-generation",
-                "description": "Crypto GPT for text generation"
+                "description": "Crypto GPT for text generation",
+                "fallbacks": [
+                    "gpt2",
+                    "distilgpt2",
+                    "EleutherAI/gpt-neo-125M"
+                ]
             },
             "trading_signals": {
                 "model_id": "agarkovv/CryptoTrader-LM",
                 "task": "text-generation",
-                "description": "CryptoTrader LM for trading signals"
+                "description": "CryptoTrader LM for trading signals",
+                "fallbacks": [
+                    "gpt2",
+                    "distilgpt2",
+                    "OpenC/crypto-gpt-o3-mini"
+                ]
             },
             "summarization": {
                 "model_id": "facebook/bart-large-cnn",
                 "task": "summarization",
-                "description": "BART for news summarization"
+                "description": "BART for news summarization",
+                "fallbacks": [
+                    "sshleifer/distilbart-cnn-12-6",
+                    "google/pegasus-xsum",
+                    "facebook/bart-large",
+                    "FurkanGozukara/Crypto-Financial-News-Summarizer",
+                    "facebook/mbart-large-50"
+                ]
             }
         }
     
@@ -219,47 +258,79 @@ class RealAIModelsRegistry:
         model_key: str
     ) -> Dict[str, Any]:
         """
-        Run REAL inference via HuggingFace API
+        Run REAL inference via HuggingFace API with fallback chain
+        Tries at least 3 models before failing
         """
         config = self.model_configs.get(model_key)
         if not config:
             raise ValueError(f"Unknown model: {model_key}")
         
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{self.hf_api_url}/{config['model_id']}",
-                headers={
-                    "Authorization": f"Bearer {self.hf_api_token}",
-                    "Content-Type": "application/json"
-                },
-                json={"inputs": text}
-            )
-            response.raise_for_status()
-            result = response.json()
+        # Build fallback chain: primary model + fallbacks
+        models_to_try = [config["model_id"]] + config.get("fallbacks", [])
         
-        # Parse result based on task type
-        if isinstance(result, list) and len(result) > 0:
-            if isinstance(result[0], list):
-                result = result[0]
-            
-            if isinstance(result[0], dict):
-                top_result = result[0]
+        last_error = None
+        for model_id in models_to_try[:5]:  # Try up to 5 models
+            try:
+                logger.info(f"🔄 Trying sentiment model: {model_id}")
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    _headers = {"Content-Type": "application/json"}
+                    if self.hf_api_token:
+                        _headers["Authorization"] = f"Bearer {self.hf_api_token}"
+                    response = await client.post(
+                        f"{self.hf_api_url}/{model_id}",
+                        headers=_headers,
+                        json={"inputs": text[:512]}  # Limit input length
+                    )
+                    response.raise_for_status()
+                    result = response.json()
+                
+                # Parse result based on task type
+                if isinstance(result, list) and len(result) > 0:
+                    if isinstance(result[0], list):
+                        result = result[0]
+                    
+                    if isinstance(result[0], dict):
+                        top_result = result[0]
+                        label = top_result.get("label", "neutral")
+                        score = top_result.get("score", 0.0)
+                        
+                        # Normalize label
+                        label_upper = label.upper()
+                        if "POSITIVE" in label_upper or "LABEL_2" in label_upper:
+                            normalized_label = "positive"
+                        elif "NEGATIVE" in label_upper or "LABEL_0" in label_upper:
+                            normalized_label = "negative"
+                        else:
+                            normalized_label = "neutral"
+                        
+                        logger.info(f"✅ Sentiment analysis succeeded with {model_id}: {normalized_label} ({score})")
+                        return {
+                            "success": True,
+                            "label": normalized_label,
+                            "score": score,
+                            "confidence": score,
+                            "model": model_id,
+                            "source": "hf_api",
+                            "fallback_used": model_id != config["model_id"],
+                            "timestamp": datetime.utcnow().isoformat()
+                        }
+                
+                # If we got here, result format is unexpected but not an error
                 return {
                     "success": True,
-                    "label": top_result.get("label", "neutral"),
-                    "score": top_result.get("score", 0.0),
-                    "model": model_key,
+                    "result": result,
+                    "model": model_id,
                     "source": "hf_api",
+                    "fallback_used": model_id != config["model_id"],
                     "timestamp": datetime.utcnow().isoformat()
                 }
+            except Exception as e:
+                logger.warning(f"⚠️ Sentiment model {model_id} failed: {e}")
+                last_error = e
+                continue
         
-        return {
-            "success": True,
-            "result": result,
-            "model": model_key,
-            "source": "hf_api",
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        logger.error(f"❌ All sentiment models failed. Last error: {last_error}")
+        raise Exception(f"Failed to predict sentiment: All models failed. Tried: {models_to_try[:5]}")
     
     async def _generate_via_api(
         self,
@@ -275,12 +346,12 @@ class RealAIModelsRegistry:
             raise ValueError(f"Unknown model: {model_key}")
         
         async with httpx.AsyncClient(timeout=60.0) as client:
+            _headers = {"Content-Type": "application/json"}
+            if self.hf_api_token:
+                _headers["Authorization"] = f"Bearer {self.hf_api_token}"
             response = await client.post(
                 f"{self.hf_api_url}/{config['model_id']}",
-                headers={
-                    "Authorization": f"Bearer {self.hf_api_token}",
-                    "Content-Type": "application/json"
-                },
+                headers=_headers,
                 json={
                     "inputs": prompt,
                     "parameters": {
@@ -314,42 +385,58 @@ class RealAIModelsRegistry:
         text: str
     ) -> Dict[str, Any]:
         """
-        Summarize REAL text via HuggingFace API
+        Summarize REAL text via HuggingFace API with fallback chain
+        Tries at least 3 models before failing
         """
         config = self.model_configs["summarization"]
+        models_to_try = [config["model_id"]] + config.get("fallbacks", [])
         
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{self.hf_api_url}/{config['model_id']}",
-                headers={
-                    "Authorization": f"Bearer {self.hf_api_token}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "inputs": text,
-                    "parameters": {
-                        "max_length": 130,
-                        "min_length": 30,
-                        "do_sample": False
+        last_error = None
+        for model_id in models_to_try[:5]:  # Try up to 5 models
+            try:
+                logger.info(f"🔄 Trying summarization model: {model_id}")
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    _headers = {"Content-Type": "application/json"}
+                    if self.hf_api_token:
+                        _headers["Authorization"] = f"Bearer {self.hf_api_token}"
+                    response = await client.post(
+                        f"{self.hf_api_url}/{model_id}",
+                        headers=_headers,
+                        json={
+                            "inputs": text[:1024],  # Limit input length
+                            "parameters": {
+                                "max_length": 130,
+                                "min_length": 30,
+                                "do_sample": False
+                            }
+                        }
+                    )
+                    response.raise_for_status()
+                    result = response.json()
+                
+                # Parse result
+                if isinstance(result, list) and len(result) > 0:
+                    summary = result[0].get("summary_text", "")
+                else:
+                    summary = result.get("summary_text", str(result))
+                
+                if summary and len(summary.strip()) > 0:
+                    logger.info(f"✅ Summarization succeeded with {model_id}")
+                    return {
+                        "success": True,
+                        "summary": summary,
+                        "model": model_id,
+                        "source": "hf_api",
+                        "fallback_used": model_id != config["model_id"],
+                        "timestamp": datetime.utcnow().isoformat()
                     }
-                }
-            )
-            response.raise_for_status()
-            result = response.json()
+            except Exception as e:
+                logger.warning(f"⚠️ Summarization model {model_id} failed: {e}")
+                last_error = e
+                continue
         
-        # Parse result
-        if isinstance(result, list) and len(result) > 0:
-            summary = result[0].get("summary_text", "")
-        else:
-            summary = result.get("summary_text", str(result))
-        
-        return {
-            "success": True,
-            "summary": summary,
-            "model": "summarization",
-            "source": "hf_api",
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        logger.error(f"❌ All summarization models failed. Last error: {last_error}")
+        raise Exception(f"Failed to summarize news: All models failed. Tried: {models_to_try[:5]}")
     
     def get_models_list(self) -> Dict[str, Any]:
         """
