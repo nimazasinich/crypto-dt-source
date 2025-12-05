@@ -1,0 +1,1395 @@
+openapi: 3.0.3
+info:
+  title: Cryptocurrency Data Source API - HuggingFace Space
+  version: 1.0.0
+  description: |
+    # مستندات API منبع داده ارز دیجیتال
+    
+    این API به عنوان **ارائه‌دهنده واحد** برای تمام داده‌های cryptocurrency عمل می‌کند.
+    
+    ## اولویت‌ها (Priority)
+    1. **HF-first (HTTP)** - ابتدا از endpoints داخلی HuggingFace استفاده می‌شود
+    2. **WS-only exception** - WebSocket فقط برای endpoint‌های خاص
+    3. **Fallback-last** - در صورت عدم موفقیت از providers پشتیبان استفاده می‌شود
+    
+    ## منابع داده (Data Sources)
+    - **Primary**: HuggingFace Space endpoints
+    - **Fallback**: External providers (CoinGecko, Binance, WhaleAlert, etc.)
+    - **Config**: `/mnt/data/api-config-complete.txt`
+    
+    ## Meta Fields
+    تمام response‌ها شامل فیلد `meta` با اطلاعات زیر:
+    - `source`: منبع داده (hf, hf-ws, یا URL provider)
+    - `cache_ttl_seconds`: مدت زمان cache
+    - `generated_at`: زمان تولید (ISO 8601)
+    - `attempted`: لیست منابع تلاش شده (در صورت خطا)
+    
+  contact:
+    name: Amin - Crypto Data API
+    url: https://really-amin-datasourceforcryptocurrency.hf.space
+  license:
+    name: MIT
+    
+servers:
+  - url: https://really-amin-datasourceforcryptocurrency.hf.space
+    description: Production HuggingFace Space
+  - url: http://localhost:7860
+    description: Local Development
+
+tags:
+  - name: Market Data
+    description: قیمت‌ها، جفت ارزها، OHLC و عمق بازار
+  - name: Trading Signals
+    description: سیگنال‌های معاملاتی و پیش‌بینی‌های مدل
+  - name: News
+    description: اخبار و تحلیل محتوای خبری
+  - name: Sentiment
+    description: تحلیل احساسات بازار
+  - name: Whale Tracking
+    description: ردیابی تراکنش‌های بزرگ (نهنگ‌ها)
+  - name: Blockchain
+    description: آمار blockchain و gas fees
+  - name: Providers
+    description: مدیریت و وضعیت providers
+  - name: System
+    description: Health، status و monitoring
+  - name: WebSocket
+    description: Real-time data streams
+
+paths:
+  # ============================================================================
+  # MARKET DATA ENDPOINTS
+  # ============================================================================
+  
+  /api/market:
+    get:
+      tags: [Market Data]
+      summary: دریافت لیست بازار (Market Snapshot)
+      description: |
+        دریافت لیست ارزهای برتر با قیمت، حجم و تغییرات 24 ساعته.
+        **Priority**: HF HTTP first
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 200
+          description: تعداد آیتم‌ها
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [price, volume, change, market_cap]
+            default: market_cap
+          description: نوع مرتب‌سازی
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketResponse'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+          
+  /api/market/pairs:
+    get:
+      tags: [Market Data]
+      summary: دریافت جفت‌های معاملاتی (Trading Pairs)
+      description: |
+        **MUST be served by HF HTTP first** - این endpoint باید حتماً از HF HTTP سرو شود
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 500
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PairsResponse'
+                
+  /api/market/ohlc:
+    get:
+      tags: [Market Data]
+      summary: دریافت داده‌های OHLC
+      description: Open, High, Low, Close candles برای نمودار
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+          example: BTC
+        - name: interval
+          in: query
+          schema:
+            type: integer
+            default: 60
+          description: فاصله زمانی به دقیقه (1, 5, 15, 60, 240, 1440)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OHLCResponse'
+                
+  /api/market/depth:
+    get:
+      tags: [Market Data]
+      summary: دریافت عمق بازار (Order Book)
+      description: Bids و Asks برای یک symbol
+      parameters:
+        - name: symbol
+          in: query
+          required: true
+          schema:
+            type: string
+          example: BTCUSDT
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 500
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepthResponse'
+                
+  /api/market/tickers:
+    get:
+      tags: [Market Data]
+      summary: دریافت ticker های بازار
+      description: مشابه /api/market اما با فرمت متفاوت
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [volume, change]
+            default: volume
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketResponse'
+  
+  # ============================================================================
+  # TRADING SIGNALS & MODELS
+  # ============================================================================
+  
+  /api/models/{model_key}/predict:
+    post:
+      tags: [Trading Signals]
+      summary: پیش‌بینی با مدل خاص
+      description: |
+        درخواست سیگنال معاملاتی از یک مدل AI.
+        **نیاز به احراز هویت دارد**
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: model_key
+          in: path
+          required: true
+          schema:
+            type: string
+          example: trade-model
+          description: شناسه مدل
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictRequest'
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignalResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+          
+  /api/models/batch/predict:
+    post:
+      tags: [Trading Signals]
+      summary: پیش‌بینی دسته‌ای (Batch Prediction)
+      description: پیش‌بینی برای چندین symbol به صورت همزمان
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchPredictRequest'
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  predictions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SignalResponse'
+                  meta:
+                    $ref: '#/components/schemas/MetaInfo'
+                    
+  /api/trading/decision:
+    post:
+      tags: [Trading Signals]
+      summary: تصمیم معاملاتی (Alias)
+      description: مشابه /api/models/{model_key}/predict اما با فرمت ساده‌تر
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictRequest'
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignalResponse'
+  
+  /api/signals:
+    get:
+      tags: [Trading Signals]
+      summary: دریافت سیگنال‌های ذخیره شده
+      description: تاریخچه سیگنال‌های معاملاتی از database
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: فقط سیگنال‌های بعد از این تاریخ (ISO 8601)
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signals:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SignalResponse'
+                  meta:
+                    $ref: '#/components/schemas/MetaInfo'
+                    
+  /api/signals/ack:
+    post:
+      tags: [Trading Signals]
+      summary: تایید دریافت سیگنال
+      description: ثبت acknowledgement برای یک سیگنال
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, user, ack_at]
+              properties:
+                id:
+                  type: string
+                  description: شناسه سیگنال
+                user:
+                  type: string
+                  description: شناسه کاربر
+                ack_at:
+                  type: string
+                  format: date-time
+                  description: زمان تایید (ISO 8601)
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: acknowledged
+                  signal_id:
+                    type: string
+  
+  # ============================================================================
+  # NEWS ENDPOINTS
+  # ============================================================================
+  
+  /api/news:
+    get:
+      tags: [News]
+      summary: دریافت اخبار
+      description: لیست اخبار cryptocurrency
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: source
+          in: query
+          schema:
+            type: string
+          description: فیلتر بر اساس منبع خبر
+          example: CoinDesk
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsResponse'
+                
+  /api/news/{id}:
+    get:
+      tags: [News]
+      summary: دریافت یک خبر خاص
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsArticle'
+        '404':
+          description: خبر یافت نشد
+          
+  /api/news/analyze:
+    post:
+      tags: [News]
+      summary: تحلیل محتوای خبر
+      description: تحلیل sentiment و خلاصه‌سازی یک خبر
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: URL خبر برای تحلیل
+                text:
+                  type: string
+                  description: متن خبر به صورت مستقیم
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsAnalysis'
+  
+  # ============================================================================
+  # SENTIMENT ENDPOINTS
+  # ============================================================================
+  
+  /api/sentiment/analyze:
+    post:
+      tags: [Sentiment]
+      summary: تحلیل احساسات
+      description: تحلیل sentiment یک متن
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  description: متن برای تحلیل
+                  example: "Bitcoin price is rising rapidly today!"
+                mode:
+                  type: string
+                  enum: [simple, detailed]
+                  default: simple
+                  description: نوع تحلیل
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SentimentResponse'
+  
+  # ============================================================================
+  # WHALE TRACKING ENDPOINTS
+  # ============================================================================
+  
+  /api/crypto/whales/transactions:
+    get:
+      tags: [Whale Tracking]
+      summary: تراکنش‌های نهنگ‌ها
+      description: |
+        ردیابی تراکنش‌های بزرگ cryptocurrency.
+        **Fallback**: اگر HF فراهم نکند، از WhaleAlert/BitQuery استفاده می‌شود
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: chain
+          in: query
+          schema:
+            type: string
+            enum: [ethereum, bitcoin, tron, bsc, all]
+            default: all
+          description: blockchain مورد نظر
+        - name: min_amount_usd
+          in: query
+          schema:
+            type: number
+            default: 1000000
+          description: حداقل مبلغ به دلار
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WhaleTransaction'
+                  meta:
+                    $ref: '#/components/schemas/MetaInfo'
+                    
+  /api/crypto/whales/stats:
+    get:
+      tags: [Whale Tracking]
+      summary: آمار نهنگ‌ها
+      description: آمار جمع‌آوری شده از تراکنش‌های نهنگ‌ها
+      parameters:
+        - name: hours
+          in: query
+          schema:
+            type: integer
+            default: 24
+          description: بازه زمانی (ساعت)
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhaleStatsResponse'
+  
+  # ============================================================================
+  # BLOCKCHAIN ENDPOINTS
+  # ============================================================================
+  
+  /api/crypto/blockchain/gas:
+    get:
+      tags: [Blockchain]
+      summary: قیمت Gas
+      description: هزینه‌های gas برای blockchain‌های مختلف
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ethereum, bsc, polygon]
+          example: ethereum
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GasResponse'
+                
+  /api/crypto/blockchain/stats:
+    get:
+      tags: [Blockchain]
+      summary: آمار blockchain
+      description: آمار عمومی یک blockchain
+      parameters:
+        - name: chain
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ethereum, bitcoin, bsc, tron]
+        - name: hours
+          in: query
+          schema:
+            type: integer
+            default: 24
+          description: بازه زمانی
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockchainStats'
+  
+  # ============================================================================
+  # PROVIDERS & SYSTEM ENDPOINTS
+  # ============================================================================
+  
+  /api/providers:
+    get:
+      tags: [Providers]
+      summary: لیست providers
+      description: لیست تمام providers و قابلیت‌های آنها
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Provider'
+                  total:
+                    type: integer
+                  meta:
+                    $ref: '#/components/schemas/MetaInfo'
+                    
+  /api/status:
+    get:
+      tags: [System]
+      summary: وضعیت سیستم
+      description: وضعیت کلی سیستم و connectivity مدل‌ها
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+                
+  /api/health:
+    get:
+      tags: [System]
+      summary: Health check
+      description: بررسی سلامت سرویس
+      responses:
+        '200':
+          description: سالم
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                    
+  /api/freshness:
+    get:
+      tags: [System]
+      summary: Freshness timestamps
+      description: آخرین زمان به‌روزرسانی هر subsystem
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  market_data:
+                    type: string
+                    format: date-time
+                  news:
+                    type: string
+                    format: date-time
+                  whale_tracking:
+                    type: string
+                    format: date-time
+                  sentiment:
+                    type: string
+                    format: date-time
+                  meta:
+                    $ref: '#/components/schemas/MetaInfo'
+                    
+  /api/logs/recent:
+    get:
+      tags: [System]
+      summary: لاگ‌های اخیر
+      description: لاگ‌های سیستم برای troubleshooting
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+      responses:
+        '200':
+          description: موفقیت‌آمیز
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        timestamp:
+                          type: string
+                          format: date-time
+                        level:
+                          type: string
+                          enum: [debug, info, warning, error]
+                        message:
+                          type: string
+                        context:
+                          type: object
+                          
+  /docs:
+    get:
+      tags: [System]
+      summary: OpenAPI Documentation
+      description: مستندات Swagger UI
+      responses:
+        '200':
+          description: HTML page
+          
+  /redoc:
+    get:
+      tags: [System]
+      summary: ReDoc Documentation
+      description: مستندات ReDoc
+      responses:
+        '200':
+          description: HTML page
+  
+  # ============================================================================
+  # WEBSOCKET (documented but exception-only)
+  # ============================================================================
+  
+  /ws:
+    get:
+      tags: [WebSocket]
+      summary: WebSocket Connection
+      description: |
+        ## اتصال WebSocket (فقط در موارد استثنایی)
+        
+        **URL**: `wss://really-amin-datasourceforcryptocurrency.hf.space/ws`
+        
+        ### Subscribe Message:
+        ```json
+        {
+          "action": "subscribe",
+          "service": "market_data",
+          "symbols": ["BTC", "ETH"]
+        }
+        ```
+        
+        ### Services:
+        - `market_data`: تیک‌های قیمت real-time
+        - `sentiment`: تغییرات sentiment
+        - `news`: اخبار جدید
+        - `whale_tracking`: تراکنش‌های whale
+        
+        ### Message Format:
+        ```json
+        {
+          "service": "market_data",
+          "symbol": "BTC",
+          "price": 45000,
+          "change_24h": 2.5,
+          "ts": "2025-11-24T10:00:00Z"
+        }
+        ```
+        
+        **توجه**: WebSocket فقط برای endpoint‌های WS-only مجاز است.
+        برای pairs و OHLC **همیشه** از HTTP استفاده کنید.
+      responses:
+        '101':
+          description: Switching Protocols
+
+# ============================================================================
+# COMPONENTS
+# ============================================================================
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key برای endpoint‌های محافظت شده
+      
+  schemas:
+    # Meta Information (used in all responses)
+    MetaInfo:
+      type: object
+      required:
+        - source
+        - generated_at
+      properties:
+        source:
+          type: string
+          description: منبع داده (hf, hf-ws, یا URL provider)
+          example: hf
+        cache_ttl_seconds:
+          type: integer
+          description: مدت زمان cache (ثانیه)
+          example: 30
+        generated_at:
+          type: string
+          format: date-time
+          description: زمان تولید response (ISO 8601)
+        attempted:
+          type: array
+          items:
+            type: string
+          description: لیست منابع تلاش شده (فقط در صورت خطا)
+          example: ["hf", "coingecko", "binance"]
+          
+    # Market Data Schemas
+    MarketItem:
+      type: object
+      required:
+        - symbol
+        - price
+      properties:
+        symbol:
+          type: string
+          example: BTC
+        name:
+          type: string
+          example: Bitcoin
+        price:
+          type: number
+          format: float
+          example: 45000.50
+        change_24h:
+          type: number
+          format: float
+          example: 2.34
+          description: تغییر 24 ساعته (درصد)
+        volume_24h:
+          type: number
+          format: float
+          example: 25000000000
+        market_cap:
+          type: number
+          format: float
+          example: 880000000000
+        rank:
+          type: integer
+          example: 1
+        source:
+          type: string
+          example: binance
+          
+    MarketResponse:
+      type: object
+      properties:
+        last_updated:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketItem'
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+          
+    TradingPair:
+      type: object
+      properties:
+        pair:
+          type: string
+          example: BTCUSDT
+        base:
+          type: string
+          example: BTC
+        quote:
+          type: string
+          example: USDT
+        tick_size:
+          type: number
+          format: float
+          example: 0.01
+        min_qty:
+          type: number
+          format: float
+          example: 0.00001
+        source:
+          type: string
+          example: binance
+          
+    PairsResponse:
+      type: object
+      properties:
+        pairs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradingPair'
+        total:
+          type: integer
+        page:
+          type: integer
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+          
+    OHLCCandle:
+      type: object
+      properties:
+        ts:
+          type: string
+          format: date-time
+          description: timestamp
+        open:
+          type: number
+          format: float
+        high:
+          type: number
+          format: float
+        low:
+          type: number
+          format: float
+        close:
+          type: number
+          format: float
+        volume:
+          type: number
+          format: float
+          
+    OHLCResponse:
+      type: object
+      properties:
+        symbol:
+          type: string
+        interval:
+          type: integer
+          description: فاصله زمانی (دقیقه)
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OHLCCandle'
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+          
+    DepthResponse:
+      type: object
+      properties:
+        symbol:
+          type: string
+        bids:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+            minItems: 2
+            maxItems: 2
+          description: "[price, quantity] pairs"
+          example: [[45000, 1.5], [44999, 2.1]]
+        asks:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+            minItems: 2
+            maxItems: 2
+          description: "[price, quantity] pairs"
+          example: [[45001, 1.2], [45002, 0.8]]
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+    
+    # Trading Signal Schemas
+    PredictRequest:
+      type: object
+      required:
+        - symbol
+      properties:
+        symbol:
+          type: string
+          example: BTC
+        context:
+          type: string
+          description: زمینه تحلیل
+          example: short-term
+        params:
+          type: object
+          description: پارامترهای اضافی مدل
+          additionalProperties: true
+          example:
+            horizon: "1h"
+            risk_level: "medium"
+            
+    BatchPredictRequest:
+      type: object
+      required:
+        - symbols
+      properties:
+        symbols:
+          type: array
+          items:
+            type: string
+          example: ["BTC", "ETH", "BNB"]
+        context:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+          
+    SignalResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+        type:
+          type: string
+          enum: [buy, sell, hold]
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: اعتماد به سیگنال (0-1)
+        model:
+          type: string
+          description: نام مدل استفاده شده
+        explain:
+          type: string
+          description: توضیح سیگنال (optional)
+        generated_at:
+          type: string
+          format: date-time
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+    
+    # News Schemas
+    NewsArticle:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+        summary:
+          type: string
+        source:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+        sentiment:
+          type: object
+          properties:
+            label:
+              type: string
+              enum: [positive, negative, neutral]
+            score:
+              type: number
+              format: float
+              
+    NewsResponse:
+      type: object
+      properties:
+        articles:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsArticle'
+        total:
+          type: integer
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+          
+    NewsAnalysis:
+      type: object
+      properties:
+        summary:
+          type: string
+        sentiment:
+          type: object
+          properties:
+            label:
+              type: string
+            score:
+              type: number
+        topics:
+          type: array
+          items:
+            type: string
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+    
+    # Sentiment Schemas
+    SentimentResponse:
+      type: object
+      properties:
+        score:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+          description: نمره sentiment (-1 تا +1)
+        label:
+          type: string
+          enum: [positive, negative, neutral]
+        details:
+          type: object
+          properties:
+            positive:
+              type: number
+            negative:
+              type: number
+            neutral:
+              type: number
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+    
+    # Whale Tracking Schemas
+    WhaleTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+        tx_hash:
+          type: string
+          description: Transaction hash
+        chain:
+          type: string
+          enum: [ethereum, bitcoin, tron, bsc]
+        from:
+          type: string
+          description: آدرس مبدا
+        to:
+          type: string
+          description: آدرس مقصد
+        amount_usd:
+          type: number
+          format: float
+          description: مبلغ به دلار
+        token:
+          type: string
+          description: نام توکن
+        block:
+          type: integer
+          description: شماره بلاک
+        tx_at:
+          type: string
+          format: date-time
+          description: زمان تراکنش
+          
+    WhaleStatsResponse:
+      type: object
+      properties:
+        period_hours:
+          type: integer
+        total_transactions:
+          type: integer
+        total_volume_usd:
+          type: number
+          format: float
+        top_tokens:
+          type: array
+          items:
+            type: object
+            properties:
+              token:
+                type: string
+              count:
+                type: integer
+              volume_usd:
+                type: number
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+    
+    # Blockchain Schemas
+    GasResponse:
+      type: object
+      properties:
+        chain:
+          type: string
+        fast:
+          type: number
+          format: float
+          description: سریع (Gwei یا واحد مربوطه)
+        standard:
+          type: number
+          format: float
+        slow:
+          type: number
+          format: float
+        unit:
+          type: string
+          example: Gwei
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+          
+    BlockchainStats:
+      type: object
+      properties:
+        chain:
+          type: string
+        blocks:
+          type: integer
+          description: تعداد بلاک‌های تولید شده
+        txs:
+          type: integer
+          description: تعداد تراکنش‌ها
+        avg_gas:
+          type: number
+          description: میانگین gas
+        pending:
+          type: integer
+          description: تراکنش‌های در انتظار
+        period_hours:
+          type: integer
+        meta:
+          $ref: '#/components/schemas/MetaInfo'
+    
+    # Provider Schema
+    Provider:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        base_url:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum: [market, whales, blockchain, news, sentiment]
+        status:
+          type: string
+          enum: [online, offline, degraded]
+        last_check:
+          type: string
+          format: date-time
+          
+    # System Status Schema
+    SystemStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, down]
+        timestamp:
+          type: string
+          format: date-time
+        models:
+          type: object
+          description: وضعیت مدل‌های AI
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+              last_used:
+                type: string
+                format: date-time
+        providers:
+          type: object
+          properties:
+            total:
+              type: integer
+            online:
+              type: integer
+            degraded:
+              type: integer
+            offline:
+              type: integer
+        hf_status:
+          type: string
+          enum: [online, degraded, offline]
+          description: وضعیت HuggingFace endpoints
+          
+    # Error Schema
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: BadGateway
+        message:
+          type: string
+          example: All providers failed
+        meta:
+          type: object
+          properties:
+            attempted:
+              type: array
+              items:
+                type: string
+              description: لیست منابع تلاش شده
+              example: ["hf", "coingecko", "binance"]
+            timestamp:
+              type: string
+              format: date-time
+              
+  responses:
+    BadGateway:
+      description: تمام providers شکست خوردند
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadGateway
+            message: All upstream providers failed
+            meta:
+              attempted: ["hf", "coingecko", "binance"]
+              timestamp: "2025-11-24T10:00:00Z"
+              
+    Unauthorized:
+      description: احراز هویت نامعتبر
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Invalid or missing API key
+            
+# ============================================================================
+# EXAMPLES & DOCUMENTATION
+# ============================================================================
+
+externalDocs:
+  description: |
+    ## راهنمای استفاده از API
+    
+    ### کلاینت‌ها باید چگونه متصل شوند؟
+    
+    **Base URL**: `https://really-amin-datasourceforcryptocurrency.hf.space`
+    
+    #### مثال با curl:
+    ```bash
+    # Market snapshot
+    curl "https://really-amin-datasourceforcryptocurrency.hf.space/api/market?limit=20&sort=volume"
+    
+    # Trading pairs
+    curl "https://really-amin-datasourceforcryptocurrency.hf.space/api/market/pairs?limit=200"
+    
+    # OHLC 1h
+    curl "https://really-amin-datasourceforcryptocurrency.hf.space/api/market/ohlc?symbol=BTC&interval=60&limit=200"
+    
+    # Signal prediction (with API key)
+    curl -X POST "https://really-amin-datasourceforcryptocurrency.hf.space/api/models/trade-model/predict" \
+      -H "Content-Type: application/json" \
+      -H "X-API-Key: YOUR_API_KEY" \
+      -d '{"symbol":"BTC","context":"short-term","params":{"horizon":"1h"}}'
+    ```
+    
+    #### مثال با JavaScript:
+    ```javascript
+    // Market data
+    const response = await fetch('https://really-amin-datasourceforcryptocurrency.hf.space/api/market?limit=50');
+    const data = await response.json();
+    console.log(data.items);
+    
+    // WebSocket connection
+    const ws = new WebSocket("wss://really-amin-datasourceforcryptocurrency.hf.space/ws");
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ 
+        action: "subscribe", 
+        service: "market_data", 
+        symbols: ["BTC","ETH"] 
+      }));
+    };
+    ws.onmessage = (m) => console.log("msg", JSON.parse(m.data));
+    ```
+    
+    ### Cache TTLs (پیش‌فرض)
+    - Dashboard snapshot: 30s
+    - Tickers / market: 30-60s
+    - OHLC history: 120s
+    - Whale events: 10-60s
+    
+    ### نکات مهم
+    1. **هیچ کلاینتی نباید مستقیماً به fallback providers دسترسی داشته باشد**
+    2. Space به عنوان provider واحد عمل می‌کند
+    3. تمام response‌ها شامل فیلد `meta` برای traceability هستند
+    4. برای endpoint‌های محافظت شده از API key استفاده کنید
+    5. WebSocket فقط برای feed‌های documented استفاده شود
+    
+    ### Fallback Config
+    فایل `/mnt/data/api-config-complete.txt` شامل لیست ordered fallback providers است.
+    سیستم به صورت خودکار این path را به URL تبدیل می‌کند.
+  url: https://really-amin-datasourceforcryptocurrency.hf.space/docs

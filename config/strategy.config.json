@@ -1,0 +1,83 @@
+{
+  "strategies": {
+    "simple_moving_average": {
+      "name": "Simple Moving Average",
+      "description": "Buy when short SMA crosses above long SMA, sell when it crosses below",
+      "enabled": true,
+      "parameters": {
+        "short_period": 10,
+        "long_period": 50,
+        "signal_threshold": 0.001
+      },
+      "risk_level": "medium"
+    },
+    "rsi_strategy": {
+      "name": "RSI Strategy",
+      "description": "Buy when RSI is oversold, sell when overbought",
+      "enabled": true,
+      "parameters": {
+        "period": 14,
+        "oversold_level": 30,
+        "overbought_level": 70
+      },
+      "risk_level": "medium"
+    },
+    "macd_strategy": {
+      "name": "MACD Strategy",
+      "description": "Buy when MACD line crosses above signal line, sell when it crosses below",
+      "enabled": true,
+      "parameters": {
+        "fast_period": 12,
+        "slow_period": 26,
+        "signal_period": 9
+      },
+      "risk_level": "low"
+    },
+    "bollinger_bands": {
+      "name": "Bollinger Bands",
+      "description": "Buy when price touches lower band, sell when it touches upper band",
+      "enabled": true,
+      "parameters": {
+        "period": 20,
+        "std_dev": 2
+      },
+      "risk_level": "medium"
+    },
+    "momentum_strategy": {
+      "name": "Momentum Strategy",
+      "description": "Buy when momentum is positive, sell when negative",
+      "enabled": true,
+      "parameters": {
+        "period": 14,
+        "threshold": 0.02
+      },
+      "risk_level": "high"
+    }
+  },
+  "templates": {
+    "conservative": {
+      "strategy": "macd_strategy",
+      "risk_tolerance": "low",
+      "max_position_size": 0.1,
+      "stop_loss": 0.02,
+      "take_profit": 0.05
+    },
+    "moderate": {
+      "strategy": "simple_moving_average",
+      "risk_tolerance": "medium",
+      "max_position_size": 0.2,
+      "stop_loss": 0.03,
+      "take_profit": 0.08
+    },
+    "aggressive": {
+      "strategy": "momentum_strategy",
+      "risk_tolerance": "high",
+      "max_position_size": 0.3,
+      "stop_loss": 0.05,
+      "take_profit": 0.12
+    }
+  },
+  "version": "1.0.0",
+  "last_updated": "2025-01-01T00:00:00Z"
+}
+
