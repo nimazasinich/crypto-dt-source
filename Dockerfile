@@ -33,5 +33,5 @@ ENV USE_GRADIO=false
 
 EXPOSE 7860
 
-# Run the application (will choose Gradio or FastAPI based on env vars)
-CMD ["python", "app.py"]
+# Run the FastAPI application with uvicorn
+CMD ["uvicorn", "hf_space_api:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]

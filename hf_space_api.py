@@ -49,7 +49,8 @@ except ImportError:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 # Add workspace to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -213,6 +214,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files
+static_path = Path(__file__).parent / "static"
+if static_path.exists():
+    app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+    logger.info(f"✅ Static files mounted at /static from {static_path}")
+else:
+    logger.warning(f"⚠️ Static directory not found at {static_path}")
+
 
 # ============================================================================
 # Root Endpoint
@@ -220,14 +229,32 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    """Root endpoint - API information"""
+    """Root endpoint - Redirect to main UI or show API information"""
+    # Check if request is from browser (Accept: text/html)
+    # If yes, serve index.html, otherwise return API info
+    index_file = Path(__file__).parent / "static" / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    
     return {
         "success": True,
         "name": "HuggingFace Space Crypto API",
-        "version": "1.0.0",
-        "description": "Real-time cryptocurrency data API with AI-powered analysis",
+        "version": "2.0.0",
+        "description": "Real-time cryptocurrency data API with AI-powered analysis + Smart Fallback System",
         "authentication": "Required - use HF_TOKEN in Authorization header",
         "data_policy": "REAL DATA ONLY - No mock or fake data",
+        "ui": {
+            "main": "/static/index.html",
+            "dashboard": "/static/pages/dashboard/index.html",
+            "market": "/static/pages/market/index.html",
+            "trading": "/static/pages/trading-assistant/index.html",
+            "technical_analysis": "/static/pages/technical-analysis/index.html",
+            "news": "/static/pages/news/index.html",
+            "sentiment": "/static/pages/sentiment/index.html",
+            "models": "/static/pages/models/index.html",
+            "api_explorer": "/static/pages/api-explorer/index.html",
+            "diagnostics": "/static/pages/diagnostics/index.html"
+        },
         "endpoints": {
             "market_data": "/api/market",
             "market_history": "/api/market/history",
@@ -239,11 +266,25 @@ async def root():
             "documentation": "/docs"
         },
         "data_sources": {
-            "market_prices": "CoinGecko (FREE API)",
-            "ohlcv_data": "Binance (FREE API)",
-            "ai_models": "HuggingFace Transformers",
+            "primary": "Smart Fallback System (305+ FREE resources)",
+            "market_prices": "21 Market Data APIs with rotation",
+            "block_explorers": "40+ Block Explorers",
+            "news": "15 News APIs with fallback",
+            "sentiment": "12 Sentiment APIs",
+            "whale_tracking": "9 Whale tracking sources",
+            "onchain": "13 On-chain analytics",
+            "rpc_nodes": "24 RPC nodes",
             "alphavantage": "Alpha Vantage API",
-            "massive": "Massive.com (APIBricks)"
+            "massive": "Massive.com (APIBricks)",
+            "ai_models": "HuggingFace Transformers"
+        },
+        "features": {
+            "smart_fallback": "Automatic failover - NEVER 404",
+            "resource_rotation": "Uses ALL resources, not just one",
+            "proxy_support": "Smart proxy for sanctioned exchanges",
+            "background_collection": "24/7 data collection agent",
+            "health_monitoring": "Real-time health tracking",
+            "auto_cleanup": "Automatic removal of dead resources"
         },
         "timestamp": int(time.time() * 1000)
     }
