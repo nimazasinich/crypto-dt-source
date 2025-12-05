@@ -1,0 +1,289 @@
+/**
+ * Enhanced Typography & Styling
+ * Professional fonts, better contrast, larger sizes
+ */
+
+/* Import Professional Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
+
+/* Base Typography */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6,
+.card-title,
+.section-title,
+.modal-title {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px !important;
+    color: #ffffff !important;
+}
+
+h1 { font-size: 2rem !important; }
+h2 { font-size: 1.75rem !important; }
+h3 { font-size: 1.5rem !important; }
+h4, .card-title { font-size: 1.375rem !important; }
+
+/* Monospace for Numbers */
+.stat-value,
+.crypto-price,
+.signal-item-value,
+.price-display,
+.numeric-value {
+    font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px !important;
+}
+
+/* Text Colors - High Contrast */
+.text-primary,
+.card-title,
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff !important;
+}
+
+.text-secondary {
+    color: #e2e8f0 !important;
+}
+
+.text-muted {
+    color: #94a3b8 !important;
+}
+
+/* Buttons */
+.btn {
+    font-family: 'Inter', sans-serif !important;
+    padding: 14px 28px !important;
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    border-radius: 12px !important;
+    text-transform: uppercase !important;
+}
+
+.btn-primary {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Cards */
+.card {
+    padding: 28px !important;
+    border-radius: 18px !important;
+    border-width: 2px !important;
+}
+
+.card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+.card-header {
+    margin-bottom: 24px !important;
+    padding-bottom: 20px !important;
+    border-bottom-width: 2px !important;
+}
+
+/* Crypto Cards */
+.crypto-card {
+    padding: 24px !important;
+    border-radius: 16px !important;
+    border-width: 2px !important;
+}
+
+.crypto-symbol {
+    font-size: 1.25rem !important;
+    font-weight: 900 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+.crypto-price {
+    font-size: 1.5rem !important;
+    font-weight: 900 !important;
+}
+
+.crypto-change {
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    padding: 6px 14px !important;
+    border-radius: 10px !important;
+}
+
+/* Strategy Cards */
+.strategy-card {
+    padding: 24px !important;
+    border-radius: 16px !important;
+    border-width: 2px !important;
+}
+
+.strategy-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.3) !important;
+}
+
+.strategy-name {
+    font-size: 1.25rem !important;
+    font-weight: 900 !important;
+    margin-bottom: 10px !important;
+}
+
+.strategy-desc {
+    font-size: 0.9375rem !important;
+    line-height: 1.7 !important;
+    font-weight: 500 !important;
+}
+
+.strategy-badge {
+    padding: 8px 18px !important;
+    font-size: 0.75rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px !important;
+}
+
+/* Signal Cards */
+.signal-card {
+    padding: 28px !important;
+    border-radius: 16px !important;
+    margin-bottom: 20px !important;
+}
+
+.signal-badge {
+    padding: 10px 22px !important;
+    font-size: 1.0625rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px !important;
+}
+
+.signal-symbol {
+    font-size: 1.5rem !important;
+    font-weight: 900 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+.signal-item {
+    padding: 20px !important;
+    border-radius: 14px !important;
+    border-width: 2px !important;
+}
+
+.signal-item-label {
+    font-size: 0.9375rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.signal-item-value {
+    font-size: 1.5rem !important;
+    font-weight: 900 !important;
+}
+
+/* Modal */
+.modal-header {
+    padding: 36px 40px !important;
+}
+
+.modal-title {
+    font-size: 2rem !important;
+    font-weight: 900 !important;
+}
+
+.modal-body {
+    padding: 36px 40px !important;
+}
+
+.info-item {
+    padding: 24px !important;
+    border-radius: 14px !important;
+    border-width: 2px !important;
+}
+
+.info-label {
+    font-size: 0.9375rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 10px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+.info-value {
+    font-size: 1.75rem !important;
+    font-weight: 900 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+.detail-item {
+    padding: 20px !important;
+    border-radius: 14px !important;
+    border-width: 2px !important;
+    margin-bottom: 14px !important;
+}
+
+.detail-label {
+    font-size: 1.0625rem !important;
+    font-weight: 700 !important;
+}
+
+.detail-value {
+    font-size: 1.125rem !important;
+    font-weight: 900 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* Stats */
+.stat-value {
+    font-size: 1.75rem !important;
+    font-weight: 900 !important;
+}
+
+.stat-label {
+    font-size: 0.8125rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+/* Agent */
+.agent-name {
+    font-size: 1.25rem !important;
+    font-weight: 900 !important;
+}
+
+.agent-desc {
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        font-size: 15px !important;
+    }
+    
+    h1 { font-size: 1.75rem !important; }
+    h2 { font-size: 1.5rem !important; }
+    h3 { font-size: 1.25rem !important; }
+    h4, .card-title { font-size: 1.125rem !important; }
+    
+    .btn {
+        padding: 12px 24px !important;
+        font-size: 0.9375rem !important;
+    }
+    
+    .card {
+        padding: 20px !important;
+    }
+}
+

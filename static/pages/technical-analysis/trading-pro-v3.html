@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Pro v3 | Strategy Builder</title>
+    <link rel="icon" type="image/svg+xml" href="/static/assets/icons/favicon.svg">
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            /* Light Theme - Inspired by the image */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafb;
+            --bg-tertiary: #f0f4f7;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --border-color: rgba(0, 180, 180, 0.15);
+            --text-primary: #1a2b3c;
+            --text-secondary: #5a6b7c;
+            --text-muted: #8a9bac;
+            
+            /* Gradient Colors from Image */
+            --accent-cyan: #00d4d4;
+            --accent-teal: #00b4b4;
+            --accent-green: #00c896;
+            --accent-blue: #0088cc;
+            --accent-pink: #e91e8c;
+            --accent-purple: #9c27b0;
+            
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, #00d4d4, #00b4b4, #00c896);
+            --gradient-accent: linear-gradient(135deg, #00b4b4, #0088cc);
+            --gradient-pink: linear-gradient(135deg, #e91e8c, #9c27b0);
+            --gradient-smoke: linear-gradient(90deg, #00d4d4, #00b4b4, #00c896, #0088cc);
+            
+            /* Status Colors */
+            --success: #00c896;
+            --danger: #e91e8c;
+            --warning: #ffb800;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(ellipse at 20% 20%, rgba(0, 212, 212, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 200, 150, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 30%, rgba(233, 30, 140, 0.05) 0%, transparent 40%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Layout */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            backdrop-filter: blur(20px);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 180, 180, 0.3);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .symbol-display {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .symbol-input {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            width: 140px;
+            transition: all 0.3s;
+        }
+
+        .symbol-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 4px rgba(0, 212, 212, 0.1);
+        }
+
+        .price-info {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+        }
+
+        .current-price {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .price-change {
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .price-change.positive {
+            background: rgba(0, 200, 150, 0.15);
+            color: var(--success);
+        }
+
+        .price-change.negative {
+            background: rgba(233, 30, 140, 0.15);
+            color: var(--danger);
+        }
+
+        .timeframes {
+            display: flex;
+            gap: 0.35rem;
+            background: var(--bg-tertiary);
+            padding: 0.35rem;
+            border-radius: 12px;
+        }
+
+        .tf-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tf-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tf-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 180, 180, 0.3);
+        }
+
+        /* Main Grid */
+        .trading-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            grid-template-rows: auto 1fr auto;
+            gap: 1rem;
+            height: calc(100vh - 140px);
+        }
+
+        /* Chart Container */
+        .chart-section {
+            grid-row: 1 / 3;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chart-tools {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tool-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .tool-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .tool-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+        }
+
+        #tradingChart {
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Analysis Panel */
+        .analysis-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .signal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .signal-badge.buy {
+            background: linear-gradient(135deg, rgba(0, 200, 150, 0.2), rgba(0, 180, 180, 0.2));
+            color: var(--success);
+        }
+
+        .signal-badge.sell {
+            background: linear-gradient(135deg, rgba(233, 30, 140, 0.2), rgba(156, 39, 176, 0.2));
+            color: var(--danger);
+        }
+
+        .signal-badge.hold {
+            background: rgba(255, 184, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-weight: 600;
+        }
+
+        .metric-value.bullish { color: var(--success); }
+        .metric-value.bearish { color: var(--danger); }
+
+        /* Strategy Section */
+        .strategy-section {
+            grid-column: 1 / 3;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .strategy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .strategy-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .strategy-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .strategy-tab:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .strategy-tab.active {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary {
+            padding: 0.6rem 1.25rem;
+            border: none;
+            border-radius: 10px;
+            background: var(--gradient-primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 180, 180, 0.4);
+        }
+
+        .strategy-content {
+            padding: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .strategy-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .strategy-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .strategy-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 180, 180, 0.15);
+        }
+
+        .strategy-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .strategy-card.active {
+            border-color: var(--accent-cyan);
+            background: linear-gradient(135deg, rgba(0, 212, 212, 0.05), rgba(0, 200, 150, 0.05));
+        }
+
+        .strategy-card.active::before {
+            transform: scaleX(1);
+        }
+
+        .strategy-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strategy-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .strategy-stats {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .strategy-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-sm:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 10px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 4px rgba(0, 212, 212, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .condition-builder {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .condition-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .condition-op {
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: var(--gradient-primary);
+            color: white;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .btn-add-condition {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-add-condition:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(0, 212, 212, 0.05);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-lg {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+        }
+
+        /* Backtest Results */
+        .backtest-results {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .backtest-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .backtest-title {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .backtest-status {
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .backtest-status.running {
+            background: rgba(0, 212, 212, 0.15);
+            color: var(--accent-cyan);
+            animation: pulse 1.5s infinite;
+        }
+
+        .backtest-status.complete {
+            background: rgba(0, 200, 150, 0.15);
+            color: var(--success);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .backtest-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .backtest-stat {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: 12px;
+        }
+
+        .backtest-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .backtest-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Equity Curve */
+        .equity-curve {
+            margin-top: 1rem;
+            height: 150px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .equity-line {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: var(--gradient-primary);
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.info { border-left: 4px solid var(--accent-cyan); }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.removing {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOut {
+            to { transform: translateX(400px); opacity: 0; }
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden { display: none !important; }
+
+        /* Animations */
+        .trade-marker {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: tradeAppear 0.5s ease-out;
+        }
+
+        .trade-marker.buy {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .trade-marker.sell {
+            background: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+        }
+
+        @keyframes tradeAppear {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#grad)" stroke-width="2">
+                    <defs>
+                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00d4d4"/>
+                            <stop offset="100%" style="stop-color:#00c896"/>
+                        </linearGradient>
+                    </defs>
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                    <polyline points="16 7 22 7 22 13"/>
+                </svg>
+                Trading Pro
+            </div>
+
+            <nav>
+                <a href="/static/pages/dashboard/index.html" class="nav-item">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" stroke-width="2"/><rect x="14" y="3" width="7" height="7" stroke-width="2"/><rect x="14" y="14" width="7" height="7" stroke-width="2"/><rect x="3" y="14" width="7" height="7" stroke-width="2"/></svg>
+                    Dashboard
+                </a>
+                <a href="/static/pages/market/index.html" class="nav-item">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke-width="2"/></svg>
+                    Market
+                </a>
+                <div class="nav-item active">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" stroke-width="2"/><line x1="8" y1="21" x2="16" y2="21" stroke-width="2"/><line x1="12" y1="17" x2="12" y2="21" stroke-width="2"/></svg>
+                    Trading Pro
+                </div>
+                <a href="/static/pages/news/index.html" class="nav-item">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" stroke-width="2"/></svg>
+                    News
+                </a>
+                <a href="/static/pages/sentiment/index.html" class="nav-item">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke-width="2"/></svg>
+                    Sentiment
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="symbol-display">
+                    <input type="text" class="symbol-input" id="symbolInput" value="BTCUSDT">
+                    <div class="price-info">
+                        <span class="current-price" id="currentPrice">$0.00</span>
+                        <span class="price-change positive" id="priceChange">+0.00%</span>
+                    </div>
+                </div>
+                <div class="timeframes">
+                    <button class="tf-btn" data-tf="1m">1m</button>
+                    <button class="tf-btn" data-tf="5m">5m</button>
+                    <button class="tf-btn" data-tf="15m">15m</button>
+                    <button class="tf-btn" data-tf="1h">1h</button>
+                    <button class="tf-btn active" data-tf="4h">4h</button>
+                    <button class="tf-btn" data-tf="1d">1D</button>
+                </div>
+            </div>
+
+            <!-- Trading Grid -->
+            <div class="trading-grid">
+                <!-- Chart -->
+                <div class="chart-section">
+                    <div class="chart-header">
+                        <div class="chart-tools">
+                            <button class="tool-btn" data-tool="crosshair" title="Crosshair">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><line x1="22" y1="12" x2="18" y2="12" stroke-width="2"/><line x1="6" y1="12" x2="2" y2="12" stroke-width="2"/><line x1="12" y1="6" x2="12" y2="2" stroke-width="2"/><line x1="12" y1="22" x2="12" y2="18" stroke-width="2"/></svg>
+                            </button>
+                            <button class="tool-btn" data-tool="trendline" title="Trend Line">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 21L21 3" stroke-width="2"/></svg>
+                            </button>
+                            <button class="tool-btn" data-tool="fib" title="Fibonacci">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path d="M12 2v20M2 12h20" stroke-width="2"/></svg>
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span style="font-size: 0.85rem; color: var(--text-muted);" id="lastUpdate">--:--</span>
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite;"></div>
+                        </div>
+                    </div>
+                    <div id="tradingChart"></div>
+                    <div class="loading-overlay" id="chartLoading">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 1rem; color: var(--text-secondary);">Loading chart...</p>
+                    </div>
+                </div>
+
+                <!-- Analysis Panel -->
+                <div class="analysis-panel">
+                    <div class="card">
+                        <div class="card-title">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-width="2"/></svg>
+                            Signal
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <span class="signal-badge buy" id="signalBadge">STRONG BUY</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Confidence</span>
+                            <span class="metric-value bullish" id="confidence">85%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Risk/Reward</span>
+                            <span class="metric-value" id="riskReward">1:2.5</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-width="2"/></svg>
+                            Key Levels
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Resistance</span>
+                            <span class="metric-value bearish" id="resistance">$0</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Current</span>
+                            <span class="metric-value" id="currentLevel">$0</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Support</span>
+                            <span class="metric-value bullish" id="support">$0</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" stroke-width="2"/></svg>
+                            Indicators
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">RSI (14)</span>
+                            <span class="metric-value" id="rsiValue">--</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">MACD</span>
+                            <span class="metric-value" id="macdValue">--</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">EMA Trend</span>
+                            <span class="metric-value" id="emaTrend">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategy Section -->
+                <div class="strategy-section">
+                    <div class="strategy-header">
+                        <div class="strategy-tabs">
+                            <button class="strategy-tab active" data-tab="strategies">My Strategies</button>
+                            <button class="strategy-tab" data-tab="backtest">Backtest</button>
+                            <button class="strategy-tab" data-tab="results">Results</button>
+                        </div>
+                        <button class="btn-primary" id="btnNewStrategy">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke-width="2"/><line x1="5" y1="12" x2="19" y2="12" stroke-width="2"/></svg>
+                            New Strategy
+                        </button>
+                    </div>
+                    <div class="strategy-content" id="strategyContent">
+                        <div class="strategy-grid" id="strategyGrid">
+                            <!-- Strategies will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Strategy Builder Modal -->
+    <div class="modal-overlay" id="strategyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Create New Strategy</h2>
+                <button class="modal-close" id="modalClose">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Strategy Name</label>
+                    <input type="text" class="form-input" id="strategyName" placeholder="My Strategy">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Timeframe</label>
+                        <select class="form-select" id="strategyTimeframe">
+                            <option value="1m">1 Minute</option>
+                            <option value="5m">5 Minutes</option>
+                            <option value="15m">15 Minutes</option>
+                            <option value="1h">1 Hour</option>
+                            <option value="4h" selected>4 Hours</option>
+                            <option value="1d">1 Day</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Risk per Trade (%)</label>
+                        <input type="number" class="form-input" id="riskPercent" value="2" min="0.1" max="10" step="0.1">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Entry Conditions</label>
+                    <div class="condition-builder" id="entryConditions">
+                        <div class="condition-row">
+                            <select class="form-select">
+                                <option value="rsi">RSI (14)</option>
+                                <option value="ema20">EMA (20)</option>
+                                <option value="ema50">EMA (50)</option>
+                                <option value="macd">MACD</option>
+                                <option value="price">Price</option>
+                            </select>
+                            <select class="form-select" style="width: auto;">
+                                <option value="crosses_above">Crosses Above</option>
+                                <option value="crosses_below">Crosses Below</option>
+                                <option value="greater">Greater Than</option>
+                                <option value="less">Less Than</option>
+                            </select>
+                            <input type="text" class="form-input" placeholder="Value or Indicator">
+                            <button class="btn-sm" style="color: var(--danger);">×</button>
+                        </div>
+                        <button class="btn-add-condition" id="addEntryCondition">+ Add Condition</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Exit Conditions</label>
+                    <div class="condition-builder" id="exitConditions">
+                        <div class="condition-row">
+                            <select class="form-select">
+                                <option value="tp">Take Profit (%)</option>
+                                <option value="sl">Stop Loss (%)</option>
+                                <option value="rsi">RSI (14)</option>
+                                <option value="trailing">Trailing Stop (%)</option>
+                            </select>
+                            <select class="form-select" style="width: auto;">
+                                <option value="equals">Equals</option>
+                                <option value="greater">Greater Than</option>
+                                <option value="less">Less Than</option>
+                            </select>
+                            <input type="text" class="form-input" placeholder="Value">
+                            <button class="btn-sm" style="color: var(--danger);">×</button>
+                        </div>
+                        <button class="btn-add-condition" id="addExitCondition">+ Add Condition</button>
+                    </div>
+                </div>
+
+                <!-- Backtest Results Preview -->
+                <div class="backtest-results hidden" id="backtestPreview">
+                    <div class="backtest-header">
+                        <span class="backtest-title">Backtest Results</span>
+                        <span class="backtest-status running" id="backtestStatus">Running...</span>
+                    </div>
+                    <div class="backtest-stats" id="backtestStats">
+                        <div class="backtest-stat">
+                            <div class="backtest-stat-value" style="color: var(--success);" id="btWinRate">--</div>
+                            <div class="backtest-stat-label">Win Rate</div>
+                        </div>
+                        <div class="backtest-stat">
+                            <div class="backtest-stat-value" style="color: var(--accent-cyan);" id="btProfitFactor">--</div>
+                            <div class="backtest-stat-label">Profit Factor</div>
+                        </div>
+                        <div class="backtest-stat">
+                            <div class="backtest-stat-value" id="btTrades">--</div>
+                            <div class="backtest-stat-label">Total Trades</div>
+                        </div>
+                        <div class="backtest-stat">
+                            <div class="backtest-stat-value" style="color: var(--danger);" id="btDrawdown">--</div>
+                            <div class="backtest-stat-label">Max Drawdown</div>
+                        </div>
+                    </div>
+                    <div class="equity-curve" id="equityCurve"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btnBacktest">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 4px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke-width="2"/></svg>
+                    Run Backtest
+                </button>
+                <button class="btn-primary btn-lg" id="btnSaveStrategy">Save Strategy</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./trading-pro-v3.js"></script>
+</body>
+</html>
+
