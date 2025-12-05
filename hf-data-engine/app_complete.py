@@ -651,7 +651,7 @@ async def get_providers(request: Request):
     })
     
     # Add market data providers
-    for provider in config.market_data[:5]:
+    for provider in config.market_data:
         providers_list.append({
             "id": provider.name,
             "name": provider.name.title(),

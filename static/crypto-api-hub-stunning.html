@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Permissions-Policy"
+        content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()">
     <title>🚀 Crypto API Hub - Stunning Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -23,7 +28,7 @@
             --gradient-8: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
             --gradient-9: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
             --gradient-10: linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%);
-            
+
             --bg-main: #0a0e27;
             --bg-card: rgba(255, 255, 255, 0.03);
             --text-primary: #ffffff;
@@ -45,7 +50,7 @@
             content: '';
             position: fixed;
             inset: 0;
-            background: 
+            background:
                 radial-gradient(circle at 20% 20%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
                 radial-gradient(circle at 80% 80%, rgba(240, 147, 251, 0.15) 0%, transparent 50%),
                 radial-gradient(circle at 50% 50%, rgba(79, 172, 254, 0.1) 0%, transparent 50%);
@@ -54,8 +59,17 @@
         }
 
         @keyframes bgPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.05); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
         }
 
         .container {
@@ -85,6 +99,7 @@
                 opacity: 0;
                 transform: translateY(-30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -127,8 +142,15 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
         .logo svg {
@@ -141,6 +163,7 @@
             font-size: 2rem;
             font-weight: 800;
             background: var(--gradient-3);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.25rem;
@@ -165,6 +188,7 @@
             font-size: 2.5rem;
             font-weight: 900;
             background: var(--gradient-3);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             line-height: 1;
@@ -252,6 +276,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -367,14 +392,45 @@
             transform: scaleX(1);
         }
 
-        .service-card:nth-child(8n+1) { --card-gradient: var(--gradient-1); animation-delay: 0.05s; }
-        .service-card:nth-child(8n+2) { --card-gradient: var(--gradient-2); animation-delay: 0.1s; }
-        .service-card:nth-child(8n+3) { --card-gradient: var(--gradient-3); animation-delay: 0.15s; }
-        .service-card:nth-child(8n+4) { --card-gradient: var(--gradient-4); animation-delay: 0.2s; }
-        .service-card:nth-child(8n+5) { --card-gradient: var(--gradient-5); animation-delay: 0.25s; }
-        .service-card:nth-child(8n+6) { --card-gradient: var(--gradient-6); animation-delay: 0.3s; }
-        .service-card:nth-child(8n+7) { --card-gradient: var(--gradient-7); animation-delay: 0.35s; }
-        .service-card:nth-child(8n+8) { --card-gradient: var(--gradient-8); animation-delay: 0.4s; }
+        .service-card:nth-child(8n+1) {
+            --card-gradient: var(--gradient-1);
+            animation-delay: 0.05s;
+        }
+
+        .service-card:nth-child(8n+2) {
+            --card-gradient: var(--gradient-2);
+            animation-delay: 0.1s;
+        }
+
+        .service-card:nth-child(8n+3) {
+            --card-gradient: var(--gradient-3);
+            animation-delay: 0.15s;
+        }
+
+        .service-card:nth-child(8n+4) {
+            --card-gradient: var(--gradient-4);
+            animation-delay: 0.2s;
+        }
+
+        .service-card:nth-child(8n+5) {
+            --card-gradient: var(--gradient-5);
+            animation-delay: 0.25s;
+        }
+
+        .service-card:nth-child(8n+6) {
+            --card-gradient: var(--gradient-6);
+            animation-delay: 0.3s;
+        }
+
+        .service-card:nth-child(8n+7) {
+            --card-gradient: var(--gradient-7);
+            animation-delay: 0.35s;
+        }
+
+        .service-card:nth-child(8n+8) {
+            --card-gradient: var(--gradient-8);
+            animation-delay: 0.4s;
+        }
 
         .service-header {
             display: flex;
@@ -539,8 +595,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         .modal-content {
@@ -561,6 +622,7 @@
                 opacity: 0;
                 transform: translateY(30px) scale(0.95);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0) scale(1);
@@ -752,6 +814,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
@@ -760,9 +823,12 @@
                 <div class="logo-section">
                     <div class="logo">
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
                         </svg>
                     </div>
                     <div class="brand-text">
@@ -788,14 +854,16 @@
 
                 <div class="header-actions">
                     <button class="btn-gradient" onclick="openTester()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <polyline points="16 18 22 12 16 6"></polyline>
                             <polyline points="8 6 2 12 8 18"></polyline>
                         </svg>
                         <span>API Tester</span>
                     </button>
                     <button class="btn-gradient" onclick="exportJSON()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -809,11 +877,13 @@
         <!-- Controls -->
         <div class="controls">
             <div class="search-wrapper">
-                <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a0aec0" stroke-width="2">
+                <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a0aec0"
+                    stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
-                <input type="text" class="search-input" id="searchInput" placeholder="Search services, endpoints, or APIs..." onkeyup="filterServices()">
+                <input type="text" class="search-input" id="searchInput"
+                    placeholder="Search services, endpoints, or APIs..." onkeyup="filterServices()">
             </div>
             <div class="filter-tabs">
                 <button class="filter-tab active" onclick="setFilter('all')">All</button>
@@ -854,7 +924,8 @@
 
                 <div class="form-group">
                     <label class="form-label">Headers (JSON format)</label>
-                    <textarea class="form-textarea" id="testHeaders" placeholder='{"Authorization": "Bearer YOUR_KEY"}'></textarea>
+                    <textarea class="form-textarea" id="testHeaders"
+                        placeholder='{"Authorization": "Bearer YOUR_KEY"}'></textarea>
                 </div>
 
                 <div class="form-group" id="bodyGroup" style="display: none;">
@@ -886,80 +957,96 @@
     <script>
         const SERVICES = {
             explorer: [
-                {name: "Etherscan", url: "https://api.etherscan.io/api", key: "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
-                 endpoints: ["?module=account&action=balance&address={address}&apikey={KEY}", "?module=gastracker&action=gasoracle&apikey={KEY}"]},
-                {name: "Etherscan Backup", url: "https://api.etherscan.io/api", key: "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45", endpoints: []},
-                {name: "BscScan", url: "https://api.bscscan.com/api", key: "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT",
-                 endpoints: ["?module=account&action=balance&address={address}&apikey={KEY}"]},
-                {name: "TronScan", url: "https://apilist.tronscanapi.com/api", key: "7ae72726-bffe-4e74-9c33-97b761eeea21",
-                 endpoints: ["/account?address={address}"]},
-                {name: "Blockchair ETH", url: "https://api.blockchair.com/ethereum/dashboards/address/{address}", key: "", endpoints: []},
-                {name: "Ethplorer", url: "https://api.ethplorer.io", key: "freekey", endpoints: ["/getAddressInfo/{address}?apiKey=freekey"]},
-                {name: "TronGrid", url: "https://api.trongrid.io", key: "", endpoints: ["/wallet/getaccount"]},
-                {name: "Ankr", url: "https://rpc.ankr.com/multichain", key: "", endpoints: []},
-                {name: "1inch BSC", url: "https://api.1inch.io/v5.0/56", key: "", endpoints: []}
+                {
+                    name: "Etherscan", url: "https://api.etherscan.io/api", key: "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
+                    endpoints: ["?module=account&action=balance&address={address}&apikey={KEY}", "?module=gastracker&action=gasoracle&apikey={KEY}"]
+                },
+                { name: "Etherscan Backup", url: "https://api.etherscan.io/api", key: "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45", endpoints: [] },
+                {
+                    name: "BscScan", url: "https://api.bscscan.com/api", key: "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT",
+                    endpoints: ["?module=account&action=balance&address={address}&apikey={KEY}"]
+                },
+                {
+                    name: "TronScan", url: "https://apilist.tronscanapi.com/api", key: "7ae72726-bffe-4e74-9c33-97b761eeea21",
+                    endpoints: ["/account?address={address}"]
+                },
+                { name: "Blockchair ETH", url: "https://api.blockchair.com/ethereum/dashboards/address/{address}", key: "", endpoints: [] },
+                { name: "Ethplorer", url: "https://api.ethplorer.io", key: "freekey", endpoints: ["/getAddressInfo/{address}?apiKey=freekey"] },
+                { name: "TronGrid", url: "https://api.trongrid.io", key: "", endpoints: ["/wallet/getaccount"] },
+                { name: "Ankr", url: "https://rpc.ankr.com/multichain", key: "", endpoints: [] },
+                { name: "1inch BSC", url: "https://api.1inch.io/v5.0/56", key: "", endpoints: [] }
             ],
             market: [
-                {name: "CoinGecko", url: "https://api.coingecko.com/api/v3", key: "",
-                 endpoints: ["/simple/price?ids=bitcoin,ethereum&vs_currencies=usd", "/coins/markets?vs_currency=usd&per_page=100"]},
-                {name: "CoinMarketCap", url: "https://pro-api.coinmarketcap.com/v1", key: "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1",
-                 endpoints: ["/cryptocurrency/quotes/latest?symbol=BTC&convert=USD"]},
-                {name: "CoinMarketCap Alt", url: "https://pro-api.coinmarketcap.com/v1", key: "b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c", endpoints: []},
-                {name: "CryptoCompare", url: "https://min-api.cryptocompare.com/data", key: "e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f",
-                 endpoints: ["/pricemulti?fsyms=BTC,ETH&tsyms=USD"]},
-                {name: "CoinPaprika", url: "https://api.coinpaprika.com/v1", key: "", endpoints: ["/tickers", "/coins"]},
-                {name: "CoinCap", url: "https://api.coincap.io/v2", key: "", endpoints: ["/assets", "/assets/bitcoin"]},
-                {name: "Binance", url: "https://api.binance.com/api/v3", key: "", endpoints: ["/ticker/price?symbol=BTCUSDT"]},
-                {name: "CoinDesk", url: "https://api.coindesk.com/v1", key: "", endpoints: ["/bpi/currentprice.json"]},
-                {name: "Nomics", url: "https://api.nomics.com/v1", key: "", endpoints: []},
-                {name: "Messari", url: "https://data.messari.io/api/v1", key: "", endpoints: ["/assets/bitcoin/metrics"]},
-                {name: "CoinLore", url: "https://api.coinlore.net/api", key: "", endpoints: ["/tickers/"]},
-                {name: "CoinStats", url: "https://api.coinstats.app/public/v1", key: "", endpoints: ["/coins"]},
-                {name: "Mobula", url: "https://api.mobula.io/api/1", key: "", endpoints: []},
-                {name: "TokenMetrics", url: "https://api.tokenmetrics.com/v2", key: "", endpoints: []},
-                {name: "DIA Data", url: "https://api.diadata.org/v1", key: "", endpoints: []}
+                {
+                    name: "CoinGecko", url: "https://api.coingecko.com/api/v3", key: "",
+                    endpoints: ["/simple/price?ids=bitcoin,ethereum&vs_currencies=usd", "/coins/markets?vs_currency=usd&per_page=100"]
+                },
+                {
+                    name: "CoinMarketCap", url: "https://pro-api.coinmarketcap.com/v1", key: "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1",
+                    endpoints: ["/cryptocurrency/quotes/latest?symbol=BTC&convert=USD"]
+                },
+                { name: "CoinMarketCap Alt", url: "https://pro-api.coinmarketcap.com/v1", key: "b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c", endpoints: [] },
+                {
+                    name: "CryptoCompare", url: "https://min-api.cryptocompare.com/data", key: "e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f",
+                    endpoints: ["/pricemulti?fsyms=BTC,ETH&tsyms=USD"]
+                },
+                { name: "CoinPaprika", url: "https://api.coinpaprika.com/v1", key: "", endpoints: ["/tickers", "/coins"] },
+                { name: "CoinCap", url: "https://api.coincap.io/v2", key: "", endpoints: ["/assets", "/assets/bitcoin"] },
+                { name: "Binance", url: "https://api.binance.com/api/v3", key: "", endpoints: ["/ticker/price?symbol=BTCUSDT"] },
+                { name: "CoinDesk", url: "https://api.coindesk.com/v1", key: "", endpoints: ["/bpi/currentprice.json"] },
+                { name: "Nomics", url: "https://api.nomics.com/v1", key: "", endpoints: [] },
+                { name: "Messari", url: "https://data.messari.io/api/v1", key: "", endpoints: ["/assets/bitcoin/metrics"] },
+                { name: "CoinLore", url: "https://api.coinlore.net/api", key: "", endpoints: ["/tickers/"] },
+                { name: "CoinStats", url: "https://api.coinstats.app/public/v1", key: "", endpoints: ["/coins"] },
+                { name: "Mobula", url: "https://api.mobula.io/api/1", key: "", endpoints: [] },
+                { name: "TokenMetrics", url: "https://api.tokenmetrics.com/v2", key: "", endpoints: [] },
+                { name: "DIA Data", url: "https://api.diadata.org/v1", key: "", endpoints: [] }
             ],
             news: [
-                {name: "CryptoPanic", url: "https://cryptopanic.com/api/v1", key: "", endpoints: ["/posts/?auth_token={KEY}"]},
-                {name: "NewsAPI", url: "https://newsapi.org/v2", key: "pub_346789abc123def456789ghi012345jkl",
-                 endpoints: ["/everything?q=crypto&apiKey={KEY}"]},
-                {name: "CryptoControl", url: "https://cryptocontrol.io/api/v1/public", key: "", endpoints: ["/news/local?language=EN"]},
-                {name: "CoinDesk RSS", url: "https://www.coindesk.com/arc/outboundfeeds/rss/", key: "", endpoints: []},
-                {name: "CoinTelegraph", url: "https://cointelegraph.com/api/v1", key: "", endpoints: []},
-                {name: "CryptoSlate", url: "https://cryptoslate.com/api", key: "", endpoints: []},
-                {name: "The Block", url: "https://api.theblock.co/v1", key: "", endpoints: []},
-                {name: "Bitcoin Magazine", url: "https://bitcoinmagazine.com/.rss/full/", key: "", endpoints: []},
-                {name: "Decrypt", url: "https://decrypt.co/feed", key: "", endpoints: []},
-                {name: "Reddit Crypto", url: "https://www.reddit.com/r/CryptoCurrency/new.json", key: "", endpoints: []}
+                { name: "CryptoPanic", url: "https://cryptopanic.com/api/v1", key: "", endpoints: ["/posts/?auth_token={KEY}"] },
+                {
+                    name: "NewsAPI", url: "https://newsapi.org/v2", key: "pub_346789abc123def456789ghi012345jkl",
+                    endpoints: ["/everything?q=crypto&apiKey={KEY}"]
+                },
+                { name: "CryptoControl", url: "https://cryptocontrol.io/api/v1/public", key: "", endpoints: ["/news/local?language=EN"] },
+                { name: "CoinDesk RSS", url: "https://www.coindesk.com/arc/outboundfeeds/rss/", key: "", endpoints: [] },
+                { name: "CoinTelegraph", url: "https://cointelegraph.com/api/v1", key: "", endpoints: [] },
+                { name: "CryptoSlate", url: "https://cryptoslate.com/api", key: "", endpoints: [] },
+                { name: "The Block", url: "https://api.theblock.co/v1", key: "", endpoints: [] },
+                { name: "Bitcoin Magazine", url: "https://bitcoinmagazine.com/.rss/full/", key: "", endpoints: [] },
+                { name: "Decrypt", url: "https://decrypt.co/feed", key: "", endpoints: [] },
+                { name: "Reddit Crypto", url: "https://www.reddit.com/r/CryptoCurrency/new.json", key: "", endpoints: [] }
             ],
             sentiment: [
-                {name: "Fear & Greed", url: "https://api.alternative.me/fng/", key: "", endpoints: ["?limit=1", "?limit=30"]},
-                {name: "LunarCrush", url: "https://api.lunarcrush.com/v2", key: "", endpoints: ["?data=assets&key={KEY}"]},
-                {name: "Santiment", url: "https://api.santiment.net/graphql", key: "", endpoints: []},
-                {name: "The TIE", url: "https://api.thetie.io", key: "", endpoints: []},
-                {name: "CryptoQuant", url: "https://api.cryptoquant.com/v1", key: "", endpoints: []},
-                {name: "Glassnode Social", url: "https://api.glassnode.com/v1/metrics/social", key: "", endpoints: []},
-                {name: "Augmento", url: "https://api.augmento.ai/v1", key: "", endpoints: []}
+                { name: "Fear & Greed", url: "https://api.alternative.me/fng/", key: "", endpoints: ["?limit=1", "?limit=30"] },
+                { name: "LunarCrush", url: "https://api.lunarcrush.com/v2", key: "", endpoints: ["?data=assets&key={KEY}"] },
+                { name: "Santiment", url: "https://api.santiment.net/graphql", key: "", endpoints: [] },
+                { name: "The TIE", url: "https://api.thetie.io", key: "", endpoints: [] },
+                { name: "CryptoQuant", url: "https://api.cryptoquant.com/v1", key: "", endpoints: [] },
+                { name: "Glassnode Social", url: "https://api.glassnode.com/v1/metrics/social", key: "", endpoints: [] },
+                { name: "Augmento", url: "https://api.augmento.ai/v1", key: "", endpoints: [] }
             ],
             analytics: [
-                {name: "Whale Alert", url: "https://api.whale-alert.io/v1", key: "", endpoints: ["/transactions?api_key={KEY}&min_value=1000000"]},
-                {name: "Nansen", url: "https://api.nansen.ai/v1", key: "", endpoints: []},
-                {name: "DeBank", url: "https://api.debank.com", key: "", endpoints: []},
-                {name: "Zerion", url: "https://api.zerion.io", key: "", endpoints: []},
-                {name: "WhaleMap", url: "https://whalemap.io", key: "", endpoints: []},
-                {name: "The Graph", url: "https://api.thegraph.com/subgraphs", key: "", endpoints: []},
-                {name: "Glassnode", url: "https://api.glassnode.com/v1", key: "", endpoints: []},
-                {name: "IntoTheBlock", url: "https://api.intotheblock.com/v1", key: "", endpoints: []},
-                {name: "Dune", url: "https://api.dune.com/api/v1", key: "", endpoints: []},
-                {name: "Covalent", url: "https://api.covalenthq.com/v1", key: "", endpoints: ["/1/address/{address}/balances_v2/"]},
-                {name: "Moralis", url: "https://deep-index.moralis.io/api/v2", key: "", endpoints: []},
-                {name: "Transpose", url: "https://api.transpose.io", key: "", endpoints: []},
-                {name: "Footprint", url: "https://api.footprint.network", key: "", endpoints: []},
-                {name: "Bitquery", url: "https://graphql.bitquery.io", key: "", endpoints: []},
-                {name: "Arkham", url: "https://api.arkham.com", key: "", endpoints: []},
-                {name: "Clank", url: "https://clankapp.com/api", key: "", endpoints: []},
-                {name: "Hugging Face", url: "https://api-inference.huggingface.co/models", key: "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",
-                 endpoints: ["/ElKulako/cryptobert"]}
+                { name: "Whale Alert", url: "https://api.whale-alert.io/v1", key: "", endpoints: ["/transactions?api_key={KEY}&min_value=1000000"] },
+                { name: "Nansen", url: "https://api.nansen.ai/v1", key: "", endpoints: [] },
+                { name: "DeBank", url: "https://api.debank.com", key: "", endpoints: [] },
+                { name: "Zerion", url: "https://api.zerion.io", key: "", endpoints: [] },
+                { name: "WhaleMap", url: "https://whalemap.io", key: "", endpoints: [] },
+                { name: "The Graph", url: "https://api.thegraph.com/subgraphs", key: "", endpoints: [] },
+                { name: "Glassnode", url: "https://api.glassnode.com/v1", key: "", endpoints: [] },
+                { name: "IntoTheBlock", url: "https://api.intotheblock.com/v1", key: "", endpoints: [] },
+                { name: "Dune", url: "https://api.dune.com/api/v1", key: "", endpoints: [] },
+                { name: "Covalent", url: "https://api.covalenthq.com/v1", key: "", endpoints: ["/1/address/{address}/balances_v2/"] },
+                { name: "Moralis", url: "https://deep-index.moralis.io/api/v2", key: "", endpoints: [] },
+                { name: "Transpose", url: "https://api.transpose.io", key: "", endpoints: [] },
+                { name: "Footprint", url: "https://api.footprint.network", key: "", endpoints: [] },
+                { name: "Bitquery", url: "https://graphql.bitquery.io", key: "", endpoints: [] },
+                { name: "Arkham", url: "https://api.arkham.com", key: "", endpoints: [] },
+                { name: "Clank", url: "https://clankapp.com/api", key: "", endpoints: [] },
+                {
+                    name: "Hugging Face", url: "https://api-inference.huggingface.co/models", key: "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",
+                    endpoints: ["/ElKulako/cryptobert"]
+                }
             ]
         };
 
@@ -1098,14 +1185,14 @@
             try {
                 const headers = headersText ? JSON.parse(headersText) : {};
                 const options = { method: currentMethod, headers };
-                
+
                 if ((currentMethod === 'POST' || currentMethod === 'PUT') && bodyText) {
                     options.body = bodyText;
                 }
 
                 const response = await fetch(url, options);
                 const data = await response.json();
-                
+
                 responseJson.textContent = JSON.stringify(data, null, 2);
                 showToast('✅', 'Request successful!');
             } catch (error) {
@@ -1155,4 +1242,5 @@
         });
     </script>
 </body>
+
 </html>

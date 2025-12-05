@@ -22,8 +22,9 @@ class HuggingFaceInferenceClient:
     """
     
     def __init__(self):
-        self.api_token = os.getenv("HF_API_TOKEN", "")
-        self.base_url = "https://api-inference.huggingface.co/models"
+        # Strip whitespace from token to avoid "Illegal header value" errors
+        self.api_token = (os.getenv("HF_API_TOKEN") or os.getenv("HF_TOKEN") or "").strip()
+        self.base_url = "https://router.huggingface.co/models"
         self.timeout = 30.0  # HF models can take time to load
         
         # Real sentiment analysis models
@@ -35,9 +36,10 @@ class HuggingFaceInferenceClient:
         }
         
         self.headers = {
-            "Authorization": f"Bearer {self.api_token}",
             "Content-Type": "application/json"
         }
+        if self.api_token:
+            self.headers["Authorization"] = f"Bearer {self.api_token}"
     
     def _normalize_sentiment_label(self, label: str, score: float) -> tuple[str, str]:
         """
@@ -199,6 +201,34 @@ class HuggingFaceInferenceClient:
                     status_code=400,
                     detail="Invalid text or parameters"
                 )
+            elif e.response.status_code in (404, 410):
+                # Endpoint moved or model not available on old host; provide safe fallback
+                logger.warning("⚠ HuggingFace endpoint returned 404/410; using keyword fallback")
+                # Simple keyword-based sentiment fallback
+                text_lower = (text or "").lower()
+                pos_kw = ["bull", "up", "gain", "profit", "surge", "rally", "strong"]
+                neg_kw = ["bear", "down", "loss", "drop", "dump", "sell", "weak"]
+                pos_score = sum(k in text_lower for k in pos_kw)
+                neg_score = sum(k in text_lower for k in neg_kw)
+                if pos_score > neg_score:
+                    label, sentiment = ("POSITIVE", "positive")
+                    score = 0.7
+                elif neg_score > pos_score:
+                    label, sentiment = ("NEGATIVE", "negative")
+                    score = 0.7
+                else:
+                    label, sentiment = ("NEUTRAL", "neutral")
+                    score = 0.5
+                return {
+                    "label": label,
+                    "score": score,
+                    "sentiment": sentiment,
+                    "confidence": score,
+                    "text": text[:100] + ("..." if len(text) > 100 else ""),
+                    "model": "fallback-keywords",
+                    "source": "fallback",
+                    "timestamp": int(datetime.utcnow().timestamp() * 1000)
+                }
             else:
                 logger.error(f"❌ HuggingFace API HTTP error: {e}")
                 raise HTTPException(

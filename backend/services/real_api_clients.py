@@ -40,9 +40,10 @@ class RealAPIConfiguration:
     NEWSAPI_BASE_URL = "https://newsapi.org/v2"
     
     # HuggingFace Space - کلید جدید
-    HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
-    HF_SPACE_BASE_URL = os.getenv("HF_SPACE_BASE_URL", "https://really-amin-datasourceforcryptocurrency.hf.space")
-    HF_SPACE_WS_URL = os.getenv("HF_SPACE_WS_URL", "wss://really-amin-datasourceforcryptocurrency.hf.space/ws")
+    # IMPORTANT: Strip whitespace to avoid "Illegal header value" errors
+    HF_API_TOKEN = os.getenv("HF_API_TOKEN", "").strip()
+    HF_SPACE_BASE_URL = os.getenv("HF_SPACE_BASE_URL", "https://really-amin-datasourceforcryptocurrency.hf.space").strip()
+    HF_SPACE_WS_URL = os.getenv("HF_SPACE_WS_URL", "wss://really-amin-datasourceforcryptocurrency.hf.space/ws").strip()
     
     # منابع اضافی جدید
     # TronGrid (منبع دوم برای Tron)
@@ -179,49 +180,201 @@ class CoinMarketCapClient:
     
     async def _get_ohlc_fallback(self, symbol: str, interval: str, limit: int) -> Dict[str, Any]:
         """
-        Fallback to Binance for OHLC data (also REAL)
+        Fallback chain for OHLC data with at least 3 providers
+        Priority: Binance → CoinGecko → CoinPaprika → CoinCap → CryptoCompare
         """
-        try:
-            interval_map = {"1m": "1m", "5m": "5m", "15m": "15m", "1h": "1h", "4h": "4h", "1d": "1d"}
-            binance_interval = interval_map.get(interval, "1h")
-            
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(
-                    "https://api.binance.com/api/v3/klines",
-                    params={
-                        "symbol": f"{symbol}USDT",
-                        "interval": binance_interval,
-                        "limit": limit
-                    }
-                )
-                response.raise_for_status()
-                klines = response.json()
-                
-                # Transform to standard format
-                ohlc_data = []
-                for kline in klines:
-                    ohlc_data.append({
-                        "ts": int(kline[0]),
-                        "open": float(kline[1]),
-                        "high": float(kline[2]),
-                        "low": float(kline[3]),
-                        "close": float(kline[4]),
-                        "volume": float(kline[5])
-                    })
-                
-                logger.info(f"✅ Binance fallback: Fetched {len(ohlc_data)} real candles for {symbol}")
-                return {
-                    "success": True,
-                    "data": ohlc_data,
-                    "meta": {
-                        "source": "binance",
-                        "timestamp": datetime.utcnow().isoformat(),
-                        "fallback": True
-                    }
+        fallback_providers = [
+            ("binance", self._fetch_binance_ohlc),
+            ("coingecko", self._fetch_coingecko_ohlc),
+            ("coinpaprika", self._fetch_coinpaprika_ohlc),
+            ("coincap", self._fetch_coincap_ohlc),
+            ("cryptocompare", self._fetch_cryptocompare_ohlc)
+        ]
+        
+        last_error = None
+        for provider_name, fetch_func in fallback_providers:
+            try:
+                logger.info(f"🔄 Trying OHLC fallback: {provider_name}")
+                result = await fetch_func(symbol, interval, limit)
+                if result and result.get("success"):
+                    logger.info(f"✅ {provider_name} fallback succeeded: {len(result.get('data', []))} candles")
+                    return result
+            except Exception as e:
+                logger.warning(f"⚠️ {provider_name} fallback failed: {e}")
+                last_error = e
+                continue
+        
+        logger.error(f"❌ All OHLC fallback providers failed. Last error: {last_error}")
+        raise HTTPException(status_code=503, detail=f"All OHLC sources failed. Tried: {[p[0] for p in fallback_providers]}")
+    
+    async def _fetch_binance_ohlc(self, symbol: str, interval: str, limit: int) -> Dict[str, Any]:
+        """Fallback 1: Binance"""
+        interval_map = {"1m": "1m", "5m": "5m", "15m": "15m", "1h": "1h", "4h": "4h", "1d": "1d"}
+        binance_interval = interval_map.get(interval, "1h")
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                "https://api.binance.com/api/v3/klines",
+                params={
+                    "symbol": f"{symbol}USDT",
+                    "interval": binance_interval,
+                    "limit": limit
                 }
-        except Exception as e:
-            logger.error(f"❌ Binance fallback failed: {e}")
-            raise HTTPException(status_code=503, detail="All OHLC sources failed")
+            )
+            response.raise_for_status()
+            klines = response.json()
+            
+            ohlc_data = []
+            for kline in klines:
+                ohlc_data.append({
+                    "ts": int(kline[0]),
+                    "open": float(kline[1]),
+                    "high": float(kline[2]),
+                    "low": float(kline[3]),
+                    "close": float(kline[4]),
+                    "volume": float(kline[5])
+                })
+            
+            return {
+                "success": True,
+                "data": ohlc_data,
+                "meta": {"source": "binance", "timestamp": datetime.utcnow().isoformat(), "fallback": True}
+            }
+    
+    async def _fetch_coingecko_ohlc(self, symbol: str, interval: str, limit: int) -> Dict[str, Any]:
+        """Fallback 2: CoinGecko"""
+        # Map interval to CoinGecko format
+        days_map = {"1h": 1, "4h": 7, "1d": 30}
+        days = days_map.get(interval, 1)
+        
+        # Get coin ID from symbol
+        coin_id_map = {"BTC": "bitcoin", "ETH": "ethereum", "BNB": "binancecoin", "USDT": "tether"}
+        coin_id = coin_id_map.get(symbol.upper(), symbol.lower())
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                f"{RealAPIConfiguration.COINGECKO_BASE_URL}/coins/{coin_id}/ohlc",
+                params={"vs_currency": "usd", "days": days}
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            ohlc_data = []
+            for item in data[:limit]:
+                ohlc_data.append({
+                    "ts": item[0],
+                    "open": item[1],
+                    "high": item[2],
+                    "low": item[3],
+                    "close": item[4],
+                    "volume": 0  # CoinGecko doesn't provide volume in OHLC endpoint
+                })
+            
+            return {
+                "success": True,
+                "data": ohlc_data,
+                "meta": {"source": "coingecko", "timestamp": datetime.utcnow().isoformat(), "fallback": True}
+            }
+    
+    async def _fetch_coinpaprika_ohlc(self, symbol: str, interval: str, limit: int) -> Dict[str, Any]:
+        """Fallback 3: CoinPaprika"""
+        # Get coin ID
+        coin_id_map = {"BTC": "btc-bitcoin", "ETH": "eth-ethereum", "BNB": "bnb-binance-coin"}
+        coin_id = coin_id_map.get(symbol.upper(), f"{symbol.lower()}-{symbol.lower()}")
+        
+        # Map interval
+        quote_map = {"1h": "1h", "4h": "4h", "1d": "1d"}
+        quote = quote_map.get(interval, "1h")
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                f"https://api.coinpaprika.com/v1/coins/{coin_id}/ohlcv/historical",
+                params={"quote": "usd", "interval": quote}
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            ohlc_data = []
+            for item in data[-limit:]:  # Get last N items
+                ohlc_data.append({
+                    "ts": int(item["time_open"]),
+                    "open": float(item["open"]),
+                    "high": float(item["high"]),
+                    "low": float(item["low"]),
+                    "close": float(item["close"]),
+                    "volume": float(item["volume"])
+                })
+            
+            return {
+                "success": True,
+                "data": ohlc_data,
+                "meta": {"source": "coinpaprika", "timestamp": datetime.utcnow().isoformat(), "fallback": True}
+            }
+    
+    async def _fetch_coincap_ohlc(self, symbol: str, interval: str, limit: int) -> Dict[str, Any]:
+        """Fallback 4: CoinCap"""
+        coin_id_map = {"BTC": "bitcoin", "ETH": "ethereum", "BNB": "binance-coin"}
+        coin_id = coin_id_map.get(symbol.upper(), symbol.lower())
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                f"https://api.coincap.io/v2/assets/{coin_id}/history",
+                params={"interval": interval, "limit": limit}
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            ohlc_data = []
+            for item in data.get("data", []):
+                price = float(item.get("priceUsd", 0))
+                ohlc_data.append({
+                    "ts": int(item["time"]),
+                    "open": price,
+                    "high": price,
+                    "low": price,
+                    "close": price,
+                    "volume": float(item.get("volumeUsd", 0))
+                })
+            
+            return {
+                "success": True,
+                "data": ohlc_data,
+                "meta": {"source": "coincap", "timestamp": datetime.utcnow().isoformat(), "fallback": True}
+            }
+    
+    async def _fetch_cryptocompare_ohlc(self, symbol: str, interval: str, limit: int) -> Dict[str, Any]:
+        """Fallback 5: CryptoCompare"""
+        interval_map = {"1h": "histohour", "4h": "histohour", "1d": "histoday"}
+        endpoint = interval_map.get(interval, "histohour")
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                f"https://min-api.cryptocompare.com/data/v2/{endpoint}",
+                params={
+                    "fsym": symbol.upper(),
+                    "tsym": "USD",
+                    "limit": limit
+                }
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            ohlc_data = []
+            for item in data.get("Data", {}).get("Data", []):
+                ohlc_data.append({
+                    "ts": item["time"] * 1000,
+                    "open": float(item["open"]),
+                    "high": float(item["high"]),
+                    "low": float(item["low"]),
+                    "close": float(item["close"]),
+                    "volume": float(item["volumefrom"])
+                })
+            
+            return {
+                "success": True,
+                "data": ohlc_data,
+                "meta": {"source": "cryptocompare", "timestamp": datetime.utcnow().isoformat(), "fallback": True}
+            }
 
 
 class NewsAPIClient:
@@ -511,10 +664,13 @@ class HuggingFaceSpaceClient:
     """
     
     def __init__(self):
-        self.api_token = RealAPIConfiguration.HF_API_TOKEN
+        # Ensure token is stripped to prevent "Illegal header value" errors
+        self.api_token = (RealAPIConfiguration.HF_API_TOKEN or "").strip()
         self.base_url = RealAPIConfiguration.HF_SPACE_BASE_URL
         self.headers = {
             "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json"
+        } if self.api_token else {
             "Content-Type": "application/json"
         }
     

@@ -1,3 +1,12 @@
+/**
+ * WebSocket Client (OPTIONAL)
+ * 
+ * IMPORTANT: WebSocket is completely optional. All data can be retrieved via HTTP REST API.
+ * This WebSocket client is provided as an alternative method for users who prefer real-time streaming.
+ * If WebSocket is unavailable or you prefer HTTP, use the HTTP endpoints instead.
+ * 
+ * The application automatically falls back to HTTP polling if WebSocket fails.
+ */
 class WSClient {
     constructor() {
         this.socket = null;
@@ -9,11 +18,13 @@ class WSClient {
         this.backoff = 1000;
         this.maxBackoff = 16000;
         this.shouldReconnect = true;
+        this.isOptional = true; // Mark as optional feature
     }
 
     get url() {
         const { protocol, host } = window.location;
         const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+        // For HuggingFace Space: wss://Really-amin-Datasourceforcryptocurrency-2.hf.space/ws
         return `${wsProtocol}//${host}/ws`;
     }
 
@@ -48,14 +59,20 @@ class WSClient {
         this.statusSubscribers.forEach((cb) => cb(newStatus));
     }
 
+    /**
+     * Connect to WebSocket (OPTIONAL - HTTP endpoints work fine)
+     * This is just an alternative method for real-time updates.
+     * If connection fails, use HTTP polling instead.
+     */
     connect() {
         if (this.socket && (this.status === 'connecting' || this.status === 'connected')) {
             return;
         }
 
+        console.log('[WebSocket] Attempting optional WebSocket connection (HTTP endpoints are recommended)');
         this.updateStatus('connecting');
         this.socket = new WebSocket(this.url);
-        this.logEvent({ type: 'status', status: 'connecting' });
+        this.logEvent({ type: 'status', status: 'connecting', note: 'optional' });
 
         this.socket.addEventListener('open', () => {
             this.backoff = 1000;
@@ -78,20 +95,32 @@ class WSClient {
 
         this.socket.addEventListener('close', () => {
             this.updateStatus('disconnected');
-            this.logEvent({ type: 'status', status: 'disconnected' });
-            if (this.shouldReconnect) {
+            this.logEvent({ type: 'status', status: 'disconnected', note: 'optional - use HTTP if needed' });
+            // Don't auto-reconnect aggressively - WebSocket is optional
+            // Users can use HTTP endpoints instead
+            if (this.shouldReconnect && this.backoff < this.maxBackoff) {
                 const delay = this.backoff;
                 this.backoff = Math.min(this.backoff * 2, this.maxBackoff);
+                console.log(`[WebSocket] Optional reconnection in ${delay}ms (or use HTTP endpoints)`);
                 setTimeout(() => this.connect(), delay);
+            } else if (this.shouldReconnect) {
+                console.log('[WebSocket] Max reconnection attempts reached. Use HTTP endpoints instead.');
             }
         });
 
         this.socket.addEventListener('error', (error) => {
-            console.error('WebSocket error', error);
-            this.logEvent({ type: 'error', details: error.message || 'unknown' });
-            if (this.socket) {
-                this.socket.close();
-            }
+            console.warn('[WebSocket] Optional WebSocket error (non-critical):', error);
+            console.info('[WebSocket] Tip: Use HTTP REST API endpoints instead - they work perfectly');
+            this.logEvent({ 
+                type: 'error', 
+                details: error.message || 'unknown',
+                timestamp: new Date().toISOString(),
+                note: 'optional - HTTP endpoints available'
+            });
+            this.updateStatus('error');
+            
+            // Don't close immediately - let close event handle cleanup
+            // This allows for proper reconnection logic
         });
     }
 

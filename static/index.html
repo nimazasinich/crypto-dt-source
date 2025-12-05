@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Permissions-Policy with only recognized features to avoid browser warnings -->
+    <meta http-equiv="Permissions-Policy"
+        content="accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), sync-xhr=(), usb=(), web-share=()">
+    <!-- Suppress HF Space Permissions-Policy warnings - Load IMMEDIATELY before any other scripts -->
+    <script>
+        // Inline console filter - runs immediately to catch early warnings
+        (function() {
+            if (window._hfWarningsSuppressed) return;
+            const features = ['ambient-light-sensor', 'battery', 'document-domain', 'layout-animations', 'legacy-image-formats', 'oversized-images', 'vr', 'wake-lock'];
+            const originalWarn = console.warn;
+            const originalError = console.error;
+            const shouldSuppress = (msg) => {
+                if (!msg) return false;
+                const m = msg.toString().toLowerCase();
+                return m.includes('unrecognized feature:') && features.some(f => m.includes(f));
+            };
+            console.warn = function(...args) { if (!shouldSuppress(args[0])) originalWarn.apply(console, args); };
+            console.error = function(...args) { if (!shouldSuppress(args[0])) originalError.apply(console, args); };
+            window._hfWarningsSuppressed = true;
+        })();
+    </script>
+    <title>Crypto Intelligence Hub | Loading...</title>
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Load fonts with font-display swap for non-blocking -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet"></noscript>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #0b1121;
+            --accent-cyan: #2dd4bf;
+            --accent-purple: #818cf8;
+            --accent-pink: #ec4899;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(241, 245, 249, 0.75);
+            --glass: rgba(6, 12, 27, 0.85);
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary), #020617, var(--bg-secondary));
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 90%;
+            padding: 3rem;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 120px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 15px 40px rgba(45, 212, 191, 0.4);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+
+        .status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .status-card {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+        }
+
+        .status-card small {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .status-card strong {
+            display: block;
+            font-size: 1.5rem;
+            margin-top: 0.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 999px;
+            animation: progress 2s ease-in-out forwards;
+        }
+
+        @keyframes progress {
+            to {
+                width: 100%;
+            }
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 2rem auto;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .message {
+            color: var(--text-secondary);
+            margin-top: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .skip-link {
+            margin-top: 2rem;
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .skip-link:hover {
+            color: var(--accent-purple);
+            text-decoration: underline;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+
+        .error-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-details {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
+                <path d="M2 17L12 22L22 17"></path>
+                <path d="M2 12L12 17L22 12"></path>
+            </svg>
+        </div>
+
+        <h1>Crypto Intelligence Hub</h1>
+        <p class="subtitle">Unified data fabric, AI analytics, and real-time market intelligence</p>
+
+        <div id="status-section" class="status">
+            <div class="status-card">
+                <small>Backend</small>
+                <strong id="backend-status">Checking...</strong>
+            </div>
+            <div class="status-card">
+                <small>AI Models</small>
+                <strong id="models-status">Loading...</strong>
+            </div>
+            <div class="status-card">
+                <small>Data Streams</small>
+                <strong id="streams-status">Ready</strong>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+
+        <div class="spinner" id="spinner"></div>
+
+        <div id="message" class="message">
+            Initializing system components and checking backend health...
+        </div>
+
+        <div id="error-section" style="display: none;" class="error">
+            <div class="error-title">⚠️ Connection Issue</div>
+            <div class="error-details" id="error-message"></div>
+        </div>
+
+        <a href="/static/pages/dashboard/index.html" class="skip-link">Skip to Dashboard →</a>
+    </div>
+
+    <script defer>
+        const API_BASE = window.location.origin + '/api';
+        const REDIRECT_URL = '/static/pages/dashboard/index.html';
+
+        async function checkBackend() {
+            const backendStatus = document.getElementById('backend-status');
+            const modelsStatus = document.getElementById('models-status');
+            const messageEl = document.getElementById('message');
+            const errorSection = document.getElementById('error-section');
+            const errorMessage = document.getElementById('error-message');
+
+            try {
+                // Check backend health
+                messageEl.textContent = 'Connecting to backend...';
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const healthRes = await fetch(`${API_BASE}/health`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!healthRes.ok) {
+                    throw new Error(`Backend returned ${healthRes.status}`);
+                }
+
+                const healthData = await healthRes.json();
+                backendStatus.textContent = '✓ Online';
+                backendStatus.style.color = '#22c55e';
+
+                // Check models status
+                messageEl.textContent = 'Loading AI models...';
+                try {
+                    const modelsRes = await fetch(`${API_BASE}/models/status`);
+                    if (modelsRes.ok) {
+                        const modelsData = await modelsRes.json();
+                        const loadedCount = modelsData.models_loaded || 0;
+                        modelsStatus.textContent = `${loadedCount} Loaded`;
+                        modelsStatus.style.color = loadedCount > 0 ? '#22c55e' : '#f59e0b';
+                    } else {
+                        modelsStatus.textContent = 'Fallback';
+                        modelsStatus.style.color = '#f59e0b';
+                    }
+                } catch (err) {
+                    modelsStatus.textContent = 'Fallback';
+                    modelsStatus.style.color = '#f59e0b';
+                }
+
+                // All checks passed
+                messageEl.textContent = 'System ready! Redirecting...';
+
+                setTimeout(() => {
+                    window.location.href = REDIRECT_URL;
+                }, 1500);
+
+            } catch (error) {
+                console.error('Backend check failed:', error);
+                backendStatus.textContent = '✗ Offline';
+                backendStatus.style.color = '#ef4444';
+                modelsStatus.textContent = 'N/A';
+                modelsStatus.style.color = '#64748b';
+
+                errorSection.style.display = 'block';
+                errorMessage.textContent = `Failed to connect to backend: ${error.message}. Please ensure the server is running.`;
+                messageEl.textContent = 'Backend connection failed. You can still access the dashboard, but live data will not be available.';
+
+                document.getElementById('spinner').style.display = 'none';
+
+                // Still allow manual navigation
+                setTimeout(() => {
+                    const skipText = document.querySelector('.skip-link');
+                    skipText.textContent = 'Continue to Dashboard (Offline Mode) →';
+                    skipText.style.fontSize = '1.1rem';
+                    skipText.style.fontWeight = '600';
+                }, 1000);
+            }
+        }
+
+        // Start checking backend
+        setTimeout(checkBackend, 500);
+    </script>
+    <script>
+        // Suppress harmless Permissions-Policy warnings from Hugging Face Space container
+        // These warnings come from the HF Space iframe and cannot be controlled by the application
+        // Run IMMEDIATELY (not deferred) to catch warnings as early as possible
+        (function() {
+            if (window._hfWarningsSuppressed) return;
+            
+            const originalWarn = console.warn;
+            const originalError = console.error;
+            
+            // List of unrecognized features that cause warnings (from HF Space container)
+            const unrecognizedFeatures = [
+                'ambient-light-sensor',
+                'battery',
+                'document-domain',
+                'layout-animations',
+                'legacy-image-formats',
+                'oversized-images',
+                'vr',
+                'wake-lock',
+                'screen-wake-lock',
+                'virtual-reality',
+                'cross-origin-isolated',
+                'execution-while-not-rendered',
+                'execution-while-out-of-viewport',
+                'keyboard-map',
+                'navigation-override',
+                'publickey-credentials-get',
+                'xr-spatial-tracking'
+            ];
+            
+            const shouldSuppress = (message) => {
+                if (!message) return false;
+                const msg = message.toString().toLowerCase();
+                
+                // Check for "Unrecognized feature:" pattern
+                if (msg.includes('unrecognized feature:')) {
+                    return unrecognizedFeatures.some(feature => msg.includes(feature));
+                }
+                
+                // Also check for Permissions-Policy warnings
+                if (msg.includes('permissions-policy') || msg.includes('feature-policy')) {
+                    return unrecognizedFeatures.some(feature => msg.includes(feature));
+                }
+                
+                // Check for HF Space domain in warning
+                if (msg.includes('datasourceforcryptocurrency') && 
+                    unrecognizedFeatures.some(feature => msg.includes(feature))) {
+                    return true;
+                }
+                
+                return false;
+            };
+            
+            console.warn = function(...args) {
+                const message = args[0]?.toString() || '';
+                if (shouldSuppress(message)) {
+                    return; // Suppress silently
+                }
+                originalWarn.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                const message = args[0]?.toString() || '';
+                if (shouldSuppress(message)) {
+                    return; // Suppress silently
+                }
+                originalError.apply(console, args);
+            };
+            
+            window._hfWarningsSuppressed = true;
+        })();
+    </script>
+</body>
+
+</html>

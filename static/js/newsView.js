@@ -1,4 +1,5 @@
 import apiClient from './apiClient.js';
+import { escapeHtml } from '../shared/js/utils/sanitizer.js';
 
 class NewsView {
     constructor(section) {
@@ -45,7 +46,8 @@ class NewsView {
     async loadNews() {
         const result = await apiClient.getLatestNews(40);
         if (!result.ok) {
-            this.tableBody.innerHTML = `<tr><td colspan="6"><div class="inline-message inline-error">${result.error}</div></td></tr>`;
+            const errorMsg = escapeHtml(result.error || 'Failed to load news');
+            this.tableBody.innerHTML = `<tr><td colspan="6"><div class="inline-message inline-error">${errorMsg}</div></td></tr>`;
             return;
         }
         this.dataset = result.data || [];
@@ -78,17 +80,22 @@ class NewsView {
         }
         this.tableBody.innerHTML = filtered
             .map((news, index) => {
-                const rowId = news.id || `${news.title}-${index}`;
+                const rowId = news.id || `${escapeHtml(news.title || '')}-${index}`;
                 this.datasetMap.set(rowId, news);
+                // Sanitize all dynamic content
+                const source = escapeHtml(news.source || 'N/A');
+                const title = escapeHtml(news.title || '');
+                const symbols = (news.symbols || []).map(s => escapeHtml(s));
+                const sentiment = escapeHtml(news.sentiment || 'Unknown');
                 return `
-                <tr data-news-id="${rowId}">
+                <tr data-news-id="${escapeHtml(rowId)}">
                     <td>${new Date(news.published_at || news.date).toLocaleString()}</td>
-                    <td>${news.source || 'N/A'}</td>
-                    <td>${news.title}</td>
-                    <td>${(news.symbols || []).map((s) => `<span class="chip">${s}</span>`).join(' ')}</td>
-                    <td><span class="badge ${this.getSentimentClass(news.sentiment)}">${news.sentiment || 'Unknown'}</span></td>
+                    <td>${source}</td>
+                    <td>${title}</td>
+                    <td>${symbols.map((s) => `<span class="chip">${s}</span>`).join(' ')}</td>
+                    <td><span class="badge ${this.getSentimentClass(news.sentiment)}">${sentiment}</span></td>
                     <td>
-                        <button class="ghost" data-news-summarize="${rowId}">Summarize</button>
+                        <button class="ghost" data-news-summarize="${escapeHtml(rowId)}">Summarize</button>
                     </td>
                 </tr>
             `;
@@ -147,17 +154,23 @@ class NewsView {
     async showModal(item, analysis = null, errorMessage = null) {
         if (!this.modalContent) return;
         this.modalBackdrop.classList.add('active');
+        // Sanitize all user data before inserting into HTML
+        const title = escapeHtml(item.title || '');
+        const source = escapeHtml(item.source || '');
+        const summary = escapeHtml(item.summary || item.description || '');
+        const symbols = (item.symbols || []).map(s => escapeHtml(s));
+        
         this.modalContent.innerHTML = `
-            <h3>${item.title}</h3>
-            <p class="text-muted">${new Date(item.published_at || item.date).toLocaleString()} • ${item.source || ''}</p>
-            <p>${item.summary || item.description || ''}</p>
-            <div class="chip-row">${(item.symbols || []).map((s) => `<span class="chip">${s}</span>`).join('')}</div>
+            <h3>${title}</h3>
+            <p class="text-muted">${new Date(item.published_at || item.date).toLocaleString()} • ${source}</p>
+            <p>${summary}</p>
+            <div class="chip-row">${symbols.map((s) => `<span class="chip">${s}</span>`).join('')}</div>
             <div class="ai-block">${analysis ? '' : errorMessage ? '' : 'Click Summarize to run AI insights.'}</div>
         `;
         const aiBlock = this.modalContent.querySelector('.ai-block');
         if (!aiBlock) return;
         if (errorMessage) {
-            aiBlock.innerHTML = `<div class="inline-message inline-error">${errorMessage}</div>`;
+            aiBlock.innerHTML = `<div class="inline-message inline-error">${escapeHtml(errorMessage)}</div>`;
             return;
         }
         if (!analysis) {
@@ -165,10 +178,13 @@ class NewsView {
             return;
         }
         const sentiment = analysis.sentiment || analysis.analysis?.sentiment;
+        const analysisSummary = escapeHtml(analysis.summary || analysis.analysis?.summary || 'Model returned no summary.');
+        const sentimentLabel = escapeHtml(sentiment?.label || sentiment || 'Unknown');
+        const sentimentScore = sentiment?.score !== undefined ? escapeHtml(String(sentiment.score)) : '';
         aiBlock.innerHTML = `
             <h4>AI Summary</h4>
-            <p>${analysis.summary || analysis.analysis?.summary || 'Model returned no summary.'}</p>
-            <p><strong>Sentiment:</strong> ${sentiment?.label || sentiment || 'Unknown'} (${sentiment?.score ?? ''})</p>
+            <p>${analysisSummary}</p>
+            <p><strong>Sentiment:</strong> ${sentimentLabel}${sentimentScore ? ` (${sentimentScore})` : ''}</p>
         `;
     }
 

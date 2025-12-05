@@ -1,0 +1,6 @@
+# Real API Dependencies
+# Add these to your requirements.txt
+
+httpx>=0.25.0  # For async HTTP requests
+python-dotenv>=1.0.0  # For environment variables (optional)
+

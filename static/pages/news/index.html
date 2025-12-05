@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-theme="dark">
+<html lang="en" dir="ltr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Permissions-Policy" content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()">
   <meta name="description" content="Crypto Monitor ULTIMATE - Cryptocurrency News">
   <title>News | Crypto Monitor ULTIMATE</title>
   
@@ -13,7 +14,7 @@
   <link rel="stylesheet" href="/static/shared/css/components.css">
   <link rel="stylesheet" href="/static/shared/css/layout.css">
   <link rel="stylesheet" href="/static/shared/css/utilities.css">
-  <link rel="stylesheet" href="./news.css">
+  <link rel="stylesheet" href="/static/pages/news/news.css">
 </head>
 <body>
   <div class="app-container">
@@ -109,6 +110,24 @@
   </div>
 
   <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-  <script type="module" src="./news.js"></script>
+  
+  <!-- Initialize layout and page -->
+  <script type="module">
+    import { LayoutManager } from '/static/shared/js/core/layout-manager.js';
+    
+    // Initialize layouts first
+    await LayoutManager.init('news');
+    
+    // Then load page module
+    const { default: NewsPage } = await import('./news.js');
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (window.newsPage) {
+        window.newsPage.destroy();
+      }
+    });
+  </script>
 </body>
 </html>
+

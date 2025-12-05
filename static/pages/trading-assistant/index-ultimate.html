@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Ultimate Trading System - Live Market Intelligence</title>
+    
+    <!-- TradingView Widget -->
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Professional Color Palette */
+            --primary-blue: #2563eb;
+            --primary-cyan: #06b6d4;
+            --primary-purple: #7c3aed;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+            --warning-orange: #f59e0b;
+            
+            /* Backgrounds */
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            
+            /* Text */
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            
+            /* Borders */
+            --border-color: #334155;
+            --border-accent: #3b82f6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background Gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(37, 99, 235, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1920px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success-green);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--success-green);
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success-green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0 16px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .stat-item:first-child {
+            border-left: none;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-cyan);
+            margin-top: 4px;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr 380px;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: 280px 1fr 320px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card */
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--border-accent);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Crypto Grid */
+        .crypto-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .crypto-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .crypto-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .crypto-card:hover::before {
+            left: 100%;
+        }
+
+        .crypto-card:hover {
+            border-color: var(--primary-blue);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .crypto-card.active {
+            border-color: var(--primary-cyan);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(37, 99, 235, 0.1));
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+        }
+
+        .crypto-symbol {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .crypto-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .crypto-price {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--primary-cyan);
+        }
+
+        .crypto-change {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .crypto-change.positive {
+            color: var(--success-green);
+        }
+
+        .crypto-change.negative {
+            color: var(--danger-red);
+        }
+
+        /* Strategy Grid */
+        .strategy-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .strategy-card {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-darker));
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .strategy-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent);
+            transform: translate(50%, -50%);
+            transition: all 0.3s;
+        }
+
+        .strategy-card:hover::after {
+            width: 150px;
+            height: 150px;
+        }
+
+        .strategy-card:hover {
+            border-color: var(--primary-blue);
+            transform: translateX(4px);
+            box-shadow: -4px 0 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .strategy-card.active {
+            border-color: var(--primary-cyan);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(37, 99, 235, 0.15));
+            box-shadow: -4px 0 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .strategy-card.hts {
+            border-color: var(--primary-purple);
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(37, 99, 235, 0.15));
+        }
+
+        .strategy-card.hts.active {
+            box-shadow: -4px 0 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .strategy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .strategy-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .strategy-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-premium {
+            background: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
+            color: white;
+        }
+
+        .badge-standard {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--primary-blue);
+            border: 1px solid var(--primary-blue);
+        }
+
+        .strategy-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .strategy-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .strategy-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Chart Container */
+        #chart-container {
+            height: 600px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--bg-darker);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-cyan));
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green), #059669);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-red), #dc2626);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* Agent Status */
+        .agent-status {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid var(--success-green);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .agent-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-cyan));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .agent-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .agent-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Signals */
+        .signals-container {
+            max-height: 800px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .signals-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .signals-container::-webkit-scrollbar-track {
+            background: var(--bg-darker);
+            border-radius: 3px;
+        }
+
+        .signals-container::-webkit-scrollbar-thumb {
+            background: var(--primary-blue);
+            border-radius: 3px;
+        }
+
+        .signal-card {
+            background: var(--bg-card);
+            border-left: 4px solid var(--primary-blue);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .signal-card.buy {
+            border-left-color: var(--success-green);
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), var(--bg-card));
+        }
+
+        .signal-card.sell {
+            border-left-color: var(--danger-red);
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), var(--bg-card));
+        }
+
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .signal-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+
+        .signal-badge.buy {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-green);
+            border: 1px solid var(--success-green);
+        }
+
+        .signal-badge.sell {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-red);
+            border: 1px solid var(--danger-red);
+        }
+
+        .signal-symbol {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .signal-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .signal-body {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .signal-item {
+            background: var(--bg-darker);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .signal-item-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .signal-item-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        .value-price {
+            color: var(--primary-cyan);
+        }
+
+        .value-confidence {
+            color: var(--success-green);
+        }
+
+        .value-stop {
+            color: var(--danger-red);
+        }
+
+        .value-target {
+            color: var(--success-green);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .empty-subtext {
+            font-size: 0.875rem;
+        }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            padding: 16px 20px;
+            min-width: 300px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+
+        .toast-message {
+            flex: 1;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <div class="logo">🚀 ULTIMATE TRADING</div>
+                <div class="live-badge">
+                    <div class="live-dot"></div>
+                    <span>LIVE MARKET</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="stat-item">
+                    <div class="stat-label">Last Update</div>
+                    <div class="stat-value" id="last-update">--:--:--</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Signals</div>
+                    <div class="stat-value" id="total-signals">0</div>
+                </div>
+                <button class="btn btn-primary" id="refresh-btn">
+                    🔄 REFRESH
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Left Panel -->
+            <div>
+                <!-- Agent -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="card-title-icon">🤖</span>
+                            AI Agent
+                        </div>
+                    </div>
+                    <div class="agent-status">
+                        <div class="agent-avatar">🧠</div>
+                        <div class="agent-info">
+                            <div class="agent-name" id="agent-status">Ready</div>
+                            <div class="agent-desc">Monitoring <span id="agent-pairs">0</span> pairs</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-success btn-full" id="start-agent">
+                        ▶️ START AGENT
+                    </button>
+                    <button class="btn btn-danger btn-full" id="stop-agent" style="display: none; margin-top: 12px;">
+                        ⏹️ STOP AGENT
+                    </button>
+                </div>
+
+                <!-- Cryptos -->
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="card-title-icon">💰</span>
+                            Assets
+                        </div>
+                    </div>
+                    <div class="crypto-grid" id="crypto-grid"></div>
+                </div>
+
+                <!-- Strategies -->
+                <div class="card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="card-title-icon">🎯</span>
+                            Strategies
+                        </div>
+                    </div>
+                    <div class="strategy-grid" id="strategy-grid"></div>
+                </div>
+            </div>
+
+            <!-- Center Panel -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="card-title-icon">📈</span>
+                            Live Chart
+                        </div>
+                        <div class="stat-value" id="current-price">$0.00</div>
+                    </div>
+                    <div id="chart-container"></div>
+                </div>
+
+                <button class="btn btn-primary btn-full" id="analyze-btn" style="margin-top: 24px; padding: 16px;">
+                    ⚡ ANALYZE NOW
+                </button>
+            </div>
+
+            <!-- Right Panel -->
+            <div>
+                <div class="card" style="height: 100%;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="card-title-icon">🎯</span>
+                            Live Signals
+                        </div>
+                    </div>
+                    <div class="signals-container" id="signals-container">
+                        <div class="empty-state">
+                            <div class="empty-icon">📡</div>
+                            <div class="empty-text">No signals yet</div>
+                            <div class="empty-subtext">Start the agent or analyze manually</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Script -->
+    <script type="module" src="./trading-assistant-ultimate.js"></script>
+</body>
+</html>
+

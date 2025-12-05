@@ -1,312 +1,176 @@
 /**
- * Central Configuration for Crypto Monitor ULTIMATE
- * All constants, API endpoints, and settings in one place
+ * Configuration for API endpoints
+ * This file provides exports for the old api-client.js
+ * @version 2025-12-04
  */
 
-// ============================================================================
-// API CONFIGURATION
-// ============================================================================
-
-export const CONFIG = {
-  // Base API URL (relative to current origin)
-  API_BASE_URL: window.location.origin + '/api',
-  
-  // Polling intervals (milliseconds)
-  POLLING_INTERVALS: {
-    dashboard: 30000,      // 30 seconds
-    market: 30000,         // 30 seconds
-    providers: 60000,      // 1 minute
-    news: 120000,          // 2 minutes
-    diagnostics: 0,        // Manual refresh only
-  },
-  
-  // Cache configuration
-  CACHE_TTL: 60000,        // Default cache TTL: 1 minute
-  MAX_RETRIES: 3,          // Max retry attempts for failed requests
-  RETRY_DELAY: 3000,       // Delay between retries (ms)
-  
-  // Pagination
-  PAGINATION: {
-    defaultLimit: 50,
-    maxLimit: 100,
-  },
-  
-  // Chart timeframes
-  TIMEFRAMES: ['1D', '7D', '30D', '1Y'],
-  
-  // Theme options
-  THEMES: {
-    DARK: 'dark',
-    LIGHT: 'light',
-    SYSTEM: 'system',
-  },
-  
-  // LocalStorage keys
-  STORAGE_KEYS: {
-    THEME: 'crypto_monitor_theme',
-    PREFERENCES: 'crypto_monitor_preferences',
-    CACHE_PREFIX: 'cm_cache_',
-  },
-  
-  // Toast notification defaults
-  TOAST: {
-    DEFAULT_DURATION: 5000,
-    ERROR_DURATION: 7000,
-    MAX_VISIBLE: 5,
-  },
+// API Keys
+export const API_KEYS = {
+  ETHERSCAN: 'SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2',
+  ETHERSCAN_BACKUP: 'T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45',
+  BSCSCAN: 'K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT',
+  TRONSCAN: '7ae72726-bffe-4e74-9c33-97b761eeea21',
+  CMC: 'b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c',
+  CMC_BACKUP: '04cf4b5b-9868-465c-8ba0-9f2e78c92eb1',
+  NEWSAPI: 'pub_346789abc123def456789ghi012345jkl',
+  CRYPTOCOMPARE: 'e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f',
+  HUGGINGFACE: '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'
 };
 
-// ============================================================================
-// ROUTE DEFINITIONS
-// ============================================================================
-
-export const ROUTES = {
-  DASHBOARD: '/',
-  MARKET: '/market',
-  MODELS: '/models',
-  SENTIMENT: '/sentiment',
-  AI_ANALYST: '/ai-analyst',
-  TRADING: '/trading-assistant',
-  NEWS: '/news',
-  PROVIDERS: '/providers',
-  DIAGNOSTICS: '/diagnostics',
-  API_EXPLORER: '/api-explorer',
-};
-
-// ============================================================================
-// API ENDPOINTS
-// ============================================================================
-
+// API Endpoints configuration
 export const API_ENDPOINTS = {
-  // Health & Status
-  HEALTH: '/health',
-  STATUS: '/status',
-  STATS: '/stats',
-  
   // Market Data
-  MARKET: '/market',
-  TRENDING: '/trending',
-  SENTIMENT: '/sentiment',
-  DEFI: '/defi',
-  COINS_TOP: '/coins/top',
-  COIN_DETAILS: (symbol) => `/coins/${symbol}`,
-  COIN_HISTORY: (symbol) => `/coins/${symbol}/history`,
+  coingecko: {
+    baseUrl: 'https://api.coingecko.com/api/v3',
+    endpoints: {
+      simplePrice: '/simple/price',
+      coins: '/coins',
+      trending: '/search/trending',
+      global: '/global'
+    }
+  },
   
-  // Charts
-  PRICE_CHART: (symbol) => `/charts/price/${symbol}`,
-  ANALYZE_CHART: '/charts/analyze',
+  coinmarketcap: {
+    baseUrl: 'https://pro-api.coinmarketcap.com/v1',
+    key: API_KEYS.CMC,
+    endpoints: {
+      quotes: '/cryptocurrency/quotes/latest',
+      listings: '/cryptocurrency/listings/latest'
+    }
+  },
+  
+  binance: {
+    baseUrl: 'https://api.binance.com/api/v3',
+    endpoints: {
+      ticker: '/ticker/price',
+      ticker24hr: '/ticker/24hr',
+      klines: '/klines'
+    }
+  },
+  
+  coincap: {
+    baseUrl: 'https://api.coincap.io/v2',
+    endpoints: {
+      assets: '/assets',
+      history: '/assets/{id}/history'
+    }
+  },
   
   // News
-  NEWS_LATEST: '/news/latest',
-  NEWS_ANALYZE: '/news/analyze',
-  NEWS_SUMMARIZE: '/news/summarize',
+  cryptopanic: {
+    baseUrl: 'https://cryptopanic.com/api/v1',
+    endpoints: {
+      posts: '/posts'
+    }
+  },
   
-  // AI/ML Models
-  MODELS_LIST: '/models/list',
-  MODELS_STATUS: '/models/status',
-  MODELS_STATS: '/models/data/stats',
-  MODELS_TEST: '/models/test',
+  // Sentiment
+  alternativeMe: {
+    baseUrl: 'https://api.alternative.me',
+    endpoints: {
+      fng: '/fng'
+    }
+  },
   
-  // Sentiment Analysis
-  SENTIMENT_ANALYZE: '/sentiment/analyze',
-  SENTIMENT_GLOBAL: '/sentiment/global',
+  // Block Explorers
+  etherscan: {
+    baseUrl: 'https://api.etherscan.io/api',
+    key: API_KEYS.ETHERSCAN,
+    endpoints: {
+      balance: '?module=account&action=balance',
+      txlist: '?module=account&action=txlist'
+    }
+  },
   
-  // AI Advisor
-  AI_DECISION: '/ai/decision',
-  AI_SIGNALS: '/ai/signals',
+  bscscan: {
+    baseUrl: 'https://api.bscscan.com/api',
+    key: API_KEYS.BSCSCAN,
+    endpoints: {
+      balance: '?module=account&action=balance',
+      txlist: '?module=account&action=txlist'
+    }
+  },
   
-  // Datasets
-  DATASETS_LIST: '/datasets/list',
-  DATASET_PREVIEW: (name) => `/datasets/${name}/preview`,
-  
-  // Providers
-  PROVIDERS: '/providers',
-  PROVIDER_DETAILS: (id) => `/providers/${id}`,
-  PROVIDER_HEALTH: (id) => `/providers/${id}/health-check`,
-  PROVIDERS_CONFIG: '/providers/config',
-  
-  // Resources
-  RESOURCES: '/resources',
-  RESOURCES_DISCOVERY: '/resources/discovery/run',
-  
-  // Pools
-  POOLS: '/pools',
-  POOL_DETAILS: (id) => `/pools/${id}`,
-  POOL_CREATE: '/pools',
-  POOL_ROTATE: (id) => `/pools/${id}/rotate`,
-  
-  // Logs & Diagnostics
-  LOGS: '/logs',
-  LOGS_RECENT: '/logs/recent',
-  LOGS_ERRORS: '/logs/errors',
-  LOGS_CLEAR: '/logs',
-  
-  // HuggingFace Integration
-  HF_HEALTH: '/hf/health',
-  HF_RUN_SENTIMENT: '/hf/run-sentiment',
-  
-  // Feature Flags
-  FEATURE_FLAGS: '/feature-flags',
-  FEATURE_FLAG_UPDATE: (name) => `/feature-flags/${name}`,
-  FEATURE_FLAGS_RESET: '/feature-flags/reset',
+  tronscan: {
+    baseUrl: 'https://apilist.tronscanapi.com/api',
+    key: API_KEYS.TRONSCAN,
+    endpoints: {
+      account: '/account',
+      transactions: '/transaction'
+    }
+  }
 };
 
-// ============================================================================
-// PAGE METADATA
-// ============================================================================
-
+// Page metadata for navigation
 export const PAGE_METADATA = [
-  {
-    path: '/',
-    page: 'dashboard',
-    title: 'Dashboard | Crypto Monitor ULTIMATE',
-    icon: 'dashboard',
-    description: 'System overview and statistics',
-    polling: true,
-    interval: 30000,
-  },
-  {
-    path: '/dashboard',
-    page: 'dashboard',
-    title: 'Dashboard | Crypto Monitor ULTIMATE',
-    icon: 'dashboard',
-    description: 'System overview and statistics',
-    polling: true,
-    interval: 30000,
-  },
-  {
-    path: '/market',
-    page: 'market',
-    title: 'Market | Crypto Monitor ULTIMATE',
-    icon: 'market',
-    description: 'Real-time market data and charts',
-    polling: true,
-    interval: 30000,
-  },
-  {
-    path: '/models',
-    page: 'models',
-    title: 'AI Models | Crypto Monitor ULTIMATE',
-    icon: 'models',
-    description: 'Machine learning models status',
-    polling: false,
-    interval: 0,
-  },
-  {
-    path: '/sentiment',
-    page: 'sentiment',
-    title: 'Sentiment Analysis | Crypto Monitor ULTIMATE',
-    icon: 'sentiment',
-    description: 'AI-powered sentiment analysis',
-    polling: false,
-    interval: 0,
-  },
-  {
-    path: '/ai-analyst',
-    page: 'ai-analyst',
-    title: 'AI Analyst | Crypto Monitor ULTIMATE',
-    icon: 'aiAnalyst',
-    description: 'AI trading advisor and decision support',
-    polling: false,
-    interval: 0,
-  },
-  {
-    path: '/trading-assistant',
-    page: 'trading-assistant',
-    title: 'Trading Assistant | Crypto Monitor ULTIMATE',
-    icon: 'trading',
-    description: 'Trading signals and recommendations',
-    polling: false,
-    interval: 0,
-  },
-  {
-    path: '/news',
-    page: 'news',
-    title: 'News | Crypto Monitor ULTIMATE',
-    icon: 'news',
-    description: 'Curated cryptocurrency news',
-    polling: true,
-    interval: 120000,
-  },
-  {
-    path: '/providers',
-    page: 'providers',
-    title: 'Providers | Crypto Monitor ULTIMATE',
-    icon: 'providers',
-    description: 'API provider management',
-    polling: true,
-    interval: 60000,
-  },
-  {
-    path: '/diagnostics',
-    page: 'diagnostics',
-    title: 'Diagnostics | Crypto Monitor ULTIMATE',
-    icon: 'diagnostics',
-    description: 'System diagnostics and logs',
-    polling: false,
-    interval: 0,
-  },
-  {
-    path: '/api-explorer',
-    page: 'api-explorer',
-    title: 'API Explorer | Crypto Monitor ULTIMATE',
-    icon: 'apiExplorer',
-    description: 'Interactive API testing tool',
-    polling: false,
-    interval: 0,
-  },
-  {
-    path: '/crypto-api-hub',
-    page: 'crypto-api-hub',
-    title: 'Crypto API Hub | Crypto Monitor ULTIMATE',
-    icon: 'apiHub',
-    description: 'Comprehensive API resources dashboard',
-    polling: false,
-    interval: 0,
-  },
+  { page: 'dashboard', title: 'Dashboard | Crypto Hub', icon: 'dashboard' },
+  { page: 'market', title: 'Market | Crypto Hub', icon: 'trending_up' },
+  { page: 'models', title: 'AI Models | Crypto Hub', icon: 'psychology' },
+  { page: 'sentiment', title: 'Sentiment | Crypto Hub', icon: 'mood' },
+  { page: 'ai-analyst', title: 'AI Analyst | Crypto Hub', icon: 'analytics' },
+  { page: 'technical-analysis', title: 'Technical Analysis | Crypto Hub', icon: 'show_chart' },
+  { page: 'trading-assistant', title: 'Trading | Crypto Hub', icon: 'attach_money' },
+  { page: 'news', title: 'News | Crypto Hub', icon: 'newspaper' },
+  { page: 'providers', title: 'Providers | Crypto Hub', icon: 'cloud' },
+  { page: 'help', title: 'Help | Crypto Hub', icon: 'help' },
+  { page: 'settings', title: 'Settings | Crypto Hub', icon: 'settings' }
 ];
 
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
+// API configuration
+export const API_CONFIG = {
+  timeout: 10000,
+  retries: 3,
+  cacheTimeout: 60000, // 1 minute
+  
+  corsProxies: [
+    'https://api.allorigins.win/get?url=',
+    'https://proxy.cors.sh/',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ]
+};
 
-/**
- * Get page metadata by path
- */
-export function getPageMetadata(path) {
-  return PAGE_METADATA.find(p => p.path === path) || PAGE_METADATA[0];
+// Detect environment
+const IS_HUGGINGFACE = window.location.hostname.includes('hf.space') || window.location.hostname.includes('huggingface.co');
+const IS_LOCALHOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+// CONFIG object for api-client.js compatibility
+export const CONFIG = {
+  API_BASE_URL: window.location.origin,
+  API_TIMEOUT: 10000,
+  CACHE_TTL: 60000,
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 1000,
+  RETRIES: 3,
+  IS_HUGGINGFACE: IS_HUGGINGFACE,
+  IS_LOCALHOST: IS_LOCALHOST,
+  ENVIRONMENT: IS_HUGGINGFACE ? 'huggingface' : IS_LOCALHOST ? 'local' : 'production'
+};
+
+// Helper function to build API URLs
+export function buildApiUrl(endpoint, params = {}) {
+  const base = CONFIG.API_BASE_URL;
+  let url = `${base}${endpoint}`;
+  
+  if (Object.keys(params).length > 0) {
+    const queryString = new URLSearchParams(params).toString();
+    url += (url.includes('?') ? '&' : '?') + queryString;
+  }
+  
+  return url;
 }
 
-/**
- * Get polling interval for current page
- */
-export function getPollingInterval(pageName) {
-  const metadata = PAGE_METADATA.find(p => p.page === pageName);
-  return metadata?.polling ? metadata.interval : 0;
+// Helper function to get cache key
+export function getCacheKey(endpoint, params = {}) {
+  return `${endpoint}:${JSON.stringify(params)}`;
 }
 
-/**
- * Build full API URL
- */
-export function buildApiUrl(endpoint) {
-  return `${CONFIG.API_BASE_URL}${endpoint}`;
-}
-
-/**
- * Get cache key for endpoint
- */
-export function getCacheKey(endpoint) {
-  return `${CONFIG.STORAGE_KEYS.CACHE_PREFIX}${endpoint}`;
-}
-
-// Export as default for convenience
+// Export default configuration
 export default {
   CONFIG,
-  ROUTES,
+  API_KEYS,
   API_ENDPOINTS,
   PAGE_METADATA,
-  getPageMetadata,
-  getPollingInterval,
+  API_CONFIG,
   buildApiUrl,
-  getCacheKey,
+  getCacheKey
 };

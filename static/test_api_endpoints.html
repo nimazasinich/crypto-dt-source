@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Endpoints Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .endpoint {
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 3px;
+        }
+        .endpoint-url {
+            color: #64B5F6;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 3px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            border-left: 4px solid #f44336;
+        }
+        .loading {
+            color: #FFC107;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 API Endpoints Test</h1>
+    <p>Testing all fixed endpoints...</p>
+
+    <div class="test-section">
+        <h2>1. Health Check</h2>
+        <div class="endpoint">
+            <div class="endpoint-url">GET /api/health</div>
+            <button onclick="testHealth()">Test</button>
+            <div id="health-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Exchange Rate (Fixed)</h2>
+        <div class="endpoint">
+            <div class="endpoint-url">GET /api/service/rate?pair=BTC/USDT</div>
+            <button onclick="testRate()">Test</button>
+            <div id="rate-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Market OHLC (New)</h2>
+        <div class="endpoint">
+            <div class="endpoint-url">GET /api/market/ohlc?symbol=BTC&interval=1h&limit=10</div>
+            <button onclick="testOHLC()">Test</button>
+            <div id="ohlc-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. OHLCV (New)</h2>
+        <div class="endpoint">
+            <div class="endpoint-url">GET /api/ohlcv?symbol=BTC&timeframe=1h&limit=10</div>
+            <button onclick="testOHLCV()">Test</button>
+            <div id="ohlcv-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Latest News (Fixed - Real Data Only)</h2>
+        <div class="endpoint">
+            <div class="endpoint-url">GET /api/news/latest?limit=3</div>
+            <button onclick="testNews()">Test</button>
+            <div id="news-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Test All Endpoints</h2>
+        <button onclick="testAll()" style="background: #2196F3; font-size: 16px; padding: 12px 24px;">🚀 Test All Endpoints</button>
+        <div id="all-results" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        async function testEndpoint(url, resultId) {
+            const resultDiv = document.getElementById(resultId);
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '⏳ Testing...';
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(url);
+                const duration = Date.now() - startTime;
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ SUCCESS (${duration}ms)\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ ERROR ${response.status}\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ FAILED\n\n${error.message}\n\n⚠️ Make sure Flask server is running and restarted after code changes!`;
+            }
+        }
+
+        function testHealth() {
+            testEndpoint(`${API_BASE}/api/health`, 'health-result');
+        }
+
+        function testRate() {
+            testEndpoint(`${API_BASE}/api/service/rate?pair=BTC/USDT`, 'rate-result');
+        }
+
+        function testOHLC() {
+            testEndpoint(`${API_BASE}/api/market/ohlc?symbol=BTC&interval=1h&limit=10`, 'ohlc-result');
+        }
+
+        function testOHLCV() {
+            testEndpoint(`${API_BASE}/api/ohlcv?symbol=BTC&timeframe=1h&limit=10`, 'ohlcv-result');
+        }
+
+        function testNews() {
+            testEndpoint(`${API_BASE}/api/news/latest?limit=3`, 'news-result');
+        }
+
+        async function testAll() {
+            const allResults = document.getElementById('all-results');
+            allResults.className = 'result loading';
+            allResults.textContent = '⏳ Testing all endpoints...\n\n';
+
+            const endpoints = [
+                { name: 'Health', url: '/api/health' },
+                { name: 'Exchange Rate', url: '/api/service/rate?pair=BTC/USDT' },
+                { name: 'Market OHLC', url: '/api/market/ohlc?symbol=BTC&interval=1h&limit=10' },
+                { name: 'OHLCV', url: '/api/ohlcv?symbol=BTC&timeframe=1h&limit=10' },
+                { name: 'Latest News', url: '/api/news/latest?limit=3' }
+            ];
+
+            let results = [];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const startTime = Date.now();
+                    const response = await fetch(`${API_BASE}${endpoint.url}`);
+                    const duration = Date.now() - startTime;
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        results.push(`✅ ${endpoint.name}: SUCCESS (${duration}ms)`);
+                    } else {
+                        results.push(`❌ ${endpoint.name}: ERROR ${response.status}`);
+                    }
+                } catch (error) {
+                    results.push(`❌ ${endpoint.name}: FAILED - ${error.message}`);
+                }
+                
+                allResults.textContent = results.join('\n') + '\n\n⏳ Testing...';
+            }
+
+            const successCount = results.filter(r => r.startsWith('✅')).length;
+            const totalCount = results.length;
+            
+            allResults.className = successCount === totalCount ? 'result success' : 'result error';
+            allResults.textContent = results.join('\n') + `\n\n📊 Results: ${successCount}/${totalCount} passed`;
+            
+            if (successCount < totalCount) {
+                allResults.textContent += '\n\n⚠️ Some endpoints failed. Make sure:';
+                allResults.textContent += '\n1. Flask server is running (python app.py)';
+                allResults.textContent += '\n2. Server was restarted after code changes';
+                allResults.textContent += '\n3. Check server logs for errors';
+            }
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            setTimeout(testAll, 1000);
+        });
+    </script>
+</body>
+</html>
+

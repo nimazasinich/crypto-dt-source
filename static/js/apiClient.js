@@ -143,9 +143,16 @@ class ApiClient {
     getMarketStats() {
         return this.get('/api/market/stats');
     }
-
-    getLatestNews(limit = 20) {
-        return this.get(`/api/news/latest?limit=${limit}`);
+    
+    async getLatestNews(limit = 20) {
+        try {
+            // Primary endpoint for unified/real-data servers
+            return await this.get(`/api/news/latest?limit=${limit}`);
+        } catch (error) {
+            console.warn('[APIClient] /api/news/latest failed, falling back to /news/latest', error);
+            // Fallback to aggregated news endpoint provided by direct_api router
+            return await this.get(`/news/latest?limit=${limit}`);
+        }
     }
 
     getProviders() {

@@ -1,57 +1,36 @@
-# Unified dependencies for Crypto Intelligence Hub (HuggingFace Space)
-# Optimized for HF deployment with minimal conflicts
+# ============================================================================
+# CRYPTO INTELLIGENCE HUB - Hugging Face Spaces Requirements
+# ============================================================================
 
-# ===== Core API Stack =====
+# Core FastAPI dependencies
 fastapi==0.115.0
 uvicorn[standard]==0.30.0
 pydantic==2.9.0
 pydantic-settings==2.5.0
+
+# Database & HTTP
 sqlalchemy==2.0.35
 httpx==0.27.2
-websockets>=10.4,<12.0  # Compatible with gradio-client
-python-dotenv==1.0.1
-python-multipart==0.0.9
 requests==2.32.3
 aiohttp==3.10.5
 
-# ===== Data Processing =====
+# Data processing
 pandas==2.2.3
 numpy>=1.26.0,<2.0.0
 
-# ===== Gradio Dashboard =====
-gradio==4.44.0
-plotly==5.24.1
+# Utilities
+python-dotenv==1.0.1
+python-multipart==0.0.9
+python-dateutil>=2.9.0
+pytz>=2024.1
 psutil==6.0.0
+tenacity>=9.0.0
 
-# ===== HuggingFace & AI/ML =====
-# Core transformers with minimal deps
-transformers>=4.45.0
-tokenizers>=0.20.0
-huggingface-hub>=0.25.0
-safetensors>=0.4.0
-
-# Datasets library
-datasets>=3.0.0
-
-# PyTorch - CPU only for space efficiency
-torch>=2.4.0,<2.5.0
-torchaudio>=2.4.0,<2.5.0
-
-# Optional: Sentence transformers for embeddings
-sentence-transformers>=3.1.0
-
-# Tokenization
-sentencepiece==0.2.0
-
-# ===== Content Parsing =====
+# Web scraping (for news/data)
 feedparser==6.0.11
 beautifulsoup4==4.12.3
 lxml==5.3.0
 
-# ===== Utilities =====
-python-dateutil>=2.9.0
-pytz>=2024.1
-tenacity>=9.0.0
-
-# ===== Optional: Acceleration =====
-# accelerate>=0.34.0  # Uncomment if using multi-GPU
+# Flask fallback (lightweight)
+Flask==3.0.0
+flask-cors==4.0.0

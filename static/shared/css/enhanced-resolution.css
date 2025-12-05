@@ -1,0 +1,381 @@
+/**
+ * Enhanced Resolution & Content Density System
+ * Optimizes layout for maximum content visibility without sacrificing aesthetics
+ * Supports 1080p, 1440p, 4K displays with adaptive scaling
+ */
+
+/* =============================================================================
+   VIEWPORT OPTIMIZATION
+   ============================================================================= */
+
+:root {
+  /* Enhanced spacing for higher density */
+  --content-max-width: 1920px;
+  --content-padding: clamp(1rem, 2vw, 2rem);
+  --panel-gap: clamp(0.75rem, 1.5vw, 1.5rem);
+  
+  /* Compact spacing variants */
+  --space-compact-1: 0.25rem;
+  --space-compact-2: 0.5rem;
+  --space-compact-3: 0.75rem;
+  --space-compact-4: 1rem;
+  
+  /* Table density */
+  --table-row-height: 2.5rem;
+  --table-cell-padding: 0.5rem 0.75rem;
+  --table-font-size: 0.875rem;
+  
+  /* Card density */
+  --card-padding-compact: 1rem;
+  --card-gap-compact: 0.75rem;
+}
+
+/* Adaptive container widths based on viewport */
+@media (min-width: 1920px) {
+  :root {
+    --content-max-width: 2400px;
+    --table-row-height: 2.75rem;
+  }
+}
+
+@media (min-width: 2560px) {
+  :root {
+    --content-max-width: 3200px;
+    --table-row-height: 3rem;
+  }
+}
+
+/* =============================================================================
+   ENHANCED LAYOUT SYSTEM
+   ============================================================================= */
+
+.page-content {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--content-padding);
+}
+
+/* Compact mode for data-heavy pages */
+.page-content.compact-mode {
+  --space-4: var(--space-compact-4);
+  --space-3: var(--space-compact-3);
+  --space-2: var(--space-compact-2);
+}
+
+/* =============================================================================
+   HIGH-DENSITY GRID SYSTEM
+   ============================================================================= */
+
+.grid-dense {
+  display: grid;
+  gap: var(--panel-gap);
+}
+
+/* Responsive grid templates */
+.grid-dense.cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-dense.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.grid-dense.cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.grid-dense.cols-auto {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* Adaptive columns based on viewport */
+@media (min-width: 1920px) {
+  .grid-dense.cols-auto {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+@media (min-width: 2560px) {
+  .grid-dense.cols-auto {
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  }
+}
+
+/* =============================================================================
+   ENHANCED TABLE STYLES
+   ============================================================================= */
+
+.table-enhanced {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--table-font-size);
+}
+
+.table-enhanced thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: var(--table-cell-padding);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table-enhanced tbody tr {
+  height: var(--table-row-height);
+  transition: background 0.15s ease;
+}
+
+.table-enhanced tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.table-enhanced tbody td {
+  padding: var(--table-cell-padding);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+/* Compact table variant */
+.table-enhanced.table-compact tbody tr {
+  height: 2rem;
+}
+
+.table-enhanced.table-compact tbody td,
+.table-enhanced.table-compact thead th {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+/* =============================================================================
+   COMPACT CARD SYSTEM
+   ============================================================================= */
+
+.card-compact {
+  padding: var(--card-padding-compact);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-compact .card-header {
+  margin-bottom: var(--card-gap-compact);
+}
+
+.card-compact .card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.card-compact .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap-compact);
+}
+
+/* =============================================================================
+   MULTI-COLUMN LAYOUTS
+   ============================================================================= */
+
+.layout-2col {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: var(--panel-gap);
+}
+
+.layout-3col {
+  display: grid;
+  grid-template-columns: 300px 1fr 350px;
+  gap: var(--panel-gap);
+}
+
+.layout-sidebar-main {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--panel-gap);
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1400px) {
+  .layout-2col,
+  .layout-3col,
+  .layout-sidebar-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1920px) {
+  .layout-2col {
+    grid-template-columns: 1fr 480px;
+  }
+  
+  .layout-3col {
+    grid-template-columns: 350px 1fr 400px;
+  }
+  
+  .layout-sidebar-main {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+/* =============================================================================
+   SCROLLABLE CONTAINERS
+   ============================================================================= */
+
+.scrollable-panel {
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.5) rgba(255, 255, 255, 0.05);
+}
+
+.scrollable-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.scrollable-panel::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  border-radius: 4px;
+}
+
+.scrollable-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+
+/* =============================================================================
+   FLEXIBLE CHART CONTAINERS
+   ============================================================================= */
+
+.chart-container-enhanced {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  height: clamp(400px, 50vh, 700px);
+}
+
+@media (min-width: 1920px) {
+  .chart-container-enhanced {
+    min-height: 500px;
+    height: clamp(500px, 55vh, 800px);
+  }
+}
+
+@media (min-width: 2560px) {
+  .chart-container-enhanced {
+    min-height: 600px;
+    height: clamp(600px, 60vh, 1000px);
+  }
+}
+
+/* =============================================================================
+   DATA VISUALIZATION ENHANCEMENTS
+   ============================================================================= */
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-compact-3);
+}
+
+.metric-card {
+  padding: var(--space-compact-3);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.metric-change {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* =============================================================================
+   RESPONSIVE UTILITIES
+   ============================================================================= */
+
+/* Hide on smaller screens */
+@media (max-width: 1400px) {
+  .hide-below-xl {
+    display: none !important;
+  }
+}
+
+/* Show only on large screens */
+.show-xl-up {
+  display: none;
+}
+
+@media (min-width: 1920px) {
+  .show-xl-up {
+    display: block;
+  }
+}
+
+/* Compact spacing on smaller viewports */
+@media (max-width: 1600px) {
+  :root {
+    --panel-gap: 1rem;
+    --content-padding: 1rem;
+  }
+}
+
+/* =============================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================================================= */
+
+/* GPU acceleration for smooth scrolling */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =============================================================================
+   PRINT STYLES
+   ============================================================================= */
+
+@media print {
+  .page-content {
+    max-width: 100%;
+    padding: 0;
+  }
+  
+  .table-enhanced {
+    font-size: 10pt;
+  }
+  
+  .card-compact {
+    break-inside: avoid;
+  }
+}
+

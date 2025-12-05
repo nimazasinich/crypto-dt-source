@@ -1,0 +1,413 @@
+{
+  "report_metadata": {
+    "generated_at": "2025-12-03T00:00:00Z",
+    "qa_agent": "Automated Policy Enforcement System",
+    "policy_version": "1.0",
+    "scan_scope": "Full codebase (frontend + backend)",
+    "overall_status": "FAIL",
+    "total_violations": 25,
+    "critical_violations": 8,
+    "warnings": 17
+  },
+  "violations": {
+    "external_api_calls_frontend": [
+      {
+        "id": "EXT-001",
+        "severity": "ERROR",
+        "type": "Direct External API Call from Frontend",
+        "file": "static/pages/trading-assistant/trading-assistant-professional.js",
+        "line": 347,
+        "code_snippet": "const url = `${API_CONFIG.coingecko}/simple/price?ids=${coinId}&vs_currencies=usd`;",
+        "description": "Direct CoinGecko API call from frontend JavaScript. Violates policy: 'No direct external exchange API calls from frontend'",
+        "impact": "CORS errors, rate limiting, timeout issues, unreliable behavior",
+        "recommended_fix": "Remove direct CoinGecko call. Use only server-side unified API endpoint: `/api/service/rate`",
+        "related_lines": [334, 360, 361]
+      },
+      {
+        "id": "EXT-002",
+        "severity": "ERROR",
+        "type": "Direct External API Call from Frontend",
+        "file": "static/pages/market/market.js",
+        "line": 96,
+        "code_snippet": "const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=50');",
+        "description": "Direct CoinGecko API call from frontend as fallback",
+        "impact": "CORS errors, rate limiting, unreliable fallback behavior",
+        "recommended_fix": "Remove direct CoinGecko call. Use server-side API: `/api/coins/top` or `/api/service/market`",
+        "related_lines": [94, 100]
+      },
+      {
+        "id": "EXT-003",
+        "severity": "ERROR",
+        "type": "Direct External API Call from Frontend",
+        "file": "static/pages/technical-analysis/trading-pro.js",
+        "line": 240,
+        "code_snippet": "response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${this.symbol}&interval=${interval}&limit=500`);",
+        "description": "Direct Binance API call from frontend as fallback",
+        "impact": "CORS errors, timeout issues, rate limiting",
+        "recommended_fix": "Remove direct Binance call. Use server-side unified API: `/api/market/ohlc`",
+        "related_lines": [235, 250]
+      },
+      {
+        "id": "EXT-004",
+        "severity": "WARNING",
+        "type": "External API URL in Config",
+        "file": "static/pages/trading-assistant/trading-assistant-professional.js",
+        "line": 20,
+        "code_snippet": "binance: 'https://api.binance.com/api/v3',",
+        "description": "Binance API URL defined in frontend config (may be used for direct calls)",
+        "impact": "Potential for direct API calls, violates separation of concerns",
+        "recommended_fix": "Remove external API URLs from frontend config. Only keep server-side endpoints",
+        "related_lines": [21]
+      },
+      {
+        "id": "EXT-005",
+        "severity": "WARNING",
+        "type": "External API URL in Config",
+        "file": "static/pages/trading-assistant/trading-assistant-ultimate.js",
+        "line": 11,
+        "code_snippet": "binance: 'https://api.binance.com/api/v3',",
+        "description": "Binance API URL in frontend config",
+        "impact": "Potential for direct API calls",
+        "recommended_fix": "Remove external API URLs from frontend config",
+        "related_lines": []
+      },
+      {
+        "id": "EXT-006",
+        "severity": "WARNING",
+        "type": "External API URL in Config",
+        "file": "static/pages/trading-assistant/trading-assistant-real.js",
+        "line": 11,
+        "code_snippet": "binance: 'https://api.binance.com/api/v3',",
+        "description": "Binance API URL in frontend config",
+        "impact": "Potential for direct API calls",
+        "recommended_fix": "Remove external API URLs from frontend config",
+        "related_lines": []
+      },
+      {
+        "id": "EXT-007",
+        "severity": "WARNING",
+        "type": "External API URL in Config",
+        "file": "static/pages/trading-assistant/trading-assistant-enhanced.js",
+        "line": 14,
+        "code_snippet": "binanceAPI: 'https://api.binance.com/api/v3',",
+        "description": "Binance API URL in frontend config",
+        "impact": "Potential for direct API calls",
+        "recommended_fix": "Remove external API URLs from frontend config",
+        "related_lines": []
+      },
+      {
+        "id": "EXT-008",
+        "severity": "WARNING",
+        "type": "External API URL in Config",
+        "file": "static/pages/technical-analysis/technical-analysis-professional.js",
+        "line": 18,
+        "code_snippet": "coingecko: 'https://api.coingecko.com/api/v3',",
+        "description": "CoinGecko API URL in frontend config",
+        "impact": "Potential for direct API calls",
+        "recommended_fix": "Remove external API URLs from frontend config",
+        "related_lines": [19]
+      }
+    ],
+    "mock_demo_data_production": [
+      {
+        "id": "MOCK-001",
+        "severity": "ERROR",
+        "type": "Mock Data Generation in Production Code",
+        "file": "static/pages/trading-assistant/trading-assistant-professional.js",
+        "line": 487,
+        "code_snippet": "return this.generateDemoOHLCV(crypto.demoPrice || 1000, limit);",
+        "description": "generateDemoOHLCV() called as last resort fallback. Generates fake OHLCV data without user notification",
+        "impact": "Users see fake chart data when APIs fail, no clear indication it's demo data",
+        "recommended_fix": "Remove generateDemoOHLCV() call. Show error state with retry button instead. If demo mode is needed, must be explicitly marked in UI as 'DEMO MODE - NOT REAL DATA'",
+        "related_lines": [485, 486, 493, 520]
+      },
+      {
+        "id": "MOCK-002",
+        "severity": "ERROR",
+        "type": "Mock Data Function Exists",
+        "file": "static/pages/trading-assistant/trading-assistant-professional.js",
+        "line": 493,
+        "code_snippet": "generateDemoOHLCV(basePrice, limit) {",
+        "description": "generateDemoOHLCV() function definition exists in production code",
+        "impact": "Function can be called, generating fake data",
+        "recommended_fix": "Remove entire generateDemoOHLCV() function (lines 493-521)",
+        "related_lines": [493, 520]
+      },
+      {
+        "id": "MOCK-003",
+        "severity": "ERROR",
+        "type": "Mock Data Generation in Production Code",
+        "file": "static/pages/trading-assistant/trading-assistant.js",
+        "line": 413,
+        "code_snippet": "return this.generateDemoOHLCV(crypto.demoPrice || 1000, limit);",
+        "description": "generateDemoOHLCV() called in trading-assistant.js",
+        "impact": "Fake data shown to users",
+        "recommended_fix": "Remove generateDemoOHLCV() call and function. Show error state instead",
+        "related_lines": [419, 447]
+      },
+      {
+        "id": "MOCK-004",
+        "severity": "ERROR",
+        "type": "Mock Data Generation in Production Code",
+        "file": "static/pages/technical-analysis/technical-analysis-enhanced.js",
+        "line": 352,
+        "code_snippet": "ohlcvData = this.generateDemoOHLCV(this.currentSymbol);",
+        "description": "generateDemoOHLCV() called when all APIs fail",
+        "impact": "Fake chart data shown without clear demo mode indication",
+        "recommended_fix": "Remove generateDemoOHLCV() call. Show error state with retry button",
+        "related_lines": [351, 353, 1028, 1070]
+      },
+      {
+        "id": "MOCK-005",
+        "severity": "WARNING",
+        "type": "Demo Data Used Without Clear Labeling",
+        "file": "static/pages/market/market.js",
+        "line": 107,
+        "code_snippet": "data = this.getDemoData();",
+        "description": "getDemoData() called when APIs fail, but UI shows warning toast",
+        "impact": "Demo data shown, but warning message may not be prominent enough",
+        "recommended_fix": "Keep demo data but add prominent 'DEMO MODE - NOT REAL DATA' banner/indicator in UI",
+        "related_lines": [115, 117, 121, 127]
+      },
+      {
+        "id": "MOCK-006",
+        "severity": "WARNING",
+        "type": "Demo Data Used Without Clear Labeling",
+        "file": "static/pages/dashboard/dashboard.js",
+        "line": 366,
+        "code_snippet": "this.renderNewsAccordion(news.value || this.getDemoNews());",
+        "description": "getDemoNews() used as fallback for news",
+        "impact": "Demo news shown without clear 'DEMO MODE' indication",
+        "recommended_fix": "Add 'DEMO MODE' indicator when demo news is displayed",
+        "related_lines": [465, 497, 504]
+      },
+      {
+        "id": "MOCK-007",
+        "severity": "WARNING",
+        "type": "Demo Data Used Without Clear Labeling",
+        "file": "static/pages/news/news.js",
+        "line": 109,
+        "code_snippet": "data = this.getDemoNews();",
+        "description": "getDemoNews() used when news API fails",
+        "impact": "Demo news shown with warning toast, but may not be clear enough",
+        "recommended_fix": "Add prominent 'DEMO MODE - NOT REAL DATA' banner when demo news is active",
+        "related_lines": [110, 121, 343]
+      }
+    ],
+    "aggressive_polling": [
+      {
+        "id": "POLL-001",
+        "severity": "ERROR",
+        "type": "Polling Interval Too Fast",
+        "file": "static/pages/trading-assistant/trading-assistant-ultimate.js",
+        "line": 12,
+        "code_snippet": "updateInterval: 3000, // 3 seconds - faster updates",
+        "description": "Polling interval set to 3 seconds (3000ms). Policy requires minimum 20 seconds",
+        "impact": "Network overload, rate limiting, timeout errors, poor UX",
+        "recommended_fix": "Change updateInterval from 3000 to 30000 (30 seconds) or 60000 (60 seconds)",
+        "related_lines": [397]
+      },
+      {
+        "id": "POLL-002",
+        "severity": "ERROR",
+        "type": "Polling Interval Too Fast",
+        "file": "static/pages/trading-assistant/trading-assistant-ultimate.js",
+        "line": 14,
+        "code_snippet": "chartUpdateInterval: 1000, // 1 second for chart",
+        "description": "Chart update interval set to 1 second (1000ms). Extremely aggressive polling",
+        "impact": "Severe network overload, rate limiting, browser performance issues",
+        "recommended_fix": "Change chartUpdateInterval from 1000 to at least 20000 (20 seconds). Consider using WebSocket for real-time updates instead",
+        "related_lines": []
+      },
+      {
+        "id": "POLL-003",
+        "severity": "ERROR",
+        "type": "Polling Interval Too Fast",
+        "file": "static/pages/trading-assistant/trading-assistant-real.js",
+        "line": 12,
+        "code_snippet": "updateInterval: 5000, // 5 seconds",
+        "description": "Polling interval set to 5 seconds (5000ms). Policy requires minimum 20 seconds",
+        "impact": "Network overload, rate limiting, timeout errors",
+        "recommended_fix": "Change updateInterval from 5000 to 20000 (20 seconds) or 30000 (30 seconds)",
+        "related_lines": [554]
+      },
+      {
+        "id": "POLL-004",
+        "severity": "ERROR",
+        "type": "Polling Interval Too Fast",
+        "file": "static/pages/trading-assistant/trading-assistant-enhanced.js",
+        "line": 11,
+        "code_snippet": "updateInterval: 5000, // 5 seconds",
+        "description": "Polling interval set to 5 seconds (5000ms). Policy requires minimum 20 seconds",
+        "impact": "Network overload, rate limiting, timeout errors",
+        "recommended_fix": "Change updateInterval from 5000 to 20000 (20 seconds) or 30000 (30 seconds)",
+        "related_lines": [354]
+      }
+    ],
+    "missing_error_handling": [
+      {
+        "id": "ERR-001",
+        "severity": "WARNING",
+        "type": "Insufficient Error Handling",
+        "file": "static/pages/market/market.js",
+        "line": 96,
+        "code_snippet": "const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=50');",
+        "description": "Direct fetch call without timeout or AbortSignal. May hang indefinitely",
+        "impact": "Potential for unhandled promise rejection, browser hang",
+        "recommended_fix": "Add timeout using AbortSignal.timeout(10000) or fetchWithTimeout wrapper",
+        "related_lines": [95, 100]
+      },
+      {
+        "id": "ERR-002",
+        "severity": "WARNING",
+        "type": "Insufficient Error Handling",
+        "file": "static/pages/technical-analysis/trading-pro.js",
+        "line": 240,
+        "code_snippet": "response = await fetch(`https://api.binance.com/api/v3/klines?...`);",
+        "description": "Direct fetch has timeout but no retry logic or exponential backoff",
+        "impact": "Single failure causes fallback, no retry mechanism",
+        "recommended_fix": "Add retry logic with exponential backoff or use unified API client",
+        "related_lines": [241, 250]
+      }
+    ],
+    "demo_production_separation": [
+      {
+        "id": "CONFIG-001",
+        "severity": "WARNING",
+        "type": "Missing Frontend Demo Mode Configuration",
+        "file": "static/pages/trading-assistant/trading-assistant-professional.js",
+        "line": "N/A",
+        "code_snippet": "No USE_MOCK_DATA or DEMO_MODE check in frontend",
+        "description": "Frontend code calls generateDemoOHLCV() without checking for demo mode configuration. Backend has USE_MOCK_DATA but frontend doesn't respect it",
+        "impact": "Demo data may be shown in production if backend config is not properly set",
+        "recommended_fix": "Add frontend configuration check: `const DEMO_MODE = window.DEMO_MODE || false;` and only call demo functions if DEMO_MODE is true. Or remove demo functions entirely",
+        "related_lines": []
+      },
+      {
+        "id": "CONFIG-002",
+        "severity": "WARNING",
+        "type": "Inconsistent Demo Mode Handling",
+        "file": "static/pages/market/market.js",
+        "line": "N/A",
+        "code_snippet": "No environment variable check before using getDemoData()",
+        "description": "Demo data used without checking if demo mode is enabled",
+        "impact": "Demo data shown in production without explicit configuration",
+        "recommended_fix": "Add configuration check or remove demo data entirely",
+        "related_lines": []
+      }
+    ]
+  },
+  "summary": {
+    "by_severity": {
+      "ERROR": 12,
+      "WARNING": 13
+    },
+    "by_category": {
+      "external_api_calls_frontend": 8,
+      "mock_demo_data_production": 7,
+      "aggressive_polling": 4,
+      "missing_error_handling": 2,
+      "demo_production_separation": 2
+    },
+    "files_affected": [
+      "static/pages/trading-assistant/trading-assistant-professional.js",
+      "static/pages/trading-assistant/trading-assistant-ultimate.js",
+      "static/pages/trading-assistant/trading-assistant-real.js",
+      "static/pages/trading-assistant/trading-assistant-enhanced.js",
+      "static/pages/trading-assistant/trading-assistant.js",
+      "static/pages/market/market.js",
+      "static/pages/dashboard/dashboard.js",
+      "static/pages/news/news.js",
+      "static/pages/technical-analysis/technical-analysis-enhanced.js",
+      "static/pages/technical-analysis/technical-analysis-professional.js",
+      "static/pages/technical-analysis/trading-pro.js"
+    ]
+  },
+  "recommendations": {
+    "immediate_actions": [
+      {
+        "priority": "CRITICAL",
+        "action": "Remove all direct external API calls from frontend",
+        "files": [
+          "static/pages/trading-assistant/trading-assistant-professional.js:347",
+          "static/pages/market/market.js:96",
+          "static/pages/technical-analysis/trading-pro.js:240"
+        ],
+        "estimated_time": "2 hours"
+      },
+      {
+        "priority": "CRITICAL",
+        "action": "Remove generateDemoOHLCV() function and all calls to it",
+        "files": [
+          "static/pages/trading-assistant/trading-assistant-professional.js",
+          "static/pages/trading-assistant/trading-assistant.js",
+          "static/pages/technical-analysis/technical-analysis-enhanced.js"
+        ],
+        "estimated_time": "1 hour"
+      },
+      {
+        "priority": "CRITICAL",
+        "action": "Increase all polling intervals to minimum 20 seconds",
+        "files": [
+          "static/pages/trading-assistant/trading-assistant-ultimate.js:12,14",
+          "static/pages/trading-assistant/trading-assistant-real.js:12",
+          "static/pages/trading-assistant/trading-assistant-enhanced.js:11"
+        ],
+        "estimated_time": "30 minutes"
+      }
+    ],
+    "high_priority": [
+      {
+        "priority": "HIGH",
+        "action": "Remove external API URLs from frontend configs",
+        "files": [
+          "static/pages/trading-assistant/trading-assistant-professional.js:20-21",
+          "static/pages/trading-assistant/trading-assistant-ultimate.js:11",
+          "static/pages/trading-assistant/trading-assistant-real.js:11",
+          "static/pages/trading-assistant/trading-assistant-enhanced.js:14",
+          "static/pages/technical-analysis/technical-analysis-professional.js:18-19"
+        ],
+        "estimated_time": "30 minutes"
+      },
+      {
+        "priority": "HIGH",
+        "action": "Add clear 'DEMO MODE' indicators for demo data usage",
+        "files": [
+          "static/pages/market/market.js",
+          "static/pages/dashboard/dashboard.js",
+          "static/pages/news/news.js"
+        ],
+        "estimated_time": "1 hour"
+      }
+    ],
+    "medium_priority": [
+      {
+        "priority": "MEDIUM",
+        "action": "Add timeout handling to all fetch calls",
+        "files": [
+          "static/pages/market/market.js:96"
+        ],
+        "estimated_time": "30 minutes"
+      },
+      {
+        "priority": "MEDIUM",
+        "action": "Add frontend demo mode configuration check",
+        "description": "Ensure frontend respects demo mode configuration before using demo data",
+        "estimated_time": "1 hour"
+      }
+    ]
+  },
+  "test_results": {
+    "policy_compliance": {
+      "no_direct_external_api_calls": "FAIL",
+      "no_mock_data_in_production": "FAIL",
+      "polling_intervals_acceptable": "FAIL",
+      "error_handling_comprehensive": "PARTIAL",
+      "demo_production_separation": "PARTIAL"
+    },
+    "overall_compliance_score": "35%",
+    "block_merge": true,
+    "block_deploy": true
+  }
+}
+

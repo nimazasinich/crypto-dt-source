@@ -6,12 +6,18 @@ services:
     build: .
     container_name: crypto-monitor-app
     ports:
-      - "8000:8000"
+      - "7860:7860"
     environment:
       - HOST=0.0.0.0
-      - PORT=8000
+      - PORT=7860
       - LOG_LEVEL=INFO
       - ENABLE_AUTO_DISCOVERY=false
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN:-}
+      - HF_MODE=${HF_MODE:-public}
+      - SPACE_ID=${SPACE_ID:-}
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
@@ -19,11 +25,11 @@ services:
     networks:
       - crypto-network
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:7860/api/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 40s
 
   # Redis برای Cache (اختیاری)
   redis:

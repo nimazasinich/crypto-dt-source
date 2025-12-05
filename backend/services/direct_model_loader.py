@@ -56,34 +56,43 @@ class DirectModelLoader:
         logger.info(f"   Cache directory: {self.cache_dir}")
         
         # Model configurations - DIRECT LOADING ONLY
+        # Ordered by preference (most reliable first)
         self.model_configs = {
-            "cryptobert_elkulako": {
-                "model_id": "ElKulako/cryptobert",
-                "model_class": "BertForSequenceClassification",
-                "task": "sentiment-analysis",
-                "description": "CryptoBERT by ElKulako for crypto sentiment",
-                "loaded": False
-            },
             "cryptobert_kk08": {
                 "model_id": "kk08/CryptoBERT",
                 "model_class": "BertForSequenceClassification",
                 "task": "sentiment-analysis",
                 "description": "CryptoBERT by KK08 for crypto sentiment",
-                "loaded": False
+                "loaded": False,
+                "requires_auth": False,
+                "priority": 1
+            },
+            "twitter_sentiment": {
+                "model_id": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+                "model_class": "AutoModelForSequenceClassification",
+                "task": "sentiment-analysis",
+                "description": "Twitter RoBERTa for sentiment analysis",
+                "loaded": False,
+                "requires_auth": False,
+                "priority": 2
             },
             "finbert": {
                 "model_id": "ProsusAI/finbert",
                 "model_class": "AutoModelForSequenceClassification",
                 "task": "sentiment-analysis",
                 "description": "FinBERT for financial sentiment",
-                "loaded": False
+                "loaded": False,
+                "requires_auth": False,
+                "priority": 3
             },
-            "twitter_sentiment": {
-                "model_id": "cardiffnlp/twitter-roberta-base-sentiment",
-                "model_class": "AutoModelForSequenceClassification",
+            "cryptobert_elkulako": {
+                "model_id": "ElKulako/cryptobert",
+                "model_class": "BertForSequenceClassification",
                 "task": "sentiment-analysis",
-                "description": "Twitter RoBERTa for sentiment analysis",
-                "loaded": False
+                "description": "CryptoBERT by ElKulako for crypto sentiment",
+                "loaded": False,
+                "requires_auth": True,
+                "priority": 4
             }
         }
     
@@ -164,6 +173,7 @@ class DirectModelLoader:
         
         except Exception as e:
             logger.error(f"❌ Failed to load model {model_key}: {e}")
+            # Don't raise - allow fallback to other models
             raise Exception(f"Failed to load model {model_key}: {str(e)}")
     
     async def load_all_models(self) -> Dict[str, Any]:

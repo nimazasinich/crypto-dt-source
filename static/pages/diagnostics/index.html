@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-theme="dark">
+<html lang="en" dir="ltr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Permissions-Policy" content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()">
   <meta name="description" content="Crypto Monitor ULTIMATE - System Diagnostics">
   <title>Diagnostics | Crypto Monitor ULTIMATE</title>
   
@@ -13,7 +14,7 @@
   <link rel="stylesheet" href="/static/shared/css/components.css">
   <link rel="stylesheet" href="/static/shared/css/layout.css">
   <link rel="stylesheet" href="/static/shared/css/utilities.css">
-  <link rel="stylesheet" href="./diagnostics.css">
+  <link rel="stylesheet" href="/static/pages/diagnostics/diagnostics.css">
 </head>
 <body>
   <div class="app-container">
@@ -106,6 +107,17 @@
   </div>
 
   <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-  <script type="module" src="./diagnostics.js"></script>
+  
+  <!-- Initialize layout and page -->
+  <script type="module">
+    import { LayoutManager } from '/static/shared/js/core/layout-manager.js';
+    
+    // Initialize layouts first
+    await LayoutManager.init('diagnostics');
+    
+    // Then load page module
+    await import('./diagnostics.js');
+  </script>
 </body>
 </html>
+

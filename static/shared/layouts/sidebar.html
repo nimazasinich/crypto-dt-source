@@ -1,19 +1,39 @@
 <aside class="sidebar" role="navigation" aria-label="Main navigation">
-  <!-- Mobile Toggle Button -->
-  <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
-    <span class="toggle-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-    </span>
-  </button>
+  <!-- Brand Logo -->
+  <div class="sidebar-brand">
+    <div class="brand-logo">
+      <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2dd4bf"/>
+            <stop offset="50%" stop-color="#22d3ee"/>
+            <stop offset="100%" stop-color="#3b82f6"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="45" fill="url(#logoGradient)"/>
+        <path d="M50 20 L70 45 L50 38 L30 45 Z" fill="white" opacity="0.9"/>
+        <path d="M50 80 L30 55 L50 62 L70 55 Z" fill="white" opacity="0.9"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <span class="brand-name">Crypto Monitor</span>
+      <span class="brand-tag">ULTIMATE</span>
+    </div>
+  </div>
 
   <!-- Navigation Menu -->
   <nav class="nav-menu">
     <ul class="nav-list">
       <!-- Dashboard -->
       <li class="nav-item">
-        <a href="/" class="nav-link" data-page="dashboard">
+        <a href="/static/pages/dashboard/index.html" class="nav-link" data-page="dashboard">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+            </svg>
           </span>
           <span class="nav-label">Dashboard</span>
         </a>
@@ -21,9 +41,12 @@
 
       <!-- Market -->
       <li class="nav-item">
-        <a href="/market" class="nav-link" data-page="market">
+        <a href="/static/pages/market/index.html" class="nav-link" data-page="market">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m22 7-8.5 8.5-5-5L2 17"/>
+              <path d="M16 7h6v6"/>
+            </svg>
           </span>
           <span class="nav-label">Market</span>
         </a>
@@ -31,9 +54,15 @@
 
       <!-- AI Models -->
       <li class="nav-item">
-        <a href="/models" class="nav-link" data-page="models">
+        <a href="/static/pages/models/index.html" class="nav-link" data-page="models">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4Z"/>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="3"/>
+              <path d="M12 11v4"/>
+              <path d="M9 18h6"/>
+            </svg>
           </span>
           <span class="nav-label">AI Models</span>
         </a>
@@ -41,9 +70,14 @@
 
       <!-- Sentiment -->
       <li class="nav-item">
-        <a href="/sentiment" class="nav-link" data-page="sentiment">
+        <a href="/static/pages/sentiment/index.html" class="nav-link" data-page="sentiment">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+              <line x1="9" y1="9" x2="9.01" y2="9"/>
+              <line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
           </span>
           <span class="nav-label">Sentiment</span>
         </a>
@@ -51,19 +85,41 @@
 
       <!-- AI Analyst -->
       <li class="nav-item">
-        <a href="/ai-analyst" class="nav-link" data-page="ai-analyst">
+        <a href="/static/pages/ai-analyst/index.html" class="nav-link" data-page="ai-analyst">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2z"></path><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2z"></path></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 8V4H8"/>
+              <rect x="2" y="14" width="4" height="6" rx="1"/>
+              <rect x="10" y="10" width="4" height="10" rx="1"/>
+              <rect x="18" y="6" width="4" height="14" rx="1"/>
+              <path d="m8 4 4 4"/>
+            </svg>
           </span>
           <span class="nav-label">AI Analyst</span>
         </a>
       </li>
 
+      <!-- Technical Analysis -->
+      <li class="nav-item">
+        <a href="/static/pages/technical-analysis/index.html" class="nav-link" data-page="technical-analysis">
+          <span class="nav-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="m19 9-5 5-4-4-3 3"/>
+              <circle cx="19" cy="9" r="2"/>
+            </svg>
+          </span>
+          <span class="nav-label">Technical</span>
+        </a>
+      </li>
+
       <!-- Trading Assistant -->
       <li class="nav-item">
-        <a href="/trading-assistant" class="nav-link" data-page="trading-assistant">
+        <a href="/static/pages/trading-assistant/index.html" class="nav-link" data-page="trading-assistant">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
           </span>
           <span class="nav-label">Trading</span>
         </a>
@@ -71,9 +127,14 @@
 
       <!-- News -->
       <li class="nav-item">
-        <a href="/news" class="nav-link" data-page="news">
+        <a href="/static/pages/news/index.html" class="nav-link" data-page="news">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+              <path d="M18 14h-8"/>
+              <path d="M15 18h-5"/>
+              <path d="M10 6h8v4h-8V6Z"/>
+            </svg>
           </span>
           <span class="nav-label">News</span>
         </a>
@@ -81,41 +142,42 @@
 
       <!-- Providers -->
       <li class="nav-item">
-        <a href="/providers" class="nav-link" data-page="providers">
+        <a href="/static/pages/providers/index.html" class="nav-link" data-page="providers">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"></path><path d="M18.4 6.6a9 9 0 1 1-12.77.04"></path></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 11a9 9 0 0 1 9 9"/>
+              <path d="M4 4a16 16 0 0 1 16 16"/>
+              <circle cx="5" cy="19" r="2"/>
+            </svg>
           </span>
           <span class="nav-label">Providers</span>
         </a>
       </li>
 
-      <!-- Diagnostics -->
+      <!-- Help -->
       <li class="nav-item">
-        <a href="/diagnostics" class="nav-link" data-page="diagnostics">
+        <a href="/static/pages/help/index.html" class="nav-link" data-page="help">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
           </span>
-          <span class="nav-label">Diagnostics</span>
+          <span class="nav-label">Help</span>
         </a>
       </li>
 
-      <!-- API Explorer -->
+      <!-- Settings -->
       <li class="nav-item">
-        <a href="/api-explorer" class="nav-link" data-page="api-explorer">
+        <a href="/static/pages/settings/index.html" class="nav-link" data-page="settings">
           <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
           </span>
-          <span class="nav-label">API Explorer</span>
-        </a>
-      </li>
-
-      <!-- Crypto API Hub -->
-      <li class="nav-item">
-        <a href="/crypto-api-hub" class="nav-link" data-page="crypto-api-hub">
-          <span class="nav-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-          </span>
-          <span class="nav-label">Crypto API Hub</span>
+          <span class="nav-label">Settings</span>
         </a>
       </li>
     </ul>
@@ -123,8 +185,9 @@
 
   <!-- Sidebar Footer -->
   <div class="sidebar-footer">
-    <div class="keyboard-hint">
-      <kbd>Ctrl</kbd> + <kbd>K</kbd> for search
+    <div class="sidebar-status">
+      <span class="status-dot online"></span>
+      <span class="status-text">System Online</span>
     </div>
   </div>
 </aside>

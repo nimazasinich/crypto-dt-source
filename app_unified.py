@@ -90,15 +90,16 @@ if STATIC_DIR.exists():
 
 @app.get("/")
 async def serve_index():
-    """Serve the main dashboard from static/pages/dashboard"""
-    page_path = get_page_index("dashboard")
-    if page_path:
-        return FileResponse(str(page_path))
-    
-    # Fallback to root index.html
+    """Serve the loading page (index.html) which redirects to dashboard"""
+    # First, serve the root index.html (loading page)
     index_file = WORKSPACE_ROOT / "index.html"
     if index_file.exists():
         return FileResponse(str(index_file))
+    
+    # Fallback to dashboard if loading page doesn't exist
+    page_path = get_page_index("dashboard")
+    if page_path:
+        return FileResponse(str(page_path))
 
     return {
         "name": "Crypto Intelligence Hub - Unified",
@@ -113,7 +114,14 @@ async def serve_index():
 @app.get("/dashboard")
 async def dashboard_page():
     """Serve the main dashboard"""
-    return await serve_index()
+    page_path = get_page_index("dashboard")
+    if page_path:
+        return FileResponse(str(page_path))
+    # Fallback to root index.html if dashboard not found
+    index_file = WORKSPACE_ROOT / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    return {"error": "Dashboard not found"}
 
 
 @app.get("/dashboard/{path:path}")

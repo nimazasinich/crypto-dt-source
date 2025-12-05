@@ -151,6 +151,76 @@ async def get_binance_klines(
         raise HTTPException(status_code=503, detail=str(e))
 
 
+@router.get("/ohlcv/{symbol}")
+async def get_ohlcv(
+    symbol: str,
+    interval: str = Query("1d", description="Interval: 1m, 5m, 15m, 1h, 4h, 1d"),
+    limit: int = Query(30, description="Number of candles")
+):
+    """
+    Get OHLCV data for a cryptocurrency symbol
+    
+    This endpoint provides a unified interface for OHLCV data with automatic fallback.
+    Tries Binance first, then CoinGecko as fallback.
+    
+    Examples:
+    - `/api/v1/ohlcv/BTC?interval=1d&limit=30`
+    - `/api/v1/ohlcv/ETH?interval=1h&limit=100`
+    """
+    try:
+        # Try Binance first (best for OHLCV)
+        try:
+            binance_symbol = f"{symbol.upper()}USDT"
+            result = await binance_client.get_ohlcv(
+                symbol=binance_symbol,
+                timeframe=interval,
+                limit=limit
+            )
+            
+            return {
+                "success": True,
+                "symbol": symbol.upper(),
+                "interval": interval,
+                "data": result,
+                "source": "binance",
+                "count": len(result),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        except Exception as binance_error:
+            logger.warning(f"⚠ Binance failed for {symbol}: {binance_error}")
+            
+            # Fallback to CoinGecko
+            try:
+                coin_id = symbol.lower()
+                result = await coingecko_client.get_ohlc(
+                    coin_id=coin_id,
+                    days=30 if interval == "1d" else 7
+                )
+                
+                return {
+                    "success": True,
+                    "symbol": symbol.upper(),
+                    "interval": interval,
+                    "data": result,
+                    "source": "coingecko",
+                    "count": len(result),
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "fallback_used": True
+                }
+            except Exception as coingecko_error:
+                logger.error(f"❌ Both Binance and CoinGecko failed for {symbol}")
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Failed to fetch OHLCV data: Binance error: {str(binance_error)}, CoinGecko error: {str(coingecko_error)}"
+                )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ OHLCV endpoint failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/binance/ticker")
 async def get_binance_ticker(
     symbol: str = Query(..., description="Symbol (e.g., BTC)")
@@ -369,9 +439,9 @@ async def get_latest_crypto_news(
 @router.post("/hf/sentiment")
 async def analyze_sentiment(request: SentimentRequest):
     """
-    Analyze sentiment using HuggingFace models (NO PIPELINE)
+    Analyze sentiment using HuggingFace models with automatic fallback
     
-    Available models:
+    Available models (in fallback order):
     - cryptobert_elkulako (default): ElKulako/cryptobert
     - cryptobert_kk08: kk08/CryptoBERT
     - finbert: ProsusAI/finbert
@@ -385,17 +455,54 @@ async def analyze_sentiment(request: SentimentRequest):
     }
     ```
     """
-    try:
-        result = await direct_model_loader.predict_sentiment(
-            text=request.text,
-            model_key=request.model_key
-        )
-        
-        return result
+    # Fallback model order
+    fallback_models = [
+        request.model_key,
+        "cryptobert_kk08",
+        "finbert",
+        "twitter_sentiment"
+    ]
     
-    except Exception as e:
-        logger.error(f"❌ Sentiment analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    last_error = None
+    
+    for model_key in fallback_models:
+        try:
+            result = await direct_model_loader.predict_sentiment(
+                text=request.text,
+                model_key=model_key
+            )
+            
+            # Add fallback indicator if not primary model
+            if model_key != request.model_key:
+                result["fallback_used"] = True
+                result["primary_model"] = request.model_key
+                result["actual_model"] = model_key
+            
+            return result
+        
+        except Exception as e:
+            logger.warning(f"⚠ Model {model_key} failed: {e}")
+            last_error = e
+            continue
+    
+    # All models failed - return graceful degradation
+    logger.error(f"❌ All sentiment models failed. Last error: {last_error}")
+    raise HTTPException(
+        status_code=503,
+        detail={
+            "error": "All sentiment models unavailable",
+            "message": "Sentiment analysis service is temporarily unavailable",
+            "tried_models": fallback_models,
+            "last_error": str(last_error),
+            "degraded_response": {
+                "sentiment": "neutral",
+                "score": 0.5,
+                "confidence": 0.0,
+                "method": "fallback",
+                "warning": "Using degraded mode - all models unavailable"
+            }
+        }
+    )
 
 
 @router.post("/hf/sentiment/batch")

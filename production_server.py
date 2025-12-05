@@ -16,6 +16,17 @@ import uvicorn
 from collections import defaultdict
 from typing import Dict, List, Any
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Shared HF model registry (same core as admin/extended API)
+from ai_models import (
+    get_model_info,
+    MODEL_SPECS,
+    _registry,
+    get_model_health_registry,
+)
 
 # Import API loader
 try:
@@ -305,21 +316,20 @@ async def api_categories():
 
 @app.get("/api/providers")
 async def api_providers():
-    """Real provider data"""
-    providers = []
+    """Real provider data, shaped for static Providers page."""
+    providers: List[Dict[str, Any]] = []
     for i, (name, data) in enumerate(state["providers"].items(), 1):
-        providers.append({
-            "id": i,
-            "name": name,
-            "category": data.get("category", "unknown"),
-            "status": data["status"],
-            "response_time_ms": data["response_time_ms"],
-            "last_fetch": data.get("last_check", datetime.now().isoformat()),
-            "has_key": api_loader.get_all_apis().get(name, {}).get("key") is not None,
-            "rate_limit": None,
-            "priority": data.get("priority", 3)
-        })
-    return providers
+        providers.append(
+            {
+                "id": i,
+                "name": name,
+                "category": data.get("category", "other"),
+                "status": data["status"],
+                "latency": data.get("response_time_ms"),
+                "error": data.get("error"),
+            }
+        )
+    return {"providers": providers, "total": len(providers)}
 
 @app.get("/api/logs")
 async def api_logs():
@@ -599,28 +609,48 @@ async def api_stats():
 
 @app.get("/api/models/list")
 async def api_models_list():
-    """List available AI models"""
+    """List available HF models using shared registry."""
+    models: List[Dict[str, Any]] = []
+    for key, spec in MODEL_SPECS.items():
+        is_loaded = key in _registry._pipelines
+        error_msg = _registry._failed_models.get(key) if key in _registry._failed_models else None
+        models.append(
+            {
+                "key": key,
+                "id": key,
+                "name": spec.model_id,
+                "model_id": spec.model_id,
+                "task": spec.task,
+                "category": spec.category,
+                "requires_auth": spec.requires_auth,
+                "loaded": is_loaded,
+                "error": error_msg,
+            }
+        )
+    info = get_model_info()
     return {
-        "models": [
-            {"id": "sentiment-bert", "name": "Crypto Sentiment BERT", "type": "sentiment", "status": "online", "accuracy": 0.92},
-            {"id": "price-lstm", "name": "Price Prediction LSTM", "type": "prediction", "status": "online", "accuracy": 0.78},
-            {"id": "news-classifier", "name": "News Classifier", "type": "classification", "status": "online", "accuracy": 0.85},
-            {"id": "chart-analyzer", "name": "Chart Pattern Analyzer", "type": "analysis", "status": "degraded", "accuracy": 0.81},
-            {"id": "risk-scorer", "name": "Risk Assessment Model", "type": "risk", "status": "online", "accuracy": 0.88},
-        ],
-        "total": 5,
-        "online": 4
+        "models": models,
+        "total": len(models),
+        "timestamp": datetime.now().isoformat(),
+        "model_info": info,
     }
 
 @app.get("/api/models/status")
 async def api_models_status():
     """Get AI models status"""
-    return {
-        "status": "operational",
-        "models_online": 4,
-        "models_total": 5,
-        "last_check": datetime.now().isoformat()
-    }
+    status = _registry.get_registry_status()
+    status["last_check"] = datetime.now().isoformat()
+    return status
+
+
+@app.post("/api/models/reinit-all")
+async def api_models_reinit_all():
+    """Re-initialize all AI models using shared registry."""
+    from ai_models import initialize_models
+
+    result = initialize_models()
+    status = _registry.get_registry_status()
+    return {"status": "ok", "init_result": result, "registry": status}
 
 @app.post("/api/ai/decision")
 async def api_ai_decision(symbol: str = "BTC", horizon: str = "medium", risk_tolerance: str = "medium"):

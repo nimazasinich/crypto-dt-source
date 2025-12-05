@@ -1,0 +1,1402 @@
+{
+  "providers": {
+    "coingecko": {
+      "name": "CoinGecko",
+      "category": "market_data",
+      "base_url": "https://api.coingecko.com/api/v3",
+      "endpoints": {
+        "coins_list": "/coins/list",
+        "coins_markets": "/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100",
+        "global": "/global",
+        "trending": "/search/trending",
+        "simple_price": "/simple/price?ids=bitcoin,ethereum&vs_currencies=usd"
+      },
+      "rate_limit": {
+        "requests_per_minute": 50,
+        "requests_per_day": 10000
+      },
+      "requires_auth": false,
+      "priority": 10,
+      "weight": 100
+    },
+    "coinpaprika": {
+      "name": "CoinPaprika",
+      "category": "market_data",
+      "base_url": "https://api.coinpaprika.com/v1",
+      "endpoints": {
+        "tickers": "/tickers",
+        "global": "/global",
+        "coins": "/coins"
+      },
+      "rate_limit": {
+        "requests_per_minute": 25,
+        "requests_per_day": 20000
+      },
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 90
+    },
+    "coincap": {
+      "name": "CoinCap",
+      "category": "market_data",
+      "base_url": "https://api.coincap.io/v2",
+      "endpoints": {
+        "assets": "/assets",
+        "rates": "/rates",
+        "markets": "/markets"
+      },
+      "rate_limit": {
+        "requests_per_minute": 200,
+        "requests_per_day": 500000
+      },
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 95
+    },
+    "cryptocompare": {
+      "name": "CryptoCompare",
+      "category": "market_data",
+      "base_url": "https://min-api.cryptocompare.com/data",
+      "endpoints": {
+        "price": "/price?fsym=BTC&tsyms=USD",
+        "pricemulti": "/pricemulti?fsyms=BTC,ETH,BNB&tsyms=USD",
+        "top_list": "/top/mktcapfull?limit=100&tsym=USD"
+      },
+      "rate_limit": {
+        "requests_per_minute": 100,
+        "requests_per_hour": 100000
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "nomics": {
+      "name": "Nomics",
+      "category": "market_data",
+      "base_url": "https://api.nomics.com/v1",
+      "endpoints": {
+        "currencies": "/currencies/ticker?ids=BTC,ETH&convert=USD",
+        "global": "/global-ticker?convert=USD",
+        "markets": "/markets"
+      },
+      "rate_limit": {
+        "requests_per_day": 1000
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 70,
+      "note": "May require API key for full access"
+    },
+    "messari": {
+      "name": "Messari",
+      "category": "market_data",
+      "base_url": "https://data.messari.io/api/v1",
+      "endpoints": {
+        "assets": "/assets",
+        "asset_metrics": "/assets/{asset}/metrics",
+        "market_data": "/assets/{asset}/metrics/market-data"
+      },
+      "rate_limit": {
+        "requests_per_minute": 20,
+        "requests_per_day": 1000
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85
+    },
+    "livecoinwatch": {
+      "name": "LiveCoinWatch",
+      "category": "market_data",
+      "base_url": "https://api.livecoinwatch.com",
+      "endpoints": {
+        "coins": "/coins/list",
+        "single": "/coins/single",
+        "overview": "/overview"
+      },
+      "rate_limit": {
+        "requests_per_day": 10000
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "bitquery": {
+      "name": "Bitquery",
+      "category": "blockchain_data",
+      "base_url": "https://graphql.bitquery.io",
+      "endpoints": {
+        "graphql": ""
+      },
+      "rate_limit": {
+        "requests_per_month": 50000
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80,
+      "query_type": "graphql"
+    },
+    "etherscan": {
+      "name": "Etherscan",
+      "category": "blockchain_explorers",
+      "base_url": "https://api.etherscan.io/api",
+      "endpoints": {
+        "eth_supply": "?module=stats&action=ethsupply",
+        "eth_price": "?module=stats&action=ethprice",
+        "gas_oracle": "?module=gastracker&action=gasoracle"
+      },
+      "rate_limit": {
+        "requests_per_second": 5
+      },
+      "requires_auth": false,
+      "priority": 10,
+      "weight": 100
+    },
+    "bscscan": {
+      "name": "BscScan",
+      "category": "blockchain_explorers",
+      "base_url": "https://api.bscscan.com/api",
+      "endpoints": {
+        "bnb_supply": "?module=stats&action=bnbsupply",
+        "bnb_price": "?module=stats&action=bnbprice"
+      },
+      "rate_limit": {
+        "requests_per_second": 5
+      },
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 90
+    },
+    "polygonscan": {
+      "name": "PolygonScan",
+      "category": "blockchain_explorers",
+      "base_url": "https://api.polygonscan.com/api",
+      "endpoints": {
+        "matic_supply": "?module=stats&action=maticsupply",
+        "gas_oracle": "?module=gastracker&action=gasoracle"
+      },
+      "rate_limit": {
+        "requests_per_second": 5
+      },
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 90
+    },
+    "arbiscan": {
+      "name": "Arbiscan",
+      "category": "blockchain_explorers",
+      "base_url": "https://api.arbiscan.io/api",
+      "endpoints": {
+        "gas_oracle": "?module=gastracker&action=gasoracle",
+        "stats": "?module=stats&action=tokensupply"
+      },
+      "rate_limit": {
+        "requests_per_second": 5
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "optimistic_etherscan": {
+      "name": "Optimistic Etherscan",
+      "category": "blockchain_explorers",
+      "base_url": "https://api-optimistic.etherscan.io/api",
+      "endpoints": {
+        "gas_oracle": "?module=gastracker&action=gasoracle"
+      },
+      "rate_limit": {
+        "requests_per_second": 5
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "blockchair": {
+      "name": "Blockchair",
+      "category": "blockchain_explorers",
+      "base_url": "https://api.blockchair.com",
+      "endpoints": {
+        "bitcoin": "/bitcoin/stats",
+        "ethereum": "/ethereum/stats",
+        "multi": "/stats"
+      },
+      "rate_limit": {
+        "requests_per_day": 1000
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85
+    },
+    "blockchain_info": {
+      "name": "Blockchain.info",
+      "category": "blockchain_explorers",
+      "base_url": "https://blockchain.info",
+      "endpoints": {
+        "stats": "/stats",
+        "pools": "/pools?timespan=5days",
+        "ticker": "/ticker"
+      },
+      "rate_limit": {
+        "requests_per_second": 1
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "blockscout_eth": {
+      "name": "Blockscout Ethereum",
+      "category": "blockchain_explorers",
+      "base_url": "https://eth.blockscout.com/api",
+      "endpoints": {
+        "stats": "?module=stats&action=tokensupply"
+      },
+      "rate_limit": {
+        "requests_per_second": 10
+      },
+      "requires_auth": false,
+      "priority": 6,
+      "weight": 60
+    },
+    "ethplorer": {
+      "name": "Ethplorer",
+      "category": "blockchain_explorers",
+      "base_url": "https://api.ethplorer.io",
+      "endpoints": {
+        "get_top": "/getTop",
+        "get_token_info": "/getTokenInfo/{address}"
+      },
+      "rate_limit": {
+        "requests_per_second": 2
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "covalent": {
+      "name": "Covalent",
+      "category": "blockchain_data",
+      "base_url": "https://api.covalenthq.com/v1",
+      "endpoints": {
+        "chains": "/chains/",
+        "token_balances": "/{chain_id}/address/{address}/balances_v2/"
+      },
+      "rate_limit": {
+        "requests_per_day": 100
+      },
+      "requires_auth": true,
+      "priority": 7,
+      "weight": 70,
+      "note": "Requires API key"
+    },
+    "moralis": {
+      "name": "Moralis",
+      "category": "blockchain_data",
+      "base_url": "https://deep-index.moralis.io/api/v2",
+      "endpoints": {
+        "token_price": "/erc20/{address}/price",
+        "nft_metadata": "/nft/{address}/{token_id}"
+      },
+      "rate_limit": {
+        "requests_per_second": 25
+      },
+      "requires_auth": true,
+      "priority": 8,
+      "weight": 80,
+      "note": "Requires API key"
+    },
+    "alchemy": {
+      "name": "Alchemy",
+      "category": "blockchain_data",
+      "base_url": "https://eth-mainnet.g.alchemy.com/v2",
+      "endpoints": {
+        "nft_metadata": "/getNFTMetadata",
+        "token_balances": "/getTokenBalances"
+      },
+      "rate_limit": {
+        "requests_per_second": 25
+      },
+      "requires_auth": true,
+      "priority": 9,
+      "weight": 90,
+      "note": "Requires API key"
+    },
+    "infura": {
+      "name": "Infura",
+      "category": "blockchain_data",
+      "base_url": "https://mainnet.infura.io/v3",
+      "endpoints": {
+        "eth_call": ""
+      },
+      "rate_limit": {
+        "requests_per_day": 100000
+      },
+      "requires_auth": true,
+      "priority": 9,
+      "weight": 90,
+      "note": "Requires API key"
+    },
+    "quicknode": {
+      "name": "QuickNode",
+      "category": "blockchain_data",
+      "base_url": "https://endpoints.omniatech.io/v1/eth/mainnet",
+      "endpoints": {
+        "rpc": ""
+      },
+      "rate_limit": {
+        "requests_per_second": 25
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "defillama": {
+      "name": "DefiLlama",
+      "category": "defi",
+      "base_url": "https://api.llama.fi",
+      "endpoints": {
+        "protocols": "/protocols",
+        "tvl": "/tvl/{protocol}",
+        "chains": "/chains",
+        "historical": "/historical/{protocol}"
+      },
+      "rate_limit": {
+        "requests_per_second": 5
+      },
+      "requires_auth": false,
+      "priority": 10,
+      "weight": 100
+    },
+    "debank": {
+      "name": "DeBank",
+      "category": "defi",
+      "base_url": "https://openapi.debank.com/v1",
+      "endpoints": {
+        "user": "/user",
+        "token_list": "/token/list",
+        "protocol_list": "/protocol/list"
+      },
+      "rate_limit": {
+        "requests_per_second": 1
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "zerion": {
+      "name": "Zerion",
+      "category": "defi",
+      "base_url": "https://api.zerion.io/v1",
+      "endpoints": {
+        "portfolio": "/wallets/{address}/portfolio",
+        "positions": "/wallets/{address}/positions"
+      },
+      "rate_limit": {
+        "requests_per_day": 1000
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 70
+    },
+    "yearn": {
+      "name": "Yearn Finance",
+      "category": "defi",
+      "base_url": "https://api.yearn.finance/v1",
+      "endpoints": {
+        "vaults": "/chains/1/vaults/all",
+        "apy": "/chains/1/vaults/apy"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "aave": {
+      "name": "Aave",
+      "category": "defi",
+      "base_url": "https://aave-api-v2.aave.com",
+      "endpoints": {
+        "data": "/data/liquidity/v2",
+        "rates": "/data/rates"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "compound": {
+      "name": "Compound",
+      "category": "defi",
+      "base_url": "https://api.compound.finance/api/v2",
+      "endpoints": {
+        "ctoken": "/ctoken",
+        "account": "/account"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "uniswap_v3": {
+      "name": "Uniswap V3",
+      "category": "defi",
+      "base_url": "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3",
+      "endpoints": {
+        "graphql": ""
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 90,
+      "query_type": "graphql"
+    },
+    "pancakeswap": {
+      "name": "PancakeSwap",
+      "category": "defi",
+      "base_url": "https://api.pancakeswap.info/api/v2",
+      "endpoints": {
+        "summary": "/summary",
+        "tokens": "/tokens",
+        "pairs": "/pairs"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85
+    },
+    "sushiswap": {
+      "name": "SushiSwap",
+      "category": "defi",
+      "base_url": "https://api.sushi.com",
+      "endpoints": {
+        "analytics": "/analytics/tokens",
+        "pools": "/analytics/pools"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "curve": {
+      "name": "Curve Finance",
+      "category": "defi",
+      "base_url": "https://api.curve.fi/api",
+      "endpoints": {
+        "pools": "/getPools/ethereum/main",
+        "volume": "/getVolume/ethereum"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "1inch": {
+      "name": "1inch",
+      "category": "defi",
+      "base_url": "https://api.1inch.io/v5.0/1",
+      "endpoints": {
+        "tokens": "/tokens",
+        "quote": "/quote",
+        "liquidity_sources": "/liquidity-sources"
+      },
+      "rate_limit": {
+        "requests_per_second": 1
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "opensea": {
+      "name": "OpenSea",
+      "category": "nft",
+      "base_url": "https://api.opensea.io/api/v1",
+      "endpoints": {
+        "collections": "/collections",
+        "assets": "/assets",
+        "events": "/events"
+      },
+      "rate_limit": {
+        "requests_per_second": 4
+      },
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 90
+    },
+    "rarible": {
+      "name": "Rarible",
+      "category": "nft",
+      "base_url": "https://api.rarible.org/v0.1",
+      "endpoints": {
+        "items": "/items",
+        "collections": "/collections"
+      },
+      "rate_limit": {
+        "requests_per_second": 5
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "nftport": {
+      "name": "NFTPort",
+      "category": "nft",
+      "base_url": "https://api.nftport.xyz/v0",
+      "endpoints": {
+        "nfts": "/nfts/{chain}/{contract}",
+        "stats": "/transactions/stats/{chain}"
+      },
+      "rate_limit": {
+        "requests_per_second": 1
+      },
+      "requires_auth": true,
+      "priority": 7,
+      "weight": 70,
+      "note": "Requires API key"
+    },
+    "reservoir": {
+      "name": "Reservoir",
+      "category": "nft",
+      "base_url": "https://api.reservoir.tools",
+      "endpoints": {
+        "collections": "/collections/v5",
+        "tokens": "/tokens/v5"
+      },
+      "rate_limit": {
+        "requests_per_second": 5
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85
+    },
+    "cryptopanic": {
+      "name": "CryptoPanic",
+      "category": "news",
+      "base_url": "https://cryptopanic.com/api/v1",
+      "endpoints": {
+        "posts": "/posts/"
+      },
+      "rate_limit": {
+        "requests_per_day": 1000
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "newsapi": {
+      "name": "NewsAPI",
+      "category": "news",
+      "base_url": "https://newsapi.org/v2",
+      "endpoints": {
+        "everything": "/everything?q=cryptocurrency",
+        "top_headlines": "/top-headlines?category=business"
+      },
+      "rate_limit": {
+        "requests_per_day": 100
+      },
+      "requires_auth": true,
+      "priority": 7,
+      "weight": 70,
+      "note": "Requires API key"
+    },
+    "coindesk_rss": {
+      "name": "CoinDesk RSS",
+      "category": "news",
+      "base_url": "https://www.coindesk.com/arc/outboundfeeds/rss",
+      "endpoints": {
+        "feed": "/?outputType=xml"
+      },
+      "rate_limit": {
+        "requests_per_minute": 10
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85
+    },
+    "cointelegraph_rss": {
+      "name": "Cointelegraph RSS",
+      "category": "news",
+      "base_url": "https://cointelegraph.com/rss",
+      "endpoints": {
+        "feed": ""
+      },
+      "rate_limit": {
+        "requests_per_minute": 10
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85
+    },
+    "bitcoinist_rss": {
+      "name": "Bitcoinist RSS",
+      "category": "news",
+      "base_url": "https://bitcoinist.com/feed",
+      "endpoints": {
+        "feed": ""
+      },
+      "rate_limit": {
+        "requests_per_minute": 10
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "reddit_crypto": {
+      "name": "Reddit Crypto",
+      "category": "social",
+      "base_url": "https://www.reddit.com/r/cryptocurrency",
+      "endpoints": {
+        "hot": "/hot.json",
+        "top": "/top.json",
+        "new": "/new.json"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "twitter_trends": {
+      "name": "Twitter Crypto Trends",
+      "category": "social",
+      "base_url": "https://api.twitter.com/2",
+      "endpoints": {
+        "search": "/tweets/search/recent?query=cryptocurrency"
+      },
+      "rate_limit": {
+        "requests_per_minute": 15
+      },
+      "requires_auth": true,
+      "priority": 6,
+      "weight": 60,
+      "note": "Requires API key"
+    },
+    "lunarcrush": {
+      "name": "LunarCrush",
+      "category": "social",
+      "base_url": "https://api.lunarcrush.com/v2",
+      "endpoints": {
+        "assets": "?data=assets",
+        "market": "?data=market"
+      },
+      "rate_limit": {
+        "requests_per_day": 1000
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "santiment": {
+      "name": "Santiment",
+      "category": "sentiment",
+      "base_url": "https://api.santiment.net/graphql",
+      "endpoints": {
+        "graphql": ""
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": true,
+      "priority": 8,
+      "weight": 80,
+      "query_type": "graphql",
+      "note": "Requires API key"
+    },
+    "alternative_me": {
+      "name": "Alternative.me",
+      "category": "sentiment",
+      "base_url": "https://api.alternative.me",
+      "endpoints": {
+        "fear_greed": "/fng/",
+        "historical": "/fng/?limit=10"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 10,
+      "weight": 100
+    },
+    "glassnode": {
+      "name": "Glassnode",
+      "category": "analytics",
+      "base_url": "https://api.glassnode.com/v1",
+      "endpoints": {
+        "metrics": "/metrics/{metric_path}"
+      },
+      "rate_limit": {
+        "requests_per_day": 100
+      },
+      "requires_auth": true,
+      "priority": 9,
+      "weight": 90,
+      "note": "Requires API key"
+    },
+    "intotheblock": {
+      "name": "IntoTheBlock",
+      "category": "analytics",
+      "base_url": "https://api.intotheblock.com/v1",
+      "endpoints": {
+        "analytics": "/analytics"
+      },
+      "rate_limit": {
+        "requests_per_day": 500
+      },
+      "requires_auth": true,
+      "priority": 8,
+      "weight": 80,
+      "note": "Requires API key"
+    },
+    "coinmetrics": {
+      "name": "Coin Metrics",
+      "category": "analytics",
+      "base_url": "https://community-api.coinmetrics.io/v4",
+      "endpoints": {
+        "assets": "/catalog/assets",
+        "metrics": "/timeseries/asset-metrics"
+      },
+      "rate_limit": {
+        "requests_per_minute": 10
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85
+    },
+    "kaiko": {
+      "name": "Kaiko",
+      "category": "analytics",
+      "base_url": "https://us.market-api.kaiko.io/v2",
+      "endpoints": {
+        "data": "/data"
+      },
+      "rate_limit": {
+        "requests_per_second": 1
+      },
+      "requires_auth": true,
+      "priority": 7,
+      "weight": 70,
+      "note": "Requires API key"
+    },
+    "kraken": {
+      "name": "Kraken",
+      "category": "exchange",
+      "base_url": "https://api.kraken.com/0/public",
+      "endpoints": {
+        "ticker": "/Ticker",
+        "system_status": "/SystemStatus",
+        "assets": "/Assets"
+      },
+      "rate_limit": {
+        "requests_per_second": 1
+      },
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 90
+    },
+    "binance": {
+      "name": "Binance",
+      "category": "exchange",
+      "base_url": "https://api.binance.com/api/v3",
+      "endpoints": {
+        "ticker_24hr": "/ticker/24hr",
+        "ticker_price": "/ticker/price",
+        "exchange_info": "/exchangeInfo"
+      },
+      "rate_limit": {
+        "requests_per_minute": 1200,
+        "weight_per_minute": 1200
+      },
+      "requires_auth": false,
+      "priority": 10,
+      "weight": 100
+    },
+    "coinbase": {
+      "name": "Coinbase",
+      "category": "exchange",
+      "base_url": "https://api.coinbase.com/v2",
+      "endpoints": {
+        "exchange_rates": "/exchange-rates",
+        "prices": "/prices/BTC-USD/spot"
+      },
+      "rate_limit": {
+        "requests_per_hour": 10000
+      },
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 95
+    },
+    "bitfinex": {
+      "name": "Bitfinex",
+      "category": "exchange",
+      "base_url": "https://api-pub.bitfinex.com/v2",
+      "endpoints": {
+        "tickers": "/tickers?symbols=ALL",
+        "ticker": "/ticker/tBTCUSD"
+      },
+      "rate_limit": {
+        "requests_per_minute": 90
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85
+    },
+    "huobi": {
+      "name": "Huobi",
+      "category": "exchange",
+      "base_url": "https://api.huobi.pro",
+      "endpoints": {
+        "tickers": "/market/tickers",
+        "detail": "/market/detail"
+      },
+      "rate_limit": {
+        "requests_per_second": 10
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "kucoin": {
+      "name": "KuCoin",
+      "category": "exchange",
+      "base_url": "https://api.kucoin.com/api/v1",
+      "endpoints": {
+        "tickers": "/market/allTickers",
+        "ticker": "/market/orderbook/level1"
+      },
+      "rate_limit": {
+        "requests_per_second": 10
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "okx": {
+      "name": "OKX",
+      "category": "exchange",
+      "base_url": "https://www.okx.com/api/v5",
+      "endpoints": {
+        "tickers": "/market/tickers?instType=SPOT",
+        "ticker": "/market/ticker"
+      },
+      "rate_limit": {
+        "requests_per_second": 20
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85
+    },
+    "gate_io": {
+      "name": "Gate.io",
+      "category": "exchange",
+      "base_url": "https://api.gateio.ws/api/v4",
+      "endpoints": {
+        "tickers": "/spot/tickers",
+        "ticker": "/spot/tickers/{currency_pair}"
+      },
+      "rate_limit": {
+        "requests_per_second": 900
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "bybit": {
+      "name": "Bybit",
+      "category": "exchange",
+      "base_url": "https://api.bybit.com/v5",
+      "endpoints": {
+        "tickers": "/market/tickers?category=spot",
+        "ticker": "/market/tickers"
+      },
+      "rate_limit": {
+        "requests_per_second": 50
+      },
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80
+    },
+    "cryptorank": {
+      "name": "Cryptorank",
+      "category": "market_data",
+      "base_url": "https://api.cryptorank.io/v1",
+      "endpoints": {
+        "currencies": "/currencies",
+        "global": "/global"
+      },
+      "rate_limit": {
+        "requests_per_day": 10000
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "coinlore": {
+      "name": "CoinLore",
+      "category": "market_data",
+      "base_url": "https://api.coinlore.net/api",
+      "endpoints": {
+        "tickers": "/tickers/",
+        "global": "/global/",
+        "coin": "/ticker/"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75
+    },
+    "coincodex": {
+      "name": "CoinCodex",
+      "category": "market_data",
+      "base_url": "https://coincodex.com/api",
+      "endpoints": {
+        "coinlist": "/coincodex/get_coinlist/",
+        "coin": "/coincodex/get_coin/"
+      },
+      "rate_limit": {
+        "requests_per_minute": 60
+      },
+      "requires_auth": false,
+      "priority": 6,
+      "weight": 65
+    },
+    "publicnode_eth_mainnet": {
+      "name": "PublicNode Ethereum",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303820.2358818,
+      "response_time_ms": 193.83835792541504,
+      "added_by": "APL"
+    },
+    "publicnode_eth_allinone": {
+      "name": "PublicNode Ethereum All-in-one",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303820.2402878,
+      "response_time_ms": 183.02631378173828,
+      "added_by": "APL"
+    },
+    "llamanodes_eth": {
+      "name": "LlamaNodes Ethereum",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303820.2048109,
+      "response_time_ms": 117.4626350402832,
+      "added_by": "APL"
+    },
+    "one_rpc_eth": {
+      "name": "1RPC Ethereum",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303820.3860674,
+      "response_time_ms": 283.68401527404785,
+      "added_by": "APL"
+    },
+    "drpc_eth": {
+      "name": "dRPC Ethereum",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303821.0696099,
+      "response_time_ms": 182.6651096343994,
+      "added_by": "APL"
+    },
+    "bsc_official_mainnet": {
+      "name": "BSC Official Mainnet",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303821.1015706,
+      "response_time_ms": 199.1729736328125,
+      "added_by": "APL"
+    },
+    "bsc_official_alt1": {
+      "name": "BSC Official Alt1",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303821.1475594,
+      "response_time_ms": 229.84790802001953,
+      "added_by": "APL"
+    },
+    "bsc_official_alt2": {
+      "name": "BSC Official Alt2",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303821.1258852,
+      "response_time_ms": 192.88301467895508,
+      "added_by": "APL"
+    },
+    "publicnode_bsc": {
+      "name": "PublicNode BSC",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303821.1653347,
+      "response_time_ms": 201.74527168273926,
+      "added_by": "APL"
+    },
+    "polygon_official_mainnet": {
+      "name": "Polygon Official Mainnet",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303821.955726,
+      "response_time_ms": 213.64665031433105,
+      "added_by": "APL"
+    },
+    "publicnode_polygon_bor": {
+      "name": "PublicNode Polygon Bor",
+      "category": "unknown",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303821.9267807,
+      "response_time_ms": 139.0836238861084,
+      "added_by": "APL"
+    },
+    "blockscout_ethereum": {
+      "name": "Blockscout Ethereum",
+      "category": "unknown",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303822.2475295,
+      "response_time_ms": 444.66304779052734,
+      "added_by": "APL"
+    },
+    "defillama_prices": {
+      "name": "DefiLlama (Prices)",
+      "category": "unknown",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303825.0815687,
+      "response_time_ms": 261.27147674560547,
+      "added_by": "APL"
+    },
+    "coinstats_public": {
+      "name": "CoinStats Public API",
+      "category": "unknown",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303825.9100816,
+      "response_time_ms": 91.6907787322998,
+      "added_by": "APL"
+    },
+    "coinstats_news": {
+      "name": "CoinStats News",
+      "category": "unknown",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303826.9833155,
+      "response_time_ms": 176.76472663879395,
+      "added_by": "APL"
+    },
+    "rss_cointelegraph": {
+      "name": "Cointelegraph RSS",
+      "category": "unknown",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303827.0002286,
+      "response_time_ms": 178.41029167175293,
+      "added_by": "APL"
+    },
+    "rss_decrypt": {
+      "name": "Decrypt RSS",
+      "category": "unknown",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303826.9912832,
+      "response_time_ms": 139.10841941833496,
+      "added_by": "APL"
+    },
+    "decrypt_rss": {
+      "name": "Decrypt RSS",
+      "category": "unknown",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303826.9924374,
+      "response_time_ms": 77.10886001586914,
+      "added_by": "APL"
+    },
+    "alternative_me_fng": {
+      "name": "Alternative.me Fear & Greed",
+      "category": "unknown",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303827.6993215,
+      "response_time_ms": 196.30694389343262,
+      "added_by": "APL"
+    },
+    "altme_fng": {
+      "name": "Alternative.me F&G",
+      "category": "unknown",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303827.6999426,
+      "response_time_ms": 120.93448638916016,
+      "added_by": "APL"
+    },
+    "alt_fng": {
+      "name": "Alternative.me Fear & Greed",
+      "category": "indices",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303839.1668293,
+      "response_time_ms": 188.826322555542,
+      "added_by": "APL"
+    },
+    "hf_model_elkulako_cryptobert": {
+      "name": "HF Model: ElKulako/CryptoBERT",
+      "model_id": "ElKulako/CryptoBERT",
+      "category": "hf-model",
+      "type": "http_json",
+      "task": "fill-mask",
+      "validated": true,
+      "validated_at": 1763303839.1660795,
+      "response_time_ms": 126.39689445495605,
+      "requires_auth": true,
+      "auth_type": "HF_TOKEN",
+      "auth_env_var": "HF_TOKEN",
+      "status": "CONDITIONALLY_AVAILABLE",
+      "description": "Cryptocurrency-specific BERT model for sentiment analysis and token prediction",
+      "use_case": "crypto_sentiment_analysis",
+      "added_by": "APL",
+      "integration_status": "active"
+    },
+    "hf_model_kk08_cryptobert": {
+      "name": "HF Model: kk08/CryptoBERT",
+      "category": "hf-model",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303839.1650105,
+      "response_time_ms": 104.32291030883789,
+      "added_by": "APL"
+    },
+    "hf_ds_linxy_crypto": {
+      "name": "HF Dataset: linxy/CryptoCoin",
+      "category": "hf-dataset",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303840.0978878,
+      "response_time_ms": 300.7354736328125,
+      "added_by": "APL"
+    },
+    "hf_ds_wf_btc": {
+      "name": "HF Dataset: WinkingFace BTC/USDT",
+      "category": "hf-dataset",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303840.1099799,
+      "response_time_ms": 297.0905303955078,
+      "added_by": "APL"
+    },
+    "hf_ds_wf_eth": {
+      "name": "WinkingFace ETH/USDT",
+      "category": "hf-dataset",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303840.1940413,
+      "response_time_ms": 365.92626571655273,
+      "added_by": "APL"
+    },
+    "hf_ds_wf_sol": {
+      "name": "WinkingFace SOL/USDT",
+      "category": "hf-dataset",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303840.1869476,
+      "response_time_ms": 340.6860828399658,
+      "added_by": "APL"
+    },
+    "hf_ds_wf_xrp": {
+      "name": "WinkingFace XRP/USDT",
+      "category": "hf-dataset",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303840.2557783,
+      "response_time_ms": 394.79851722717285,
+      "added_by": "APL"
+    },
+    "blockscout": {
+      "name": "Blockscout Ethereum",
+      "category": "blockchain_explorer",
+      "type": "http_json",
+      "validated": true,
+      "validated_at": 1763303859.7769396,
+      "response_time_ms": 549.4470596313477,
+      "added_by": "APL"
+    },
+    "publicnode_eth": {
+      "name": "PublicNode Ethereum",
+      "category": "rpc",
+      "type": "http_rpc",
+      "validated": true,
+      "validated_at": 1763303860.6991374,
+      "response_time_ms": 187.87002563476562,
+      "added_by": "APL"
+    }
+  },
+  "pool_configurations": [
+    {
+      "pool_name": "Primary Market Data Pool",
+      "category": "market_data",
+      "rotation_strategy": "priority",
+      "providers": [
+        "coingecko",
+        "coincap",
+        "cryptocompare",
+        "binance",
+        "coinbase"
+      ]
+    },
+    {
+      "pool_name": "Blockchain Explorer Pool",
+      "category": "blockchain_explorers",
+      "rotation_strategy": "round_robin",
+      "providers": [
+        "etherscan",
+        "bscscan",
+        "polygonscan",
+        "blockchair",
+        "ethplorer"
+      ]
+    },
+    {
+      "pool_name": "DeFi Protocol Pool",
+      "category": "defi",
+      "rotation_strategy": "weighted",
+      "providers": [
+        "defillama",
+        "uniswap_v3",
+        "aave",
+        "compound",
+        "curve",
+        "pancakeswap"
+      ]
+    },
+    {
+      "pool_name": "NFT Market Pool",
+      "category": "nft",
+      "rotation_strategy": "priority",
+      "providers": [
+        "opensea",
+        "reservoir",
+        "rarible"
+      ]
+    },
+    {
+      "pool_name": "News Aggregation Pool",
+      "category": "news",
+      "rotation_strategy": "round_robin",
+      "providers": [
+        "coindesk_rss",
+        "cointelegraph_rss",
+        "bitcoinist_rss",
+        "cryptopanic"
+      ]
+    },
+    {
+      "pool_name": "Sentiment Analysis Pool",
+      "category": "sentiment",
+      "rotation_strategy": "priority",
+      "providers": [
+        "alternative_me",
+        "lunarcrush",
+        "reddit_crypto"
+      ]
+    },
+    {
+      "pool_name": "Exchange Data Pool",
+      "category": "exchange",
+      "rotation_strategy": "weighted",
+      "providers": [
+        "binance",
+        "kraken",
+        "coinbase",
+        "bitfinex",
+        "okx"
+      ]
+    },
+    {
+      "pool_name": "Analytics Pool",
+      "category": "analytics",
+      "rotation_strategy": "priority",
+      "providers": [
+        "coinmetrics",
+        "messari",
+        "glassnode"
+      ]
+    }
+  ],
+  "huggingface_models": {
+    "sentiment_analysis": [
+      {
+        "model_id": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+        "task": "sentiment-analysis",
+        "description": "Twitter sentiment analysis (positive/negative/neutral)",
+        "priority": 10
+      },
+      {
+        "model_id": "ProsusAI/finbert",
+        "task": "sentiment-analysis",
+        "description": "Financial sentiment analysis",
+        "priority": 9
+      },
+      {
+        "model_id": "ElKulako/CryptoBERT",
+        "task": "fill-mask",
+        "description": "Cryptocurrency-specific BERT model for sentiment analysis",
+        "priority": 10,
+        "requires_auth": true,
+        "auth_token": "HF_TOKEN",
+        "status": "active"
+      },
+      {
+        "model_id": "mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis",
+        "task": "sentiment-analysis",
+        "description": "Financial news sentiment",
+        "priority": 9
+      }
+    ],
+    "text_classification": [
+      {
+        "model_id": "yiyanghkust/finbert-tone",
+        "task": "text-classification",
+        "description": "Financial tone classification",
+        "priority": 8
+      }
+    ],
+    "zero_shot": [
+      {
+        "model_id": "facebook/bart-large-mnli",
+        "task": "zero-shot-classification",
+        "description": "Zero-shot classification for crypto topics",
+        "priority": 7
+      }
+    ]
+  },
+  "fallback_strategy": {
+    "max_retries": 3,
+    "retry_delay_seconds": 2,
+    "circuit_breaker_threshold": 5,
+    "circuit_breaker_timeout_seconds": 60,
+    "health_check_interval_seconds": 30
+  }
+}

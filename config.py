@@ -26,9 +26,9 @@ SELF_HEALING_CONFIG = {
 # Primary HuggingFace Space Configuration (Priority 1)
 # IMPORTANT: Set HF_API_TOKEN environment variable with your token
 HF_SPACE_PRIMARY = {
-    "api_token": os.getenv("HF_API_TOKEN"),  # Required: Set this in environment
-    "base_url": os.getenv("HF_SPACE_BASE_URL", "https://really-amin-datasourceforcryptocurrency.hf.space"),
-    "ws_url": os.getenv("HF_SPACE_WS_URL", "wss://really-amin-datasourceforcryptocurrency.hf.space/ws"),
+    "api_token": os.getenv("HF_API_TOKEN", "").strip() or None,  # Strip whitespace and newlines
+    "base_url": os.getenv("HF_SPACE_BASE_URL", "https://really-amin-datasourceforcryptocurrency.hf.space").strip(),
+    "ws_url": os.getenv("HF_SPACE_WS_URL", "wss://really-amin-datasourceforcryptocurrency.hf.space/ws").strip(),
     "priority": 1,
     "timeout": 8.0,
     "retry_attempts": 2,

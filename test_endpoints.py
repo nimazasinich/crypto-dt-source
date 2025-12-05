@@ -1,89 +1,92 @@
 #!/usr/bin/env python3
 """
-Test script for Backend Data Hub endpoints.
-Run this after starting the server to verify all endpoints work correctly.
-
-Usage:
-    python3 test_endpoints.py
+Test all API endpoints to verify fixes
 """
-
 import requests
 import json
 import sys
+from datetime import datetime
 
-BASE_URL = "http://127.0.0.1:7860"
-ENDPOINTS = [
-    ("GET /api/health", "/api/health", None),
-    ("GET /api/status", "/api/status", None),
-    ("GET /api/providers", "/api/providers", None),
-    ("GET /api/resources", "/api/resources", None),
-    ("GET /api/resources?q=coingecko", "/api/resources", {"q": "coingecko"}),
-]
+API_BASE = "http://localhost:7860"
 
-def test_endpoint(name, path, params):
-    """Test a single endpoint and return result."""
+def test_endpoint(name, url, expected_status=200):
+    """Test a single endpoint"""
     try:
-        url = f"{BASE_URL}{path}"
-        response = requests.get(url, params=params, timeout=10)
+        print(f"\n🧪 Testing {name}...")
+        print(f"   URL: {url}")
         
-        if response.status_code != 200:
-            return False, f"HTTP {response.status_code}", None
+        start_time = datetime.now()
+        response = requests.get(url, timeout=10)
+        duration = (datetime.now() - start_time).total_seconds() * 1000
         
-        try:
-            data = response.json()
-            return True, "OK", data
-        except json.JSONDecodeError:
-            return False, "Invalid JSON", None
-            
+        if response.status_code == expected_status:
+            print(f"   ✅ SUCCESS ({duration:.0f}ms)")
+            try:
+                data = response.json()
+                if isinstance(data, dict) and len(data) > 0:
+                    print(f"   📊 Response keys: {list(data.keys())[:5]}")
+                elif isinstance(data, list):
+                    print(f"   📊 Response: {len(data)} items")
+            except:
+                print(f"   📊 Response: {len(response.text)} chars")
+            return True
+        else:
+            print(f"   ❌ FAILED: HTTP {response.status_code}")
+            try:
+                error_data = response.json()
+                print(f"   Error: {error_data.get('error', 'Unknown error')}")
+            except:
+                print(f"   Response: {response.text[:100]}")
+            return False
     except requests.exceptions.ConnectionError:
-        return False, "Connection refused (server not running?)", None
+        print(f"   ❌ FAILED: Cannot connect to server")
+        print(f"   💡 Make sure Flask server is running: python app.py")
+        return False
     except Exception as e:
-        return False, str(e), None
+        print(f"   ❌ FAILED: {str(e)}")
+        return False
 
 def main():
-    """Run all endpoint tests."""
-    print("=" * 80)
-    print("Backend Data Hub - Endpoint Tests")
-    print("=" * 80)
-    print()
+    print("=" * 60)
+    print("  API Endpoints Test Suite")
+    print("=" * 60)
+    
+    endpoints = [
+        ("Health Check", f"{API_BASE}/api/health"),
+        ("Exchange Rate (BTC/USDT)", f"{API_BASE}/api/service/rate?pair=BTC/USDT"),
+        ("Exchange Rate (ETH/USDT)", f"{API_BASE}/api/service/rate?pair=ETH/USDT"),
+        ("Market OHLC", f"{API_BASE}/api/market/ohlc?symbol=BTC&interval=1h&limit=10"),
+        ("OHLCV", f"{API_BASE}/api/ohlcv?symbol=BTC&timeframe=1h&limit=10"),
+        ("Latest News", f"{API_BASE}/api/news/latest?limit=3"),
+    ]
     
     results = []
-    for name, path, params in ENDPOINTS:
-        print(f"Testing {name}...")
-        success, status, data = test_endpoint(name, path, params)
-        
-        if success:
-            print(f"  ✅ {status}")
-            
-            # Show key metrics
-            if "status" in data:
-                print(f"     Status: {data['status']}")
-            if "total" in data:
-                print(f"     Total: {data['total']}")
-            if "providers" in data and isinstance(data["providers"], dict):
-                print(f"     Providers: {data['providers']}")
-            if "resources" in data and isinstance(data["resources"], dict):
-                print(f"     Resources: {data['resources'].get('total', 'N/A')}")
-            if isinstance(data, list):
-                print(f"     Count: {len(data)} items")
-        else:
-            print(f"  ❌ {status}")
-            
+    for name, url in endpoints:
+        success = test_endpoint(name, url)
         results.append((name, success))
-        print()
     
-    # Summary
-    print("=" * 80)
+    print("\n" + "=" * 60)
+    print("  Test Results Summary")
+    print("=" * 60)
+    
     passed = sum(1 for _, success in results if success)
     total = len(results)
-    print(f"Results: {passed}/{total} tests passed")
-    print("=" * 80)
+    
+    for name, success in results:
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status} - {name}")
+    
+    print(f"\n📊 Total: {passed}/{total} passed")
     
     if passed == total:
-        print("✅ All tests passed!")
+        print("\n🎉 All endpoints working correctly!")
         return 0
     else:
-        print("❌ Some tests failed")
+        print(f"\n⚠️  {total - passed} endpoint(s) failed")
+        print("\n💡 Troubleshooting:")
+        print("   1. Make sure Flask server is running: python app.py")
+        print("   2. Restart the server after code changes")
+        print("   3. Check server logs for errors")
         return 1
 
 if __name__ == "__main__":
