@@ -1,0 +1,864 @@
+{
+  "models": [
+    {
+      "id": "cryptobert",
+      "hf_id": "kk08/CryptoBERT",
+      "name": "CryptoBERT",
+      "category": "sentiment",
+      "size": "small",
+      "size_mb": 420,
+      "description": "Binary sentiment analysis optimized for crypto texts",
+      "use_cases": [
+        "social_media",
+        "news",
+        "tweets",
+        "reddit"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.85,
+      "popularity_score": 0.9,
+      "tags": [
+        "crypto",
+        "sentiment",
+        "bert",
+        "binary"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "elkulako_cryptobert",
+      "hf_id": "ElKulako/cryptobert",
+      "name": "ElKulako CryptoBERT",
+      "category": "sentiment",
+      "size": "small",
+      "size_mb": 450,
+      "description": "3-class crypto sentiment (bullish/neutral/bearish)",
+      "use_cases": [
+        "twitter",
+        "reddit",
+        "social",
+        "forums"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": true,
+      "performance_score": 0.88,
+      "popularity_score": 0.85,
+      "tags": [
+        "crypto",
+        "social",
+        "sentiment",
+        "3-class"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "finbert",
+      "hf_id": "ProsusAI/finbert",
+      "name": "FinBERT",
+      "category": "sentiment",
+      "size": "small",
+      "size_mb": 440,
+      "description": "Financial sentiment analysis (positive/negative/neutral)",
+      "use_cases": [
+        "news",
+        "articles",
+        "reports",
+        "earnings"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.9,
+      "popularity_score": 0.95,
+      "tags": [
+        "finance",
+        "sentiment",
+        "bert",
+        "financial"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "finbert_tone",
+      "hf_id": "yiyanghkust/finbert-tone",
+      "name": "FinBERT Tone",
+      "category": "sentiment",
+      "size": "small",
+      "size_mb": 440,
+      "description": "Financial tone analysis for earnings calls and reports",
+      "use_cases": [
+        "earnings_calls",
+        "reports",
+        "financial_documents"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.87,
+      "popularity_score": 0.8,
+      "tags": [
+        "finance",
+        "tone",
+        "bert"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "distilroberta_financial",
+      "hf_id": "mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis",
+      "name": "DistilRoBERTa Financial",
+      "category": "sentiment",
+      "size": "small",
+      "size_mb": 330,
+      "description": "Fast financial sentiment analysis with DistilRoBERTa",
+      "use_cases": [
+        "news",
+        "real_time",
+        "streaming"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.83,
+      "popularity_score": 0.75,
+      "tags": [
+        "finance",
+        "sentiment",
+        "distil",
+        "fast"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "fintwit_bert",
+      "hf_id": "StephanAkkerman/FinTwitBERT-sentiment",
+      "name": "FinTwitBERT",
+      "category": "sentiment",
+      "size": "small",
+      "size_mb": 440,
+      "description": "Financial Twitter sentiment analysis",
+      "use_cases": [
+        "twitter",
+        "social",
+        "fintwit"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.86,
+      "popularity_score": 0.82,
+      "tags": [
+        "finance",
+        "twitter",
+        "sentiment"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "twitter_roberta",
+      "hf_id": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+      "name": "Twitter RoBERTa",
+      "category": "sentiment",
+      "size": "medium",
+      "size_mb": 500,
+      "description": "State-of-the-art Twitter sentiment analysis",
+      "use_cases": [
+        "twitter",
+        "social_media",
+        "tweets"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.89,
+      "popularity_score": 0.92,
+      "tags": [
+        "twitter",
+        "sentiment",
+        "roberta",
+        "social"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "xlm_roberta_sentiment",
+      "hf_id": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+      "name": "XLM-RoBERTa Sentiment",
+      "category": "sentiment",
+      "size": "medium",
+      "size_mb": 1100,
+      "description": "Multilingual sentiment (100+ languages)",
+      "use_cases": [
+        "global",
+        "multilingual",
+        "international"
+      ],
+      "languages": [
+        "multi"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.87,
+      "popularity_score": 0.88,
+      "tags": [
+        "multilingual",
+        "sentiment",
+        "roberta",
+        "global"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "bertweet_sentiment",
+      "hf_id": "finiteautomata/bertweet-base-sentiment-analysis",
+      "name": "BERTweet Sentiment",
+      "category": "sentiment",
+      "size": "medium",
+      "size_mb": 540,
+      "description": "BERT trained specifically on tweets",
+      "use_cases": [
+        "twitter",
+        "social",
+        "monitoring"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.85,
+      "popularity_score": 0.8,
+      "tags": [
+        "twitter",
+        "bert",
+        "sentiment"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "crypto_news_bert",
+      "hf_id": "mathugo/crypto_news_bert",
+      "name": "Crypto News BERT",
+      "category": "sentiment",
+      "size": "small",
+      "size_mb": 420,
+      "description": "BERT fine-tuned on crypto news articles",
+      "use_cases": [
+        "news",
+        "articles",
+        "crypto_media"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.84,
+      "popularity_score": 0.7,
+      "tags": [
+        "crypto",
+        "news",
+        "bert"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "crypto_gpt_o3",
+      "hf_id": "OpenC/crypto-gpt-o3-mini",
+      "name": "Crypto GPT-O3 Mini",
+      "category": "generation",
+      "size": "medium",
+      "size_mb": 850,
+      "description": "Crypto/DeFi text generation model",
+      "use_cases": [
+        "analysis",
+        "reports",
+        "content",
+        "explanation"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.8,
+      "popularity_score": 0.7,
+      "tags": [
+        "crypto",
+        "generation",
+        "gpt",
+        "defi"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "fingpt",
+      "hf_id": "oliverwang15/FinGPT",
+      "name": "FinGPT",
+      "category": "generation",
+      "size": "large",
+      "size_mb": 1500,
+      "description": "Financial text generation and analysis",
+      "use_cases": [
+        "reports",
+        "analysis",
+        "financial_content"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.82,
+      "popularity_score": 0.75,
+      "tags": [
+        "finance",
+        "generation",
+        "gpt"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "crypto_trader_lm",
+      "hf_id": "agarkovv/CryptoTrader-LM",
+      "name": "CryptoTrader LM",
+      "category": "trading",
+      "size": "small",
+      "size_mb": 450,
+      "description": "BTC/ETH trading signals (buy/sell/hold)",
+      "use_cases": [
+        "trading",
+        "signals",
+        "predictions",
+        "analysis"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.75,
+      "popularity_score": 0.65,
+      "tags": [
+        "trading",
+        "signals",
+        "crypto",
+        "predictions"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "crypto_price_predictor",
+      "hf_id": "mrm8488/bert-mini-finetuned-crypto-price-prediction",
+      "name": "Crypto Price Predictor",
+      "category": "price_prediction",
+      "size": "tiny",
+      "size_mb": 60,
+      "description": "Price trend prediction for cryptocurrencies",
+      "use_cases": [
+        "prediction",
+        "forecasting",
+        "trends"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.7,
+      "popularity_score": 0.6,
+      "tags": [
+        "prediction",
+        "price",
+        "trends"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "crypto_news_summarizer",
+      "hf_id": "FurkanGozukara/Crypto-Financial-News-Summarizer",
+      "name": "Crypto News Summarizer",
+      "category": "summarization",
+      "size": "medium",
+      "size_mb": 1200,
+      "description": "Summarize crypto and financial news articles",
+      "use_cases": [
+        "news",
+        "digest",
+        "reports",
+        "articles"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.82,
+      "popularity_score": 0.75,
+      "tags": [
+        "summarization",
+        "news",
+        "crypto"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "financial_summarizer_pegasus",
+      "hf_id": "human-centered-summarization/financial-summarization-pegasus",
+      "name": "Financial Summarizer (PEGASUS)",
+      "category": "summarization",
+      "size": "large",
+      "size_mb": 2300,
+      "description": "High-quality financial document summarization",
+      "use_cases": [
+        "reports",
+        "documents",
+        "earnings",
+        "filings"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.88,
+      "popularity_score": 0.8,
+      "tags": [
+        "summarization",
+        "finance",
+        "pegasus"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "bart_large_cnn",
+      "hf_id": "facebook/bart-large-cnn",
+      "name": "BART Large CNN",
+      "category": "summarization",
+      "size": "large",
+      "size_mb": 1600,
+      "description": "General-purpose news summarization",
+      "use_cases": [
+        "news",
+        "articles",
+        "blogs",
+        "content"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.9,
+      "popularity_score": 0.95,
+      "tags": [
+        "summarization",
+        "bart",
+        "news"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "t5_base_summarization",
+      "hf_id": "t5-base",
+      "name": "T5 Base",
+      "category": "summarization",
+      "size": "medium",
+      "size_mb": 850,
+      "description": "Flexible text-to-text model for summarization",
+      "use_cases": [
+        "general",
+        "flexible",
+        "any_text"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.85,
+      "popularity_score": 0.9,
+      "tags": [
+        "summarization",
+        "t5",
+        "flexible"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "bert_base_ner",
+      "hf_id": "dslim/bert-base-NER",
+      "name": "BERT Base NER",
+      "category": "ner",
+      "size": "small",
+      "size_mb": 420,
+      "description": "Named Entity Recognition for financial entities",
+      "use_cases": [
+        "entities",
+        "extraction",
+        "companies",
+        "tickers"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.88,
+      "popularity_score": 0.85,
+      "tags": [
+        "ner",
+        "entities",
+        "bert"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "roberta_squad2",
+      "hf_id": "deepset/roberta-base-squad2",
+      "name": "RoBERTa SQuAD2",
+      "category": "question_answering",
+      "size": "medium",
+      "size_mb": 500,
+      "description": "Question answering for any text",
+      "use_cases": [
+        "qa",
+        "chatbot",
+        "faq",
+        "retrieval"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.9,
+      "popularity_score": 0.92,
+      "tags": [
+        "qa",
+        "roberta",
+        "squad"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "bert_squad2",
+      "hf_id": "deepset/bert-base-cased-squad2",
+      "name": "BERT SQuAD2",
+      "category": "question_answering",
+      "size": "small",
+      "size_mb": 420,
+      "description": "Financial FAQ and Q&A",
+      "use_cases": [
+        "faq",
+        "support",
+        "chatbot"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.87,
+      "popularity_score": 0.88,
+      "tags": [
+        "qa",
+        "bert",
+        "squad"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "sentence_bert_mpnet",
+      "hf_id": "sentence-transformers/all-mpnet-base-v2",
+      "name": "Sentence-BERT MPNet",
+      "category": "embedding",
+      "size": "small",
+      "size_mb": 420,
+      "description": "High-quality sentence embeddings",
+      "use_cases": [
+        "search",
+        "similarity",
+        "clustering",
+        "retrieval"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.92,
+      "popularity_score": 0.95,
+      "tags": [
+        "embeddings",
+        "sentence",
+        "bert"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "e5_large_v2",
+      "hf_id": "intfloat/e5-large-v2",
+      "name": "E5 Large V2",
+      "category": "embedding",
+      "size": "medium",
+      "size_mb": 1300,
+      "description": "State-of-the-art embeddings",
+      "use_cases": [
+        "search",
+        "retrieval",
+        "rag",
+        "semantic"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.94,
+      "popularity_score": 0.9,
+      "tags": [
+        "embeddings",
+        "e5",
+        "search"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    },
+    {
+      "id": "bart_mnli",
+      "hf_id": "facebook/bart-large-mnli",
+      "name": "BART MNLI",
+      "category": "classification",
+      "size": "large",
+      "size_mb": 1600,
+      "description": "Zero-shot topic classification",
+      "use_cases": [
+        "classification",
+        "topics",
+        "zero_shot"
+      ],
+      "languages": [
+        "en"
+      ],
+      "free": true,
+      "requires_auth": false,
+      "performance_score": 0.89,
+      "popularity_score": 0.92,
+      "tags": [
+        "classification",
+        "bart",
+        "zero_shot"
+      ],
+      "api_compatible": true,
+      "downloadable": true
+    }
+  ],
+  "stats": {
+    "total_models": 24,
+    "by_category": {
+      "sentiment": 10,
+      "generation": 2,
+      "trading": 1,
+      "summarization": 4,
+      "ner": 1,
+      "question_answering": 2,
+      "classification": 1,
+      "embedding": 2,
+      "translation": 0,
+      "price_prediction": 1
+    },
+    "by_size": {
+      "tiny": 1,
+      "small": 11,
+      "medium": 8,
+      "large": 4,
+      "xlarge": 0
+    },
+    "free_models": 24,
+    "no_auth_models": 23,
+    "api_compatible": 24,
+    "downloadable": 24,
+    "avg_performance": 0.86,
+    "avg_popularity": 0.83,
+    "total_size_gb": 18.12,
+    "top_tags": [
+      {
+        "tag": "sentiment",
+        "count": 8
+      },
+      {
+        "tag": "bert",
+        "count": 8
+      },
+      {
+        "tag": "crypto",
+        "count": 6
+      },
+      {
+        "tag": "finance",
+        "count": 6
+      },
+      {
+        "tag": "summarization",
+        "count": 4
+      },
+      {
+        "tag": "twitter",
+        "count": 3
+      },
+      {
+        "tag": "roberta",
+        "count": 3
+      },
+      {
+        "tag": "news",
+        "count": 3
+      },
+      {
+        "tag": "social",
+        "count": 2
+      },
+      {
+        "tag": "generation",
+        "count": 2
+      }
+    ],
+    "languages_supported": [
+      "en",
+      "multi"
+    ]
+  },
+  "categories": [
+    {
+      "id": "sentiment",
+      "name": "SENTIMENT",
+      "count": 10,
+      "avg_performance": 0.86,
+      "models": [
+        "cryptobert",
+        "elkulako_cryptobert",
+        "finbert",
+        "finbert_tone",
+        "distilroberta_financial"
+      ]
+    },
+    {
+      "id": "summarization",
+      "name": "SUMMARIZATION",
+      "count": 4,
+      "avg_performance": 0.86,
+      "models": [
+        "crypto_news_summarizer",
+        "financial_summarizer_pegasus",
+        "bart_large_cnn",
+        "t5_base_summarization"
+      ]
+    },
+    {
+      "id": "generation",
+      "name": "GENERATION",
+      "count": 2,
+      "avg_performance": 0.81,
+      "models": [
+        "crypto_gpt_o3",
+        "fingpt"
+      ]
+    },
+    {
+      "id": "question_answering",
+      "name": "QA",
+      "count": 2,
+      "avg_performance": 0.89,
+      "models": [
+        "roberta_squad2",
+        "bert_squad2"
+      ]
+    },
+    {
+      "id": "embedding",
+      "name": "EMBEDDING",
+      "count": 2,
+      "avg_performance": 0.93,
+      "models": [
+        "sentence_bert_mpnet",
+        "e5_large_v2"
+      ]
+    },
+    {
+      "id": "trading",
+      "name": "TRADING",
+      "count": 1,
+      "avg_performance": 0.75,
+      "models": [
+        "crypto_trader_lm"
+      ]
+    },
+    {
+      "id": "ner",
+      "name": "NER",
+      "count": 1,
+      "avg_performance": 0.88,
+      "models": [
+        "bert_base_ner"
+      ]
+    },
+    {
+      "id": "classification",
+      "name": "CLASSIFICATION",
+      "count": 1,
+      "avg_performance": 0.89,
+      "models": [
+        "bart_mnli"
+      ]
+    },
+    {
+      "id": "price_prediction",
+      "name": "PRICE_PREDICTION",
+      "count": 1,
+      "avg_performance": 0.7,
+      "models": [
+        "crypto_price_predictor"
+      ]
+    }
+  ]
+}
