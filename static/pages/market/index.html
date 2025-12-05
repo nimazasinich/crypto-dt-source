@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-theme="dark">
+<html lang="en" dir="ltr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Permissions-Policy" content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()">
   <meta name="description" content="Crypto Monitor ULTIMATE - Market Data">
   <title>Market | Crypto Monitor ULTIMATE</title>
   
@@ -13,9 +14,8 @@
   <link rel="stylesheet" href="/static/shared/css/components.css">
   <link rel="stylesheet" href="/static/shared/css/layout.css">
   <link rel="stylesheet" href="/static/shared/css/utilities.css">
-  <link rel="stylesheet" href="./market.css">
+  <link rel="stylesheet" href="/static/pages/market/market.css">
   
-  <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js">
 </head>
 <body>
   <div class="app-container">
@@ -37,10 +37,10 @@
           </div>
           <div class="page-actions">
             <div class="timeframe-btns" id="timeframe-btns">
-              <button class="btn btn-sm" data-timeframe="1D">1D</button>
-              <button class="btn btn-sm active" data-timeframe="7D">7D</button>
-              <button class="btn btn-sm" data-timeframe="30D">30D</button>
-              <button class="btn btn-sm" data-timeframe="1Y">1Y</button>
+              <button class="btn btn-sm filter-btn" data-timeframe="1D" title="Top 10 Coins">Top 10</button>
+              <button class="btn btn-sm filter-btn" data-timeframe="7D" title="Top 25 Coins">Top 25</button>
+              <button class="btn btn-sm filter-btn active" data-timeframe="30D" title="Top 50 Coins">Top 50</button>
+              <button class="btn btn-sm filter-btn" data-timeframe="1Y" title="Top 100 Coins">Top 100</button>
             </div>
             <button id="refresh-btn" class="btn-icon" title="Refresh data" aria-label="Refresh data">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
@@ -126,6 +126,17 @@
   </div>
 
   <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-  <script type="module" src="./market.js"></script>
+  
+  <!-- Initialize layout and page -->
+  <script type="module">
+    import { LayoutManager } from '/static/shared/js/core/layout-manager.js';
+    
+    // Initialize layouts first
+    await LayoutManager.init('market');
+    
+    // Then load page module
+    await import('./market.js');
+  </script>
 </body>
 </html>
+

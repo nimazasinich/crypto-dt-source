@@ -1,19 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-theme="dark">
+<html lang="en" dir="ltr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Permissions-Policy" content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()">
   <meta name="description" content="Crypto Monitor ULTIMATE - Sentiment Analysis">
   <title>Sentiment Analysis | Crypto Monitor ULTIMATE</title>
   
-  <link rel="icon" type="image/svg+xml" href="/static/assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="../../assets/icons/favicon.svg">
   
   <link rel="stylesheet" href="/static/shared/css/design-system.css">
   <link rel="stylesheet" href="/static/shared/css/global.css">
   <link rel="stylesheet" href="/static/shared/css/components.css">
   <link rel="stylesheet" href="/static/shared/css/layout.css">
   <link rel="stylesheet" href="/static/shared/css/utilities.css">
-  <link rel="stylesheet" href="./sentiment.css">
+  <link rel="stylesheet" href="/static/pages/sentiment/sentiment.css">
 </head>
 <body>
   <div class="app-container">
@@ -93,7 +94,7 @@
                 <div class="panel-header">
                   <h3>Analysis Results</h3>
                 </div>
-                <div class="panel-body" id="asset-results">
+                <div class="panel-body" id="asset-result">
                   <div class="empty-state">
                     <p>Enter a cryptocurrency symbol and click Analyze</p>
                   </div>
@@ -132,7 +133,7 @@
                 <div class="panel-header">
                   <h3>Analysis Results</h3>
                 </div>
-                <div class="panel-body" id="text-results">
+                <div class="panel-body" id="text-result">
                   <div class="empty-state">
                     <p>Enter text and click Analyze to see results</p>
                   </div>
@@ -146,6 +147,16 @@
   </div>
 
   <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-  <script type="module" src="./sentiment.js"></script>
+  
+  <!-- Initialize layout and page -->
+  <script type="module">
+    import { LayoutManager } from '/static/shared/js/core/layout-manager.js';
+    
+    // Initialize layouts first
+    await LayoutManager.init('sentiment');
+    
+    // Then load page module
+    await import('/static/pages/sentiment/sentiment.js');
+  </script>
 </body>
 </html>

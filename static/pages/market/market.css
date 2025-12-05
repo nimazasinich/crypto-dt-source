@@ -1,5 +1,24 @@
 /* Market Page Styles */
 
+.btn-view {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #2dd4bf, #818cf8);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(45, 212, 191, 0.3);
+}
+
+.btn-view:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(45, 212, 191, 0.5);
+  background: linear-gradient(135deg, #22c55e, #2dd4bf);
+}
+
 .market-stats {
   display: flex;
   gap: var(--space-4);
@@ -37,15 +56,50 @@
   border-radius: var(--radius-md);
 }
 
-.timeframe-btns .btn {
-  padding: var(--space-1) var(--space-3);
+.timeframe-btns .btn,
+.timeframe-btns .filter-btn {
+  padding: var(--space-2) var(--space-3);
   background: transparent;
   border: none;
+  color: var(--text-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
 }
 
-.timeframe-btns .btn.active {
-  background: var(--color-primary);
+.timeframe-btns .btn:hover,
+.timeframe-btns .filter-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-strong);
+}
+
+.timeframe-btns .btn.active,
+.timeframe-btns .filter-btn.active {
+  background: linear-gradient(135deg, #2dd4bf, #818cf8);
   color: white;
+  box-shadow: 0 2px 8px rgba(45, 212, 191, 0.3);
+}
+
+.filter-btn {
+  position: relative;
+}
+
+.filter-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.filter-btn.active::after {
+  width: 80%;
 }
 
 .filters-bar {

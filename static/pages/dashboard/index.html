@@ -1,35 +1,56 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-theme="dark">
+<html lang="en" dir="ltr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Crypto Monitor ULTIMATE - Comprehensive Dashboard with Real-time Market Data, AI Analysis, and Sentiment Tracking">
-  <title>Dashboard | Crypto Monitor ULTIMATE</title>
+  <meta name="description" content="Crypto Monitor ULTIMATE - Premium Dashboard with Real-time Market Data, AI Analysis & Sentiment">
+  <meta name="theme-color" content="#14b8a6">
+  <title>Dashboard | Crypto Monitor</title>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/static/assets/icons/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232dd4bf'/%3E%3Cstop offset='50%25' stop-color='%2322d3ee'/%3E%3Cstop offset='100%25' stop-color='%233b82f6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='45' fill='url(%23g)'/%3E%3Cpath d='M50 25 L65 45 L50 40 L35 45 Z M50 75 L35 55 L50 60 L65 55 Z' fill='white'/%3E%3C/svg%3E">
 
-  <!-- Shared CSS (in order) -->
-  <link rel="stylesheet" href="/static/shared/css/design-system.css">
-  <link rel="stylesheet" href="/static/shared/css/global.css">
-  <link rel="stylesheet" href="/static/shared/css/components.css">
-  <link rel="stylesheet" href="/static/shared/css/layout.css">
-  <link rel="stylesheet" href="/static/shared/css/utilities.css">
+  <!-- Preconnect to external domains -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
-  <!-- Page-specific CSS -->
-  <link rel="stylesheet" href="./dashboard.css">
+  <!-- Critical CSS - Inline for faster first paint -->
+  <style>
+    /* Critical above-the-fold styles */
+    :root{--teal-dark:#0d7377;--teal:#14b8a6;--teal-light:#2dd4bf;--cyan:#22d3ee;--text-primary:#0f2926;--text-secondary:#2a5f5a;--bg-main:#ffffff;--bg-secondary:#f8fdfc;--sidebar-width:260px}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:14px;-webkit-font-smoothing:antialiased}
+    body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5;color:var(--text-secondary);background:var(--bg-main);min-height:100vh}
+    .app-container{display:flex;min-height:100vh}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-width);background:linear-gradient(180deg,#fff 0%,#f8fdfc 100%);border-right:1px solid rgba(20,184,166,0.12);z-index:100}
+    .main-content{flex:1;margin-left:var(--sidebar-width);min-height:100vh}
+    .page-content{padding:1.5rem;max-width:1400px;margin:0 auto}
+    @media(max-width:768px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}}
+  </style>
 
-  <!-- Preload Chart.js (will be loaded by JS when needed) -->
-  <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js">
+  <!-- Non-critical CSS - Load with media trick for async loading -->
+  <link rel="stylesheet" href="/static/shared/css/design-system.css?v=3.0" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/static/shared/css/design-system.css?v=3.0"></noscript>
+  <link rel="stylesheet" href="/static/shared/css/global.css?v=3.0" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/static/shared/css/global.css?v=3.0"></noscript>
+  <link rel="stylesheet" href="/static/shared/css/components.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/static/shared/css/components.css"></noscript>
+  <link rel="stylesheet" href="/static/shared/css/layout.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/static/shared/css/layout.css"></noscript>
+  <link rel="stylesheet" href="/static/pages/dashboard/dashboard.css?v=3.0" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/static/pages/dashboard/dashboard.css?v=3.0"></noscript>
 </head>
 <body>
   <div class="app-container">
-    <!-- Sidebar Navigation (injected by LayoutManager) -->
+    <!-- Sidebar -->
     <aside id="sidebar-container"></aside>
 
-    <!-- Main Content Area -->
+    <!-- Main Content -->
     <main class="main-content">
-      <!-- Header (injected by LayoutManager) -->
+      <!-- Header -->
       <header id="header-container"></header>
 
       <!-- Dashboard Content -->
@@ -39,159 +60,71 @@
           <div class="page-title">
             <h1>
               <span class="page-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <!-- High-quality dashboard icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <defs>
+                    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#2dd4bf"/>
+                      <stop offset="50%" stop-color="#22d3ee"/>
+                      <stop offset="100%" stop-color="#3b82f6"/>
+                    </linearGradient>
+                  </defs>
+                  <rect x="3" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="14" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/>
+                </svg>
               </span>
               Dashboard
             </h1>
-            <p class="page-subtitle">Real-time System Overview, Market Data & AI Analysis</p>
+            <p class="page-subtitle">Real-time Market Data & AI Analysis</p>
           </div>
           <div class="page-actions">
-            <button id="refresh-btn" class="btn-icon" title="Refresh all data" aria-label="Refresh data">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <button id="refresh-btn" class="btn-icon" title="Refresh" aria-label="Refresh data">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+              </svg>
             </button>
-            <span id="last-update" class="last-update" aria-live="polite">Loading...</span>
+            <span id="last-update" class="last-update">Loading...</span>
           </div>
         </div>
 
-        <!-- Stats Grid (4 cards) -->
-        <div class="stats-grid" id="stats-grid">
-          <!-- Loading skeletons (will be replaced by actual data) -->
-          <div class="stat-card skeleton">
-            <div class="stat-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">--</div>
-              <div class="stat-label">Total Resources</div>
-            </div>
-          </div>
-          <div class="stat-card skeleton">
-            <div class="stat-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">--</div>
-              <div class="stat-label">Free Resources</div>
-            </div>
-          </div>
-          <div class="stat-card skeleton">
-            <div class="stat-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">--</div>
-              <div class="stat-label">AI Models</div>
-            </div>
-          </div>
-          <div class="stat-card skeleton">
-            <div class="stat-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"></path><path d="M18.4 6.6a9 9 0 1 1-12.77.04"></path></svg>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">--</div>
-              <div class="stat-label">Active Providers</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- System Status Alert -->
-        <div id="system-alert" class="alert-container" role="region" aria-label="System status"></div>
-
-        <!-- Market Data Section -->
-        <div class="dashboard-section">
-          <div class="section-header">
-            <h2>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
-              Trending Cryptocurrencies
-            </h2>
-            <div class="section-controls">
-              <input type="text" id="market-search" class="search-input" placeholder="Search coins..." aria-label="Search cryptocurrencies">
-              <select id="market-sort" class="select-control" aria-label="Sort by">
-                <option value="rank">Rank</option>
-                <option value="price">Price</option>
-                <option value="volume">Volume</option>
-                <option value="change">24h Change</option>
-              </select>
-            </div>
-          </div>
-          <div class="table-container" id="market-table-container">
-            <div class="loading-spinner">Loading market data...</div>
-          </div>
-        </div>
-
-        <!-- Sentiment Analysis Section -->
-        <div class="dashboard-section">
-          <div class="section-header">
-            <h2>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-              Market Sentiment Analysis
-            </h2>
-            <div class="section-controls">
-              <div class="timeframe-selector" id="sentiment-timeframe">
-                <button class="timeframe-btn active" data-timeframe="1D">1D</button>
-                <button class="timeframe-btn" data-timeframe="7D">7D</button>
-                <button class="timeframe-btn" data-timeframe="30D">30D</button>
-                <button class="timeframe-btn" data-timeframe="1Y">1Y</button>
-              </div>
-            </div>
-          </div>
-          <div class="chart-container">
-            <div class="chart-body">
-              <canvas id="sentiment-chart" aria-label="Market sentiment over time"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Resources by Category Chart -->
-        <div class="dashboard-section">
-          <div class="section-header">
-            <h2>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
-              API Resources by Category
-            </h2>
-          </div>
-          <div class="chart-container">
-            <div class="chart-body">
-              <canvas id="categories-chart" aria-label="Resources by category chart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Stats Grid -->
-        <div class="dashboard-section">
-          <div class="section-header">
-            <h2>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
-              System Performance
-            </h2>
-          </div>
-          <div class="performance-grid" id="performance-grid">
-            <div class="performance-card">
-              <div class="performance-label">API Response Time</div>
-              <div class="performance-value" id="avg-response-time">-- ms</div>
-            </div>
-            <div class="performance-card">
-              <div class="performance-label">Cache Hit Rate</div>
-              <div class="performance-value" id="cache-hit-rate">-- %</div>
-            </div>
-            <div class="performance-card">
-              <div class="performance-label">Active Sessions</div>
-              <div class="performance-value" id="active-sessions">--</div>
-            </div>
-            <div class="performance-card">
-              <div class="performance-label">Data Refresh Rate</div>
-              <div class="performance-value" id="refresh-rate">30s</div>
-            </div>
-          </div>
-        </div>
+        <!-- Dynamic content injected by JS -->
       </div>
     </main>
   </div>
 
-  <!-- Toast Container (managed by Toast component) -->
-  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <!-- Toast Container -->
+  <div id="toast-container" aria-live="polite"></div>
 
-  <!-- Load page script as ES6 module -->
-  <script type="module" src="./dashboard.js"></script>
+  <script type="module">
+    // Defer non-critical initialization
+    (async function() {
+      const initApp = async () => {
+        try {
+          const { LayoutManager } = await import('/static/shared/js/core/layout-manager.js?v=3.0');
+          await LayoutManager.init('dashboard');
+          
+          // Load dashboard module after layout is ready
+          const { default: dashboardPage } = await import('/static/pages/dashboard/dashboard.js?v=3.0');
+          window.dashboardPage = dashboardPage;
+          
+          window.addEventListener('beforeunload', () => {
+            if (window.dashboardPage) window.dashboardPage.destroy();
+          });
+        } catch (error) {
+          console.error('Failed to initialize dashboard:', error);
+        }
+      };
+      
+      // Use requestIdleCallback if available, otherwise setTimeout
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(initApp, { timeout: 2000 });
+      } else {
+        setTimeout(initApp, 100);
+      }
+    })();
+  </script>
 </body>
 </html>

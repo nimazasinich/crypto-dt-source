@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-theme="dark">
+<html lang="en" dir="ltr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Permissions-Policy" content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()">
   <meta name="description" content="Crypto Monitor ULTIMATE - AI Analyst">
   <title>AI Analyst | Crypto Monitor ULTIMATE</title>
   
@@ -13,7 +14,7 @@
   <link rel="stylesheet" href="/static/shared/css/components.css">
   <link rel="stylesheet" href="/static/shared/css/layout.css">
   <link rel="stylesheet" href="/static/shared/css/utilities.css">
-  <link rel="stylesheet" href="./ai-analyst.css">
+  <link rel="stylesheet" href="/static/pages/ai-analyst/ai-analyst.css">
 </head>
 <body>
   <div class="app-container">
@@ -73,10 +74,11 @@
                   <label for="model-select">AI Model</label>
                   <select id="model-select" class="form-select">
                     <option value="default">Default (Best Available)</option>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="claude">Claude</option>
-                    <option value="gemini">Gemini</option>
                   </select>
+                  <div id="model-status-indicator" class="model-status" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="status-dot inactive"></span>
+                    <span>Loading models...</span>
+                  </div>
                 </div>
 
                 <div class="form-group">
@@ -138,6 +140,19 @@
   </div>
 
   <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-  <script type="module" src="./ai-analyst.js"></script>
+  
+  <!-- Initialize layout and page -->
+  <script type="module">
+    import { LayoutManager } from '/static/shared/js/core/layout-manager.js';
+    import AiAnalystPage from './ai-analyst.js';
+    
+    document.addEventListener('DOMContentLoaded', async () => {
+      await LayoutManager.init('ai-analyst');
+      const aiAnalystPage = new AiAnalystPage();
+      aiAnalystPage.init();
+      window.aiAnalystPage = aiAnalystPage;
+    });
+  </script>
 </body>
 </html>
+
