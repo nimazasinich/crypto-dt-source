@@ -220,12 +220,16 @@ async def root():
             "market_history": "/api/market/history",
             "sentiment_analysis": "/api/sentiment/analyze",
             "health_check": "/api/health",
+            "alphavantage": "/api/alphavantage/*",
+            "massive": "/api/massive/*",
             "documentation": "/docs"
         },
         "data_sources": {
             "market_prices": "CoinGecko (FREE API)",
             "ohlcv_data": "Binance (FREE API)",
-            "ai_models": "HuggingFace Transformers"
+            "ai_models": "HuggingFace Transformers",
+            "alphavantage": "Alpha Vantage API",
+            "massive": "Massive.com (APIBricks)"
         },
         "timestamp": int(time.time() * 1000)
     }
@@ -256,6 +260,22 @@ try:
     logger.info("✅ Technical Analysis Modes router loaded")
 except Exception as e:
     logger.warning(f"⚠️ Technical Analysis Modes router not available: {e}")
+
+# NEW: Alpha Vantage endpoints
+try:
+    from api.alphavantage_endpoints import router as alphavantage_router
+    app.include_router(alphavantage_router)
+    logger.info("✅ Alpha Vantage router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Alpha Vantage router not available: {e}")
+
+# NEW: Massive.com endpoints
+try:
+    from api.massive_endpoints import router as massive_router
+    app.include_router(massive_router)
+    logger.info("✅ Massive.com router loaded")
+except Exception as e:
+    logger.warning(f"⚠️ Massive.com router not available: {e}")
 
 
 # ============================================================================

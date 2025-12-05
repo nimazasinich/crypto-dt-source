@@ -22,6 +22,10 @@ from .coinmarketcap_provider import CoinMarketCapProvider
 from .news_provider import NewsProvider
 from .hf_sentiment_provider import HFSentimentProvider
 
+# NEW: Alpha Vantage and Massive.com providers
+from .alphavantage_provider import AlphaVantageProvider
+from .massive_provider import MassiveProvider
+
 # Base provider utilities
 from .base import BaseProvider as RestBaseProvider
 from .base import create_success_response, create_error_response
@@ -39,6 +43,9 @@ __all__ = [
     "CoinMarketCapProvider",
     "NewsProvider",
     "HFSentimentProvider",
+    # NEW: Additional providers
+    "AlphaVantageProvider",
+    "MassiveProvider",
     # Utilities
     "RestBaseProvider",
     "create_success_response",
