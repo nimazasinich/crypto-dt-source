@@ -424,3 +424,156 @@ class CachedOHLC(Base):
         # Unique constraint to prevent duplicate candles
         # (symbol, interval, timestamp) should be unique
     )
+
+
+# ============================================================================
+# Futures Trading Tables
+# ============================================================================
+
+class OrderStatus(enum.Enum):
+    """Futures order status enumeration"""
+    PENDING = "pending"
+    OPEN = "open"
+    FILLED = "filled"
+    PARTIALLY_FILLED = "partially_filled"
+    CANCELLED = "cancelled"
+    REJECTED = "rejected"
+
+
+class OrderSide(enum.Enum):
+    """Order side enumeration"""
+    BUY = "buy"
+    SELL = "sell"
+
+
+class OrderType(enum.Enum):
+    """Order type enumeration"""
+    MARKET = "market"
+    LIMIT = "limit"
+    STOP = "stop"
+    STOP_LIMIT = "stop_limit"
+
+
+class FuturesOrder(Base):
+    """Futures trading orders table"""
+    __tablename__ = 'futures_orders'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    order_id = Column(String(100), unique=True, nullable=False, index=True)  # External order ID
+    symbol = Column(String(20), nullable=False, index=True)  # BTC/USDT, ETH/USDT, etc.
+    side = Column(Enum(OrderSide), nullable=False)  # BUY or SELL
+    order_type = Column(Enum(OrderType), nullable=False)  # MARKET, LIMIT, etc.
+    quantity = Column(Float, nullable=False)
+    price = Column(Float, nullable=True)  # NULL for market orders
+    stop_price = Column(Float, nullable=True)  # For stop orders
+    status = Column(Enum(OrderStatus), default=OrderStatus.PENDING, nullable=False, index=True)
+    filled_quantity = Column(Float, default=0.0)
+    average_fill_price = Column(Float, nullable=True)
+    exchange = Column(String(50), nullable=False, default="demo")  # binance, demo, etc.
+    exchange_order_id = Column(String(100), nullable=True)  # Exchange's order ID
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    executed_at = Column(DateTime, nullable=True)
+    cancelled_at = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+
+
+class FuturesPosition(Base):
+    """Futures trading positions table"""
+    __tablename__ = 'futures_positions'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    symbol = Column(String(20), nullable=False, index=True)  # BTC/USDT, ETH/USDT, etc.
+    side = Column(Enum(OrderSide), nullable=False)  # BUY (long) or SELL (short)
+    quantity = Column(Float, nullable=False)
+    entry_price = Column(Float, nullable=False)
+    current_price = Column(Float, nullable=True)
+    leverage = Column(Float, default=1.0)
+    unrealized_pnl = Column(Float, default=0.0)
+    realized_pnl = Column(Float, default=0.0)
+    exchange = Column(String(50), nullable=False, default="demo")
+    opened_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    closed_at = Column(DateTime, nullable=True)
+    is_open = Column(Boolean, default=True, nullable=False, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+# ============================================================================
+# ML Training Tables
+# ============================================================================
+
+class TrainingStatus(enum.Enum):
+    """Training job status enumeration"""
+    PENDING = "pending"
+    RUNNING = "running"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class MLTrainingJob(Base):
+    """ML model training jobs table"""
+    __tablename__ = 'ml_training_jobs'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    job_id = Column(String(100), unique=True, nullable=False, index=True)
+    model_name = Column(String(100), nullable=False, index=True)
+    model_version = Column(String(50), nullable=True)
+    status = Column(Enum(TrainingStatus), default=TrainingStatus.PENDING, nullable=False, index=True)
+    training_data_start = Column(DateTime, nullable=False)
+    training_data_end = Column(DateTime, nullable=False)
+    total_steps = Column(Integer, nullable=True)
+    current_step = Column(Integer, default=0)
+    batch_size = Column(Integer, default=32)
+    learning_rate = Column(Float, nullable=True)
+    loss = Column(Float, nullable=True)
+    accuracy = Column(Float, nullable=True)
+    checkpoint_path = Column(String(500), nullable=True)
+    config = Column(Text, nullable=True)  # JSON config
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class TrainingStep(Base):
+    """ML training step history table"""
+    __tablename__ = 'ml_training_steps'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    job_id = Column(String(100), ForeignKey('ml_training_jobs.job_id'), nullable=False, index=True)
+    step_number = Column(Integer, nullable=False)
+    loss = Column(Float, nullable=True)
+    accuracy = Column(Float, nullable=True)
+    learning_rate = Column(Float, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    metrics = Column(Text, nullable=True)  # JSON metrics
+
+
+# ============================================================================
+# Backtesting Tables
+# ============================================================================
+
+class BacktestJob(Base):
+    """Backtesting jobs table"""
+    __tablename__ = 'backtest_jobs'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    job_id = Column(String(100), unique=True, nullable=False, index=True)
+    strategy = Column(String(100), nullable=False)
+    symbol = Column(String(20), nullable=False, index=True)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    initial_capital = Column(Float, nullable=False)
+    status = Column(Enum(TrainingStatus), default=TrainingStatus.PENDING, nullable=False, index=True)
+    total_return = Column(Float, nullable=True)
+    sharpe_ratio = Column(Float, nullable=True)
+    max_drawdown = Column(Float, nullable=True)
+    win_rate = Column(Float, nullable=True)
+    total_trades = Column(Integer, nullable=True)
+    results = Column(Text, nullable=True)  # JSON results
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
