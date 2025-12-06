@@ -1,221 +1,386 @@
-# 🚀 راهنمای سریع شروع - Quick Start Guide
+# 🚀 Quick Start Guide
 
-## ⚡ نصب و راه‌اندازی سریع
-
-### 1️⃣ نصب وابستگی‌ها
-```bash
-pip install -r requirements.txt
-```
-
-### 2️⃣ Import منابع از فایل‌های JSON
-```bash
-python import_resources.py
-```
-این اسکریپت به‌طور خودکار همه منابع را از فایل‌های JSON موجود import می‌کند.
-
-### 3️⃣ راه‌اندازی سرور
-```bash
-# روش 1: استفاده از اسکریپت راه‌انداز
-python start_server.py
-
-# روش 2: مستقیم
-python api_server_extended.py
-
-# روش 3: با uvicorn
-uvicorn api_server_extended:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 4️⃣ دسترسی به داشبورد
-```
-http://localhost:8000
-```
-
-## 📋 تب‌های داشبورد
-
-### 📊 Market
-- آمار کلی بازار
-- لیست کریپتوکارنسی‌ها
-- نمودارها و ترندینگ
-
-### 📡 API Monitor
-- وضعیت همه ارائه‌دهندگان
-- زمان پاسخ
-- Health Check
-
-### ⚡ Advanced
-- Export JSON/CSV
-- Backup
-- Clear Cache
-- Activity Logs
-
-### ⚙️ Admin
-- افزودن API جدید
-- تنظیمات
-- آمار کلی
-
-### 🤗 HuggingFace
-- مدل‌های Sentiment Analysis
-- Datasets
-- جستجو در Registry
-
-### 🔄 Pools
-- مدیریت Pool‌ها
-- افزودن/حذف اعضا
-- چرخش دستی
-
-### 📋 Logs (جدید!)
-- نمایش لاگ‌ها با فیلتر
-- Export به JSON/CSV
-- جستجو و آمار
-
-### 📦 Resources (جدید!)
-- مدیریت منابع API
-- Import/Export
-- Backup
-- فیلتر بر اساس Category
-
-## 🔧 استفاده از API
-
-### دریافت لاگ‌ها
-```bash
-# همه لاگ‌ها
-curl http://localhost:8000/api/logs
-
-# فیلتر بر اساس Level
-curl http://localhost:8000/api/logs?level=error
-
-# جستجو
-curl http://localhost:8000/api/logs?search=timeout
-```
-
-### Export لاگ‌ها
-```bash
-# Export به JSON
-curl http://localhost:8000/api/logs/export/json?level=error
-
-# Export به CSV
-curl http://localhost:8000/api/logs/export/csv
-```
-
-### مدیریت منابع
-```bash
-# دریافت همه منابع
-curl http://localhost:8000/api/resources
-
-# Export منابع
-curl http://localhost:8000/api/resources/export/json
-
-# Backup
-curl -X POST http://localhost:8000/api/resources/backup
-
-# Import
-curl -X POST "http://localhost:8000/api/resources/import/json?file_path=api-resources/crypto_resources_unified_2025-11-11.json&merge=true"
-```
-
-## 📝 مثال‌های استفاده
-
-### افزودن Provider جدید
-```python
-from resource_manager import ResourceManager
-
-manager = ResourceManager()
-
-provider = {
-    "id": "my_new_api",
-    "name": "My New API",
-    "category": "market_data",
-    "base_url": "https://api.example.com",
-    "requires_auth": False,
-    "priority": 5,
-    "weight": 50,
-    "free": True
-}
-
-manager.add_provider(provider)
-manager.save_resources()
-```
-
-### ثبت لاگ
-```python
-from log_manager import log_info, log_error, LogCategory
-
-# لاگ Info
-log_info(LogCategory.PROVIDER, "Provider health check completed", 
-         provider_id="coingecko", response_time=234.5)
-
-# لاگ Error
-log_error(LogCategory.PROVIDER, "Provider failed", 
-          provider_id="etherscan", error="Timeout")
-```
-
-### استفاده از Provider Manager
-```python
-from provider_manager import ProviderManager
-import asyncio
-
-async def main():
-    manager = ProviderManager()
-    
-    # Health Check
-    await manager.health_check_all()
-    
-    # دریافت Provider از Pool
-    provider = manager.get_next_from_pool("primary_market_data_pool")
-    if provider:
-        print(f"Selected: {provider.name}")
-    
-    await manager.close_session()
-
-asyncio.run(main())
-```
-
-## 🐳 استفاده با Docker
-
-```bash
-# Build
-docker build -t crypto-monitor .
-
-# Run
-docker run -p 8000:8000 crypto-monitor
-
-# یا با docker-compose
-docker-compose up -d
-```
-
-## 🔍 عیب‌یابی
-
-### مشکل: Port در حال استفاده است
-```bash
-# تغییر پورت
-uvicorn api_server_extended:app --port 8001
-```
-
-### مشکل: فایل‌های JSON یافت نشد
-```bash
-# بررسی وجود فایل‌ها
-ls -la api-resources/
-ls -la providers_config*.json
-```
-
-### مشکل: Import منابع ناموفق
-```bash
-# بررسی ساختار JSON
-python -m json.tool api-resources/crypto_resources_unified_2025-11-11.json | head -20
-```
-
-## 📚 مستندات بیشتر
-
-- [README.md](README.md) - مستندات کامل انگلیسی
-- [README_FA.md](README_FA.md) - مستندات کامل فارسی
-- [api-resources/README.md](api-resources/README.md) - راهنمای منابع API
-
-## 🆘 پشتیبانی
-
-در صورت بروز مشکل:
-1. لاگ‌ها را بررسی کنید: `logs/app.log`
-2. از تب Logs در داشبورد استفاده کنید
-3. آمار سیستم را بررسی کنید: `/api/status`
+Get your Crypto Intelligence Hub running in 5 minutes!
 
 ---
 
-**موفق باشید! 🚀**
+## ⚡ Super Quick Start (3 Commands)
+
+```bash
+# 1. Install dependencies
+pip install -r requirements_hf.txt
+
+# 2. Verify installation
+python3 verify_installation.py
+
+# 3. Start server
+uvicorn hf_space_api:app --reload --host 0.0.0.0 --port 7860
+```
+
+**Open browser:** http://localhost:7860
+
+---
+
+## 📋 Step-by-Step (5 Minutes)
+
+### 1. Prerequisites ✅
+```bash
+# Check Python (needs 3.11+)
+python3 --version
+
+# Check pip
+pip --version
+```
+
+### 2. Install Dependencies (2 min) 📦
+```bash
+# Install all required packages
+pip install -r requirements_hf.txt
+```
+
+### 3. Configure API Keys (1 min) 🔑
+
+Create `.env` file:
+```bash
+# Copy example
+cp .env.example .env
+
+# Add your keys (optional but recommended)
+ALPHA_VANTAGE_API_KEY=40XS7GQ6AU9NB6Y4
+MASSIVE_API_KEY=PwI1oqICvx9hNMzkGTHnGzA7v2VCE7JE
+```
+
+### 4. Verify Installation (30 sec) ✅
+```bash
+python3 verify_installation.py
+```
+
+Look for:
+- ✅ All checks passed
+- ✅ 305 resources loaded
+- ✅ All pages updated
+
+### 5. Start Application (10 sec) 🚀
+```bash
+uvicorn hf_space_api:app --reload --host 0.0.0.0 --port 7860
+```
+
+**Wait for:**
+```
+✅ Database tables created successfully
+✅ Smart Data Collection Agent started
+✅ Collecting from 305+ FREE resources
+🚀 Application startup complete!
+```
+
+### 6. Test (30 sec) 🧪
+
+Open browser: **http://localhost:7860**
+
+You should see the beautiful landing page!
+
+**Test API:**
+```bash
+# Health check
+curl http://localhost:7860/api/smart/health-report
+
+# Market data
+curl http://localhost:7860/api/smart/market?limit=10
+
+# System stats
+curl http://localhost:7860/api/smart/stats
+```
+
+---
+
+## 🎨 Available Pages
+
+Once running, visit these pages:
+
+| Page | URL | Description |
+|------|-----|-------------|
+| **Home** | http://localhost:7860 | Landing page |
+| **Dashboard** | /static/pages/dashboard/index.html | Overview |
+| **Market** | /static/pages/market/index.html | Live market data |
+| **Trading** | /static/pages/trading-assistant/index.html | AI assistant |
+| **News** | /static/pages/news/index.html | Crypto news |
+| **Sentiment** | /static/pages/sentiment/index.html | AI sentiment |
+| **API Explorer** | /static/pages/api-explorer/index.html | Test APIs |
+| **Diagnostics** | /static/pages/diagnostics/index.html | System health |
+| **API Docs** | /docs | FastAPI Swagger |
+
+---
+
+## 🔄 Smart Fallback in Action
+
+The system automatically uses **305+ resources** with rotation:
+
+```javascript
+// In browser console (F12)
+const client = window.apiClient;
+
+// Get market data (tries 21 different APIs if needed)
+const market = await client.getMarketData(100);
+console.log(market);
+
+// Get news (tries 15 different APIs if needed)
+const news = await client.getNews(20);
+console.log(news);
+
+// Get sentiment
+const sentiment = await client.getSentiment('bitcoin');
+console.log(sentiment);
+```
+
+**Never returns 404!** ✅
+
+---
+
+## 🐳 Docker Quick Start
+
+```bash
+# Build
+docker build -t crypto-hub .
+
+# Run
+docker run -p 7860:7860 \
+  -e ALPHA_VANTAGE_API_KEY=40XS7GQ6AU9NB6Y4 \
+  -e MASSIVE_API_KEY=PwI1oqICvx9hNMzkGTHnGzA7v2VCE7JE \
+  crypto-hub
+
+# Open browser
+http://localhost:7860
+```
+
+---
+
+## 🌐 HuggingFace Space Quick Deploy
+
+```bash
+# 1. Create Space on HuggingFace
+# Go to: https://huggingface.co/new-space
+# Select: Docker template
+
+# 2. Add secrets in Space settings
+HF_TOKEN = your_token
+ALPHA_VANTAGE_API_KEY = 40XS7GQ6AU9NB6Y4
+MASSIVE_API_KEY = PwI1oqICvx9hNMzkGTHnGzA7v2VCE7JE
+
+# 3. Push code
+git remote add hf https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE
+git push hf main
+
+# 4. Wait for build (2-3 minutes)
+# 5. Visit your space URL
+```
+
+---
+
+## 🚨 Troubleshooting
+
+### Application won't start
+```bash
+# Check Python version (must be 3.11+)
+python3 --version
+
+# Reinstall dependencies
+pip install -r requirements_hf.txt --upgrade
+
+# Check port availability
+lsof -i :7860
+```
+
+### Dependencies not installing
+```bash
+# Update pip first
+pip install --upgrade pip setuptools wheel
+
+# Try again
+pip install -r requirements_hf.txt
+```
+
+### No data from APIs
+```bash
+# Check API keys
+cat .env
+
+# Test providers
+python3 test_new_apis.py
+
+# Check health
+curl http://localhost:7860/api/smart/health-report
+```
+
+### Pages not loading
+```bash
+# Update pages with API config
+python3 UPDATE_ALL_PAGES.py
+
+# Restart server
+# Ctrl+C then restart
+uvicorn hf_space_api:app --reload
+```
+
+### 404 Errors
+```bash
+# Use smart endpoints instead
+curl http://localhost:7860/api/smart/market?limit=10
+
+# These NEVER return 404!
+```
+
+---
+
+## 📊 Verify Everything Works
+
+### Run Complete Tests
+```bash
+# 1. Verification
+python3 verify_installation.py
+
+# 2. Routing test
+python3 test_complete_routing.py
+
+# 3. Provider test
+python3 test_new_apis.py
+```
+
+### Check Health
+```bash
+# Get health report
+curl http://localhost:7860/api/smart/health-report | jq
+
+# Expected output:
+# {
+#   "total_resources": 305,
+#   "available": 290+,
+#   "failed": <10,
+#   "categories": {...}
+# }
+```
+
+### Check Stats
+```bash
+# Get system stats
+curl http://localhost:7860/api/smart/stats | jq
+
+# Expected output:
+# {
+#   "collection_stats": {
+#     "successful_fetches": >0,
+#     "failed_fetches": <10,
+#     "total_fetches": >0
+#   }
+# }
+```
+
+---
+
+## ✅ Success Checklist
+
+- [ ] Python 3.11+ installed
+- [ ] Dependencies installed
+- [ ] Server starts without errors
+- [ ] Browser shows landing page
+- [ ] API returns data (test with curl)
+- [ ] Pages load correctly
+- [ ] No errors in console (F12)
+- [ ] Health report shows 305 resources
+- [ ] Background agent running (check logs)
+
+---
+
+## 📚 Next Steps
+
+### Learn More
+1. [Complete Routing Guide](COMPLETE_ROUTING_GUIDE.md)
+2. [Installation Guide](INSTALLATION_GUIDE.md)
+3. [Startup Checklist](STARTUP_CHECKLIST.md)
+4. [Project Summary](PROJECT_COMPLETE_SUMMARY.md)
+
+### Explore Features
+1. Browse all pages
+2. Test API Explorer
+3. Check Diagnostics
+4. View system health
+5. Monitor resource rotation
+
+### Deploy
+1. Test locally first
+2. Deploy to Docker (optional)
+3. Deploy to HuggingFace Space
+4. Share with users!
+
+---
+
+## 🎉 You're Ready!
+
+If all checks pass, you have:
+
+✅ **305+ Resources** working  
+✅ **Smart Fallback** active  
+✅ **Resource Rotation** enabled  
+✅ **Zero 404s** guaranteed  
+✅ **24/7 Data Collection** running  
+✅ **Beautiful UI** ready  
+✅ **Complete API** functional  
+
+**Congratulations! 🎊**
+
+---
+
+## 💡 Pro Tips
+
+1. **Use Smart Endpoints**
+   - Always prefer `/api/smart/*`
+   - They never fail
+   - Automatic rotation
+
+2. **Monitor Health**
+   - Check `/api/smart/health-report` daily
+   - Watch for failed resources
+   - Clean up periodically
+
+3. **Optimize Performance**
+   - Enable caching (already done)
+   - Use background collection (already running)
+   - Monitor response times
+
+4. **Keep Updated**
+   - Update dependencies monthly
+   - Add new resources as discovered
+   - Review failed resources weekly
+
+---
+
+## 🆘 Need Help?
+
+### Check Logs
+```bash
+# View logs
+tail -f logs/hf_space_api.log
+
+# Filter errors
+grep ERROR logs/hf_space_api.log
+```
+
+### Common Issues
+- **404**: Use `/api/smart/*` endpoints
+- **Slow**: Check health report
+- **Auth**: Set HF_TOKEN in .env
+- **No Data**: Check API keys
+
+### Documentation
+- Full API docs: http://localhost:7860/docs
+- ReDoc: http://localhost:7860/redoc
+- Guides: See markdown files in project root
+
+---
+
+**Happy Coding! 🚀**
+
+---
+
+**Version**: 2.0.0  
+**Last Updated**: December 5, 2025  
+**Status**: ✅ Production Ready

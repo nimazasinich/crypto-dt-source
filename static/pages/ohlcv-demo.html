@@ -305,6 +305,20 @@
       }
     }
   </style>
+    <!-- API Configuration - Smart Fallback System -->
+    <script src="/static/js/api-config.js"></script>
+    <script>
+        // Initialize API client
+        window.apiReady = new Promise((resolve) => {
+            if (window.apiClient) {
+                console.log('✅ API Client ready');
+                resolve(window.apiClient);
+            } else {
+                console.error('❌ API Client not loaded');
+            }
+        });
+    </script>
+
 </head>
 <body>
   <div class="app-layout">

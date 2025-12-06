@@ -1,1 +1,1 @@
-# Backend module
+"""Backend module for Crypto Intelligence Hub"""

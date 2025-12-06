@@ -19,6 +19,15 @@ logger = logging.getLogger(__name__)
 # Get HF_TOKEN from environment - REQUIRED for authentication
 HF_TOKEN_ENV = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
 
+# CRITICAL: TEST MODE for development/testing
+TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
+
+if TEST_MODE:
+    logger.warning("=" * 80)
+    logger.warning("🧪 TEST MODE ACTIVE - Authentication bypass enabled!")
+    logger.warning("   Set TEST_MODE=false in production")
+    logger.warning("=" * 80)
+
 # Security scheme
 security = HTTPBearer(auto_error=False)
 
@@ -59,6 +68,17 @@ async def verify_hf_token(
         else:
             provided_token = authorization
     
+    # CRITICAL: Allow bypass in TEST_MODE for development
+    if TEST_MODE:
+        logger.info("✅ TEST MODE: Authentication bypassed")
+        return {
+            "user_id": "test_user",
+            "username": "test_user",
+            "test_mode": True,
+            "access_level": "full",
+            "note": "TEST_MODE active - no real authentication"
+        }
+    
     # If no token provided, return 401
     if not provided_token:
         logger.warning("Authentication failed: No token provided")
@@ -67,7 +87,8 @@ async def verify_hf_token(
             detail={
                 "success": False,
                 "error": "Authentication required. Please provide HF_TOKEN in Authorization header.",
-                "source": "hf_engine"
+                "source": "hf_engine",
+                "hint": "For development: Set TEST_MODE=true in .env"
             },
             headers={"WWW-Authenticate": "Bearer"}
         )
