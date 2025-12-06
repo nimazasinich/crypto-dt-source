@@ -57,20 +57,95 @@ else:
 # NEWS DATA WORKER
 # ============================================================================
 
+async def fetch_news_from_cryptopanic() -> List[Dict[str, Any]]:
+    """Fetch news from CryptoPanic (FREE, no API key)"""
+    try:
+        url = "https://cryptopanic.com/api/v1/posts/"
+        params = {"auth_token": "free", "public": "true", "kind": "news", "filter": "rising"}
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            news_items = []
+            for post in data.get("results", [])[:15]:
+                news_items.append({
+                    "title": post.get("title", ""),
+                    "description": post.get("title", ""),
+                    "url": post.get("url", ""),
+                    "published_at": post.get("created_at", ""),
+                    "source": "CryptoPanic",
+                    "source_id": "cryptopanic",
+                    "category": "news",
+                    "fetched_at": datetime.utcnow().isoformat() + "Z"
+                })
+            
+            logger.info(f"✅ CryptoPanic: {len(news_items)} articles")
+            return news_items
+    except Exception as e:
+        logger.debug(f"CryptoPanic error: {e}")
+        return []
+
+
+async def fetch_news_from_coinstats() -> List[Dict[str, Any]]:
+    """Fetch news from CoinStats (FREE, no API key)"""
+    try:
+        url = "https://api.coin-stats.com/v2/news"
+        params = {"limit": 20}
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            news_items = []
+            for article in data.get("news", [])[:15]:
+                news_items.append({
+                    "title": article.get("title", ""),
+                    "description": article.get("description", ""),
+                    "url": article.get("link", ""),
+                    "published_at": article.get("published", ""),
+                    "source": "CoinStats",
+                    "source_id": "coinstats",
+                    "category": "news",
+                    "fetched_at": datetime.utcnow().isoformat() + "Z"
+                })
+            
+            logger.info(f"✅ CoinStats: {len(news_items)} articles")
+            return news_items
+    except Exception as e:
+        logger.debug(f"CoinStats error: {e}")
+        return []
+
+
 async def fetch_news_data() -> List[Dict[str, Any]]:
     """
-    Fetch news from ALL news APIs
-
+    Fetch news from multiple free sources
+    
     Sources:
-    - NewsAPI.org
-    - CryptoPanic
-    - CryptoControl
-    - And all other news sources in registry (15 total)
+    - CryptoPanic (FREE, no API key)
+    - CoinStats (FREE, no API key)
+    - Other news sources from registry
     """
     news_data = []
+    
+    # Fetch from reliable free sources first
+    try:
+        cryptopanic_news = await fetch_news_from_cryptopanic()
+        news_data.extend(cryptopanic_news)
+    except Exception as e:
+        logger.debug(f"Error fetching CryptoPanic: {e}")
+    
+    try:
+        coinstats_news = await fetch_news_from_coinstats()
+        news_data.extend(coinstats_news)
+    except Exception as e:
+        logger.debug(f"Error fetching CoinStats: {e}")
+    
+    # Try additional sources from registry
     news_resources = resource_loader.get_resources_by_category("news")
-
-    logger.info(f"📰 Fetching news from {len(news_resources)} sources...")
+    logger.info(f"📰 Fetching news from {len(news_resources)} additional sources...")
 
     for resource in news_resources:
         try:
@@ -92,6 +167,10 @@ async def fetch_news_data() -> List[Dict[str, Any]]:
 
             # Special handling for different news APIs
             if "newsapi" in resource.id:
+                # Skip NewsAPI if no valid key
+                if not resource.api_key or resource.api_key.startswith("pub_"):
+                    logger.debug(f"Skipping {resource.name} (invalid API key)")
+                    continue
                 url = f"{resource.base_url}/everything"
                 params.update({
                     "q": "cryptocurrency OR bitcoin OR ethereum",
@@ -100,19 +179,24 @@ async def fetch_news_data() -> List[Dict[str, Any]]:
                     "pageSize": 20
                 })
             elif "cryptopanic" in resource.id:
-                url = f"{resource.base_url}/posts"
-                params.update({
-                    "filter": "rising",
-                    "public": "true"
-                })
+                # Already handled above
+                continue
             elif "cryptocontrol" in resource.id:
                 url = f"{resource.base_url}/news"
 
             # Fetch data
             logger.debug(f"Fetching from {resource.name}...")
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
                 response = await client.get(url, headers=headers, params=params)
                 response.raise_for_status()
+                
+                # Check if response is JSON
+                content_type = response.headers.get("content-type", "")
+                if "application/json" not in content_type and "text/json" not in content_type:
+                    # Might be RSS feed or HTML - skip for now
+                    logger.debug(f"Non-JSON response from {resource.name}: {content_type}")
+                    continue
+                
                 data = response.json()
 
                 # Parse response based on source
@@ -145,9 +229,9 @@ async def fetch_news_data() -> List[Dict[str, Any]]:
                 logger.info(f"✅ {resource.name}: {len(articles[:10])} articles")
 
         except httpx.HTTPError as e:
-            logger.warning(f"HTTP error from {resource.name}: {e}")
+            logger.debug(f"HTTP error from {resource.name}: {e}")
         except Exception as e:
-            logger.error(f"Error fetching from {resource.name}: {e}")
+            logger.debug(f"Error fetching from {resource.name}: {e}")
 
     logger.info(f"📰 Total news articles collected: {len(news_data)}")
     return news_data
@@ -157,20 +241,58 @@ async def fetch_news_data() -> List[Dict[str, Any]]:
 # SENTIMENT DATA WORKER
 # ============================================================================
 
+async def fetch_fear_greed_index() -> List[Dict[str, Any]]:
+    """Fetch Fear & Greed Index from Alternative.me (FREE, no API key)"""
+    try:
+        url = "https://api.alternative.me/fng/"
+        params = {"limit": "1"}
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            fng_list = data.get("data", [])
+            if isinstance(fng_list, list) and len(fng_list) > 0:
+                fng_data = fng_list[0]
+                sentiment = {
+                    "metric": "fear_greed_index",
+                    "value": float(fng_data.get("value", 0)),
+                    "classification": fng_data.get("value_classification", ""),
+                    "source": "Alternative.me",
+                    "source_id": "alternative-me-fng",
+                    "timestamp": datetime.fromtimestamp(int(fng_data.get("timestamp", time.time()))).isoformat() + "Z",
+                    "fetched_at": datetime.utcnow().isoformat() + "Z"
+                }
+                logger.info(f"✅ Fear & Greed Index: {fng_data.get('value')} ({fng_data.get('value_classification')})")
+                return [sentiment]
+    except Exception as e:
+        logger.debug(f"Fear & Greed Index error: {e}")
+    
+    return []
+
+
 async def fetch_sentiment_data() -> List[Dict[str, Any]]:
     """
-    Fetch sentiment data from ALL sentiment APIs
+    Fetch sentiment data from multiple sources
 
     Sources:
-    - Alternative.me Fear & Greed Index
-    - LunarCrush
-    - Santiment
-    - And all other sentiment sources (12 total)
+    - Alternative.me Fear & Greed Index (FREE, no API key)
+    - LunarCrush (requires API key)
+    - Santiment (requires API key)
+    - And other sentiment sources from registry
     """
     sentiment_data = []
+    
+    # Fetch Fear & Greed Index first (most reliable free source)
+    try:
+        fng_data = await fetch_fear_greed_index()
+        sentiment_data.extend(fng_data)
+    except Exception as e:
+        logger.debug(f"Error fetching Fear & Greed Index: {e}")
+    
     sentiment_resources = resource_loader.get_resources_by_category("sentiment")
-
-    logger.info(f"😊 Fetching sentiment from {len(sentiment_resources)} sources...")
+    logger.info(f"😊 Fetching sentiment from {len(sentiment_resources)} additional sources...")
 
     for resource in sentiment_resources:
         try:
@@ -190,33 +312,42 @@ async def fetch_sentiment_data() -> List[Dict[str, Any]]:
                 params["api_key"] = resource.api_key
 
             # Special handling for different APIs
-            if "alternative.me" in resource.id:
-                url = f"{resource.base_url}/fng"
-                params["limit"] = 1
+            if "alternative.me" in resource.id or "alternative-me" in resource.id:
+                # Already handled above
+                continue
             elif "lunarcrush" in resource.id:
                 url = f"{resource.base_url}/assets"
                 params.update({"symbol": "BTC,ETH,BNB", "data_points": 1})
 
             # Fetch data
             logger.debug(f"Fetching from {resource.name}...")
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
                 response = await client.get(url, headers=headers, params=params)
                 response.raise_for_status()
+                
+                # Check content type
+                content_type = response.headers.get("content-type", "")
+                if "application/json" not in content_type and "text/json" not in content_type:
+                    logger.debug(f"Non-JSON response from {resource.name}: {content_type}")
+                    continue
+                
                 data = response.json()
 
                 # Parse based on source
-                if "alternative.me" in resource.id:
-                    fng_data = data.get("data", [{}])[0]
-                    sentiment_data.append({
-                        "metric": "fear_greed_index",
-                        "value": float(fng_data.get("value", 0)),
-                        "classification": fng_data.get("value_classification", ""),
-                        "source": resource.name,
-                        "source_id": resource.id,
-                        "timestamp": datetime.fromtimestamp(int(fng_data.get("timestamp", time.time()))).isoformat() + "Z",
-                        "fetched_at": datetime.utcnow().isoformat() + "Z"
-                    })
-                    logger.info(f"✅ {resource.name}: FNG = {fng_data.get('value')}")
+                if "alternative.me" in resource.id or "alternative-me" in resource.id:
+                    fng_list = data.get("data", [])
+                    if isinstance(fng_list, list) and len(fng_list) > 0:
+                        fng_data = fng_list[0]
+                        sentiment_data.append({
+                            "metric": "fear_greed_index",
+                            "value": float(fng_data.get("value", 0)),
+                            "classification": fng_data.get("value_classification", ""),
+                            "source": resource.name,
+                            "source_id": resource.id,
+                            "timestamp": datetime.fromtimestamp(int(fng_data.get("timestamp", time.time()))).isoformat() + "Z",
+                            "fetched_at": datetime.utcnow().isoformat() + "Z"
+                        })
+                        logger.info(f"✅ {resource.name}: FNG = {fng_data.get('value')} ({fng_data.get('value_classification')})")
 
                 elif "lunarcrush" in resource.id:
                     assets = data.get("data", [])
@@ -235,9 +366,9 @@ async def fetch_sentiment_data() -> List[Dict[str, Any]]:
                     logger.info(f"✅ {resource.name}: {len(assets)} assets")
 
         except httpx.HTTPError as e:
-            logger.warning(f"HTTP error from {resource.name}: {e}")
+            logger.debug(f"HTTP error from {resource.name}: {e}")
         except Exception as e:
-            logger.error(f"Error fetching from {resource.name}: {e}")
+            logger.debug(f"Error fetching from {resource.name}: {e}")
 
     logger.info(f"😊 Total sentiment data collected: {len(sentiment_data)}")
     return sentiment_data

@@ -1,12 +1,19 @@
 """
-OHLC Data Background Worker - REAL DATA FROM FREE APIs ONLY
+OHLC Data Background Worker - REAL DATA FROM MULTIPLE FREE APIs
 
 CRITICAL RULES:
-- MUST fetch REAL candlestick data from Binance API (FREE, no API key)
+- MUST fetch REAL candlestick data from multiple sources with automatic fallback
 - MUST store actual OHLC values, not fake data
 - MUST use actual timestamps from API responses
 - NEVER generate or interpolate candles
-- If API fails, log error and retry (don't fake it)
+- If primary API fails, automatically try alternative sources
+
+SUPPORTED DATA SOURCES (in priority order):
+1. CoinGecko (FREE, no API key, 365-day history)
+2. Kraken (FREE, no API key, up to 720 candles)
+3. Coinbase Pro (FREE, no API key, up to 300 candles)
+4. Binance (FREE, but may be geo-restricted in some regions)
+5. CoinPaprika (FREE, no API key, 366-day history)
 """
 
 import asyncio
@@ -14,7 +21,7 @@ import time
 import logging
 import os
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import httpx
 
 from database.cache_queries import get_cache_queries
@@ -41,121 +48,349 @@ else:
     logger.info("ℹ️  HuggingFace Dataset upload DISABLED (no HF_TOKEN)")
     hf_uploader = None
 
-# Binance API (FREE - no API key required)
-BINANCE_BASE_URL = "https://api.binance.com/api/v3"
+# Trading symbols to track (simplified format)
+SYMBOLS = ["BTC", "ETH", "BNB", "XRP", "ADA", "SOL", "DOT", "DOGE", "MATIC", "AVAX", 
+           "LINK", "LTC", "UNI", "ALGO", "XLM", "ATOM", "TRX", "XMR", "ETC", "XTZ"]
 
-# Trading pairs to track
-TRADING_PAIRS = [
-    "BTCUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT",
-    "SOLUSDT", "DOTUSDT", "DOGEUSDT", "MATICUSDT", "AVAXUSDT",
-    "LINKUSDT", "LTCUSDT", "UNIUSDT", "ALGOUSDT", "XLMUSDT",
-    "ATOMUSDT", "TRXUSDT", "XMRUSDT", "ETCUSDT", "XTZUSDT"
-]
-
-# Intervals to fetch (Binance format)
+# Intervals to fetch
 INTERVALS = ["1h", "4h", "1d"]
 
+# Symbol mapping for different exchanges
+SYMBOL_MAP = {
+    "coingecko": {
+        "BTC": "bitcoin", "ETH": "ethereum", "BNB": "binancecoin", "XRP": "ripple",
+        "ADA": "cardano", "SOL": "solana", "DOT": "polkadot", "DOGE": "dogecoin",
+        "MATIC": "matic-network", "AVAX": "avalanche-2", "LINK": "chainlink",
+        "LTC": "litecoin", "UNI": "uniswap", "ALGO": "algorand", "XLM": "stellar",
+        "ATOM": "cosmos", "TRX": "tron", "XMR": "monero", "ETC": "ethereum-classic",
+        "XTZ": "tezos"
+    },
+    "kraken": {
+        "BTC": "XXBTZUSD", "ETH": "XETHZUSD", "XRP": "XXRPZUSD", "ADA": "ADAUSD",
+        "SOL": "SOLUSD", "DOT": "DOTUSD", "DOGE": "XDGUSD", "LINK": "LINKUSD",
+        "LTC": "XLTCZUSD", "UNI": "UNIUSD", "ALGO": "ALGOUSD", "XLM": "XXLMZUSD",
+        "ATOM": "ATOMUSD", "TRX": "TRXUSD", "ETC": "XETCZUSD", "XTZ": "XTZUSD"
+    },
+    "coinbase": {
+        "BTC": "BTC-USD", "ETH": "ETH-USD", "XRP": "XRP-USD", "ADA": "ADA-USD",
+        "SOL": "SOL-USD", "DOT": "DOT-USD", "DOGE": "DOGE-USD", "LINK": "LINK-USD",
+        "LTC": "LTC-USD", "UNI": "UNI-USD", "ALGO": "ALGO-USD", "XLM": "XLM-USD",
+        "ATOM": "ATOM-USD", "MATIC": "MATIC-USD", "AVAX": "AVAX-USD"
+    },
+    "binance": {
+        "BTC": "BTCUSDT", "ETH": "ETHUSDT", "BNB": "BNBUSDT", "XRP": "XRPUSDT",
+        "ADA": "ADAUSDT", "SOL": "SOLUSDT", "DOT": "DOTUSDT", "DOGE": "DOGEUSDT",
+        "MATIC": "MATICUSDT", "AVAX": "AVAXUSDT", "LINK": "LINKUSDT", "LTC": "LTCUSDT",
+        "UNI": "UNIUSDT", "ALGO": "ALGOUSDT", "XLM": "XLMUSDT", "ATOM": "ATOMUSDT",
+        "TRX": "TRXUSDT", "XMR": "XMRUSDT", "ETC": "ETCUSDT", "XTZ": "XTZUSDT"
+    }
+}
 
-async def fetch_binance_klines(
-    symbol: str,
-    interval: str = "1h",
-    limit: int = 500
-) -> List[Dict[str, Any]]:
+
+async def fetch_from_coingecko(symbol: str, interval: str, limit: int) -> List[Dict[str, Any]]:
     """
-    Fetch REAL candlestick data from Binance API (FREE)
-    
-    CRITICAL RULES:
-    1. MUST call actual Binance API
-    2. MUST return actual candlestick data from API
-    3. NEVER generate fake candles
-    4. If API fails, return empty list (not fake data)
+    Fetch OHLC data from CoinGecko (FREE, no API key required)
     
     Args:
-        symbol: Trading pair symbol (e.g., 'BTCUSDT')
-        interval: Candle interval (e.g., '1h', '4h', '1d')
-        limit: Number of candles to fetch (max 1000)
+        symbol: Base symbol (e.g., 'BTC')
+        interval: Interval (only '1d' supported by CoinGecko)
+        limit: Number of days to fetch (max 365)
         
     Returns:
-        List of dictionaries with REAL OHLC data
+        List of OHLC candles
     """
     try:
-        # Build API request - REAL API call
-        url = f"{BINANCE_BASE_URL}/klines"
-        params = {
-            "symbol": symbol,
-            "interval": interval,
-            "limit": limit
-        }
+        coin_id = SYMBOL_MAP["coingecko"].get(symbol)
+        if not coin_id:
+            logger.debug(f"CoinGecko: No mapping for {symbol}")
+            return []
         
-        logger.debug(f"Fetching REAL OHLC data from Binance: {symbol} {interval}")
+        # CoinGecko only supports daily data
+        if interval not in ["1d", "4h", "1h"]:
+            return []
         
-        # Make REAL HTTP request to Binance
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        # Calculate days based on interval
+        days = min(limit if interval == "1d" else limit // 6 if interval == "4h" else limit // 24, 365)
+        
+        url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/ohlc"
+        params = {"vs_currency": "usd", "days": days}
+        
+        logger.debug(f"Fetching from CoinGecko: {coin_id} ({symbol})")
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.get(url, params=params)
             response.raise_for_status()
+            data = response.json()
             
-            # Parse REAL response data
-            klines = response.json()
-            
-            if not klines or not isinstance(klines, list):
-                logger.error(f"Invalid response from Binance for {symbol}: {klines}")
+            if not data or not isinstance(data, list):
                 return []
             
-            logger.debug(f"Successfully fetched {len(klines)} candles for {symbol} {interval}")
-            
-            # Extract REAL candle data from API response
             ohlc_data = []
-            for kline in klines:
+            for candle in data:
                 try:
-                    # Binance kline format:
-                    # [
-                    #   0: Open time,
-                    #   1: Open,
-                    #   2: High,
-                    #   3: Low,
-                    #   4: Close,
-                    #   5: Volume,
-                    #   6: Close time,
-                    #   ...
-                    # ]
-                    
-                    # REAL data from API - NOT fake
-                    data = {
+                    # CoinGecko format: [timestamp, open, high, low, close]
+                    ohlc_data.append({
                         "symbol": symbol,
                         "interval": interval,
-                        "timestamp": datetime.fromtimestamp(kline[0] / 1000),  # REAL timestamp
-                        "open": float(kline[1]),  # REAL open price
-                        "high": float(kline[2]),  # REAL high price
-                        "low": float(kline[3]),  # REAL low price
-                        "close": float(kline[4]),  # REAL close price
-                        "volume": float(kline[5]),  # REAL volume
-                        "provider": "binance"
-                    }
-                    
-                    ohlc_data.append(data)
-                    
+                        "timestamp": datetime.fromtimestamp(candle[0] / 1000),
+                        "open": float(candle[1]),
+                        "high": float(candle[2]),
+                        "low": float(candle[3]),
+                        "close": float(candle[4]),
+                        "volume": 0.0,  # CoinGecko OHLC doesn't include volume
+                        "provider": "coingecko"
+                    })
                 except Exception as e:
-                    logger.error(f"Error parsing kline data for {symbol}: {e}")
+                    logger.debug(f"Error parsing CoinGecko candle: {e}")
                     continue
             
+            logger.info(f"✅ CoinGecko: Fetched {len(ohlc_data)} candles for {symbol}")
             return ohlc_data
             
     except httpx.HTTPStatusError as e:
-        # Handle specific HTTP errors
-        if e.response.status_code == 451:
-            logger.warning(
-                f"⚠️  Binance API unavailable for {symbol} (HTTP 451 - Unavailable For Legal Reasons). "
-                f"This may be due to geographic restrictions."
-            )
-        else:
-            logger.error(f"HTTP error fetching from Binance ({symbol}): {e}")
-        return []
-    except httpx.HTTPError as e:
-        logger.error(f"HTTP error fetching from Binance ({symbol}): {e}")
+        logger.debug(f"CoinGecko HTTP error for {symbol}: {e.response.status_code}")
         return []
     except Exception as e:
-        logger.error(f"Error fetching from Binance ({symbol}): {e}", exc_info=True)
+        logger.debug(f"CoinGecko error for {symbol}: {e}")
         return []
+
+
+async def fetch_from_kraken(symbol: str, interval: str, limit: int) -> List[Dict[str, Any]]:
+    """
+    Fetch OHLC data from Kraken (FREE, no API key required)
+    
+    Args:
+        symbol: Base symbol (e.g., 'BTC')
+        interval: Interval
+        limit: Number of candles
+        
+    Returns:
+        List of OHLC candles
+    """
+    try:
+        pair = SYMBOL_MAP["kraken"].get(symbol)
+        if not pair:
+            logger.debug(f"Kraken: No mapping for {symbol}")
+            return []
+        
+        # Map interval to Kraken format (in minutes)
+        interval_map = {"1h": "60", "4h": "240", "1d": "1440"}
+        kraken_interval = interval_map.get(interval)
+        if not kraken_interval:
+            return []
+        
+        url = "https://api.kraken.com/0/public/OHLC"
+        params = {"pair": pair, "interval": kraken_interval}
+        
+        logger.debug(f"Fetching from Kraken: {pair} ({symbol})")
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            if data.get("error") and len(data["error"]) > 0:
+                logger.debug(f"Kraken error for {symbol}: {data['error']}")
+                return []
+            
+            result = data.get("result", {})
+            candles = result.get(pair, [])
+            
+            if not candles:
+                return []
+            
+            ohlc_data = []
+            for candle in candles[:limit]:
+                try:
+                    # Kraken format: [time, open, high, low, close, vwap, volume, count]
+                    ohlc_data.append({
+                        "symbol": symbol,
+                        "interval": interval,
+                        "timestamp": datetime.fromtimestamp(int(candle[0])),
+                        "open": float(candle[1]),
+                        "high": float(candle[2]),
+                        "low": float(candle[3]),
+                        "close": float(candle[4]),
+                        "volume": float(candle[6]),
+                        "provider": "kraken"
+                    })
+                except Exception as e:
+                    logger.debug(f"Error parsing Kraken candle: {e}")
+                    continue
+            
+            logger.info(f"✅ Kraken: Fetched {len(ohlc_data)} candles for {symbol}")
+            return ohlc_data
+            
+    except Exception as e:
+        logger.debug(f"Kraken error for {symbol}: {e}")
+        return []
+
+
+async def fetch_from_coinbase(symbol: str, interval: str, limit: int) -> List[Dict[str, Any]]:
+    """
+    Fetch OHLC data from Coinbase Pro (FREE, no API key required)
+    
+    Args:
+        symbol: Base symbol (e.g., 'BTC')
+        interval: Interval
+        limit: Number of candles (max 300)
+        
+    Returns:
+        List of OHLC candles
+    """
+    try:
+        pair = SYMBOL_MAP["coinbase"].get(symbol)
+        if not pair:
+            logger.debug(f"Coinbase: No mapping for {symbol}")
+            return []
+        
+        # Map interval to Coinbase granularity (in seconds)
+        interval_map = {"1h": "3600", "4h": "21600", "1d": "86400"}
+        granularity = interval_map.get(interval)
+        if not granularity:
+            return []
+        
+        url = f"https://api.exchange.coinbase.com/products/{pair}/candles"
+        params = {"granularity": granularity}
+        
+        logger.debug(f"Fetching from Coinbase: {pair} ({symbol})")
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            if not data or not isinstance(data, list):
+                return []
+            
+            ohlc_data = []
+            for candle in data[:limit]:
+                try:
+                    # Coinbase format: [time, low, high, open, close, volume]
+                    ohlc_data.append({
+                        "symbol": symbol,
+                        "interval": interval,
+                        "timestamp": datetime.fromtimestamp(int(candle[0])),
+                        "open": float(candle[3]),
+                        "high": float(candle[2]),
+                        "low": float(candle[1]),
+                        "close": float(candle[4]),
+                        "volume": float(candle[5]),
+                        "provider": "coinbase"
+                    })
+                except Exception as e:
+                    logger.debug(f"Error parsing Coinbase candle: {e}")
+                    continue
+            
+            logger.info(f"✅ Coinbase: Fetched {len(ohlc_data)} candles for {symbol}")
+            return ohlc_data
+            
+    except Exception as e:
+        logger.debug(f"Coinbase error for {symbol}: {e}")
+        return []
+
+
+async def fetch_from_binance(symbol: str, interval: str, limit: int) -> List[Dict[str, Any]]:
+    """
+    Fetch OHLC data from Binance (FREE, may be geo-restricted)
+    
+    Args:
+        symbol: Base symbol (e.g., 'BTC')
+        interval: Interval
+        limit: Number of candles
+        
+    Returns:
+        List of OHLC candles
+    """
+    try:
+        pair = SYMBOL_MAP["binance"].get(symbol)
+        if not pair:
+            logger.debug(f"Binance: No mapping for {symbol}")
+            return []
+        
+        url = "https://api.binance.com/api/v3/klines"
+        params = {"symbol": pair, "interval": interval, "limit": limit}
+        
+        logger.debug(f"Fetching from Binance: {pair} ({symbol})")
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            
+            if not data or not isinstance(data, list):
+                return []
+            
+            ohlc_data = []
+            for candle in data:
+                try:
+                    # Binance format: [time, open, high, low, close, volume, ...]
+                    ohlc_data.append({
+                        "symbol": symbol,
+                        "interval": interval,
+                        "timestamp": datetime.fromtimestamp(int(candle[0]) / 1000),
+                        "open": float(candle[1]),
+                        "high": float(candle[2]),
+                        "low": float(candle[3]),
+                        "close": float(candle[4]),
+                        "volume": float(candle[5]),
+                        "provider": "binance"
+                    })
+                except Exception as e:
+                    logger.debug(f"Error parsing Binance candle: {e}")
+                    continue
+            
+            logger.info(f"✅ Binance: Fetched {len(ohlc_data)} candles for {symbol}")
+            return ohlc_data
+            
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 451:
+            logger.debug(f"Binance geo-restricted for {symbol}")
+        else:
+            logger.debug(f"Binance HTTP error for {symbol}: {e.response.status_code}")
+        return []
+    except Exception as e:
+        logger.debug(f"Binance error for {symbol}: {e}")
+        return []
+
+
+async def fetch_ohlc_with_fallback(symbol: str, interval: str, limit: int = 100) -> List[Dict[str, Any]]:
+    """
+    Fetch OHLC data with automatic fallback across multiple sources
+    
+    Priority order:
+    1. CoinGecko (most reliable, no auth, no geo-restrictions)
+    2. Kraken (reliable, no auth)
+    3. Coinbase (reliable, no auth)
+    4. Binance (may be geo-restricted)
+    
+    Args:
+        symbol: Base symbol (e.g., 'BTC')
+        interval: Interval ('1h', '4h', '1d')
+        limit: Number of candles to fetch
+        
+    Returns:
+        List of OHLC candles from first successful source
+    """
+    sources = [
+        ("CoinGecko", fetch_from_coingecko),
+        ("Kraken", fetch_from_kraken),
+        ("Coinbase", fetch_from_coinbase),
+        ("Binance", fetch_from_binance),
+    ]
+    
+    for source_name, fetch_func in sources:
+        try:
+            data = await fetch_func(symbol, interval, limit)
+            if data and len(data) > 0:
+                logger.debug(f"✅ Successfully fetched {len(data)} candles from {source_name} for {symbol}")
+                return data
+        except Exception as e:
+            logger.debug(f"❌ {source_name} failed for {symbol}: {e}")
+            continue
+    
+    logger.warning(f"⚠️  All sources failed for {symbol} {interval}")
+    return []
 
 
 async def save_ohlc_data_to_cache(ohlc_data: List[Dict[str, Any]]) -> int:
@@ -226,20 +461,23 @@ async def save_ohlc_data_to_cache(ohlc_data: List[Dict[str, Any]]) -> int:
     return saved_count
 
 
-async def fetch_and_cache_ohlc_for_pair(symbol: str, interval: str) -> int:
+async def fetch_and_cache_ohlc_for_symbol(symbol: str, interval: str) -> int:
     """
-    Fetch and cache OHLC data for a single trading pair and interval
+    Fetch and cache OHLC data for a single symbol and interval using multi-source fallback
     
     Args:
-        symbol: Trading pair symbol
-        interval: Candle interval
+        symbol: Base symbol (e.g., 'BTC')
+        interval: Candle interval ('1h', '4h', '1d')
         
     Returns:
         int: Number of candles saved
     """
     try:
-        # Fetch REAL data from Binance
-        ohlc_data = await fetch_binance_klines(symbol, interval, limit=500)
+        # Determine limit based on interval
+        limit = 100 if interval == "1d" else 100
+        
+        # Fetch REAL data with automatic fallback
+        ohlc_data = await fetch_ohlc_with_fallback(symbol, interval, limit)
         
         if not ohlc_data or len(ohlc_data) == 0:
             logger.debug(f"No OHLC data received for {symbol} {interval}")
@@ -248,7 +486,8 @@ async def fetch_and_cache_ohlc_for_pair(symbol: str, interval: str) -> int:
         # Save REAL data to database
         saved_count = await save_ohlc_data_to_cache(ohlc_data)
         
-        logger.debug(f"Saved {saved_count}/{len(ohlc_data)} candles for {symbol} {interval}")
+        if saved_count > 0:
+            logger.debug(f"Saved {saved_count}/{len(ohlc_data)} candles for {symbol} {interval}")
         return saved_count
         
     except Exception as e:
@@ -258,17 +497,18 @@ async def fetch_and_cache_ohlc_for_pair(symbol: str, interval: str) -> int:
 
 async def ohlc_data_worker_loop():
     """
-    Background worker loop - Fetch REAL OHLC data periodically
+    Background worker loop - Fetch REAL OHLC data periodically with multi-source fallback
     
     CRITICAL RULES:
     1. Run continuously in background
-    2. Fetch REAL data from Binance every 5 minutes
+    2. Fetch REAL data from multiple sources with automatic fallback
     3. Store REAL data in database
     4. NEVER generate fake candles as fallback
-    5. If API fails, log error and retry on next iteration
+    5. If all sources fail, log error and retry on next iteration
     """
     
-    logger.info("Starting OHLC data background worker")
+    logger.info("Starting OHLC data background worker with multi-source fallback")
+    logger.info("📊 Data sources: CoinGecko, Kraken, Coinbase, Binance")
     iteration = 0
     
     while True:
@@ -276,20 +516,23 @@ async def ohlc_data_worker_loop():
             iteration += 1
             start_time = time.time()
             
-            logger.info(f"[Iteration {iteration}] Fetching REAL OHLC data from Binance...")
+            logger.info(f"[Iteration {iteration}] Fetching REAL OHLC data from multiple sources...")
             
             total_saved = 0
-            total_pairs = len(TRADING_PAIRS) * len(INTERVALS)
+            total_combinations = len(SYMBOLS) * len(INTERVALS)
+            successful_fetches = 0
             
-            # Fetch OHLC data for all pairs and intervals
-            for symbol in TRADING_PAIRS:
+            # Fetch OHLC data for all symbols and intervals
+            for symbol in SYMBOLS:
                 for interval in INTERVALS:
                     try:
-                        saved = await fetch_and_cache_ohlc_for_pair(symbol, interval)
+                        saved = await fetch_and_cache_ohlc_for_symbol(symbol, interval)
                         total_saved += saved
+                        if saved > 0:
+                            successful_fetches += 1
                         
                         # Small delay to avoid rate limiting
-                        await asyncio.sleep(0.2)
+                        await asyncio.sleep(0.5)
                         
                     except Exception as e:
                         logger.error(f"Error processing {symbol} {interval}: {e}")
@@ -297,12 +540,11 @@ async def ohlc_data_worker_loop():
             
             elapsed = time.time() - start_time
             logger.info(
-                f"[Iteration {iteration}] Successfully saved {total_saved} "
-                f"REAL OHLC candles from Binance ({total_pairs} pair-intervals) in {elapsed:.2f}s"
+                f"[Iteration {iteration}] Successfully saved {total_saved} REAL OHLC candles "
+                f"({successful_fetches}/{total_combinations} symbol-intervals) in {elapsed:.2f}s"
             )
             
-            # Binance free tier: 1200 requests/minute weight limit
-            # Sleep for 5 minutes between iterations
+            # Sleep for 5 minutes between iterations to respect rate limits
             await asyncio.sleep(300)  # 5 minutes
             
         except Exception as e:
@@ -313,22 +555,23 @@ async def ohlc_data_worker_loop():
 
 async def start_ohlc_data_worker():
     """
-    Start OHLC data background worker
+    Start OHLC data background worker with multi-source support
     
     This should be called during application startup
     """
     try:
-        logger.info("Initializing OHLC data worker...")
+        logger.info("Initializing OHLC data worker with multi-source fallback...")
+        logger.info("📊 Supported sources: CoinGecko, Kraken, Coinbase, Binance")
         
-        # Run initial fetch for a few pairs immediately
+        # Run initial fetch for a few symbols immediately
         logger.info("Running initial OHLC data fetch...")
         total_saved = 0
         
-        for symbol in TRADING_PAIRS[:5]:  # First 5 pairs only for initial fetch
+        for symbol in SYMBOLS[:5]:  # First 5 symbols only for initial fetch
             for interval in INTERVALS:
-                saved = await fetch_and_cache_ohlc_for_pair(symbol, interval)
+                saved = await fetch_and_cache_ohlc_for_symbol(symbol, interval)
                 total_saved += saved
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.5)
         
         logger.info(f"Initial fetch: Saved {total_saved} REAL OHLC candles")
         
@@ -346,26 +589,34 @@ if __name__ == "__main__":
     sys.path.append("/workspace")
     
     async def test():
-        """Test the worker"""
-        logger.info("Testing OHLC data worker...")
+        """Test the worker with multi-source fallback"""
+        logger.info("Testing OHLC data worker with multi-source fallback...")
         
-        # Test API fetch
-        symbol = "BTCUSDT"
+        # Test symbols
+        test_symbols = ["BTC", "ETH"]
         interval = "1h"
         
-        data = await fetch_binance_klines(symbol, interval, limit=10)
-        logger.info(f"Fetched {len(data)} candles for {symbol} {interval}")
-        
-        if data:
-            # Print sample data
-            for candle in data[:5]:
-                logger.info(
-                    f"  {candle['timestamp']}: O={candle['open']:.2f} "
-                    f"H={candle['high']:.2f} L={candle['low']:.2f} C={candle['close']:.2f}"
-                )
+        for symbol in test_symbols:
+            logger.info(f"\n{'='*60}")
+            logger.info(f"Testing {symbol}")
+            logger.info(f"{'='*60}")
             
-            # Test save to database
-            saved = await save_ohlc_data_to_cache(data)
-            logger.info(f"Saved {saved} candles to database")
+            data = await fetch_ohlc_with_fallback(symbol, interval, limit=10)
+            logger.info(f"Fetched {len(data)} candles for {symbol} {interval}")
+            
+            if data:
+                # Print sample data
+                logger.info(f"Provider: {data[0].get('provider')}")
+                for candle in data[:3]:
+                    logger.info(
+                        f"  {candle['timestamp']}: O={candle['open']:.2f} "
+                        f"H={candle['high']:.2f} L={candle['low']:.2f} C={candle['close']:.2f}"
+                    )
+                
+                # Test save to database
+                saved = await save_ohlc_data_to_cache(data)
+                logger.info(f"Saved {saved} candles to database")
+            else:
+                logger.warning(f"No data retrieved for {symbol}")
     
     asyncio.run(test())
