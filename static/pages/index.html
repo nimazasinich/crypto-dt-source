@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Intelligence Hub - Pages</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .page-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 25px;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .page-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .page-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+        
+        .page-card p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Crypto Intelligence Hub</h1>
+        <p class="subtitle">Multi-Page Application - Choose a page to explore</p>
+        
+        <div class="pages-grid">
+            <a href="/dashboard" class="page-card">
+                <div class="icon">📊</div>
+                <h3>Dashboard</h3>
+                <p>Overview and statistics</p>
+            </a>
+            
+            <a href="/market" class="page-card">
+                <div class="icon">💹</div>
+                <h3>Market Data</h3>
+                <p>Real-time cryptocurrency prices</p>
+            </a>
+            
+            <a href="/models" class="page-card">
+                <div class="icon">🤖</div>
+                <h3>AI Models</h3>
+                <p>Machine learning models</p>
+            </a>
+            
+            <a href="/sentiment" class="page-card">
+                <div class="icon">📈</div>
+                <h3>Sentiment Analysis</h3>
+                <p>Market sentiment indicators</p>
+            </a>
+            
+            <a href="/ai-analyst" class="page-card">
+                <div class="icon">🧠</div>
+                <h3>AI Analyst</h3>
+                <p>AI-powered trading insights</p>
+            </a>
+            
+            <a href="/trading-assistant" class="page-card">
+                <div class="icon">💼</div>
+                <h3>Trading Assistant</h3>
+                <p>Advanced trading tools</p>
+            </a>
+            
+            <a href="/news" class="page-card">
+                <div class="icon">📰</div>
+                <h3>News</h3>
+                <p>Latest crypto news</p>
+            </a>
+            
+            <a href="/providers" class="page-card">
+                <div class="icon">🔌</div>
+                <h3>Data Providers</h3>
+                <p>API providers status</p>
+            </a>
+            
+            <a href="/diagnostics" class="page-card">
+                <div class="icon">🔍</div>
+                <h3>Diagnostics</h3>
+                <p>System health and testing</p>
+            </a>
+            
+            <a href="/api-explorer" class="page-card">
+                <div class="icon">🛠️</div>
+                <h3>API Explorer</h3>
+                <p>Explore API endpoints</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
