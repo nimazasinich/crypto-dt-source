@@ -1,0 +1,943 @@
+{
+  "api_sources": {
+    "market_prices": {
+      "primary": [
+        {
+          "name": "coingecko",
+          "url": "https://api.coingecko.com/api/v3",
+          "auth_required": false,
+          "rate_limit": "50/min",
+          "priority": 1,
+          "timeout": 10
+        },
+        {
+          "name": "binance_public",
+          "url": "https://api.binance.com/api/v3",
+          "auth_required": false,
+          "rate_limit": "1200/min",
+          "priority": 2,
+          "timeout": 10
+        },
+        {
+          "name": "coinpaprika",
+          "url": "https://api.coinpaprika.com/v1",
+          "auth_required": false,
+          "rate_limit": "20000/month",
+          "priority": 3,
+          "timeout": 10
+        },
+        {
+          "name": "coincap",
+          "url": "https://api.coincap.io/v2",
+          "auth_required": false,
+          "rate_limit": "200/min",
+          "priority": 4,
+          "timeout": 10
+        },
+        {
+          "name": "coinlore",
+          "url": "https://api.coinlore.net/api",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 5,
+          "timeout": 10
+        }
+      ],
+      "secondary": [
+        {
+          "name": "coinmarketcap_primary_1",
+          "url": "https://pro-api.coinmarketcap.com/v1",
+          "auth_required": true,
+          "api_key": "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1",
+          "rate_limit": "333/day",
+          "priority": 6,
+          "timeout": 15
+        },
+        {
+          "name": "coinmarketcap_primary_2",
+          "url": "https://pro-api.coinmarketcap.com/v1",
+          "auth_required": true,
+          "api_key": "b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c",
+          "rate_limit": "333/day",
+          "priority": 7,
+          "timeout": 15
+        },
+        {
+          "name": "cryptocompare",
+          "url": "https://min-api.cryptocompare.com/data",
+          "auth_required": true,
+          "api_key": "e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f",
+          "rate_limit": "100000/month",
+          "priority": 8,
+          "timeout": 10
+        },
+        {
+          "name": "messari",
+          "url": "https://data.messari.io/api/v1",
+          "auth_required": false,
+          "rate_limit": "20/min",
+          "priority": 9,
+          "timeout": 10
+        },
+        {
+          "name": "nomics",
+          "url": "https://api.nomics.com/v1",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 10,
+          "timeout": 10
+        },
+        {
+          "name": "defillama_prices",
+          "url": "https://coins.llama.fi",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 11,
+          "timeout": 10
+        },
+        {
+          "name": "coinstats_public",
+          "url": "https://api.coinstats.app/public/v1",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 12,
+          "timeout": 10
+        }
+      ],
+      "tertiary": [
+        {
+          "name": "kaiko",
+          "url": "https://us.market-api.kaiko.io/v2",
+          "auth_required": false,
+          "rate_limit": "limited",
+          "priority": 13,
+          "timeout": 10
+        },
+        {
+          "name": "coindesk_price",
+          "url": "https://api.coindesk.com/v2",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 14,
+          "timeout": 10
+        },
+        {
+          "name": "diadata",
+          "url": "https://api.diadata.org/v1",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 15,
+          "timeout": 10
+        },
+        {
+          "name": "freecryptoapi",
+          "url": "https://api.freecryptoapi.com",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 16,
+          "timeout": 10
+        },
+        {
+          "name": "cryptingup",
+          "url": "https://api.cryptingup.com/api",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 17,
+          "timeout": 10
+        },
+        {
+          "name": "coinranking",
+          "url": "https://api.coinranking.com/v2",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 18,
+          "timeout": 10
+        }
+      ]
+    },
+    "ohlc_candlestick": {
+      "primary": [
+        {
+          "name": "binance_public",
+          "url": "https://api.binance.com/api/v3/klines",
+          "auth_required": false,
+          "rate_limit": "1200/min",
+          "priority": 1,
+          "timeout": 15
+        },
+        {
+          "name": "cryptocompare_market",
+          "url": "https://min-api.cryptocompare.com/data/v2",
+          "auth_required": false,
+          "rate_limit": "100000/month",
+          "priority": 2,
+          "timeout": 15
+        },
+        {
+          "name": "coinpaprika_market",
+          "url": "https://api.coinpaprika.com/v1",
+          "auth_required": false,
+          "rate_limit": "20000/month",
+          "priority": 3,
+          "timeout": 15
+        },
+        {
+          "name": "coincap_market",
+          "url": "https://api.coincap.io/v2",
+          "auth_required": false,
+          "rate_limit": "200/min",
+          "priority": 4,
+          "timeout": 15
+        },
+        {
+          "name": "coingecko_ohlc",
+          "url": "https://api.coingecko.com/api/v3",
+          "auth_required": false,
+          "rate_limit": "50/min",
+          "priority": 5,
+          "timeout": 15
+        }
+      ],
+      "secondary": [
+        {
+          "name": "kucoin_api",
+          "url": "https://api.kucoin.com",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 6,
+          "timeout": 15
+        },
+        {
+          "name": "bybit_api",
+          "url": "https://api.bybit.com",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 7,
+          "timeout": 15
+        },
+        {
+          "name": "okx_api",
+          "url": "https://www.okx.com/api/v5",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 8,
+          "timeout": 15
+        },
+        {
+          "name": "kraken_api",
+          "url": "https://api.kraken.com/0/public",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 9,
+          "timeout": 15
+        },
+        {
+          "name": "bitfinex_api",
+          "url": "https://api-pub.bitfinex.com/v2",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 10,
+          "timeout": 15
+        },
+        {
+          "name": "gateio_api",
+          "url": "https://api.gateio.ws/api/v4",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 11,
+          "timeout": 15
+        },
+        {
+          "name": "huobi_api",
+          "url": "https://api.huobi.pro",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 12,
+          "timeout": 15
+        }
+      ],
+      "huggingface_datasets": [
+        {
+          "name": "hf_ds_linxy_crypto",
+          "dataset_id": "linxy/crypto_ohlcv",
+          "symbols": 26,
+          "timeframes": 7,
+          "total_files": 182,
+          "priority": 13
+        },
+        {
+          "name": "hf_ds_wf_btc",
+          "dataset_id": "wf/bitcoin-historical",
+          "symbols": 1,
+          "priority": 14
+        },
+        {
+          "name": "hf_ds_wf_eth",
+          "dataset_id": "wf/ethereum-historical",
+          "symbols": 1,
+          "priority": 15
+        },
+        {
+          "name": "hf_ds_wf_sol",
+          "dataset_id": "wf/solana-historical",
+          "symbols": 1,
+          "priority": 16
+        },
+        {
+          "name": "hf_ds_wf_xrp",
+          "dataset_id": "wf/ripple-historical",
+          "symbols": 1,
+          "priority": 17
+        }
+      ]
+    },
+    "blockchain_explorer": {
+      "ethereum": [
+        {
+          "name": "etherscan_primary",
+          "url": "https://api.etherscan.io/api",
+          "auth_required": true,
+          "api_key": "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
+          "rate_limit": "5/sec",
+          "priority": 1,
+          "timeout": 10
+        },
+        {
+          "name": "etherscan_secondary",
+          "url": "https://api.etherscan.io/api",
+          "auth_required": true,
+          "api_key": "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45",
+          "rate_limit": "5/sec",
+          "priority": 2,
+          "timeout": 10
+        },
+        {
+          "name": "blockchair_ethereum",
+          "url": "https://api.blockchair.com/ethereum",
+          "auth_required": false,
+          "rate_limit": "30/min",
+          "priority": 3,
+          "timeout": 10
+        },
+        {
+          "name": "blockscout_ethereum",
+          "url": "https://eth.blockscout.com/api",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 4,
+          "timeout": 10
+        },
+        {
+          "name": "ethplorer",
+          "url": "https://api.ethplorer.io",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 5,
+          "timeout": 10
+        },
+        {
+          "name": "etherchain",
+          "url": "https://www.etherchain.org/api",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 6,
+          "timeout": 10
+        },
+        {
+          "name": "chainlens",
+          "url": "https://api.chainlens.com",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 7,
+          "timeout": 10
+        }
+      ],
+      "bsc": [
+        {
+          "name": "bscscan_primary",
+          "url": "https://api.bscscan.com/api",
+          "auth_required": true,
+          "api_key": "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT",
+          "rate_limit": "5/sec",
+          "priority": 1,
+          "timeout": 10
+        },
+        {
+          "name": "bitquery_bsc",
+          "url": "https://graphql.bitquery.io",
+          "auth_required": false,
+          "rate_limit": "limited",
+          "priority": 2,
+          "timeout": 10
+        },
+        {
+          "name": "ankr_multichain_bsc",
+          "url": "https://rpc.ankr.com/multichain",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 3,
+          "timeout": 10
+        },
+        {
+          "name": "nodereal_bsc_explorer",
+          "url": "https://bsc-mainnet.nodereal.io/v1",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 4,
+          "timeout": 10
+        },
+        {
+          "name": "bsctrace",
+          "url": "https://api.bsctrace.com",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 5,
+          "timeout": 10
+        },
+        {
+          "name": "oneinch_bsc_api",
+          "url": "https://api.1inch.io/v5.0/56",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 6,
+          "timeout": 10
+        }
+      ],
+      "tron": [
+        {
+          "name": "tronscan_primary",
+          "url": "https://apilist.tronscanapi.com/api",
+          "auth_required": true,
+          "api_key": "7ae72726-bffe-4e74-9c33-97b761eeea21",
+          "rate_limit": "unlimited",
+          "priority": 1,
+          "timeout": 10
+        },
+        {
+          "name": "trongrid_explorer",
+          "url": "https://api.trongrid.io",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 2,
+          "timeout": 10
+        },
+        {
+          "name": "blockchair_tron",
+          "url": "https://api.blockchair.com/tron",
+          "auth_required": false,
+          "rate_limit": "30/min",
+          "priority": 3,
+          "timeout": 10
+        },
+        {
+          "name": "tronscan_api_v2",
+          "url": "https://api.tronscan.org/api",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 4,
+          "timeout": 10
+        },
+        {
+          "name": "getblock_tron",
+          "url": "https://go.getblock.io/tron",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 5,
+          "timeout": 10
+        }
+      ]
+    },
+    "news_feeds": {
+      "api_sources": [
+        {
+          "name": "newsapi_org",
+          "url": "https://newsapi.org/v2",
+          "auth_required": true,
+          "api_key": "pub_346789abc123def456789ghi012345jkl",
+          "rate_limit": "1000/day",
+          "priority": 1,
+          "timeout": 10
+        },
+        {
+          "name": "cryptopanic",
+          "url": "https://cryptopanic.com/api/v1",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 2,
+          "timeout": 10
+        },
+        {
+          "name": "cryptocontrol",
+          "url": "https://cryptocontrol.io/api/v1/public",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 3,
+          "timeout": 10
+        },
+        {
+          "name": "coindesk_api",
+          "url": "https://api.coindesk.com/v2",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 4,
+          "timeout": 10
+        },
+        {
+          "name": "cointelegraph_api",
+          "url": "https://api.cointelegraph.com/api/v1",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 5,
+          "timeout": 10
+        },
+        {
+          "name": "cryptoslate",
+          "url": "https://api.cryptoslate.com",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 6,
+          "timeout": 10
+        },
+        {
+          "name": "theblock_api",
+          "url": "https://api.theblock.co/v1",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 7,
+          "timeout": 10
+        },
+        {
+          "name": "coinstats_news",
+          "url": "https://api.coinstats.app/public/v1/news",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 8,
+          "timeout": 10
+        }
+      ],
+      "rss_feeds": [
+        {
+          "name": "rss_cointelegraph",
+          "url": "https://cointelegraph.com/rss",
+          "priority": 9
+        },
+        {
+          "name": "rss_coindesk",
+          "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+          "priority": 10
+        },
+        {
+          "name": "rss_decrypt",
+          "url": "https://decrypt.co/feed",
+          "priority": 11
+        },
+        {
+          "name": "rss_bitcoinmagazine",
+          "url": "https://bitcoinmagazine.com/.rss/full/",
+          "priority": 12
+        },
+        {
+          "name": "rss_theblock",
+          "url": "https://www.theblock.co/rss.xml",
+          "priority": 13
+        },
+        {
+          "name": "rss_cryptoslate",
+          "url": "https://cryptoslate.com/feed/",
+          "priority": 14
+        },
+        {
+          "name": "rss_newsbtc",
+          "url": "https://www.newsbtc.com/feed/",
+          "priority": 15
+        }
+      ]
+    },
+    "sentiment_data": {
+      "primary": [
+        {
+          "name": "alternative_me_fng",
+          "url": "https://api.alternative.me/fng/",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 1,
+          "timeout": 10
+        },
+        {
+          "name": "cfgi_v1",
+          "url": "https://api.cfgi.io/v1/fear-greed",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 2,
+          "timeout": 10
+        },
+        {
+          "name": "cfgi_legacy",
+          "url": "https://cfgi.io/api",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 3,
+          "timeout": 10
+        },
+        {
+          "name": "coingecko_community",
+          "url": "https://api.coingecko.com/api/v3",
+          "auth_required": false,
+          "rate_limit": "50/min",
+          "priority": 4,
+          "timeout": 10
+        },
+        {
+          "name": "messari_social",
+          "url": "https://data.messari.io/api/v1",
+          "auth_required": false,
+          "rate_limit": "20/min",
+          "priority": 5,
+          "timeout": 10
+        }
+      ],
+      "social_analytics": [
+        {
+          "name": "lunarcrush",
+          "url": "https://api.lunarcrush.com/v2",
+          "auth_required": true,
+          "api_key": null,
+          "rate_limit": "limited",
+          "priority": 6,
+          "timeout": 10
+        },
+        {
+          "name": "santiment",
+          "url": "https://api.santiment.net/graphql",
+          "auth_required": true,
+          "api_key": null,
+          "rate_limit": "limited",
+          "priority": 7,
+          "timeout": 10
+        },
+        {
+          "name": "thetie",
+          "url": "https://api.thetie.io",
+          "auth_required": true,
+          "api_key": null,
+          "rate_limit": "limited",
+          "priority": 8,
+          "timeout": 10
+        },
+        {
+          "name": "cryptoquant",
+          "url": "https://api.cryptoquant.com/v1",
+          "auth_required": true,
+          "api_key": null,
+          "rate_limit": "limited",
+          "priority": 9,
+          "timeout": 10
+        },
+        {
+          "name": "glassnode_social",
+          "url": "https://api.glassnode.com/v1/metrics/social",
+          "auth_required": true,
+          "api_key": null,
+          "rate_limit": "limited",
+          "priority": 10,
+          "timeout": 10
+        },
+        {
+          "name": "augmento",
+          "url": "https://api.augmento.ai/v1",
+          "auth_required": true,
+          "api_key": null,
+          "rate_limit": "limited",
+          "priority": 11,
+          "timeout": 10
+        },
+        {
+          "name": "reddit_cryptocurrency_new",
+          "url": "https://www.reddit.com/r/CryptoCurrency/new.json",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 12,
+          "timeout": 10
+        }
+      ]
+    },
+    "onchain_analytics": [
+      {
+        "name": "glassnode_general",
+        "url": "https://api.glassnode.com/v1",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 1,
+        "timeout": 10
+      },
+      {
+        "name": "intotheblock",
+        "url": "https://api.intotheblock.com/v1",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 2,
+        "timeout": 10
+      },
+      {
+        "name": "nansen",
+        "url": "https://api.nansen.ai/v1",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 3,
+        "timeout": 10
+      },
+      {
+        "name": "thegraph_subgraphs",
+        "url": "https://api.thegraph.com/subgraphs/name/",
+        "auth_required": false,
+        "rate_limit": "unlimited",
+        "priority": 4,
+        "timeout": 10
+      },
+      {
+        "name": "dune",
+        "url": "https://api.dune.com/api/v1",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 5,
+        "timeout": 10
+      },
+      {
+        "name": "covalent",
+        "url": "https://api.covalenthq.com/v1",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 6,
+        "timeout": 10
+      },
+      {
+        "name": "moralis",
+        "url": "https://deep-index.moralis.io/api/v2",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 7,
+        "timeout": 10
+      },
+      {
+        "name": "alchemy_nft_api",
+        "url": "https://eth-mainnet.g.alchemy.com/v2",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 8,
+        "timeout": 10
+      },
+      {
+        "name": "transpose",
+        "url": "https://api.transpose.io",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 9,
+        "timeout": 10
+      },
+      {
+        "name": "footprint_analytics",
+        "url": "https://api.footprint.network",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 10,
+        "timeout": 10
+      },
+      {
+        "name": "bitquery_analytics",
+        "url": "https://graphql.bitquery.io",
+        "auth_required": false,
+        "rate_limit": "limited",
+        "priority": 11,
+        "timeout": 10
+      },
+      {
+        "name": "blockchair_analytics",
+        "url": "https://api.blockchair.com",
+        "auth_required": false,
+        "rate_limit": "30/min",
+        "priority": 12,
+        "timeout": 10
+      },
+      {
+        "name": "coinmetrics",
+        "url": "https://api.coinmetrics.io/v4",
+        "auth_required": false,
+        "rate_limit": "limited",
+        "priority": 13,
+        "timeout": 10
+      }
+    ],
+    "whale_tracking": [
+      {
+        "name": "whale_alert",
+        "url": "https://api.whale-alert.io/v1",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 1,
+        "timeout": 10
+      },
+      {
+        "name": "arkham",
+        "url": "https://api.arkham.com/v1",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 2,
+        "timeout": 10
+      },
+      {
+        "name": "clankapp",
+        "url": "https://clankapp.com/api",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 3,
+        "timeout": 10
+      },
+      {
+        "name": "bitquery_whales",
+        "url": "https://graphql.bitquery.io",
+        "auth_required": false,
+        "rate_limit": "limited",
+        "priority": 4,
+        "timeout": 10
+      },
+      {
+        "name": "nansen_whales",
+        "url": "https://api.nansen.ai/v1",
+        "auth_required": true,
+        "api_key": null,
+        "rate_limit": "limited",
+        "priority": 5,
+        "timeout": 10
+      },
+      {
+        "name": "dexcheck",
+        "url": "https://api.dexcheck.io",
+        "auth_required": false,
+        "rate_limit": "unlimited",
+        "priority": 6,
+        "timeout": 10
+      },
+      {
+        "name": "debank",
+        "url": "https://api.debank.com",
+        "auth_required": false,
+        "rate_limit": "unlimited",
+        "priority": 7,
+        "timeout": 10
+      },
+      {
+        "name": "zerion",
+        "url": "https://api.zerion.io",
+        "auth_required": false,
+        "rate_limit": "unlimited",
+        "priority": 8,
+        "timeout": 10
+      },
+      {
+        "name": "whalemap",
+        "url": "https://whalemap.io/api",
+        "auth_required": false,
+        "rate_limit": "unlimited",
+        "priority": 9,
+        "timeout": 10
+      }
+    ]
+  },
+  "error_handling": {
+    "451": {
+      "description": "Geo-block detected",
+      "actions": ["switch_proxy", "try_alternative_source", "use_different_exchange"]
+    },
+    "429": {
+      "description": "Rate limit exceeded",
+      "actions": ["move_to_next_source", "mark_temporarily_unavailable", "exponential_backoff"]
+    },
+    "401": {
+      "description": "Authentication failed",
+      "actions": ["try_backup_key", "switch_to_no_auth", "check_key_validity"]
+    },
+    "403": {
+      "description": "Forbidden",
+      "actions": ["try_alternative_source", "check_permissions"]
+    },
+    "404": {
+      "description": "Not found",
+      "actions": ["skip_to_next_source"]
+    },
+    "500": {
+      "description": "Internal server error",
+      "actions": ["mark_source_down", "skip_to_next", "retry_after_5min"]
+    },
+    "502": {
+      "description": "Bad gateway",
+      "actions": ["skip_to_next_source", "retry_after_2min"]
+    },
+    "503": {
+      "description": "Service unavailable",
+      "actions": ["skip_to_next_source", "retry_after_5min"]
+    },
+    "timeout": {
+      "description": "Request timeout",
+      "actions": ["retry_with_increased_timeout", "move_to_faster_source"]
+    }
+  },
+  "retry_strategy": {
+    "max_retries": 3,
+    "retryable_errors": [451, 429, 500, 502, 503, 504, "ETIMEDOUT", "ECONNRESET"],
+    "non_retryable_errors": [400, 401, 403, 404],
+    "backoff": {
+      "type": "exponential",
+      "initial_delay_ms": 1000,
+      "max_delay_ms": 10000,
+      "multiplier": 2
+    }
+  },
+  "caching": {
+    "market_prices": {
+      "ttl_seconds": 60,
+      "max_age_seconds": 300
+    },
+    "ohlc_candlestick": {
+      "ttl_seconds": 300,
+      "max_age_seconds": 3600
+    },
+    "blockchain_explorer": {
+      "ttl_seconds": 120,
+      "max_age_seconds": 600
+    },
+    "news_feeds": {
+      "ttl_seconds": 600,
+      "max_age_seconds": 3600
+    },
+    "sentiment_data": {
+      "ttl_seconds": 300,
+      "max_age_seconds": 1800
+    },
+    "onchain_analytics": {
+      "ttl_seconds": 600,
+      "max_age_seconds": 3600
+    },
+    "whale_tracking": {
+      "ttl_seconds": 180,
+      "max_age_seconds": 900
+    }
+  },
+  "validation": {
+    "cross_check": true,
+    "acceptable_variance": 0.05,
+    "minimum_sources_to_compare": 3,
+    "confidence_threshold": 0.8
+  }
+}
