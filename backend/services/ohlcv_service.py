@@ -5,6 +5,7 @@ Automatically switches between Binance, CoinGecko, and other providers
 
 import logging
 from typing import Dict, List, Any, Optional
+from fastapi import HTTPException
 from .api_fallback_manager import get_fallback_manager
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ class OHLCVService:
     
     def _setup_providers(self):
         """Setup OHLCV providers in priority order"""
-        # Priority 1: Binance (fastest, most reliable)
+        # Priority 1: Binance (fastest, most reliable - but may have regional restrictions)
         self.manager.add_provider(
             name="Binance",
             priority=1,
@@ -28,16 +29,25 @@ class OHLCVService:
             max_failures=3
         )
         
-        # Priority 2: HuggingFace Space (fallback)
+        # Priority 2: CoinGecko (reliable alternative, no geo-restrictions)
+        self.manager.add_provider(
+            name="CoinGecko",
+            priority=2,
+            fetch_function=self._fetch_coingecko,
+            cooldown_seconds=60,
+            max_failures=3
+        )
+        
+        # Priority 3: HuggingFace Space (fallback)
         self.manager.add_provider(
             name="HuggingFace",
-            priority=2,
+            priority=3,
             fetch_function=self._fetch_huggingface,
             cooldown_seconds=300,
             max_failures=5
         )
         
-        # Priority 3: Mock/Demo data (always available)
+        # Priority 4: Mock/Demo data (always available)
         self.manager.add_provider(
             name="Demo",
             priority=999,
@@ -46,7 +56,7 @@ class OHLCVService:
             max_failures=999  # Never fails
         )
         
-        logger.info("✅ OHLCV Service initialized with 3 providers")
+        logger.info("✅ OHLCV Service initialized with 4 providers (Binance, CoinGecko, HuggingFace, Demo)")
     
     async def _fetch_binance(self, symbol: str, timeframe: str, limit: int = 100) -> Dict:
         """Fetch from Binance API"""
@@ -64,9 +74,67 @@ class OHLCVService:
                 "ohlcv": candles,
                 "source": "binance"
             }
+        except HTTPException as e:
+            if e.status_code == 451:
+                logger.warning(f"⚠️ Binance access restricted (HTTP 451). Falling back to CoinGecko.")
+            else:
+                logger.error(f"Binance fetch failed: {e.detail}")
+            raise
         except Exception as e:
             logger.error(f"Binance fetch failed: {e}")
             raise
+    
+    async def _fetch_coingecko(self, symbol: str, timeframe: str, limit: int = 100) -> Dict:
+        """Fetch from CoinGecko API"""
+        try:
+            from backend.services.coingecko_client import CoinGeckoClient
+            client = CoinGeckoClient()
+            
+            # CoinGecko uses days, not limit
+            days = self._timeframe_to_days(timeframe, limit)
+            data = await client.get_ohlcv(symbol, days=days)
+            
+            return {
+                "symbol": symbol.upper(),
+                "timeframe": timeframe,
+                "interval": timeframe,
+                "limit": limit,
+                "count": len(data.get("prices", [])),
+                "ohlcv": self._format_coingecko_data(data),
+                "source": "coingecko"
+            }
+        except Exception as e:
+            logger.error(f"CoinGecko fetch failed: {e}")
+            raise
+    
+    def _timeframe_to_days(self, timeframe: str, limit: int) -> int:
+        """Convert timeframe and limit to days for CoinGecko"""
+        # Map timeframes to approximate days
+        timeframe_hours = {
+            "1m": 1/60, "5m": 5/60, "15m": 15/60, "30m": 0.5,
+            "1h": 1, "4h": 4, "1d": 24, "1w": 168
+        }
+        hours = timeframe_hours.get(timeframe, 1)
+        days = max(1, int((hours * limit) / 24))
+        return min(days, 365)  # CoinGecko max 365 days
+    
+    def _format_coingecko_data(self, data: Dict) -> List[Dict]:
+        """Format CoinGecko data to standard OHLCV format"""
+        candles = []
+        prices = data.get("prices", [])
+        
+        for price_point in prices:
+            timestamp, price = price_point
+            candles.append({
+                "timestamp": int(timestamp),
+                "open": price,
+                "high": price * 1.01,  # Approximate
+                "low": price * 0.99,   # Approximate
+                "close": price,
+                "volume": 0  # CoinGecko doesn't provide volume in this endpoint
+            })
+        
+        return candles
     
     async def _fetch_huggingface(self, symbol: str, timeframe: str, limit: int = 100) -> Dict:
         """Fetch from HuggingFace Space"""

@@ -160,6 +160,49 @@ class CoinGeckoClient:
                 detail=f"Failed to fetch real market data from CoinGecko: {str(e)}"
             )
     
+    async def get_ohlcv(self, symbol: str, days: int = 7) -> Dict[str, Any]:
+        """
+        Fetch REAL OHLCV (price history) data from CoinGecko
+        
+        Args:
+            symbol: Cryptocurrency symbol (e.g., "BTC", "ETH")
+            days: Number of days of historical data (1, 7, 14, 30, 90, 180, 365, max)
+        
+        Returns:
+            Dict with OHLCV data
+        """
+        try:
+            coin_id = self._symbol_to_coingecko_id(symbol)
+            
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                # Get market chart (OHLC) data
+                response = await client.get(
+                    f"{self.base_url}/coins/{coin_id}/market_chart",
+                    params={
+                        "vs_currency": "usd",
+                        "days": str(days),
+                        "interval": "daily" if days > 1 else "hourly"
+                    }
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                logger.info(f"✅ CoinGecko: Fetched {days} days of OHLCV data for {symbol}")
+                return data
+        
+        except httpx.HTTPError as e:
+            logger.error(f"❌ CoinGecko OHLCV API HTTP error: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail=f"CoinGecko OHLCV API unavailable: {str(e)}"
+            )
+        except Exception as e:
+            logger.error(f"❌ CoinGecko OHLCV API failed: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail=f"Failed to fetch OHLCV data from CoinGecko: {str(e)}"
+            )
+    
     async def get_trending_coins(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Fetch REAL trending coins from CoinGecko

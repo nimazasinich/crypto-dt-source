@@ -128,6 +128,15 @@ class BinanceClient:
                     status_code=404,
                     detail=f"Symbol not found on Binance: {symbol}"
                 )
+            elif e.response.status_code == 451:
+                logger.warning(
+                    f"⚠️ Binance: HTTP 451 - Access restricted (geo-blocking or legal restrictions) for {binance_symbol}. "
+                    f"Consider using alternative data sources or VPN."
+                )
+                raise HTTPException(
+                    status_code=451,
+                    detail=f"Binance API access restricted for your region. Please use alternative data sources (CoinGecko, CoinMarketCap)."
+                )
             else:
                 logger.error(f"❌ Binance API HTTP error: {e}")
                 raise HTTPException(
@@ -185,6 +194,15 @@ class BinanceClient:
                 return ticker
         
         except httpx.HTTPStatusError as e:
+            if e.response.status_code == 451:
+                logger.warning(
+                    f"⚠️ Binance: HTTP 451 - Access restricted (geo-blocking or legal restrictions). "
+                    f"Consider using alternative data sources."
+                )
+                raise HTTPException(
+                    status_code=451,
+                    detail=f"Binance API access restricted for your region. Please use alternative data sources (CoinGecko, CoinMarketCap)."
+                )
             logger.error(f"❌ Binance ticker error: {e}")
             raise HTTPException(
                 status_code=503,

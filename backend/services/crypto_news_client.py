@@ -32,11 +32,13 @@ class CryptoNewsClient:
         self.cryptopanic_token = os.getenv("CRYPTOPANIC_TOKEN", "")
         self.cryptopanic_url = "https://cryptopanic.com/api/v1"
         
-        # RSS Feeds
+        # RSS Feeds - Updated URLs for reliability
         self.rss_feeds = {
             "coindesk": "https://www.coindesk.com/arc/outboundfeeds/rss/",
             "cointelegraph": "https://cointelegraph.com/rss",
-            "bitcoinmagazine": "https://bitcoinmagazine.com/.rss/full/"
+            "decrypt": "https://decrypt.co/feed",
+            "bitcoinist": "https://bitcoinist.com/feed/",
+            "cryptoslate": "https://cryptoslate.com/feed/"
         }
         
         self.timeout = 15.0
@@ -195,34 +197,56 @@ class CryptoNewsClient:
     async def _fetch_from_rss_feeds(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Fetch REAL news from RSS feeds"""
         articles = []
+        successful_sources = 0
         
         for source_name, feed_url in self.rss_feeds.items():
             try:
+                # Parse RSS feed with timeout handling
+                async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
+                    response = await client.get(feed_url)
+                    response.raise_for_status()
+                    
                 # Parse RSS feed
-                feed = feedparser.parse(feed_url)
+                feed = feedparser.parse(response.text)
+                
+                if feed.bozo and feed.bozo_exception:
+                    logger.warning(f"⚠️ RSS ({source_name}): Feed parsing warning: {feed.bozo_exception}")
+                
+                if not feed.entries:
+                    logger.warning(f"⚠️ RSS ({source_name}): No entries found")
+                    continue
                 
                 for entry in feed.entries[:limit]:
                     # Parse timestamp
                     try:
-                        if hasattr(entry, "published_parsed"):
+                        if hasattr(entry, "published_parsed") and entry.published_parsed:
                             dt = datetime(*entry.published_parsed[:6])
-                        elif hasattr(entry, "updated_parsed"):
+                        elif hasattr(entry, "updated_parsed") and entry.updated_parsed:
                             dt = datetime(*entry.updated_parsed[:6])
                         else:
                             dt = datetime.utcnow()
                         
                         timestamp = int(dt.timestamp() * 1000)
-                    except:
+                    except Exception as ts_error:
+                        logger.debug(f"Timestamp parsing failed for {source_name}: {ts_error}")
                         timestamp = int(datetime.utcnow().timestamp() * 1000)
                     
+                    # Extract description
+                    description = ""
+                    if hasattr(entry, "summary"):
+                        description = entry.summary[:300]
+                    elif hasattr(entry, "description"):
+                        description = entry.description[:300]
+                    
                     articles.append({
-                        "title": entry.get("title", ""),
-                        "description": entry.get("summary", "")[:200],
+                        "title": entry.get("title", "Untitled"),
+                        "description": description,
                         "url": entry.get("link", ""),
                         "source": source_name.title(),
                         "timestamp": timestamp
                     })
                 
+                successful_sources += 1
                 logger.info(
                     f"✅ RSS ({source_name}): Fetched {len(feed.entries)} articles"
                 )
@@ -230,9 +254,17 @@ class CryptoNewsClient:
                 if len(articles) >= limit:
                     break
             
+            except httpx.HTTPError as e:
+                logger.warning(f"⚠️ RSS feed {source_name} HTTP error: {e}")
+                continue
             except Exception as e:
                 logger.warning(f"⚠️ RSS feed {source_name} failed: {e}")
                 continue
+        
+        if successful_sources > 0:
+            logger.info(f"✅ Successfully fetched from {successful_sources}/{len(self.rss_feeds)} RSS sources")
+        else:
+            logger.error(f"❌ All RSS feeds failed")
         
         return articles[:limit]
 
