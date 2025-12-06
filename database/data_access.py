@@ -28,6 +28,90 @@ class DataAccessMixin:
     """
 
     # ============================================================================
+    # Cache Methods (CRITICAL FIX)
+    # ============================================================================
+    
+    def cache_market_data(self, data: dict, source: str = "fallback") -> bool:
+        """
+        Cache market data to database
+        
+        Args:
+            data: Dictionary containing market data
+            source: Source of the data (e.g., 'coingecko', 'binance', 'fallback')
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # For now, store in MarketPrice table
+            if isinstance(data, list):
+                # Multiple coins
+                for item in data:
+                    self.save_market_price(
+                        symbol=item.get('symbol', 'UNKNOWN'),
+                        price_usd=float(item.get('price', 0)),
+                        market_cap=item.get('market_cap'),
+                        volume_24h=item.get('volume_24h'),
+                        price_change_24h=item.get('change_24h'),
+                        source=source
+                    )
+            elif isinstance(data, dict):
+                # Single coin or summary
+                symbol = data.get('symbol', data.get('coin', 'BTC'))
+                price = data.get('price', data.get('price_usd', 0))
+                self.save_market_price(
+                    symbol=symbol,
+                    price_usd=float(price),
+                    source=source
+                )
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Error caching market data: {e}")
+            return False
+    
+    def get_cached_market_data(self, max_age_seconds: int = 300) -> Optional[Dict]:
+        """
+        Retrieve cached market data if not expired
+        
+        Args:
+            max_age_seconds: Maximum age of cache in seconds (default 5 minutes)
+        
+        Returns:
+            Cached data or None if expired/not found
+        """
+        try:
+            cutoff_time = datetime.now() - timedelta(seconds=max_age_seconds)
+            
+            with self.get_session() as session:
+                # Get recent market prices
+                prices = session.query(MarketPrice).filter(
+                    MarketPrice.timestamp >= cutoff_time
+                ).order_by(MarketPrice.timestamp.desc()).limit(200).all()
+                
+                if prices:
+                    return {
+                        'data': [
+                            {
+                                'symbol': p.symbol,
+                                'price': p.price_usd,
+                                'source': p.source,
+                                'timestamp': p.timestamp.isoformat()
+                            }
+                            for p in prices
+                        ],
+                        'cached_at': prices[0].timestamp.isoformat(),
+                        'source': 'database_cache'
+                    }
+                
+                return None
+                
+        except Exception as e:
+            logger.error(f"❌ Error retrieving cached data: {e}")
+            return None
+
+    # ============================================================================
     # Market Price Methods
     # ============================================================================
 

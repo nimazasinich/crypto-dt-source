@@ -71,8 +71,23 @@ from api.hf_data_hub_endpoints import router as hf_hub_router
 # Import smart fallback and data collection
 from workers.data_collection_agent import get_data_collection_agent, start_data_collection_agent
 
+# CRITICAL: Import resource loader to use ALL 305 resources
+try:
+    from backend.services.resource_loader import get_resource_loader, print_resource_stats
+    RESOURCE_LOADER_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"⚠️  Resource loader not available: {e}")
+    RESOURCE_LOADER_AVAILABLE = False
+
 # Setup logging
 logger = setup_logger("hf_space_api", level="INFO")
+
+# Check TEST_MODE
+TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
+if TEST_MODE:
+    logger.info("=" * 80)
+    logger.info("🧪 TEST MODE ENABLED - Authentication bypass active")
+    logger.info("=" * 80)
 
 # Global state
 app_start_time = None
@@ -90,6 +105,30 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 80)
     logger.info("🚀 Starting HuggingFace Space API Server - REAL DATA ONLY")
     logger.info("=" * 80)
+    
+    # CRITICAL: Load and verify ALL 305 resources
+    if RESOURCE_LOADER_AVAILABLE:
+        logger.info("📊 Loading ALL resources...")
+        try:
+            loader = get_resource_loader()
+            total = loader.get_resource_count()
+            
+            if total >= 305:
+                logger.info(f"✅ SUCCESS: All {total} resources loaded!")
+            else:
+                logger.warning(f"⚠️  WARNING: Only {total}/305 resources loaded!")
+            
+            # Print statistics
+            stats = loader.get_statistics()
+            logger.info(f"📊 Resource breakdown:")
+            logger.info(f"   • Total: {stats['total_resources']}")
+            logger.info(f"   • Free: {stats['free_resources']}")
+            logger.info(f"   • Categories: {stats['categories']}")
+            logger.info(f"   • WebSocket: {stats['websocket_enabled']}")
+        except Exception as e:
+            logger.error(f"❌ Error loading resources: {e}")
+    else:
+        logger.warning("⚠️  Resource loader not available - using fallback")
     
     # Phase 1: Initialize database
     logger.info("📊 Phase 1: Initializing database...")
