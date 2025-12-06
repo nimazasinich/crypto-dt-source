@@ -62,11 +62,12 @@ class SentimentPage {
       });
     }
 
-    // Asset input - analyze on Enter key
-    const assetInput = document.getElementById('asset-input');
-    if (assetInput) {
-      assetInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+    // Asset select - analyze on change
+    const assetSelect = document.getElementById('asset-select');
+    if (assetSelect) {
+      assetSelect.addEventListener('change', () => {
+        // Auto-analyze when selection changes
+        if (assetSelect.value) {
           this.analyzeAsset();
         }
       });
@@ -325,15 +326,15 @@ class SentimentPage {
    * Analyze specific asset
    */
   async analyzeAsset() {
-    const input = document.getElementById('asset-input');
+    const assetSelect = document.getElementById('asset-select');
     const container = document.getElementById('asset-result');
     
-    if (!input || !container) {
-      console.error('[Sentiment] Asset input or result container not found');
+    if (!assetSelect || !container) {
+      console.error('[Sentiment] Asset select or result container not found');
       return;
     }
     
-    const symbol = input.value.trim().toUpperCase();
+    const symbol = assetSelect.value.trim().toUpperCase();
     
     if (!symbol) {
       this.showToast('Please enter a symbol', 'warning');
