@@ -140,6 +140,16 @@ async def fetch_binance_klines(
             
             return ohlc_data
             
+    except httpx.HTTPStatusError as e:
+        # Handle specific HTTP errors
+        if e.response.status_code == 451:
+            logger.warning(
+                f"⚠️  Binance API unavailable for {symbol} (HTTP 451 - Unavailable For Legal Reasons). "
+                f"This may be due to geographic restrictions."
+            )
+        else:
+            logger.error(f"HTTP error fetching from Binance ({symbol}): {e}")
+        return []
     except httpx.HTTPError as e:
         logger.error(f"HTTP error fetching from Binance ({symbol}): {e}")
         return []
@@ -232,7 +242,7 @@ async def fetch_and_cache_ohlc_for_pair(symbol: str, interval: str) -> int:
         ohlc_data = await fetch_binance_klines(symbol, interval, limit=500)
         
         if not ohlc_data or len(ohlc_data) == 0:
-            logger.warning(f"No OHLC data received for {symbol} {interval}")
+            logger.debug(f"No OHLC data received for {symbol} {interval}")
             return 0
         
         # Save REAL data to database
