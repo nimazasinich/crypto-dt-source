@@ -31,6 +31,8 @@ from backend.routers.crypto_api_hub_self_healing import router as self_healing_r
 from backend.routers.futures_api import router as futures_router
 from backend.routers.ai_api import router as ai_router
 from backend.routers.config_api import router as config_router
+from backend.routers.multi_source_api import router as multi_source_router
+from backend.routers.trading_backtesting_api import router as trading_router
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -212,6 +214,18 @@ try:
     logger.info("✓ ✅ Configuration Router loaded")
 except Exception as e:
     logger.error(f"Failed to include config_router: {e}")
+
+try:
+    app.include_router(multi_source_router)  # Multi-Source Fallback API (137+ sources)
+    logger.info("✓ ✅ Multi-Source Fallback Router loaded (137+ sources)")
+except Exception as e:
+    logger.error(f"Failed to include multi_source_router: {e}")
+
+try:
+    app.include_router(trading_router)  # Trading & Backtesting API (Smart Binance & KuCoin)
+    logger.info("✓ ✅ Trading & Backtesting Router loaded (Smart Exchange Integration)")
+except Exception as e:
+    logger.error(f"Failed to include trading_router: {e}")
 
 try:
     from api.resources_endpoint import router as resources_router
