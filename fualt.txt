@@ -536,6 +536,35 @@ await in analyzeAsset
   GET https://really-amin-datasourceforcryptocurrency-2.hf.space/api/ohlcv?symbol=BTC&timeframe=1h&limit=100 404 (Not Found)
 analyzeAsset @ ai-analyst.js:297
 await in analyzeAsset
+(anonymous) @ ai-analyst.js:149models.js:571  POST https://really-amin-datasourceforcryptocurrency-2.hf.space/api/models/reinitialize 404 (Not Found)
+reinitializeAll @ models.js:571
+(anonymous) @ models.js:81
+layout-manager.js:86 [Models] Re-initialize error: Error: HTTP 404
+    at ModelsPage.reinitializeAll (models.js:581:15)
+console.error @ layout-manager.js:86
+reinitializeAll @ models.js:584
+await in reinitializeAll
+(anonymous) @ models.js:81
+models.js:571  POST https://really-amin-datasourceforcryptocurrency-2.hf.space/api/models/reinitialize 404 (Not Found)
+reinitializeAll @ models.js:571
+(anonymous) @ models.js:81
+  POST https://really-amin-datasourceforcryptocurrency-2.hf.space/api/models/reinitialize 404 (Not Found)
+reinitializeAll @ models.js:571
+(anonymous) @ models.js:81
+layout-manager.js:86 [Models] Re-initialize error: Error: HTTP 404
+    at ModelsPage.reinitializeAll (models.js:581:15)
+console.error @ layout-manager.js:86
+reinitializeAll @ models.js:584
+await in reinitializeAll
+(anonymous) @ models.js:81
+ai-analyst.js:291  GET https://really-amin-datasourceforcryptocurrency-2.hf.space/api/market/ohlc?symbol=BTC&interval=1h&limit=100 404 (Not Found)
+analyzeAsset @ ai-analyst.js:291
+await in analyzeAsset
 (anonymous) @ ai-analyst.js:149
+ai-analyst.js:297  GET https://really-amin-datasourceforcryptocurrency-2.hf.space/api/ohlcv?symbol=BTC&timeframe=1h&limit=100 404 (Not Found)
+analyzeAsset @ ai-analyst.js:297
+await in analyzeAsset
+(anonymous) @ ai-analyst.js:149
+
 
  
