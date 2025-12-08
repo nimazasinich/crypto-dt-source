@@ -1,0 +1,507 @@
+{
+  "timestamp": "Generated",
+  "existing_count": 242,
+  "potential_new_count": 50,
+  "new_resources": [
+    {
+      "name": "Blockscout (Free)",
+      "category": "Block Explorer",
+      "url": "https://eth.blockscout.com/api",
+      "free": true,
+      "rate_limit": "Unlimited",
+      "description": "Open-source explorer for ETH/BSC, unlimited free.",
+      "endpoint": "/v2/addresses/{address}",
+      "key_required": false
+    },
+    {
+      "name": "Etherchain (Free)",
+      "category": "Block Explorer",
+      "url": "https://www.etherchain.org/api",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "ETH balances/transactions.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Chainlens (Free tier)",
+      "category": "Block Explorer",
+      "url": "https://api.chainlens.com",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Multi-chain explorer.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Ethplorer (Free)",
+      "category": "Block Explorer",
+      "url": "https://api.ethplorer.io",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "ETH tokens.",
+      "endpoint": "/getAddressInfo/{address}?apiKey=freekey",
+      "key_required": false
+    },
+    {
+      "name": "BlockCypher (Free)",
+      "category": "Block Explorer",
+      "url": "https://api.blockcypher.com/v1",
+      "free": true,
+      "rate_limit": "3/sec",
+      "description": "BTC/ETH multi.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "TronGrid (Free)",
+      "category": "Block Explorer",
+      "url": "https://api.trongrid.io",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "TRON RPC.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Blockchair (TRON Free)",
+      "category": "Block Explorer",
+      "url": "https://api.blockchair.com/tron",
+      "free": true,
+      "rate_limit": "1440/day",
+      "description": "Multi incl TRON.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "AnkrScan (BSC Free)",
+      "category": "Block Explorer",
+      "url": "https://rpc.ankr.com/bsc",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "BSC RPC.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "BinTools (BSC Free)",
+      "category": "Block Explorer",
+      "url": "https://api.bintools.io/bsc",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "BSC tools.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Infura (ETH Free tier)",
+      "category": "Block Explorer",
+      "url": "https://mainnet.infura.io/v3",
+      "free": true,
+      "rate_limit": "100k/day",
+      "description": "ETH RPC.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Alchemy (ETH Free)",
+      "category": "Block Explorer",
+      "url": "https://eth-mainnet.alchemyapi.io/v2",
+      "free": true,
+      "rate_limit": "300/sec",
+      "description": "ETH RPC.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Covalent (ETH Free)",
+      "category": "Block Explorer",
+      "url": "https://api.covalenthq.com/v1/1",
+      "free": true,
+      "rate_limit": "100/min",
+      "description": "Balances.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Moralis (Free tier)",
+      "category": "Block Explorer",
+      "url": "https://deep-index.moralis.io/api/v2",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Multi-chain API.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Chainstack (Free tier)",
+      "category": "Block Explorer",
+      "url": "https://node-api.chainstack.com",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "RPC for ETH/BSC.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "QuickNode (Free tier)",
+      "category": "Block Explorer",
+      "url": "https://api.quicknode.com",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Multi-chain RPC.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "BlastAPI (Free)",
+      "category": "Block Explorer",
+      "url": "https://eth-mainnet.public.blastapi.io",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Public ETH RPC.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "PublicNode (Free)",
+      "category": "Block Explorer",
+      "url": "https://ethereum.publicnode.com",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Public RPCs.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "1RPC (Free)",
+      "category": "Block Explorer",
+      "url": "https://1rpc.io/eth",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Privacy RPC.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "LlamaNodes (Free)",
+      "category": "Block Explorer",
+      "url": "https://eth.llamarpc.com",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Public ETH.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "dRPC (Free)",
+      "category": "Block Explorer",
+      "url": "https://eth.drpc.org",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Decentralized RPC.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "GetBlock (Free tier)",
+      "category": "Block Explorer",
+      "url": "https://getblock.io/nodes/eth",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Multi-chain nodes.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Coinpaprika (Free)",
+      "category": "Market Data",
+      "url": "https://api.coinpaprika.com/v1",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Prices/tickers.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "CoinAPI (Free tier)",
+      "category": "Market Data",
+      "url": "https://rest.coinapi.io/v1",
+      "free": true,
+      "rate_limit": "100/day",
+      "description": "Exchange rates.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "CryptoCompare (Free)",
+      "category": "Market Data",
+      "url": "https://min-api.cryptocompare.com/data",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Historical/prices.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Nomics (Free tier)",
+      "category": "Market Data",
+      "url": "https://api.nomics.com/v1",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Market data.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Coinlayer (Free tier)",
+      "category": "Market Data",
+      "url": "https://api.coinlayer.com",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Live rates.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "CoinGecko (Free)",
+      "category": "Market Data",
+      "url": "https://api.coingecko.com/api/v3",
+      "free": true,
+      "rate_limit": "10-30/min",
+      "description": "Comprehensive.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Alpha Vantage (Crypto Free)",
+      "category": "Market Data",
+      "url": "https://www.alphavantage.co/query",
+      "free": true,
+      "rate_limit": "5/min free",
+      "description": "Crypto ratings/prices.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Twelve Data (Free tier)",
+      "category": "Market Data",
+      "url": "https://api.twelvedata.com",
+      "free": true,
+      "rate_limit": "8/min free",
+      "description": "Real-time prices.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Finnhub (Crypto Free)",
+      "category": "Market Data",
+      "url": "https://finnhub.io/api/v1",
+      "free": true,
+      "rate_limit": "60/min free",
+      "description": "Crypto candles.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Polygon.io (Crypto Free tier)",
+      "category": "Market Data",
+      "url": "https://api.polygon.io/v2",
+      "free": true,
+      "rate_limit": "5/min free",
+      "description": "Stocks/crypto.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Tiingo (Crypto Free)",
+      "category": "Market Data",
+      "url": "https://api.tiingo.com/tiingo/crypto",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Historical/prices.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Messari (Free tier)",
+      "category": "Market Data",
+      "url": "https://data.messari.io/api/v1",
+      "free": true,
+      "rate_limit": "20/min",
+      "description": "",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "CoinMetrics (Free)",
+      "category": "Market Data",
+      "url": "https://community-api.coinmetrics.io/v4",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Metrics.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "DefiLlama (Free)",
+      "category": "Market Data",
+      "url": "https://api.llama.fi",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "DeFi TVL/prices.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Dune Analytics (Free)",
+      "category": "Market Data",
+      "url": "https://api.dune.com/api/v1",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "On-chain queries.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "BitQuery (Free GraphQL)",
+      "category": "Market Data",
+      "url": "https://graphql.bitquery.io",
+      "free": true,
+      "rate_limit": "10k/month",
+      "description": "Blockchain data.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "CryptoPanic (Free)",
+      "category": "News",
+      "url": "https://cryptopanic.com/api/v1",
+      "free": true,
+      "rate_limit": "5/min",
+      "description": "Crypto news aggregator.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "CryptoControl (Free)",
+      "category": "News",
+      "url": "https://cryptocontrol.io/api/v1/public",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Crypto news.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Alpha Vantage News (Free)",
+      "category": "News",
+      "url": "https://www.alphavantage.co/query?function=NEWS_SENTIMENT",
+      "free": true,
+      "rate_limit": "5/min",
+      "description": "Sentiment news.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "GNews (Free tier)",
+      "category": "News",
+      "url": "https://gnews.io/api/v4",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Global news API.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Alternative.me F&G (Free)",
+      "category": "Sentiment",
+      "url": "https://api.alternative.me/fng",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Fear & Greed index.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "LunarCrush (Free)",
+      "category": "Sentiment",
+      "url": "https://api.lunarcrush.com/v2",
+      "free": true,
+      "rate_limit": "500/day",
+      "description": "Social metrics.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "CryptoBERT HF Model (Free)",
+      "category": "Sentiment",
+      "url": "https://huggingface.co/ElKulako/cryptobert",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Bullish/Bearish/Neutral.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Glassnode (Free tier)",
+      "category": "On-Chain",
+      "url": "https://api.glassnode.com/v1",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Metrics.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "CryptoQuant (Free tier)",
+      "category": "On-Chain",
+      "url": "https://api.cryptoquant.com/v1",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Network data.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "WhaleAlert (Primary)",
+      "category": "Whale-Tracking",
+      "url": "https://api.whale-alert.io/v1",
+      "free": true,
+      "rate_limit": "10/min",
+      "description": "Large TXs.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Arkham Intelligence (Fallback)",
+      "category": "Whale-Tracking",
+      "url": "https://api.arkham.com",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Address transfers.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "sebdg/crypto_data HF",
+      "category": "Dataset",
+      "url": "https://huggingface.co/datasets/sebdg/crypto_data",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "OHLCV/indicators.",
+      "endpoint": "",
+      "key_required": false
+    },
+    {
+      "name": "Crypto Market Sentiment Kaggle",
+      "category": "Dataset",
+      "url": "https://www.kaggle.com/datasets/pratyushpuri/crypto-market-sentiment-and-price-dataset-2025",
+      "free": true,
+      "rate_limit": "Unknown",
+      "description": "Prices/sentiment.",
+      "endpoint": "",
+      "key_required": false
+    }
+  ]
+}
