@@ -1,293 +1,218 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-theme="light">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Real-Time System Monitor - Live Network Visualization & System Status">
-  <meta name="theme-color" content="#14b8a6">
-  <title>System Monitor | Crypto Monitor</title>
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232dd4bf'/%3E%3Cstop offset='50%25' stop-color='%2322d3ee'/%3E%3Cstop offset='100%25' stop-color='%233b82f6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='45' fill='url(%23g)'/%3E%3Cpath d='M50 25 L65 45 L50 40 L35 45 Z M50 75 L35 55 L50 60 L65 55 Z' fill='white'/%3E%3C/svg%3E">
-
-  <!-- Preconnect -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <!-- Critical CSS -->
-  <style>
-    :root{--teal-dark:#0d7377;--teal:#14b8a6;--teal-light:#2dd4bf;--cyan:#22d3ee;--text-primary:#0f2926;--text-secondary:#2a5f5a;--bg-main:#ffffff;--bg-secondary:#f8fdfc;--sidebar-width:180px}
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    html{font-size:14px;-webkit-font-smoothing:antialiased}
-    body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5;color:var(--text-secondary);background:var(--bg-main);min-height:100vh}
-    .app-container{display:flex;min-height:100vh}
-    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-width);background:linear-gradient(180deg,#fff 0%,#f8fdfc 100%);border-right:1px solid rgba(20,184,166,0.12);z-index:100}
-    .main-content{flex:1;margin-left:var(--sidebar-width);min-height:100vh}
-    .page-content{padding:1.5rem;max-width:1600px;margin:0 auto}
-    @media(max-width:768px){.sidebar{transform:translateX(-100%)}.main-content{margin-left:0}}
-  </style>
-
-  <!-- App CSS -->
-  <link rel="stylesheet" href="/static/shared/css/design-system.css?v=3.0" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="/static/shared/css/design-system.css?v=3.0"></noscript>
-  <link rel="stylesheet" href="/static/shared/css/global.css?v=3.0" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="/static/shared/css/global.css?v=3.0"></noscript>
-  <link rel="stylesheet" href="/static/shared/css/components.css" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="/static/shared/css/components.css"></noscript>
-  <link rel="stylesheet" href="/static/shared/css/layout.css" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="/static/shared/css/layout.css"></noscript>
-  <link rel="stylesheet" href="/static/pages/system-monitor/system-monitor.css?v=2.0">
+  <title>مانیتور سیستم | سیستم جامع ارزهای دیجیتال</title>
+  <link rel="stylesheet" href="system-monitor.css">
 </head>
 <body>
-  <div class="app-container">
-    <!-- Sidebar Navigation (injected by LayoutManager) -->
-    <aside id="sidebar-container"></aside>
+  <div class="monitor-container">
+    <!-- Header -->
+    <header class="monitor-header">
+      <div class="header-content">
+        <h1>
+          <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="6"/>
+            <circle cx="12" cy="12" r="2"/>
+            <line x1="12" y1="2" x2="12" y2="4"/>
+            <line x1="12" y1="20" x2="12" y2="22"/>
+            <line x1="2" y1="12" x2="4" y2="12"/>
+            <line x1="20" y1="12" x2="22" y2="12"/>
+          </svg>
+          مانیتور سیستم Real-Time
+        </h1>
+        <p class="header-subtitle">نمایش زنده وضعیت شبکه و سیستم</p>
+      </div>
+      <div class="header-actions">
+        <div class="status-badge" id="system-status">
+          <span class="status-dot"></span>
+          <span class="status-text">در حال بارگذاری...</span>
+        </div>
+        <button class="refresh-btn" id="refresh-btn" title="بروزرسانی">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+          </svg>
+        </button>
+        <span class="last-update" id="last-update">--</span>
+      </div>
+    </header>
 
-    <!-- Main Content Area -->
-    <main class="main-content">
-      <!-- Header (injected by LayoutManager) -->
-      <header id="header-container"></header>
-
-      <!-- System Monitor Content -->
-      <div class="page-content">
-        <!-- Page Header -->
-        <div class="page-header">
-          <div class="page-title">
-            <h1>
-              <span class="page-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <defs>
-                    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#2dd4bf"/>
-                      <stop offset="50%" stop-color="#22d3ee"/>
-                      <stop offset="100%" stop-color="#3b82f6"/>
-                    </linearGradient>
-                  </defs>
-                  <circle cx="12" cy="12" r="10"/>
-                  <circle cx="12" cy="12" r="6"/>
-                  <circle cx="12" cy="12" r="2"/>
-                  <line x1="12" y1="2" x2="12" y2="4"/>
-                  <line x1="12" y1="20" x2="12" y2="22"/>
-                  <line x1="2" y1="12" x2="4" y2="12"/>
-                  <line x1="20" y1="12" x2="22" y2="12"/>
-                </svg>
-              </span>
-              Real-Time System Monitor
-            </h1>
-            <p class="page-subtitle">Live Network Visualization & System Status</p>
-          </div>
-          <div class="page-actions">
-            <div class="status-badge" id="overall-status-badge">
-              <span class="status-dot" id="status-dot"></span>
-              <span id="overall-status-text">Loading...</span>
-            </div>
-            <button id="refresh-btn" class="btn-icon" title="Refresh" aria-label="Refresh data">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
-                <path d="M21 3v5h-5"/>
-              </svg>
-            </button>
-            <span id="last-update" class="last-update">--</span>
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card" data-animate="fade-up">
+        <div class="stat-header">
+          <h3>
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="2" y="2" width="20" height="8" rx="2"/>
+              <rect x="2" y="14" width="20" height="8" rx="2"/>
+              <line x1="6" y1="6" x2="6.01" y2="6"/>
+              <line x1="6" y1="18" x2="6.01" y2="18"/>
+            </svg>
+            سرور API
+          </h3>
+          <div class="status-indicator online">
+            <span class="status-dot"></span>
+            <span>آنلاین</span>
           </div>
         </div>
+        <div class="stat-value">
+          <span class="big-number" id="server-requests">0</span>
+          <span class="stat-label">درخواست/دقیقه</span>
+        </div>
+        <div class="stat-progress">
+          <div class="progress-bar" id="server-load" style="width: 0%"></div>
+        </div>
+        <div class="stat-footer">
+          <span>بار سرور: <strong id="server-load-text">0%</strong></span>
+        </div>
+      </div>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid" id="stats-grid">
-          <!-- Database Status -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <h3>
-                <svg class="stat-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <ellipse cx="12" cy="5" rx="9" ry="3"/>
-                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-                </svg>
-                Database
-              </h3>
-              <div class="status-indicator" id="db-status">
-                <span class="status-dot"></span>
-                <span class="status-text">Checking...</span>
-              </div>
-            </div>
-            <div class="stat-details" id="db-details"></div>
-          </div>
-
-          <!-- AI Models -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <h3>
-                <svg class="stat-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                  <path d="M2 17l10 5 10-5"/>
-                  <path d="M2 12l10 5 10-5"/>
-                </svg>
-                AI Models
-              </h3>
-            </div>
-            <div class="stats-mini-grid">
-              <div class="stat-mini">
-                <div class="stat-number" id="models-total">0</div>
-                <div class="stat-label">Total</div>
-              </div>
-              <div class="stat-mini success">
-                <div class="stat-number" id="models-available">0</div>
-                <div class="stat-label">Available</div>
-              </div>
-              <div class="stat-mini error">
-                <div class="stat-number" id="models-failed">0</div>
-                <div class="stat-label">Failed</div>
-              </div>
-            </div>
-            <div class="models-list" id="models-list"></div>
-          </div>
-
-          <!-- Data Sources -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <h3>
-                <svg class="stat-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <circle cx="12" cy="12" r="6"/>
-                  <circle cx="12" cy="12" r="2"/>
-                </svg>
-                Data Sources
-              </h3>
-            </div>
-            <div class="stats-mini-grid">
-              <div class="stat-mini">
-                <div class="stat-number" id="sources-total">0</div>
-                <div class="stat-label">Total</div>
-              </div>
-              <div class="stat-mini success">
-                <div class="stat-number" id="sources-active">0</div>
-                <div class="stat-label">Active</div>
-              </div>
-              <div class="stat-mini">
-                <div class="stat-number" id="sources-pools">0</div>
-                <div class="stat-label">Pools</div>
-              </div>
-            </div>
-            <div class="sources-summary" id="sources-summary"></div>
-          </div>
-
-          <!-- Active Requests -->
-          <div class="stat-card">
-            <div class="stat-header">
-              <h3>
-                <svg class="stat-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="3" width="7" height="9"/>
-                  <rect x="14" y="3" width="7" height="5"/>
-                  <rect x="14" y="12" width="7" height="9"/>
-                  <rect x="3" y="16" width="7" height="5"/>
-                </svg>
-                Active Requests
-              </h3>
-            </div>
-            <div class="request-stats">
-              <div class="request-stat">
-                <span class="request-label">Last Minute:</span>
-                <span class="request-value" id="requests-minute">0</span>
-              </div>
-              <div class="request-stat">
-                <span class="request-label">Last Hour:</span>
-                <span class="request-value" id="requests-hour">0</span>
-              </div>
-            </div>
-            <div class="requests-list" id="requests-list"></div>
+      <div class="stat-card" data-animate="fade-up" data-delay="100">
+        <div class="stat-header">
+          <h3>
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+            پایگاه داده
+          </h3>
+          <div class="status-indicator online">
+            <span class="status-dot"></span>
+            <span>فعال</span>
           </div>
         </div>
+        <div class="stat-value">
+          <span class="big-number" id="db-size">0</span>
+          <span class="stat-label">MB استفاده شده</span>
+        </div>
+        <div class="stat-progress">
+          <div class="progress-bar" id="db-usage" style="width: 0%"></div>
+        </div>
+        <div class="stat-footer">
+          <span>کوئری‌ها: <strong id="db-queries">0</strong>/ثانیه</span>
+        </div>
+      </div>
 
-        <!-- Network Visualization -->
-        <div class="network-section">
-          <div class="section-header">
-            <h2>
-              <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 2l4 4-4 4"/>
-                <path d="M8 22l-4-4 4-4"/>
-                <path d="M21 6H3"/>
-                <path d="M21 18H3"/>
-              </svg>
-              Network Activity
-            </h2>
-            <div class="network-legend">
-              <div class="legend-item">
-                <span class="legend-color" style="background: #22c55e;"></span>
-                <span>Active Sources</span>
-              </div>
-              <div class="legend-item">
-                <span class="legend-color" style="background: #ef4444;"></span>
-                <span>Inactive Sources</span>
-              </div>
-              <div class="legend-item">
-                <span class="legend-color" style="background: #3b82f6;"></span>
-                <span>Data Packets</span>
-              </div>
-            </div>
+      <div class="stat-card" data-animate="fade-up" data-delay="200">
+        <div class="stat-header">
+          <h3>
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+            مدل‌های AI
+          </h3>
+          <div class="status-indicator online">
+            <span class="status-dot"></span>
+            <span>آماده</span>
           </div>
-          <div class="network-canvas-container">
-            <canvas id="network-canvas"></canvas>
+        </div>
+        <div class="stat-grid-mini">
+          <div class="stat-mini">
+            <span class="mini-number" id="ai-total">0</span>
+            <span class="mini-label">کل مدل‌ها</span>
+          </div>
+          <div class="stat-mini success">
+            <span class="mini-number" id="ai-active">0</span>
+            <span class="mini-label">فعال</span>
           </div>
         </div>
       </div>
-    </main>
+
+      <div class="stat-card" data-animate="fade-up" data-delay="300">
+        <div class="stat-header">
+          <h3>
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+              <path d="M2 12h20"/>
+            </svg>
+            منابع داده
+          </h3>
+          <div class="status-indicator online">
+            <span class="status-dot"></span>
+            <span>متصل</span>
+          </div>
+        </div>
+        <div class="stat-grid-mini">
+          <div class="stat-mini">
+            <span class="mini-number" id="sources-total">0</span>
+            <span class="mini-label">کل منابع</span>
+          </div>
+          <div class="stat-mini success">
+            <span class="mini-number" id="sources-active">0</span>
+            <span class="mini-label">آنلاین</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Network Visualization -->
+    <div class="network-section" data-animate="fade-up" data-delay="400">
+      <div class="section-header">
+        <h2>
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M16 2l4 4-4 4"/>
+            <path d="M8 22l-4-4 4-4"/>
+            <path d="M21 6H3"/>
+            <path d="M21 18H3"/>
+          </svg>
+          فعالیت شبکه
+        </h2>
+        <div class="network-legend">
+          <div class="legend-item">
+            <span class="legend-dot online"></span>
+            <span>منابع فعال</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot">></span>
+            <span>انتقال داده</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot processing"></span>
+            <span>در حال پردازش</span>
+          </div>
+        </div>
+      </div>
+      <div class="network-canvas-wrapper">
+        <canvas id="network-canvas"></canvas>
+        <div class="network-stats">
+          <div class="network-stat">
+            <span class="network-stat-label">بسته‌های فعال:</span>
+            <span class="network-stat-value" id="packets-count">0</span>
+          </div>
+          <div class="network-stat">
+            <span class="network-stat-label">کلاینت‌ها:</span>
+            <span class="network-stat-value" id="clients-count">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="activity-section" data-animate="fade-up" data-delay="500">
+      <div class="section-header">
+        <h2>
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="9" y1="9" x2="15" y2="9"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+          فعالیت‌های اخیر
+        </h2>
+        <button class="clear-btn" id="clear-log">پاک کردن</button>
+      </div>
+      <div class="activity-log" id="activity-log">
+        <!-- Activities will be added here -->
+      </div>
+    </div>
   </div>
 
-  <!-- Connection Status -->
-  <div class="connection-status" id="connection-status">
-    <span class="connection-dot"></span>
-    <span class="connection-text">Connecting...</span>
-  </div>
-
-  <!-- Toast Container -->
-  <div id="toast-container" aria-live="polite"></div>
-
-  <script type="module">
-    // Initialize Layout Manager
-    (async function() {
-      try {
-        const { LayoutManager } = await import('/static/shared/js/core/layout-manager.js?v=3.0');
-        await LayoutManager.init('system-monitor');
-        
-        // Load system monitor after layout is ready
-        // Try both default export and named export
-        let SystemMonitorClass;
-        try {
-          const module = await import('/static/pages/system-monitor/system-monitor.js?v=2.0');
-          SystemMonitorClass = module.default || module.SystemMonitor || window.SystemMonitor;
-        } catch (importError) {
-          console.error('[SystemMonitor] Import error:', importError);
-          // Fallback: use global if available
-          SystemMonitorClass = window.SystemMonitor;
-        }
-        
-        if (!SystemMonitorClass) {
-          throw new Error('SystemMonitor class not found');
-        }
-        
-        window.systemMonitor = new SystemMonitorClass();
-        
-        window.addEventListener('beforeunload', () => {
-          if (window.systemMonitor && typeof window.systemMonitor.destroy === 'function') {
-            window.systemMonitor.destroy();
-          }
-        });
-      } catch (error) {
-        console.error('Failed to initialize system monitor:', error);
-        // Show error to user
-        const container = document.querySelector('.page-content');
-        if (container) {
-          container.innerHTML = `
-            <div style="padding: 2rem; text-align: center;">
-              <h2 style="color: #ef4444;">Failed to Load System Monitor</h2>
-              <p style="color: #64748b; margin-top: 1rem;">${error.message}</p>
-              <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #14b8a6; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                Reload Page
-              </button>
-            </div>
-          `;
-        }
-      }
-    })();
-  </script>
+  <script src="system-monitor.js"></script>
 </body>
 </html>

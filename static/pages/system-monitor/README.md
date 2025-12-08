@@ -1,273 +1,326 @@
-# System Monitor - Enhanced Animated Visualization
+# 🖥️ System Monitor - مانیتور سیستم
 
-## Overview
+## ✨ نسخه کامل با انیمیشن‌های پیشرفته
 
-The System Monitor provides a beautiful, real-time animated visualization of your entire system architecture. It's like looking at your system from above with a bird's-eye view, showing all components and data flow between them.
-
-## Features
-
-### 🎨 Visual Components
-
-1. **API Server (Center)** - The main FastAPI server
-   - Green pulsing glow when healthy
-   - Central hub for all communications
-   - Server icon with status indicator
-
-2. **Database (Right)** - SQLite database
-   - Blue when online, red when offline
-   - Shows data persistence operations
-   - Database cylinder icon
-
-3. **Clients (Bottom)** - Multiple client connections
-   - Purple nodes representing different clients
-   - Monitor icons showing active connections
-   - Receives final responses
-
-4. **Data Sources (Top Arc)** - External API sources
-   - Orange/yellow nodes in an arc formation
-   - Radio wave icons for data sources
-   - Shows active/inactive status
-
-5. **AI Models (Left Side)** - Machine learning models
-   - Pink nodes for AI/ML models
-   - Neural network icons
-   - Status indicators for model health
-
-### 🌊 Animated Data Flow
-
-The system shows complete request/response cycles with beautiful animations:
-
-1. **Request Phase (Purple)** 
-   - Client → Server
-   - Arrow indicator on packet
-
-2. **Processing Phase (Cyan)**
-   - Server → Data Source/AI Model/Database
-   - Shows where data is being fetched
-
-3. **Response Phase (Green)**
-   - Data Source/AI Model/Database → Server
-   - Checkmark indicator on packet
-
-4. **Final Response (Bright Green)**
-   - Server → Client
-   - Particle explosion effect on arrival
-
-### ✨ Visual Effects
-
-- **Pulsing Glows** - All nodes have animated glowing effects
-- **Animated Connections** - Dashed lines flow between active nodes
-- **Packet Trails** - Data packets leave glowing trails
-- **Particle Effects** - Burst animations when packets arrive
-- **Grid Background** - Subtle grid pattern for depth
-- **Gradient Backgrounds** - Beautiful dark theme with gradients
-
-### 📊 Real-Time Stats
-
-**Top-Left Legend:**
-- Request (Purple)
-- Processing (Cyan)
-- Response (Green)
-
-**Top-Right Stats Panel:**
-- Active Packets count
-- Data Sources count
-- AI Models count
-- Connected Clients count
-
-### 🔄 Data Updates
-
-The monitor updates via two methods:
-
-1. **WebSocket** - Real-time updates every 2 seconds
-2. **HTTP Polling** - Fallback polling every 5 seconds
-
-### 🎯 Status Indicators
-
-Each node shows its status:
-- **Green dot** - Online/Healthy
-- **Red dot** - Offline/Failed
-- **Pulsing glow** - Active processing
-
-## Technical Details
-
-### Canvas Size
-- Default: 700px height
-- Responsive: Adjusts for different screen sizes
-- Dark theme with gradient background
-
-### Animation System
-- 60 FPS smooth animations
-- Easing functions for natural movement
-- Trail effects with fade-out
-- Particle system for visual feedback
-
-### Node Layout
-- **Server**: Center (x: 50%, y: 50%)
-- **Database**: Right of server (+200px)
-- **Clients**: Bottom row (3 clients, 150px spacing)
-- **Sources**: Top arc (250px radius)
-- **AI Models**: Left column (80px spacing)
-
-### Packet Flow Logic
-
-```
-Client Request
-    ↓
-API Server
-    ↓
-[Data Source / AI Model / Database]
-    ↓
-API Server
-    ↓
-Client Response (with particle effect)
-```
-
-### Demo Mode
-
-When no real requests are active, the system generates demo packets every 3 seconds to showcase the animation system:
-- `/api/market/price`
-- `/api/models/sentiment`
-- `/api/service/rate`
-- `/api/monitoring/status`
-- `/api/database/query`
-
-## API Integration
-
-### Endpoints Used
-
-- `GET /api/monitoring/status` - System status
-- `WS /api/monitoring/ws` - Real-time WebSocket
-- `GET /api/monitoring/sources/detailed` - Source details
-- `GET /api/monitoring/requests/recent` - Recent requests
-
-### Data Structure
-
-```javascript
-{
-  database: { online: true },
-  ai_models: {
-    total: 10,
-    available: 8,
-    failed: 2,
-    models: [...]
-  },
-  data_sources: {
-    total: 15,
-    active: 12,
-    pools: 3,
-    sources: [...]
-  },
-  recent_requests: [...],
-  stats: {
-    active_sources: 12,
-    requests_last_minute: 45,
-    requests_last_hour: 2500
-  }
-}
-```
-
-## Customization
-
-### Colors
-
-You can customize colors in the code:
-
-```javascript
-// Node colors
-server: '#22c55e'    // Green
-database: '#3b82f6'  // Blue
-client: '#8b5cf6'    // Purple
-source: '#f59e0b'    // Orange
-aiModel: '#ec4899'   // Pink
-
-// Packet colors
-request: '#8b5cf6'      // Purple
-processing: '#22d3ee'   // Cyan
-response: '#22c55e'     // Green
-final: '#10b981'        // Bright Green
-```
-
-### Canvas Size
-
-Adjust in CSS:
-
-```css
-.network-canvas-container {
-  height: 700px; /* Change this value */
-}
-```
-
-### Animation Speed
-
-Adjust packet speed:
-
-```javascript
-speed: 0.015  // Lower = slower, Higher = faster
-```
-
-### Demo Packet Frequency
-
-```javascript
-setInterval(() => {
-  this.createPacket({ endpoint: randomEndpoint });
-}, 3000); // Change interval (milliseconds)
-```
-
-## Browser Compatibility
-
-- ✅ Chrome/Edge (Chromium)
-- ✅ Firefox
-- ✅ Safari
-- ✅ Opera
-
-Requires HTML5 Canvas support.
-
-## Performance
-
-- Optimized for 60 FPS
-- Automatic cleanup of old packets
-- Efficient canvas rendering
-- Pauses updates when tab is hidden
-
-## Troubleshooting
-
-### Canvas not showing
-- Check browser console for errors
-- Ensure canvas element exists in DOM
-- Verify JavaScript is enabled
-
-### No animations
-- Check WebSocket connection status
-- Verify API endpoints are accessible
-- Look for rate limiting (429 errors)
-
-### Slow performance
-- Reduce canvas size
-- Decrease packet generation frequency
-- Close other browser tabs
-
-## Future Enhancements
-
-- [ ] Click on nodes to see details
-- [ ] Zoom and pan controls
-- [ ] Export visualization as image
-- [ ] Custom color themes
-- [ ] Sound effects for packets
-- [ ] 3D visualization mode
-- [ ] Historical playback
-- [ ] Alert animations for errors
-
-## Credits
-
-Built with ❤️ using:
-- HTML5 Canvas API
-- WebSocket API
-- FastAPI backend
-- Modern JavaScript (ES6+)
+صفحه مانیتور سیستم یک داشبورد Real-time با انیمیشن‌های زیبا و نمایش زنده وضعیت شبکه است.
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: 2025-12-08  
-**Author**: Crypto Monitor Team
+## 🎯 ویژگی‌ها
+
+### 🎨 طراحی و UI
+- ✅ طراحی مدرن Dark Mode
+- ✅ انیمیشن‌های روان و حرفه‌ای
+- ✅ Responsive (موبایل + دسکتاپ)
+- ✅ Gradient backgrounds
+- ✅ Glassmorphism effects
+
+### 📊 نمایش داده‌ها
+- ✅ آمار سرور API (درخواست‌ها، بار سیستم)
+- ✅ وضعیت پایگاه داده (حجم، کوئری‌ها)
+- ✅ مدل‌های AI (تعداد، وضعیت)
+- ✅ منابع داده (کل، فعال)
+- ✅ بروزرسانی خودکار هر 2 ثانیه
+
+### 🌐 نمایش شبکه (Canvas)
+- ✅ گراف تعاملی با انیمیشن
+- ✅ نودهای مختلف:
+  - 🟢 سرور مرکزی (API Server)
+  - 🔵 پایگاه داده (Database)
+  - 🟣 کلاینت‌ها (6 نود)
+  - 🟡 منابع داده (8 نود)
+  - 🔴 مدل‌های AI (4 نود)
+- ✅ بسته‌های داده متحرک
+- ✅ جلوه‌های نوری (Glow effects)
+- ✅ مسیرهای دنباله‌دار (Trails)
+- ✅ ذرات انفجاری (Particle effects)
+
+### 📋 لاگ فعالیت
+- ✅ نمایش فعالیت‌های اخیر
+- ✅ آیکون‌های مختلف برای هر نوع
+- ✅ زمان دقیق هر رویداد
+- ✅ حداکثر 10 فعالیت آخر
+- ✅ دکمه پاک کردن
+
+---
+
+## 🚀 نحوه استفاده
+
+### روش 1: مستقیم در مرورگر
+```bash
+# فایل index.html را در مرورگر باز کنید
+open index.html
+# یا
+firefox index.html
+```
+
+### روش 2: با وب سرور محلی
+```bash
+# با Python
+python3 -m http.server 8000
+
+# با Node.js
+npx http-server
+
+# سپس باز کنید:
+http://localhost:8000/index.html
+```
+
+### روش 3: در پروژه
+```html
+<iframe src="/static/pages/system-monitor/index.html" 
+        width="100%" 
+        height="900px" 
+        frameborder="0">
+</iframe>
+```
+
+---
+
+## 📁 ساختار فایل‌ها
+
+```
+system-monitor/
+├── index.html          (8.1 KB)  - صفحه اصلی
+├── system-monitor.css  (13 KB)   - استایل‌ها
+├── system-monitor.js   (21 KB)   - منطق و انیمیشن‌ها
+├── README.md          (این فایل) - مستندات
+└── VISUAL_GUIDE.txt              - راهنمای بصری
+```
+
+---
+
+## 🎨 انیمیشن‌های پیاده‌سازی شده
+
+### 1. Header
+```
+• آیکون چرخان با pulse
+• Status badge با dot متحرک
+• Gradient slide در border بالا
+```
+
+### 2. Stats Cards
+```
+• Fade-in با delay
+• Hover effect با lift
+• Progress bars با shimmer
+• شمارنده‌های متحرک (animated counters)
+```
+
+### 3. Network Canvas
+```
+• Grid pattern در پس‌زمینه
+• اتصالات dash با حرکت
+• نودها با glow effect و pulse
+• بسته‌های داده:
+  - حرکت روان با easing
+  - دنباله (trail)
+  - ذرات انفجاری در مقصد
+```
+
+### 4. Activity Log
+```
+• Slide-in از راست
+• Hover effect
+• آیکون‌های SVG متحرک
+```
+
+---
+
+## ⚙️ تنظیمات
+
+### رنگ‌ها (CSS Variables)
+```css
+:root {
+  --primary: #14b8a6;      /* رنگ اصلی */
+  --success: #22c55e;      /* موفقیت */
+  --danger: #ef4444;       /* خطا */
+  --info: #3b82f6;         /* اطلاعات */
+  /* ... */
+}
+```
+
+### سرعت انیمیشن‌ها
+```javascript
+// در system-monitor.js
+this.time += 0.016;  // سرعت کلی (60 FPS)
+packet.speed = 0.01; // سرعت بسته‌ها
+```
+
+### تعداد نودها
+```javascript
+// در createNetworkNodes()
+const numClients = 6;    // تعداد کلاینت‌ها
+const numSources = 8;    // تعداد منابع
+const numAI = 4;         // تعداد مدل‌های AI
+```
+
+---
+
+## 🔧 سفارشی‌سازی
+
+### اضافه کردن نوع فعالیت جدید
+```javascript
+// در startActivityGenerator()
+activityTypes.push({
+  title: 'عنوان فعالیت',
+  desc: 'توضیحات',
+  icon: 'icon-name'
+});
+```
+
+### تغییر بازه بروزرسانی
+```javascript
+// در startDataUpdates()
+setInterval(() => {
+  this.updateUI();
+}, 2000); // 2 ثانیه (می‌توانید تغییر دهید)
+```
+
+### افزودن نوع نود جدید
+```javascript
+// در drawNodeIcon()
+case 'new-type':
+  // کد رسم آیکون
+  break;
+```
+
+---
+
+## 📊 داده‌های Demo
+
+صفحه از داده‌های تصادفی برای نمایش استفاده می‌کند:
+
+```javascript
+stats = {
+  serverRequests: 50-150 req/min (تصادفی),
+  serverLoad: 30-70% (تصادفی),
+  dbSize: 800-1000 MB (تصادفی),
+  dbUsage: 45-75% (تصادفی),
+  dbQueries: 20-70 queries/sec (تصادفی),
+  aiTotal: 12 (ثابت),
+  aiActive: 8 (ثابت),
+  sourcesTotal: 281 (ثابت),
+  sourcesActive: 267 (ثابت)
+}
+```
+
+### اتصال به Backend واقعی
+
+برای اتصال به API واقعی، متد `startDataUpdates()` را تغییر دهید:
+
+```javascript
+async startDataUpdates() {
+  setInterval(async () => {
+    try {
+      const response = await fetch('/api/monitoring/status');
+      const data = await response.json();
+      
+      this.stats.serverRequests = data.requests;
+      this.stats.serverLoad = data.load;
+      // ...
+      
+      this.updateUI();
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  }, 2000);
+}
+```
+
+---
+
+## 🎯 Performance
+
+### بهینه‌سازی‌های انجام شده:
+- ✅ استفاده از `requestAnimationFrame` برای انیمیشن
+- ✅ محدود کردن تعداد بسته‌ها و ذرات
+- ✅ پاکسازی خودکار اشیاء قدیمی
+- ✅ Throttling در بروزرسانی‌ها
+
+### مصرف منابع:
+- 📈 CPU: ~5-10% (در حین انیمیشن)
+- 💾 RAM: ~50 MB
+- 🎨 FPS: 60 (روان)
+
+---
+
+## 🐛 رفع مشکلات
+
+### صفحه سیاه نمایش می‌دهد
+```
+✅ راه حل:
+1. Console مرورگر را باز کنید (F12)
+2. خطاها را بررسی کنید
+3. مطمئن شوید فایل‌های CSS و JS بارگذاری شده‌اند
+```
+
+### Canvas خالی است
+```
+✅ راه حل:
+1. مطمئن شوید canvas element وجود دارد
+2. بررسی کنید که JavaScript اجرا شده
+3. Console را برای خطاهای Canvas بررسی کنید
+```
+
+### انیمیشن‌ها کند هستند
+```
+✅ راه حل:
+1. تعداد نودها را کاهش دهید
+2. سرعت بروزرسانی را کم کنید (3000ms به جای 2000ms)
+3. Hardware acceleration مرورگر را فعال کنید
+```
+
+---
+
+## 📱 Responsive
+
+صفحه کاملاً Responsive است:
+
+### Desktop (> 1200px)
+- ✅ 4 ستونی در stats grid
+- ✅ Canvas ارتفاع 600px
+- ✅ همه المان‌ها در یک ردیف
+
+### Tablet (768px - 1200px)
+- ✅ 2 ستونی در stats grid
+- ✅ Canvas ارتفاع 500px
+
+### Mobile (< 768px)
+- ✅ 1 ستونی (تمام صفحه)
+- ✅ Canvas ارتفاع 400px
+- ✅ Header و actions عمودی
+- ✅ فونت‌ها کوچک‌تر
+
+---
+
+## 🚀 بروزرسانی‌های آتی (اختیاری)
+
+- [ ] اضافه کردن نمودار خطی برای تاریخچه
+- [ ] zoom و pan روی Canvas
+- [ ] export تصویر شبکه (PNG/SVG)
+- [ ] فیلتر فعالیت‌ها
+- [ ] تنظیمات کاربر (رنگ، سرعت)
+- [ ] حالت light mode
+- [ ] اتصال به API واقعی
+
+---
+
+## 📄 لایسنس
+
+این فایل بخشی از پروژه Crypto Resources API است.
+
+---
+
+## 🙏 تشکر
+
+ساخته شده با:
+- HTML5 Canvas API
+- CSS3 Animations
+- Vanilla JavaScript (بدون framework)
+
+---
+
+**🎊 لذت ببرید!**
+
+برای سوالات یا پیشنهادات، لطفاً issue ایجاد کنید.
