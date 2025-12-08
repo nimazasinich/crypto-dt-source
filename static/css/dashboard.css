@@ -1,0 +1,277 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * DASHBOARD LAYOUT — ULTRA ENTERPRISE EDITION
+ * Crypto Monitor HF — Glass + Neon Dashboard
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAIN LAYOUT
+   ═══════════════════════════════════════════════════════════════════ */
+
+.dashboard-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════════════════════════════════ */
+
+.dashboard-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    background: var(--surface-glass-strong);
+    border-bottom: 1px solid var(--border-light);
+    backdrop-filter: var(--blur-lg);
+    box-shadow: var(--shadow-md);
+    z-index: var(--z-fixed);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-6);
+    gap: var(--space-6);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex: 1;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-strong);
+    text-decoration: none;
+}
+
+.header-logo-icon {
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-center {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.header-search {
+    position: relative;
+    max-width: 420px;
+    width: 100%;
+}
+
+.header-search input {
+    width: 100%;
+    padding: var(--space-3) var(--space-4) var(--space-3) var(--space-10);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-full);
+    background: var(--input-bg);
+    backdrop-filter: var(--blur-md);
+    font-size: var(--fs-sm);
+    color: var(--text-normal);
+    transition: all var(--transition-fast);
+}
+
+.header-search input:focus {
+    border-color: var(--brand-cyan);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25), var(--glow-cyan);
+    background: rgba(15, 23, 42, 0.80);
+}
+
+.header-search-icon {
+    position: absolute;
+    left: var(--space-4);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.theme-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background: var(--surface-glass);
+    border: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-normal);
+    transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+    background: var(--surface-glass-strong);
+    color: var(--text-strong);
+    transform: translateY(-1px);
+}
+
+.theme-toggle-icon {
+    font-size: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONNECTION STATUS BAR
+   ═══════════════════════════════════════════════════════════════════ */
+
+.connection-status-bar {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    height: var(--status-bar-height);
+    background: var(--surface-glass);
+    border-bottom: 1px solid var(--border-subtle);
+    backdrop-filter: var(--blur-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-6);
+    font-size: var(--fs-xs);
+    z-index: var(--z-sticky);
+}
+
+.connection-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-normal);
+    font-weight: var(--fw-medium);
+}
+
+.online-users {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-soft);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAIN CONTENT
+   ═══════════════════════════════════════════════════════════════════ */
+
+.dashboard-main {
+    flex: 1;
+    margin-top: calc(var(--header-height) + var(--status-bar-height));
+    padding: var(--space-6);
+    max-width: var(--max-content-width);
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TAB CONTENT
+   ═══════════════════════════════════════════════════════════════════ */
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: tab-fade-in 0.25s var(--ease-out);
+}
+
+@keyframes tab-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tab-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
+    border-bottom: 2px solid var(--border-subtle);
+}
+
+.tab-title {
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-strong);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+}
+
+.tab-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.tab-body {
+    /* Content styles handled by components */
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE ADJUSTMENTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 0 var(--space-4);
+        gap: var(--space-3);
+    }
+
+    .header-center {
+        display: none;
+    }
+
+    .dashboard-main {
+        padding: var(--space-4);
+        margin-bottom: var(--mobile-nav-height);
+    }
+
+    .tab-title {
+        font-size: var(--fs-2xl);
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-header {
+        padding: 0 var(--space-3);
+    }
+
+    .dashboard-main {
+        padding: var(--space-3);
+    }
+
+    .header-logo-text {
+        display: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   END OF DASHBOARD
+   ═══════════════════════════════════════════════════════════════════ */

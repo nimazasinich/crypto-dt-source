@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTS - آزمایشگاه بصری استراتژی ترید</title>
+
+    <!-- Vazirmatn Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Colors */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafb;
+            --bg-tertiary: #f0f4f7;
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --accent: #06b6d4;
+            --warning: #f59e0b;
+
+            /* Component Colors */
+            --color-data: #3b82f6;
+            --color-indicator: #a855f7;
+            --color-pattern: #ec4899;
+            --color-logic: #10b981;
+            --color-risk: #ef4444;
+            --color-output: #f59e0b;
+
+            /* Text */
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+
+            /* Glass */
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(15, 23, 42, 0.08);
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: var(--bg-primary);
+            background-image:
+                radial-gradient(ellipse at 10% 10%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 90%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* ============= LAYOUT ============= */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            z-index: 100;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #10b981);
+            color: white;
+            border: none;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Main Content (3 columns) */
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ============= COMPONENT LIBRARY ============= */
+        .component-library {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .library-header {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .component-category {
+            margin-bottom: 2rem;
+        }
+
+        .category-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .category-icon {
+            font-size: 1.25rem;
+        }
+
+        .component-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .component-item:hover {
+            transform: translateX(-4px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .component-item:active {
+            cursor: grabbing;
+        }
+
+        .component-item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .component-item.data .component-item-icon { background: rgba(59, 130, 246, 0.1); }
+        .component-item.indicator .component-item-icon { background: rgba(168, 85, 247, 0.1); }
+        .component-item.pattern .component-item-icon { background: rgba(236, 72, 153, 0.1); }
+        .component-item.logic .component-item-icon { background: rgba(16, 185, 129, 0.1); }
+        .component-item.risk .component-item-icon { background: rgba(239, 68, 68, 0.1); }
+        .component-item.output .component-item-icon { background: rgba(245, 158, 11, 0.1); }
+
+        .component-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .component-item-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .component-item-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* ============= CANVAS ============= */
+        .canvas-container {
+            position: relative;
+            background: var(--bg-secondary);
+            overflow: hidden;
+        }
+
+        .canvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .canvas-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(var(--glass-border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.3;
+        }
+
+        #connectionSvg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .canvas-nodes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        /* Node */
+        .node {
+            position: absolute;
+            min-width: 220px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(2, 6, 23, 0.1);
+            cursor: move;
+            transition: box-shadow 0.2s;
+            user-select: none;
+        }
+
+        .node:hover {
+            box-shadow: 0 15px 35px rgba(2, 6, 23, 0.15);
+        }
+
+        .node.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .node-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .node-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.125rem;
+            flex-shrink: 0;
+        }
+
+        .node.data .node-icon { background: rgba(59, 130, 246, 0.15); }
+        .node.indicator .node-icon { background: rgba(168, 85, 247, 0.15); }
+        .node.pattern .node-icon { background: rgba(236, 72, 153, 0.15); }
+        .node.logic .node-icon { background: rgba(16, 185, 129, 0.15); }
+        .node.risk .node-icon { background: rgba(239, 68, 68, 0.15); }
+        .node.output .node-icon { background: rgba(245, 158, 11, 0.15); }
+
+        .node-title {
+            flex: 1;
+            font-weight: 800;
+            font-size: 0.875rem;
+        }
+
+        .node-delete {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .node:hover .node-delete {
+            opacity: 1;
+        }
+
+        .node-delete:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .node-body {
+            padding: 12px;
+        }
+
+        .node-param {
+            margin-bottom: 12px;
+        }
+
+        .node-param:last-child {
+            margin-bottom: 0;
+        }
+
+        .param-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.375rem;
+            display: block;
+        }
+
+        .param-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            background: white;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.875rem;
+        }
+
+        .param-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .param-range {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        .range-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .node-ports {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 12px 12px;
+        }
+
+        .port {
+            width: 14px;
+            height: 14px;
+            border: 2px solid;
+            border-radius: 50%;
+            background: white;
+            cursor: crosshair;
+            transition: all 0.2s;
+        }
+
+        .port:hover {
+            transform: scale(1.4);
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        .port.input {
+            border-color: var(--success);
+        }
+
+        .port.output {
+            border-color: var(--danger);
+        }
+
+        .port.connected {
+            background: currentColor;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            margin-right: auto;
+        }
+
+        .status-indicator.active {
+            background: var(--success);
+            animation: pulse-indicator 1.5s infinite;
+        }
+
+        @keyframes pulse-indicator {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Connections */
+        .connection-path {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 3;
+            stroke-linecap: round;
+            opacity: 0.6;
+            transition: all 0.2s;
+        }
+
+        .connection-path:hover {
+            stroke-width: 4;
+            opacity: 1;
+        }
+
+        .connection-pulse {
+            fill: var(--primary);
+            filter: drop-shadow(0 4px 8px rgba(37, 99, 235, 0.4));
+        }
+
+        /* ============= PROPERTIES PANEL ============= */
+        .properties-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--glass-border);
+            background: var(--bg-secondary);
+        }
+
+        .panel-tab {
+            flex: 1;
+            padding: 0.875rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .panel-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .panel-tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .panel-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .metric-value.success { color: var(--success); }
+        .metric-value.danger { color: var(--danger); }
+
+        .no-selection {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .no-selection-icon {
+            font-size: 4rem;
+            opacity: 0.3;
+            margin-bottom: 1rem;
+        }
+
+        /* Chart */
+        #equityChart {
+            width: 100%;
+            height: 250px;
+            background: white;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--accent));
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Template Card */
+        .template-card {
+            padding: 1rem;
+            background: white;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .template-name {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .template-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Results Section */
+        .results-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+            padding: 1rem 1.5rem;
+        }
+
+        .results-header {
+            font-size: 0.875rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .results-metrics {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .result-metric {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .result-metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .result-metric-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            padding: 1rem 1.5rem;
+            background: white;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success { border-right: 3px solid var(--success); }
+        .toast.error { border-right: 3px solid var(--danger); }
+        .toast.info { border-right: 3px solid var(--primary); }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+    <!-- API Configuration - Smart Fallback System -->
+    <script src="/static/js/api-config.js"></script>
+    <script>
+        // Initialize API client
+        window.apiReady = new Promise((resolve) => {
+            if (window.apiClient) {
+                console.log('✅ API Client ready');
+                resolve(window.apiClient);
+            } else {
+                console.error('❌ API Client not loaded');
+            }
+        });
+    </script>
+
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <span>🎯</span>
+                <span>HTS - آزمایشگاه بصری استراتژی ترید</span>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn btn-success" id="executeBtn">
+                    <span>▶️</span>
+                    <span>اجرا</span>
+                </button>
+
+                <button class="btn" id="pauseBtn" disabled>
+                    <span>⏸️</span>
+                    <span>توقف</span>
+                </button>
+
+                <button class="btn" id="resetBtn">
+                    <span>🔄</span>
+                    <span>ریست</span>
+                </button>
+
+                <button class="btn btn-primary" id="saveBtn">
+                    <span>💾</span>
+                    <span>ذخیره</span>
+                </button>
+
+                <button class="btn" id="loadBtn">
+                    <span>📁</span>
+                    <span>بارگذاری</span>
+                </button>
+
+                <button class="btn" id="exportBtn">
+                    <span>📤</span>
+                    <span>خروجی</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Component Library -->
+            <aside class="component-library">
+                <div class="library-header">📦 کتابخانه اجزا</div>
+
+                <!-- Data Sources -->
+                <div class="component-category">
+                    <div class="category-title">
+                        <span class="category-icon">📊</span>
+                        <span>منابع داده</span>
+                    </div>
+                    <div class="component-item data" draggable="true" data-type="price-data">
+                        <div class="component-item-icon">📊</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">داده قیمت</div>
+                            <div class="component-item-desc">OHLCV لحظه‌ای</div>
+                        </div>
+                    </div>
+                    <div class="component-item data" draggable="true" data-type="multi-timeframe">
+                        <div class="component-item-icon">⏱️</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">چند تایم‌فریم</div>
+                            <div class="component-item-desc">تحلیل MTF</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicators -->
+                <div class="component-category">
+                    <div class="category-title">
+                        <span class="category-icon">📈</span>
+                        <span>اندیکاتورها</span>
+                    </div>
+                    <div class="component-item indicator" draggable="true" data-type="rsi">
+                        <div class="component-item-icon">📉</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">RSI</div>
+                            <div class="component-item-desc">شاخص قدرت نسبی</div>
+                        </div>
+                    </div>
+                    <div class="component-item indicator" draggable="true" data-type="macd">
+                        <div class="component-item-icon">〰️</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">MACD</div>
+                            <div class="component-item-desc">واگرایی میانگین</div>
+                        </div>
+                    </div>
+                    <div class="component-item indicator" draggable="true" data-type="ema">
+                        <div class="component-item-icon">📈</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">EMA</div>
+                            <div class="component-item-desc">میانگین نمایی</div>
+                        </div>
+                    </div>
+                    <div class="component-item indicator" draggable="true" data-type="bollinger">
+                        <div class="component-item-icon">🎯</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">Bollinger Bands</div>
+                            <div class="component-item-desc">باندهای بولینگر</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pattern Recognition -->
+                <div class="component-category">
+                    <div class="category-title">
+                        <span class="category-icon">🎯</span>
+                        <span>تشخیص الگو</span>
+                    </div>
+                    <div class="component-item pattern" draggable="true" data-type="smc">
+                        <div class="component-item-icon">💎</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">Smart Money</div>
+                            <div class="component-item-desc">مفاهیم SMC</div>
+                        </div>
+                    </div>
+                    <div class="component-item pattern" draggable="true" data-type="fibonacci">
+                        <div class="component-item-icon">📐</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">فیبوناچی</div>
+                            <div class="component-item-desc">سطوح فیبوناچی</div>
+                        </div>
+                    </div>
+                    <div class="component-item pattern" draggable="true" data-type="harmonic">
+                        <div class="component-item-icon">🎼</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">هارمونیک</div>
+                            <div class="component-item-desc">الگوهای هارمونیک</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logic Operators -->
+                <div class="component-category">
+                    <div class="category-title">
+                        <span class="category-icon">🧠</span>
+                        <span>عملگرهای منطقی</span>
+                    </div>
+                    <div class="component-item logic" draggable="true" data-type="and-gate">
+                        <div class="component-item-icon">∧</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">دروازه AND</div>
+                            <div class="component-item-desc">منطق و</div>
+                        </div>
+                    </div>
+                    <div class="component-item logic" draggable="true" data-type="or-gate">
+                        <div class="component-item-icon">∨</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">دروازه OR</div>
+                            <div class="component-item-desc">منطق یا</div>
+                        </div>
+                    </div>
+                    <div class="component-item logic" draggable="true" data-type="threshold">
+                        <div class="component-item-icon">🎚️</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">آستانه</div>
+                            <div class="component-item-desc">مقایسه مقدار</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Management -->
+                <div class="component-category">
+                    <div class="category-title">
+                        <span class="category-icon">💰</span>
+                        <span>مدیریت ریسک</span>
+                    </div>
+                    <div class="component-item risk" draggable="true" data-type="position-sizer">
+                        <div class="component-item-icon">💰</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">اندازه پوزیشن</div>
+                            <div class="component-item-desc">محاسبه حجم</div>
+                        </div>
+                    </div>
+                    <div class="component-item risk" draggable="true" data-type="stop-loss">
+                        <div class="component-item-icon">🛑</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">استاپ لاس</div>
+                            <div class="component-item-desc">محاسبه SL</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output -->
+                <div class="component-category">
+                    <div class="category-title">
+                        <span class="category-icon">📤</span>
+                        <span>خروجی/اقدامات</span>
+                    </div>
+                    <div class="component-item output" draggable="true" data-type="signal-output">
+                        <div class="component-item-icon">📤</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">خروجی سیگنال</div>
+                            <div class="component-item-desc">نتیجه نهایی</div>
+                        </div>
+                    </div>
+                    <div class="component-item output" draggable="true" data-type="trade-executor">
+                        <div class="component-item-icon">⚡</div>
+                        <div class="component-item-info">
+                            <div class="component-item-name">اجرای معامله</div>
+                            <div class="component-item-desc">اجرای خودکار</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Canvas -->
+            <div class="canvas-container">
+                <div class="canvas">
+                    <div class="canvas-grid"></div>
+                    <svg id="connectionSvg">
+                        <defs>
+                            <linearGradient id="gradBuy" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#16a34a;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="gradSell" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ef4444;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="gradHold" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="canvas-nodes" id="canvasNodes"></div>
+                </div>
+            </div>
+
+            <!-- Properties Panel -->
+            <aside class="properties-panel">
+                <div class="panel-tabs">
+                    <button class="panel-tab active" data-tab="properties">ویژگی‌ها</button>
+                    <button class="panel-tab" data-tab="results">نتایج</button>
+                    <button class="panel-tab" data-tab="templates">قالب‌ها</button>
+                </div>
+
+                <div class="panel-content">
+                    <!-- Properties Tab -->
+                    <div id="propertiesTab" class="panel-tab-content">
+                        <div class="no-selection">
+                            <div class="no-selection-icon">📦</div>
+                            <p style="font-weight: 600; margin-bottom: 0.5rem;">هیچ گره‌ای انتخاب نشده</p>
+                            <p style="font-size: 0.875rem;">یک گره را از کتابخانه به Canvas بکشید</p>
+                        </div>
+                    </div>
+
+                    <!-- Results Tab -->
+                    <div id="resultsTab" class="panel-tab-content hidden">
+                        <div class="panel-section">
+                            <div class="section-title">📊 عملکرد کلی</div>
+                            <div class="metric">
+                                <span class="metric-label">تعداد معاملات</span>
+                                <span class="metric-value" id="totalTrades">۰</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">نرخ برد</span>
+                                <span class="metric-value success" id="winRate">۰٪</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">سود/زیان کل</span>
+                                <span class="metric-value" id="totalPnL">$۰</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">حداکثر افت</span>
+                                <span class="metric-value danger" id="maxDrawdown">۰٪</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">فاکتور سود</span>
+                                <span class="metric-value" id="profitFactor">۰</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">شارپ</span>
+                                <span class="metric-value" id="sharpeRatio">۰</span>
+                            </div>
+                        </div>
+
+                        <div class="panel-section">
+                            <div class="section-title">📈 نمودار سرمایه</div>
+                            <canvas id="equityChart"></canvas>
+                        </div>
+
+                        <div class="panel-section">
+                            <div class="section-title">پیشرفت</div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Templates Tab -->
+                    <div id="templatesTab" class="panel-tab-content hidden">
+                        <div class="panel-section">
+                            <div class="section-title">📋 قالب‌های آماده</div>
+
+                            <div class="template-card" data-template="rsi-macd">
+                                <div class="template-name">⚡ RSI + MACD Classic</div>
+                                <div class="template-desc">استراتژی کلاسیک ترکیب RSI و MACD برای سیگنال‌گیری</div>
+                            </div>
+
+                            <div class="template-card" data-template="smc-mtf">
+                                <div class="template-name">💎 SMC Multi-Timeframe</div>
+                                <div class="template-desc">استراتژی Smart Money در چند تایم‌فریم</div>
+                            </div>
+
+                            <div class="template-card" data-template="bollinger-breakout">
+                                <div class="template-name">🎯 Bollinger Breakout</div>
+                                <div class="template-desc">شکست باندهای بولینگر با مدیریت ریسک</div>
+                            </div>
+
+                            <div class="template-card" data-template="trend-following">
+                                <div class="template-name">📈 Trend Following</div>
+                                <div class="template-desc">دنبال کردن روند با EMA و فیبوناچی</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section hidden" id="resultsSection">
+            <div class="results-header">📊 نتایج زنده - Live Results</div>
+            <div class="results-metrics">
+                <div class="result-metric">
+                    <div class="result-metric-label">معاملات</div>
+                    <div class="result-metric-value" id="liveTradeCount">۰</div>
+                </div>
+                <div class="result-metric">
+                    <div class="result-metric-label">نرخ برد</div>
+                    <div class="result-metric-value success" id="liveWinRate">۰٪</div>
+                </div>
+                <div class="result-metric">
+                    <div class="result-metric-label">سود</div>
+                    <div class="result-metric-value success" id="liveProfit">$۰</div>
+                </div>
+                <div class="result-metric">
+                    <div class="result-metric-label">افت</div>
+                    <div class="result-metric-value danger" id="liveDrawdown">-۰٪</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+    <script>
+        // ============= STATE MANAGEMENT =============
+        const state = {
+            nodes: [],
+            connections: [],
+            selectedNode: null,
+            nodeIdCounter: 0,
+            isExecuting: false,
+            dragState: {
+                active: false,
+                node: null,
+                offsetX: 0,
+                offsetY: 0
+            },
+            connectState: {
+                active: false,
+                fromNode: null,
+                fromPort: null
+            }
+        };
+
+        // ============= COMPONENT DEFINITIONS =============
+        const NODE_LIBRARY = {
+            'price-data': {
+                name: 'داده قیمت',
+                category: 'data',
+                icon: '📊',
+                params: [
+                    { name: 'symbol', label: 'نماد', type: 'text', default: 'BTC/USDT' },
+                    { name: 'timeframe', label: 'تایم‌فریم', type: 'select', options: ['1m', '5m', '15m', '1h', '4h', '1d'], default: '15m' }
+                ],
+                inputs: [],
+                outputs: ['price', 'volume']
+            },
+            'multi-timeframe': {
+                name: 'چند تایم‌فریم',
+                category: 'data',
+                icon: '⏱️',
+                params: [
+                    { name: 'tf1', label: 'تایم‌فریم ۱', type: 'select', options: ['5m', '15m', '1h', '4h'], default: '15m' },
+                    { name: 'tf2', label: 'تایم‌فریم ۲', type: 'select', options: ['5m', '15m', '1h', '4h'], default: '1h' },
+                    { name: 'tf3', label: 'تایم‌فریم ۳', type: 'select', options: ['5m', '15m', '1h', '4h'], default: '4h' }
+                ],
+                inputs: [],
+                outputs: ['tf1_data', 'tf2_data', 'tf3_data']
+            },
+            'rsi': {
+                name: 'RSI',
+                category: 'indicator',
+                icon: '📉',
+                params: [
+                    { name: 'period', label: 'دوره', type: 'range', min: 2, max: 50, default: 14 },
+                    { name: 'oversold', label: 'اشباع فروش', type: 'range', min: 10, max: 40, default: 30 },
+                    { name: 'overbought', label: 'اشباع خرید', type: 'range', min: 60, max: 90, default: 70 }
+                ],
+                inputs: ['price'],
+                outputs: ['rsi', 'oversold_signal', 'overbought_signal']
+            },
+            'macd': {
+                name: 'MACD',
+                category: 'indicator',
+                icon: '〰️',
+                params: [
+                    { name: 'fast', label: 'سریع', type: 'range', min: 5, max: 20, default: 12 },
+                    { name: 'slow', label: 'کند', type: 'range', min: 20, max: 40, default: 26 },
+                    { name: 'signal', label: 'سیگنال', type: 'range', min: 5, max: 15, default: 9 }
+                ],
+                inputs: ['price'],
+                outputs: ['macd', 'signal', 'cross_up', 'cross_down']
+            },
+            'ema': {
+                name: 'EMA',
+                category: 'indicator',
+                icon: '📈',
+                params: [
+                    { name: 'period', label: 'دوره', type: 'range', min: 5, max: 200, default: 20 }
+                ],
+                inputs: ['price'],
+                outputs: ['ema', 'above', 'below']
+            },
+            'bollinger': {
+                name: 'Bollinger Bands',
+                category: 'indicator',
+                icon: '🎯',
+                params: [
+                    { name: 'period', label: 'دوره', type: 'range', min: 10, max: 50, default: 20 },
+                    { name: 'std', label: 'انحراف معیار', type: 'range', min: 1, max: 3, step: 0.5, default: 2 }
+                ],
+                inputs: ['price'],
+                outputs: ['upper', 'middle', 'lower', 'above_upper', 'below_lower']
+            },
+            'smc': {
+                name: 'Smart Money',
+                category: 'pattern',
+                icon: '💎',
+                params: [
+                    { name: 'sensitivity', label: 'حساسیت', type: 'range', min: 0.1, max: 1, step: 0.1, default: 0.7 },
+                    { name: 'lookback', label: 'بازنگری', type: 'range', min: 20, max: 100, default: 50 }
+                ],
+                inputs: ['price'],
+                outputs: ['order_block', 'fvg', 'score']
+            },
+            'fibonacci': {
+                name: 'فیبوناچی',
+                category: 'pattern',
+                icon: '📐',
+                params: [
+                    { name: 'direction', label: 'جهت', type: 'select', options: ['Retracement', 'Extension'], default: 'Retracement' }
+                ],
+                inputs: ['high', 'low'],
+                outputs: ['fib_236', 'fib_382', 'fib_500', 'fib_618']
+            },
+            'harmonic': {
+                name: 'هارمونیک',
+                category: 'pattern',
+                icon: '🎼',
+                params: [
+                    { name: 'pattern', label: 'الگو', type: 'select', options: ['Gartley', 'Butterfly', 'Bat', 'Crab'], default: 'Gartley' }
+                ],
+                inputs: ['price'],
+                outputs: ['pattern_found', 'completion']
+            },
+            'and-gate': {
+                name: 'دروازه AND',
+                category: 'logic',
+                icon: '∧',
+                params: [],
+                inputs: ['input1', 'input2'],
+                outputs: ['result']
+            },
+            'or-gate': {
+                name: 'دروازه OR',
+                category: 'logic',
+                icon: '∨',
+                params: [],
+                inputs: ['input1', 'input2'],
+                outputs: ['result']
+            },
+            'threshold': {
+                name: 'آستانه',
+                category: 'logic',
+                icon: '🎚️',
+                params: [
+                    { name: 'threshold', label: 'مقدار آستانه', type: 'range', min: 0, max: 100, default: 50 }
+                ],
+                inputs: ['value'],
+                outputs: ['above', 'below']
+            },
+            'position-sizer': {
+                name: 'اندازه پوزیشن',
+                category: 'risk',
+                icon: '💰',
+                params: [
+                    { name: 'risk_percent', label: 'درصد ریسک', type: 'range', min: 0.5, max: 5, step: 0.5, default: 2 }
+                ],
+                inputs: ['capital', 'atr'],
+                outputs: ['size', 'risk_amount']
+            },
+            'stop-loss': {
+                name: 'استاپ لاس',
+                category: 'risk',
+                icon: '🛑',
+                params: [
+                    { name: 'atr_multiplier', label: 'ضریب ATR', type: 'range', min: 1, max: 5, step: 0.5, default: 2 }
+                ],
+                inputs: ['entry', 'atr'],
+                outputs: ['sl_price', 'sl_distance']
+            },
+            'signal-output': {
+                name: 'خروجی سیگنال',
+                category: 'output',
+                icon: '📤',
+                params: [],
+                inputs: ['buy_signal', 'sell_signal'],
+                outputs: []
+            },
+            'trade-executor': {
+                name: 'اجرای معامله',
+                category: 'output',
+                icon: '⚡',
+                params: [
+                    { name: 'commission', label: 'کمیسیون', type: 'range', min: 0, max: 1, step: 0.05, default: 0.1 }
+                ],
+                inputs: ['signal', 'size'],
+                outputs: []
+            }
+        };
+
+        // ============= DOM ELEMENTS =============
+        const elements = {
+            canvasNodes: document.getElementById('canvasNodes'),
+            connectionSvg: document.getElementById('connectionSvg'),
+            executeBtn: document.getElementById('executeBtn'),
+            pauseBtn: document.getElementById('pauseBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            saveBtn: document.getElementById('saveBtn'),
+            loadBtn: document.getElementById('loadBtn'),
+            exportBtn: document.getElementById('exportBtn'),
+            fileInput: document.getElementById('fileInput'),
+            toastContainer: document.getElementById('toastContainer'),
+            propertiesTab: document.getElementById('propertiesTab'),
+            resultsTab: document.getElementById('resultsTab'),
+            templatesTab: document.getElementById('templatesTab'),
+            resultsSection: document.getElementById('resultsSection'),
+            progressBar: document.getElementById('progressBar')
+        };
+
+        // ============= UTILITY FUNCTIONS =============
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            elements.toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function generateId() {
+            return `node-${state.nodeIdCounter++}`;
+        }
+
+        function toFarsi(num) {
+            const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+            return String(num).replace(/\d/g, d => farsiDigits[d]);
+        }
+
+        // ============= NODE CREATION =============
+        function createNode(type, x, y, params = null) {
+            const definition = NODE_LIBRARY[type];
+            if (!definition) return null;
+
+            const nodeId = generateId();
+            const node = {
+                id: nodeId,
+                type: type,
+                definition: definition,
+                x: x,
+                y: y,
+                params: {}
+            };
+
+            // Initialize parameters
+            definition.params.forEach(param => {
+                node.params[param.name] = params && params[param.name] !== undefined ?
+                    params[param.name] : param.default;
+            });
+
+            state.nodes.push(node);
+            renderNode(node);
+            return node;
+        }
+
+        function renderNode(node) {
+            const nodeEl = document.createElement('div');
+            nodeEl.className = `node ${node.definition.category}`;
+            nodeEl.id = node.id;
+            nodeEl.style.left = `${node.x}px`;
+            nodeEl.style.top = `${node.y}px`;
+
+            // Header
+            const header = document.createElement('div');
+            header.className = 'node-header';
+            header.innerHTML = `
+                <div class="node-icon">${node.definition.icon}</div>
+                <div class="node-title">${node.definition.name}</div>
+                <div class="status-indicator"></div>
+                <button class="node-delete" data-node="${node.id}">✕</button>
+            `;
+
+            // Body
+            const body = document.createElement('div');
+            body.className = 'node-body';
+
+            node.definition.params.forEach(param => {
+                const paramDiv = document.createElement('div');
+                paramDiv.className = 'node-param';
+
+                if (param.type === 'select') {
+                    paramDiv.innerHTML = `
+                        <label class="param-label">${param.label}</label>
+                        <select class="param-input" data-node="${node.id}" data-param="${param.name}">
+                            ${param.options.map(opt => `<option value="${opt}" ${opt === node.params[param.name] ? 'selected' : ''}>${opt}</option>`).join('')}
+                        </select>
+                    `;
+                } else if (param.type === 'range') {
+                    const step = param.step || 1;
+                    paramDiv.innerHTML = `
+                        <label class="param-label">${param.label}: <span class="range-value">${toFarsi(node.params[param.name])}</span></label>
+                        <input type="range" class="param-range" data-node="${node.id}" data-param="${param.name}"
+                               min="${param.min}" max="${param.max}" step="${step}" value="${node.params[param.name]}">
+                    `;
+                } else {
+                    paramDiv.innerHTML = `
+                        <label class="param-label">${param.label}</label>
+                        <input type="${param.type}" class="param-input" data-node="${node.id}" data-param="${param.name}"
+                               value="${node.params[param.name]}">
+                    `;
+                }
+
+                body.appendChild(paramDiv);
+            });
+
+            // Ports
+            const ports = document.createElement('div');
+            ports.className = 'node-ports';
+
+            if (node.definition.inputs.length > 0) {
+                const inputPort = document.createElement('div');
+                inputPort.className = 'port input';
+                inputPort.dataset.node = node.id;
+                inputPort.dataset.type = 'input';
+                inputPort.title = 'ورودی';
+                ports.appendChild(inputPort);
+            }
+
+            if (node.definition.outputs.length > 0) {
+                const outputPort = document.createElement('div');
+                outputPort.className = 'port output';
+                outputPort.dataset.node = node.id;
+                outputPort.dataset.type = 'output';
+                outputPort.title = 'خروجی';
+                ports.appendChild(outputPort);
+            }
+
+            nodeEl.appendChild(header);
+            if (body.children.length > 0) {
+                nodeEl.appendChild(body);
+            }
+            nodeEl.appendChild(ports);
+
+            elements.canvasNodes.appendChild(nodeEl);
+            setupNodeEvents(nodeEl, node);
+        }
+
+        function setupNodeEvents(nodeEl, node) {
+            // Node selection
+            nodeEl.addEventListener('click', (e) => {
+                if (!e.target.closest('.node-delete') && !e.target.closest('.port')) {
+                    selectNode(node);
+                }
+            });
+
+            // Node dragging
+            nodeEl.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.port') || e.target.closest('.node-delete') || e.target.closest('.param-input') || e.target.closest('.param-range')) return;
+
+                state.dragState.active = true;
+                state.dragState.node = node;
+                state.dragState.offsetX = e.clientX - node.x;
+                state.dragState.offsetY = e.clientY - node.y;
+            });
+
+            // Parameter changes
+            nodeEl.querySelectorAll('.param-input, .param-range').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const paramName = e.target.dataset.param;
+                    const value = e.target.type === 'range' ? parseFloat(e.target.value) : e.target.value;
+                    node.params[paramName] = value;
+
+                    // Update range value display
+                    if (e.target.type === 'range') {
+                        const valueSpan = e.target.previousElementSibling.querySelector('.range-value');
+                        if (valueSpan) {
+                            valueSpan.textContent = toFarsi(value);
+                        }
+                    }
+
+                    updatePropertiesPanel();
+                });
+            });
+
+            // Delete button
+            const deleteBtn = nodeEl.querySelector('.node-delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => deleteNode(node.id));
+            }
+
+            // Port connections
+            const ports = nodeEl.querySelectorAll('.port');
+            ports.forEach(port => {
+                port.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    startConnection(port, node);
+                });
+            });
+        }
+
+        function selectNode(node) {
+            document.querySelectorAll('.node').forEach(el => el.classList.remove('selected'));
+            state.selectedNode = node;
+            document.getElementById(node.id).classList.add('selected');
+            updatePropertiesPanel();
+        }
+
+        function deleteNode(nodeId) {
+            state.connections = state.connections.filter(conn =>
+                conn.from !== nodeId && conn.to !== nodeId
+            );
+            state.nodes = state.nodes.filter(n => n.id !== nodeId);
+            document.getElementById(nodeId)?.remove();
+            updateConnections();
+
+            if (state.selectedNode?.id === nodeId) {
+                state.selectedNode = null;
+                updatePropertiesPanel();
+            }
+        }
+
+        // ============= CONNECTIONS =============
+        function startConnection(portEl, node) {
+            if (portEl.dataset.type === 'output') {
+                state.connectState.active = true;
+                state.connectState.fromNode = node;
+                state.connectState.fromPort = portEl;
+            }
+        }
+
+        document.addEventListener('mouseup', (e) => {
+            if (state.connectState.active) {
+                const targetPort = e.target.closest('.port');
+
+                if (targetPort && targetPort.dataset.type === 'input') {
+                    const targetNode = state.nodes.find(n => n.id === targetPort.dataset.node);
+
+                    if (targetNode && targetNode.id !== state.connectState.fromNode.id) {
+                        createConnection(state.connectState.fromNode.id, targetNode.id);
+                    }
+                }
+
+                state.connectState.active = false;
+                state.connectState.fromNode = null;
+                state.connectState.fromPort = null;
+            }
+        });
+
+        function createConnection(fromNodeId, toNodeId) {
+            const exists = state.connections.some(c => c.from === fromNodeId && c.to === toNodeId);
+            if (exists) {
+                showToast('این اتصال قبلاً وجود دارد', 'info');
+                return;
+            }
+
+            state.connections.push({
+                id: `conn-${state.connections.length}`,
+                from: fromNodeId,
+                to: toNodeId
+            });
+
+            updateConnections();
+            showToast('اتصال ایجاد شد', 'success');
+        }
+
+        function updateConnections() {
+            const svg = elements.connectionSvg;
+            // Clear existing paths (keep defs)
+            Array.from(svg.children).forEach(child => {
+                if (child.tagName !== 'defs') {
+                    child.remove();
+                }
+            });
+
+            state.connections.forEach(conn => {
+                const fromNode = state.nodes.find(n => n.id === conn.from);
+                const toNode = state.nodes.find(n => n.id === conn.to);
+
+                if (!fromNode || !toNode) return;
+
+                const fromEl = document.getElementById(fromNode.id);
+                const toEl = document.getElementById(toNode.id);
+
+                if (!fromEl || !toEl) return;
+
+                const fromPort = fromEl.querySelector('.port.output');
+                const toPort = toEl.querySelector('.port.input');
+
+                if (!fromPort || !toPort) return;
+
+                const fromRect = fromPort.getBoundingClientRect();
+                const toRect = toPort.getBoundingClientRect();
+                const containerRect = svg.getBoundingClientRect();
+
+                const x1 = fromRect.left + fromRect.width / 2 - containerRect.left;
+                const y1 = fromRect.top + fromRect.height / 2 - containerRect.top;
+                const x2 = toRect.left + toRect.width / 2 - containerRect.left;
+                const y2 = toRect.top + toRect.height / 2 - containerRect.top;
+
+                const dx = x2 - x1;
+                const curve = Math.abs(dx) * 0.5;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('class', 'connection-path');
+                path.setAttribute('d', `M ${x1} ${y1} C ${x1 + curve} ${y1}, ${x2 - curve} ${y2}, ${x2} ${y2}`);
+                path.dataset.connection = conn.id;
+
+                svg.appendChild(path);
+
+                fromPort.classList.add('connected');
+                toPort.classList.add('connected');
+            });
+        }
+
+        // ============= DRAG AND DROP =============
+        document.querySelectorAll('.component-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('componentType', item.dataset.type);
+            });
+        });
+
+        elements.canvasNodes.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        elements.canvasNodes.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const componentType = e.dataTransfer.getData('componentType');
+            if (componentType) {
+                const rect = elements.canvasNodes.getBoundingClientRect();
+                const x = e.clientX - rect.left - 110;
+                const y = e.clientY - rect.top - 50;
+                createNode(componentType, x, y);
+                showToast('گره اضافه شد', 'success');
+            }
+        });
+
+        // Node movement
+        document.addEventListener('mousemove', (e) => {
+            if (state.dragState.active) {
+                const node = state.dragState.node;
+                node.x = e.clientX - state.dragState.offsetX;
+                node.y = e.clientY - state.dragState.offsetY;
+
+                const nodeEl = document.getElementById(node.id);
+                nodeEl.style.left = `${node.x}px`;
+                nodeEl.style.top = `${node.y}px`;
+
+                updateConnections();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (state.dragState.active) {
+                state.dragState.active = false;
+                state.dragState.node = null;
+            }
+        });
+
+        // ============= PROPERTIES PANEL =============
+        function updatePropertiesPanel() {
+            const tab = elements.propertiesTab;
+
+            if (!state.selectedNode) {
+                tab.innerHTML = `
+                    <div class="no-selection">
+                        <div class="no-selection-icon">📦</div>
+                        <p style="font-weight: 600; margin-bottom: 0.5rem;">هیچ گره‌ای انتخاب نشده</p>
+                        <p style="font-size: 0.875rem;">یک گره را از کتابخانه به Canvas بکشید</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const node = state.selectedNode;
+            let html = `<div class="panel-section">`;
+            html += `<div class="section-title">${node.definition.icon} ${node.definition.name}</div>`;
+
+            if (node.definition.params.length > 0) {
+                node.definition.params.forEach(param => {
+                    const value = node.params[param.name];
+                    html += `<div class="metric">`;
+                    html += `<span class="metric-label">${param.label}</span>`;
+                    html += `<span class="metric-value">${toFarsi(value)}</span>`;
+                    html += `</div>`;
+                });
+            } else {
+                html += `<p style="color: var(--text-muted); font-size: 0.875rem;">این گره پارامتری ندارد</p>`;
+            }
+
+            html += `</div>`;
+
+            const inputs = state.connections.filter(c => c.to === node.id);
+            const outputs = state.connections.filter(c => c.from === node.id);
+
+            if (inputs.length > 0 || outputs.length > 0) {
+                html += `<div class="panel-section">`;
+                html += `<div class="section-title">🔗 اتصالات</div>`;
+
+                if (inputs.length > 0) {
+                    html += `<div class="metric"><span class="metric-label">ورودی</span><span class="metric-value">${toFarsi(inputs.length)}</span></div>`;
+                }
+
+                if (outputs.length > 0) {
+                    html += `<div class="metric"><span class="metric-label">خروجی</span><span class="metric-value">${toFarsi(outputs.length)}</span></div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            tab.innerHTML = html;
+        }
+
+        // ============= PANEL TABS =============
+        document.querySelectorAll('.panel-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const tabName = tab.dataset.tab;
+                elements.propertiesTab.classList.add('hidden');
+                elements.resultsTab.classList.add('hidden');
+                elements.templatesTab.classList.add('hidden');
+
+                if (tabName === 'properties') {
+                    elements.propertiesTab.classList.remove('hidden');
+                } else if (tabName === 'results') {
+                    elements.resultsTab.classList.remove('hidden');
+                } else if (tabName === 'templates') {
+                    elements.templatesTab.classList.remove('hidden');
+                }
+            });
+        });
+
+        // ============= EXECUTION ENGINE =============
+        async function executeStrategy() {
+            if (state.nodes.length === 0) {
+                showToast('هیچ گره‌ای برای اجرا وجود ندارد', 'error');
+                return;
+            }
+
+            state.isExecuting = true;
+            elements.executeBtn.disabled = true;
+            elements.pauseBtn.disabled = false;
+            elements.resultsSection.classList.remove('hidden');
+
+            showToast('اجرای استراتژی شروع شد...', 'info');
+
+            // Simulate backtest
+            const numCandles = 100;
+            for (let i = 0; i < numCandles; i++) {
+                if (!state.isExecuting) break;
+
+                elements.progressBar.style.width = `${(i / numCandles) * 100}%`;
+
+                // Simulate processing delay
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+
+            // Generate results
+            const results = {
+                totalTrades: Math.floor(Math.random() * 100 + 50),
+                winRate: (Math.random() * 40 + 40).toFixed(1),
+                totalPnL: ((Math.random() - 0.3) * 10000).toFixed(2),
+                maxDrawdown: (Math.random() * 30).toFixed(1),
+                profitFactor: (Math.random() * 2 + 0.5).toFixed(2),
+                sharpeRatio: (Math.random() * 2).toFixed(2)
+            };
+
+            document.getElementById('totalTrades').textContent = toFarsi(results.totalTrades);
+            document.getElementById('winRate').textContent = toFarsi(results.winRate) + '٪';
+            document.getElementById('totalPnL').textContent = '$' + toFarsi(results.totalPnL);
+            document.getElementById('totalPnL').className = `metric-value ${parseFloat(results.totalPnL) > 0 ? 'success' : 'danger'}`;
+            document.getElementById('maxDrawdown').textContent = toFarsi(results.maxDrawdown) + '٪';
+            document.getElementById('profitFactor').textContent = toFarsi(results.profitFactor);
+            document.getElementById('sharpeRatio').textContent = toFarsi(results.sharpeRatio);
+
+            document.getElementById('liveTradeCount').textContent = toFarsi(results.totalTrades);
+            document.getElementById('liveWinRate').textContent = toFarsi(results.winRate) + '٪';
+            document.getElementById('liveProfit').textContent = '$' + toFarsi(results.totalPnL);
+            document.getElementById('liveDrawdown').textContent = '-' + toFarsi(results.maxDrawdown) + '٪';
+
+            // Draw equity curve
+            drawEquityCurve();
+
+            showToast('اجرای استراتژی به پایان رسید', 'success');
+
+            state.isExecuting = false;
+            elements.executeBtn.disabled = false;
+            elements.pauseBtn.disabled = true;
+        }
+
+        function drawEquityCurve() {
+            const canvas = document.getElementById('equityChart');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            const numPoints = 100;
+            const points = [];
+            let y = canvas.height / 2;
+
+            for (let i = 0; i <= numPoints; i++) {
+                y += (Math.random() - 0.45) * 15;
+                y = Math.max(20, Math.min(canvas.height - 20, y));
+                points.push(y);
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Grid
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = (i / 4) * canvas.height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Equity curve
+            ctx.beginPath();
+            ctx.strokeStyle = points[points.length - 1] < canvas.height / 2 ? '#ef4444' : '#10b981';
+            ctx.lineWidth = 3;
+
+            points.forEach((y, i) => {
+                const x = (i / numPoints) * canvas.width;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+
+            ctx.stroke();
+        }
+
+        function pauseStrategy() {
+            state.isExecuting = false;
+            showToast('استراتژی متوقف شد', 'info');
+        }
+
+        function resetStrategy() {
+            state.isExecuting = false;
+            elements.executeBtn.disabled = false;
+            elements.pauseBtn.disabled = true;
+            elements.resultsSection.classList.add('hidden');
+            elements.progressBar.style.width = '0%';
+
+            document.getElementById('totalTrades').textContent = '۰';
+            document.getElementById('winRate').textContent = '۰٪';
+            document.getElementById('totalPnL').textContent = '$۰';
+            document.getElementById('maxDrawdown').textContent = '۰٪';
+            document.getElementById('profitFactor').textContent = '۰';
+            document.getElementById('sharpeRatio').textContent = '۰';
+
+            showToast('استراتژی بازنشانی شد', 'info');
+        }
+
+        // ============= SAVE/LOAD =============
+        function saveStrategy() {
+            const strategy = {
+                name: 'My Strategy',
+                version: '1.0',
+                created: new Date().toISOString(),
+                nodes: state.nodes.map(n => ({
+                    id: n.id,
+                    type: n.type,
+                    x: n.x,
+                    y: n.y,
+                    params: n.params
+                })),
+                connections: state.connections
+            };
+
+            const blob = new Blob([JSON.stringify(strategy, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `strategy-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showToast('استراتژی ذخیره شد', 'success');
+        }
+
+        function loadStrategy() {
+            elements.fileInput.click();
+        }
+
+        elements.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const strategy = JSON.parse(event.target.result);
+
+                    // Clear current
+                    state.nodes.forEach(n => deleteNode(n.id));
+                    state.nodes = [];
+                    state.connections = [];
+
+                    // Load nodes
+                    strategy.nodes.forEach(nodeData => {
+                        createNode(nodeData.type, nodeData.x, nodeData.y, nodeData.params);
+                    });
+
+                    // Load connections
+                    state.connections = strategy.connections;
+                    updateConnections();
+
+                    showToast('استراتژی بارگذاری شد', 'success');
+                } catch (error) {
+                    showToast('خطا در بارگذاری فایل', 'error');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+
+            e.target.value = '';
+        });
+
+        function exportStrategy() {
+            showToast('خروجی در حال تولید...', 'info');
+            setTimeout(() => {
+                saveStrategy();
+            }, 500);
+        }
+
+        // ============= TEMPLATES =============
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const templateName = card.dataset.template;
+                loadTemplate(templateName);
+            });
+        });
+
+        function loadTemplate(templateName) {
+            // Clear current
+            state.nodes.forEach(n => deleteNode(n.id));
+            state.nodes = [];
+            state.connections = [];
+
+            const templates = {
+                'rsi-macd': () => {
+                    const price = createNode('price-data', 100, 100);
+                    const rsi = createNode('rsi', 350, 80);
+                    const macd = createNode('macd', 350, 250);
+                    const andGate = createNode('and-gate', 600, 165);
+                    const output = createNode('signal-output', 850, 165);
+
+                    setTimeout(() => {
+                        createConnection(price.id, rsi.id);
+                        createConnection(price.id, macd.id);
+                        createConnection(rsi.id, andGate.id);
+                        createConnection(macd.id, andGate.id);
+                        createConnection(andGate.id, output.id);
+                    }, 100);
+                },
+                'smc-mtf': () => {
+                    const mtf = createNode('multi-timeframe', 100, 150);
+                    const smc = createNode('smc', 400, 150);
+                    const output = createNode('signal-output', 700, 150);
+
+                    setTimeout(() => {
+                        createConnection(mtf.id, smc.id);
+                        createConnection(smc.id, output.id);
+                    }, 100);
+                },
+                'bollinger-breakout': () => {
+                    const price = createNode('price-data', 100, 150);
+                    const bollinger = createNode('bollinger', 400, 150);
+                    const positionSizer = createNode('position-sizer', 700, 100);
+                    const executor = createNode('trade-executor', 1000, 150);
+
+                    setTimeout(() => {
+                        createConnection(price.id, bollinger.id);
+                        createConnection(bollinger.id, executor.id);
+                        createConnection(positionSizer.id, executor.id);
+                    }, 100);
+                },
+                'trend-following': () => {
+                    const price = createNode('price-data', 100, 150);
+                    const ema = createNode('ema', 400, 150);
+                    const fibonacci = createNode('fibonacci', 700, 150);
+                    const output = createNode('signal-output', 1000, 150);
+
+                    setTimeout(() => {
+                        createConnection(price.id, ema.id);
+                        createConnection(price.id, fibonacci.id);
+                        createConnection(ema.id, output.id);
+                        createConnection(fibonacci.id, output.id);
+                    }, 100);
+                }
+            };
+
+            if (templates[templateName]) {
+                templates[templateName]();
+                showToast('قالب بارگذاری شد', 'success');
+            }
+        }
+
+        // ============= EVENT LISTENERS =============
+        elements.executeBtn.addEventListener('click', executeStrategy);
+        elements.pauseBtn.addEventListener('click', pauseStrategy);
+        elements.resetBtn.addEventListener('click', resetStrategy);
+        elements.saveBtn.addEventListener('click', saveStrategy);
+        elements.loadBtn.addEventListener('click', loadStrategy);
+        elements.exportBtn.addEventListener('click', exportStrategy);
+
+        // ============= INITIALIZATION =============
+        showToast('آزمایشگاه بصری استراتژی آماده است', 'success');
+        updatePropertiesPanel();
+
+        // Create sample connections line effect
+        setInterval(() => {
+            document.querySelectorAll('.connection-path').forEach(path => {
+                path.style.opacity = 0.6 + Math.random() * 0.4;
+            });
+        }, 2000);
+    </script>
+</body>
+</html>

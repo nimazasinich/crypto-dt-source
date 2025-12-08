@@ -1,0 +1,86 @@
+{
+  "test_time": "2025-12-08T03:06:48.601159",
+  "dns_tests": [
+    {
+      "domain": "api.binance.com",
+      "attempt": 1,
+      "ip": "99.84.93.45",
+      "status": "success"
+    },
+    {
+      "domain": "api.binance.com",
+      "attempt": 2,
+      "ip": "99.84.93.45",
+      "status": "success"
+    },
+    {
+      "domain": "api.binance.com",
+      "attempt": 3,
+      "ip": "99.84.93.45",
+      "status": "success"
+    },
+    {
+      "domain": "api.kucoin.com",
+      "attempt": 1,
+      "ip": "104.18.33.108",
+      "status": "success"
+    },
+    {
+      "domain": "api.kucoin.com",
+      "attempt": 2,
+      "ip": "172.64.154.148",
+      "status": "success"
+    },
+    {
+      "domain": "api.kucoin.com",
+      "attempt": 3,
+      "ip": "104.18.33.108",
+      "status": "success"
+    }
+  ],
+  "binance_tests": [
+    {
+      "test": "health",
+      "status": "success"
+    },
+    {
+      "test": "price",
+      "status": "success",
+      "price": 90032.55
+    },
+    {
+      "test": "ticker",
+      "status": "success"
+    },
+    {
+      "test": "ohlcv",
+      "status": "success"
+    }
+  ],
+  "kucoin_tests": [
+    {
+      "test": "health",
+      "status": "warning"
+    },
+    {
+      "test": "ticker",
+      "status": "warning"
+    },
+    {
+      "test": "stats",
+      "status": "warning"
+    }
+  ],
+  "statistics": {
+    "dns_rotations": 0,
+    "proxy_rotations": 0,
+    "successful_requests": 9,
+    "failed_requests": 0,
+    "success_rate": "100.0%",
+    "dns_providers": 4,
+    "proxy_pool_size": 0,
+    "dns_failures": {},
+    "proxy_failures": {},
+    "cache_size": 2
+  }
+}

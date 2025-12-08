@@ -1,0 +1,222 @@
+<aside class="sidebar" role="navigation" aria-label="Main navigation">
+  <!-- Brand Logo -->
+  <div class="sidebar-brand">
+    <div class="brand-logo">
+      <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2dd4bf"/>
+            <stop offset="50%" stop-color="#22d3ee"/>
+            <stop offset="100%" stop-color="#3b82f6"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <circle cx="50" cy="50" r="45" fill="url(#logoGradient)" filter="url(#glow)"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="white" stroke-width="1.5" opacity="0.3"/>
+        <path d="M50 15 L65 40 L50 35 L35 40 Z" fill="white" opacity="1"/>
+        <path d="M50 85 L35 60 L50 65 L65 60 Z" fill="white" opacity="1"/>
+        <circle cx="50" cy="50" r="8" fill="white" opacity="0.9"/>
+        <path d="M50 42 L54 50 L50 48 L46 50 Z" fill="url(#logoGradient)" opacity="0.8"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <span class="brand-name">Crypto Monitor</span>
+      <span class="brand-tag">ULTIMATE</span>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="nav-menu">
+    <ul class="nav-list">
+      <!-- Dashboard -->
+      <li class="nav-item">
+        <a href="/" class="nav-link" data-page="dashboard">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+      </li>
+
+      <!-- Market -->
+      <li class="nav-item">
+        <a href="/static/pages/market/index.html" class="nav-link" data-page="market">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m22 7-8.5 8.5-5-5L2 17"/>
+              <path d="M16 7h6v6"/>
+            </svg>
+          </span>
+          <span class="nav-label">Market</span>
+        </a>
+      </li>
+
+      <!-- AI Models -->
+      <li class="nav-item">
+        <a href="/static/pages/models/index.html" class="nav-link" data-page="models">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4Z"/>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="3"/>
+              <path d="M12 11v4"/>
+              <path d="M9 18h6"/>
+            </svg>
+          </span>
+          <span class="nav-label">AI Models</span>
+        </a>
+      </li>
+
+      <!-- Sentiment -->
+      <li class="nav-item">
+        <a href="/static/pages/sentiment/index.html" class="nav-link" data-page="sentiment">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+              <line x1="9" y1="9" x2="9.01" y2="9"/>
+              <line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+          </span>
+          <span class="nav-label">Sentiment</span>
+        </a>
+      </li>
+
+      <!-- AI Analyst -->
+      <li class="nav-item">
+        <a href="/static/pages/ai-analyst/index.html" class="nav-link" data-page="ai-analyst">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 8V4H8"/>
+              <rect x="2" y="14" width="4" height="6" rx="1"/>
+              <rect x="10" y="10" width="4" height="10" rx="1"/>
+              <rect x="18" y="6" width="4" height="14" rx="1"/>
+              <path d="m8 4 4 4"/>
+            </svg>
+          </span>
+          <span class="nav-label">AI Analyst</span>
+        </a>
+      </li>
+
+      <!-- Technical Analysis -->
+      <li class="nav-item">
+        <a href="/static/pages/technical-analysis/index.html" class="nav-link" data-page="technical-analysis">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="m19 9-5 5-4-4-3 3"/>
+              <circle cx="19" cy="9" r="2"/>
+            </svg>
+          </span>
+          <span class="nav-label">Technical</span>
+        </a>
+      </li>
+
+      <!-- Trading Assistant -->
+      <li class="nav-item">
+        <a href="/static/pages/trading-assistant/index.html" class="nav-link" data-page="trading-assistant">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </span>
+          <span class="nav-label">Trading</span>
+        </a>
+      </li>
+
+      <!-- News -->
+      <li class="nav-item">
+        <a href="/static/pages/news/index.html" class="nav-link" data-page="news">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+              <path d="M18 14h-8"/>
+              <path d="M15 18h-5"/>
+              <path d="M10 6h8v4h-8V6Z"/>
+            </svg>
+          </span>
+          <span class="nav-label">News</span>
+        </a>
+      </li>
+
+      <!-- Providers -->
+      <li class="nav-item">
+        <a href="/static/pages/providers/index.html" class="nav-link" data-page="providers">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 11a9 9 0 0 1 9 9"/>
+              <path d="M4 4a16 16 0 0 1 16 16"/>
+              <circle cx="5" cy="19" r="2"/>
+            </svg>
+          </span>
+          <span class="nav-label">Providers</span>
+        </a>
+      </li>
+
+      <!-- System Monitor -->
+      <li class="nav-item">
+        <a href="/system-monitor" class="nav-link" data-page="system-monitor">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2"/>
+              <line x1="12" y1="2" x2="12" y2="4"/>
+              <line x1="12" y1="20" x2="12" y2="22"/>
+              <line x1="2" y1="12" x2="4" y2="12"/>
+              <line x1="20" y1="12" x2="22" y2="12"/>
+            </svg>
+          </span>
+          <span class="nav-label">System Monitor</span>
+          <span class="nav-badge" style="background: #ef4444; color: white; font-size: 9px; padding: 2px 5px; border-radius: 8px; margin-left: auto;">LIVE</span>
+        </a>
+      </li>
+
+      <!-- Help -->
+      <li class="nav-item">
+        <a href="/static/pages/help/index.html" class="nav-link" data-page="help">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </span>
+          <span class="nav-label">Help</span>
+        </a>
+      </li>
+
+      <!-- Settings -->
+      <li class="nav-item">
+        <a href="/static/pages/settings/index.html" class="nav-link" data-page="settings">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </span>
+          <span class="nav-label">Settings</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="sidebar-footer">
+    <div class="sidebar-status">
+      <span class="status-dot online"></span>
+      <span class="status-text">System Online</span>
+    </div>
+  </div>
+</aside>

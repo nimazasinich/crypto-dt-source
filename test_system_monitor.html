@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Monitor Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
+        .test { margin: 10px 0; padding: 10px; background: #2a2a2a; border-left: 3px solid #0f0; }
+        .error { border-left-color: #f00; color: #f00; }
+        .success { border-left-color: #0f0; color: #0f0; }
+        .info { border-left-color: #00f; color: #0af; }
+        pre { background: #000; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>System Monitor Diagnostic Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            results.appendChild(div);
+        }
+        
+        async function runTests() {
+            log('Starting System Monitor Diagnostics...', 'info');
+            
+            // Test 1: Check if API endpoint exists
+            log('Test 1: Checking /api/monitoring/status endpoint...', 'info');
+            try {
+                const response = await fetch('/api/monitoring/status');
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✓ API endpoint working! Status: ${response.status}`, 'success');
+                    log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+                } else {
+                    log(`✗ API returned error: ${response.status} ${response.statusText}`, 'error');
+                    const text = await response.text();
+                    log(`<pre>${text}</pre>`, 'error');
+                }
+            } catch (error) {
+                log(`✗ Failed to fetch API: ${error.message}`, 'error');
+            }
+            
+            // Test 2: Check WebSocket
+            log('Test 2: Testing WebSocket connection...', 'info');
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/api/monitoring/ws`;
+                log(`Connecting to: ${wsUrl}`, 'info');
+                
+                const ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    log('✓ WebSocket connected successfully!', 'success');
+                    ws.send('ping');
+                };
+                
+                ws.onmessage = (event) => {
+                    log('✓ WebSocket message received:', 'success');
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'info');
+                    } catch (e) {
+                        log(`<pre>${event.data}</pre>`, 'info');
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    log(`✗ WebSocket error: ${error}`, 'error');
+                };
+                
+                ws.onclose = () => {
+                    log('WebSocket closed', 'info');
+                };
+                
+                // Close after 5 seconds
+                setTimeout(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.close();
+                        log('WebSocket test completed', 'info');
+                    }
+                }, 5000);
+            } catch (error) {
+                log(`✗ WebSocket test failed: ${error.message}`, 'error');
+            }
+            
+            // Test 3: Check if SystemMonitor class loads
+            log('Test 3: Checking SystemMonitor class...', 'info');
+            try {
+                const module = await import('/static/pages/system-monitor/system-monitor.js');
+                const SystemMonitorClass = module.default || module.SystemMonitor;
+                if (SystemMonitorClass) {
+                    log('✓ SystemMonitor class loaded successfully!', 'success');
+                    log(`Class type: ${typeof SystemMonitorClass}`, 'info');
+                } else {
+                    log('✗ SystemMonitor class not found in module', 'error');
+                }
+            } catch (error) {
+                log(`✗ Failed to load SystemMonitor: ${error.message}`, 'error');
+                log(`<pre>${error.stack}</pre>`, 'error');
+            }
+            
+            // Test 4: Check canvas element
+            log('Test 4: Checking canvas element...', 'info');
+            const canvas = document.createElement('canvas');
+            if (canvas.getContext) {
+                log('✓ Canvas API supported', 'success');
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    log('✓ 2D context available', 'success');
+                } else {
+                    log('✗ 2D context not available', 'error');
+                }
+            } else {
+                log('✗ Canvas API not supported', 'error');
+            }
+            
+            log('Diagnostics complete!', 'success');
+        }
+        
+        runTests();
+    </script>
+</body>
+</html>

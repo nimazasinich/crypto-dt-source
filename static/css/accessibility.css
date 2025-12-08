@@ -1,0 +1,225 @@
+/**
+ * ============================================
+ * ACCESSIBILITY (WCAG 2.1 AA)
+ * Focus indicators, screen reader support, keyboard navigation
+ * ============================================
+ */
+
+/* ===== FOCUS INDICATORS ===== */
+
+*:focus {
+    outline: 2px solid var(--color-accent-blue);
+    outline-offset: 2px;
+}
+
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+*:focus-visible {
+    outline: 2px solid var(--color-accent-blue);
+    outline-offset: 2px;
+}
+
+/* High contrast focus for interactive elements */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid var(--color-accent-blue);
+    outline-offset: 3px;
+}
+
+/* ===== SKIP LINKS ===== */
+
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background: var(--color-accent-blue);
+    color: white;
+    padding: var(--spacing-3) var(--spacing-6);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+    border-radius: var(--radius-base);
+    z-index: var(--z-tooltip);
+    transition: top var(--duration-fast);
+}
+
+.skip-link:focus {
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+}
+
+/* ===== SCREEN READER ONLY ===== */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.sr-only-focusable:active,
+.sr-only-focusable:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* ===== KEYBOARD NAVIGATION HINTS ===== */
+
+[data-keyboard-hint]::after {
+    content: attr(data-keyboard-hint);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--radius-base);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-fast);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border-primary);
+}
+
+[data-keyboard-hint]:focus::after {
+    opacity: 1;
+}
+
+/* ===== REDUCED MOTION ===== */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .toast,
+    .modal,
+    .sidebar {
+        transition: none !important;
+    }
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+
+@media (prefers-contrast: high) {
+    :root {
+        --color-border-primary: rgba(255, 255, 255, 0.3);
+        --color-border-secondary: rgba(255, 255, 255, 0.2);
+    }
+
+    .card,
+    .provider-card,
+    .table-container {
+        border-width: 2px;
+    }
+
+    .btn {
+        border-width: 2px;
+    }
+}
+
+/* ===== ARIA LIVE REGIONS ===== */
+
+.aria-live-polite {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+[aria-live="polite"],
+[aria-live="assertive"] {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* ===== LOADING STATES (for screen readers) ===== */
+
+[aria-busy="true"] {
+    cursor: wait;
+}
+
+[aria-busy="true"]::after {
+    content: " (Loading...)";
+    position: absolute;
+    left: -10000px;
+}
+
+/* ===== DISABLED STATES ===== */
+
+[aria-disabled="true"],
+[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* ===== TOOLTIPS (Accessible) ===== */
+
+[role="tooltip"] {
+    position: absolute;
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--radius-base);
+    font-size: var(--font-size-sm);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border-primary);
+    z-index: var(--z-tooltip);
+    max-width: 300px;
+}
+
+/* ===== COLOR CONTRAST HELPERS ===== */
+
+.text-high-contrast {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.bg-high-contrast {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+/* ===== KEYBOARD NAVIGATION INDICATORS ===== */
+
+body:not(.using-mouse) *:focus {
+    outline: 3px solid var(--color-accent-blue);
+    outline-offset: 3px;
+}
+
+/* Detect mouse usage */
+body.using-mouse *:focus {
+    outline: none;
+}
+
+body.using-mouse *:focus-visible {
+    outline: 2px solid var(--color-accent-blue);
+    outline-offset: 2px;
+}
