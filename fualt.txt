@@ -521,5 +521,21 @@ INFO:     10.20.24.53:18180 - "GET /api/health HTTP/1.1" 200 OK
 INFO:     10.20.34.97:2468 - "GET /api/health HTTP/1.1" 200 OK
 INFO:     10.20.38.235:23016 - "GET /api/health HTTP/1.1" 200 OK
 INFO:     10.20.24.53:51427 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     10.20.22.61:8373 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.20.22.61:8373 - "GET /api/health HTTP/1.1" 200 OKai-analyst.js:291  GET https://really-amin-datasourceforcryptocurrency-2.hf.space/api/market/ohlc?symbol=BTC&interval=1h&limit=100 404 (Not Found)
+analyzeAsset @ ai-analyst.js:291
+await in analyzeAsset
+(anonymous) @ ai-analyst.js:149
+  GET https://really-amin-datasourceforcryptocurrency-2.hf.space/api/market/ohlc?symbol=BTC&interval=1h&limit=100 404 (Not Found)
+analyzeAsset @ ai-analyst.js:291
+await in analyzeAsset
+(anonymous) @ ai-analyst.js:149
+ai-analyst.js:297  GET https://really-amin-datasourceforcryptocurrency-2.hf.space/api/ohlcv?symbol=BTC&timeframe=1h&limit=100 404 (Not Found)
+analyzeAsset @ ai-analyst.js:297
+await in analyzeAsset
+(anonymous) @ ai-analyst.js:149
+  GET https://really-amin-datasourceforcryptocurrency-2.hf.space/api/ohlcv?symbol=BTC&timeframe=1h&limit=100 404 (Not Found)
+analyzeAsset @ ai-analyst.js:297
+await in analyzeAsset
+(anonymous) @ ai-analyst.js:149
+
  
