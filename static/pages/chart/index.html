@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نمودار قیمت - Crypto Charts</title>
+  <link rel="stylesheet" href="/shared/css/global.css?v=3.0">
+  <link rel="stylesheet" href="/shared/css/design-system.css?v=3.0">
+  <link rel="stylesheet" href="./chart.css">
+</head>
+<body>
+  <div class="chart-container">
+    <header class="chart-header">
+      <h1 id="chart-title">نمودار قیمت</h1>
+      <div class="chart-controls">
+        <select id="symbol-select">
+          <option value="BTC">Bitcoin (BTC)</option>
+          <option value="ETH">Ethereum (ETH)</option>
+          <option value="BNB">Binance Coin (BNB)</option>
+          <option value="SOL">Solana (SOL)</option>
+          <option value="XRP">Ripple (XRP)</option>
+        </select>
+        <select id="timeframe-select">
+          <option value="1h">1 ساعت</option>
+          <option value="4h">4 ساعت</option>
+          <option value="1d" selected>1 روز</option>
+          <option value="1w">1 هفته</option>
+          <option value="1M">1 ماه</option>
+        </select>
+        <button id="refresh-btn" class="btn-primary">بروزرسانی</button>
+      </div>
+    </header>
+
+    <div class="chart-wrapper">
+      <div id="price-chart" class="chart-canvas"></div>
+      <div class="chart-info">
+        <div class="info-card">
+          <span class="info-label">قیمت فعلی:</span>
+          <span id="current-price" class="info-value">—</span>
+        </div>
+        <div class="info-card">
+          <span class="info-label">تغییر 24 ساعت:</span>
+          <span id="change-24h" class="info-value">—</span>
+        </div>
+        <div class="info-card">
+          <span class="info-label">حجم 24 ساعت:</span>
+          <span id="volume-24h" class="info-value">—</span>
+        </div>
+        <div class="info-card">
+          <span class="info-label">بالاترین:</span>
+          <span id="high-24h" class="info-value">—</span>
+        </div>
+        <div class="info-card">
+          <span class="info-label">پایین‌ترین:</span>
+          <span id="low-24h" class="info-value">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-footer">
+      <p class="chart-note">💡 این نمودار از داده‌های واقعی بازار استفاده می‌کند</p>
+      <button id="back-btn" class="btn-secondary" onclick="window.history.back()">بازگشت</button>
+    </div>
+  </div>
+
+  <script src="./chart.js"></script>
+</body>
+</html>
