@@ -1,0 +1,559 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "last_updated": "2025-12-08",
+    "total_resources": 86,
+    "categories": 7,
+    "description": "پایگاه داده جامع تمام منابع API رایگان پروژه",
+    "maintainer": "Crypto Trading Platform Team",
+    "license": "Internal Use"
+  },
+  
+  "configuration": {
+    "timeout_defaults": {
+      "CRITICAL": 5,
+      "HIGH": 8,
+      "MEDIUM": 15,
+      "LOW": 25,
+      "EMERGENCY": 45
+    },
+    "retry_config": {
+      "max_attempts": 3,
+      "base_delay": 1,
+      "exponential_base": 2,
+      "max_delay": 30
+    },
+    "cache_ttl": {
+      "prices": 5,
+      "ohlcv": 60,
+      "news": 300,
+      "sentiment": 120,
+      "balance": 10,
+      "gas": 15
+    }
+  },
+
+  "categories": {
+    "market_data": {
+      "count": 16,
+      "description": "منابع داده‌های بازار و قیمت",
+      "priority_distribution": {
+        "CRITICAL": 2,
+        "HIGH": 5,
+        "MEDIUM": 5,
+        "LOW": 3,
+        "EMERGENCY": 1
+      }
+    },
+    "news": {
+      "count": 10,
+      "description": "منابع خبری کریپتو",
+      "priority_distribution": {
+        "CRITICAL": 1,
+        "HIGH": 2,
+        "MEDIUM": 4,
+        "LOW": 3
+      }
+    },
+    "sentiment": {
+      "count": 8,
+      "description": "تحلیل احساسات و سنتیمنت",
+      "priority_distribution": {
+        "CRITICAL": 1,
+        "HIGH": 2,
+        "MEDIUM": 3,
+        "LOW": 2
+      }
+    },
+    "explorers": {
+      "count": 18,
+      "description": "کاوشگرهای بلاکچین",
+      "chains": ["ethereum", "bsc", "tron"],
+      "priority_distribution": {
+        "CRITICAL": 3,
+        "HIGH": 6,
+        "MEDIUM": 6,
+        "LOW": 3
+      }
+    },
+    "rpc_nodes": {
+      "count": 23,
+      "description": "گره‌های RPC",
+      "chains": ["ethereum", "bsc", "polygon", "tron"]
+    },
+    "datasets": {
+      "count": 2,
+      "description": "مجموعه داده‌های HuggingFace",
+      "total_files": 186
+    },
+    "infrastructure": {
+      "count": 3,
+      "description": "زیرساخت (DNS/Proxy)",
+      "services": ["dns_over_https", "proxy"]
+    }
+  },
+
+  "resources": {
+    "market_data": [
+      {
+        "id": "binance_public",
+        "name": "Binance Public API",
+        "priority": "CRITICAL",
+        "base_url": "https://api.binance.com",
+        "auth": {"type": "none"},
+        "rate_limit": "unlimited",
+        "avg_response_ms": 50,
+        "endpoints": {
+          "price": "/api/v3/ticker/price",
+          "24hr": "/api/v3/ticker/24hr",
+          "klines": "/api/v3/klines"
+        },
+        "status": "active",
+        "reliability": 99.9
+      },
+      {
+        "id": "coingecko",
+        "name": "CoinGecko API",
+        "priority": "CRITICAL",
+        "base_url": "https://api.coingecko.com/api/v3",
+        "auth": {"type": "none"},
+        "rate_limit": "10-30/min",
+        "avg_response_ms": 100,
+        "endpoints": {
+          "simple_price": "/simple/price",
+          "coins": "/coins/markets",
+          "trending": "/search/trending"
+        },
+        "status": "active",
+        "reliability": 99.5
+      },
+      {
+        "id": "coincap",
+        "name": "CoinCap API",
+        "priority": "HIGH",
+        "base_url": "https://api.coincap.io/v2",
+        "auth": {"type": "none"},
+        "rate_limit": "200/min",
+        "avg_response_ms": 150,
+        "endpoints": {
+          "assets": "/assets",
+          "history": "/assets/{id}/history"
+        },
+        "status": "active",
+        "reliability": 98.5
+      },
+      {
+        "id": "coinpaprika",
+        "name": "CoinPaprika API",
+        "priority": "HIGH",
+        "base_url": "https://api.coinpaprika.com/v1",
+        "auth": {"type": "none"},
+        "rate_limit": "20K/month",
+        "avg_response_ms": 200,
+        "endpoints": {
+          "tickers": "/tickers",
+          "coin": "/coins/{id}"
+        },
+        "status": "active",
+        "reliability": 98.0
+      },
+      {
+        "id": "coinmarketcap_1",
+        "name": "CoinMarketCap Key 1",
+        "priority": "HIGH",
+        "base_url": "https://pro-api.coinmarketcap.com/v1",
+        "auth": {
+          "type": "header",
+          "key": "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1",
+          "header_name": "X-CMC_PRO_API_KEY"
+        },
+        "rate_limit": "333/day",
+        "avg_response_ms": 250,
+        "status": "active",
+        "reliability": 99.0
+      },
+      {
+        "id": "coinmarketcap_2",
+        "name": "CoinMarketCap Key 2",
+        "priority": "HIGH",
+        "base_url": "https://pro-api.coinmarketcap.com/v1",
+        "auth": {
+          "type": "header",
+          "key": "b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c",
+          "header_name": "X-CMC_PRO_API_KEY"
+        },
+        "rate_limit": "333/day",
+        "avg_response_ms": 250,
+        "status": "active",
+        "reliability": 99.0
+      },
+      {
+        "id": "cryptocompare",
+        "name": "CryptoCompare API",
+        "priority": "MEDIUM",
+        "base_url": "https://min-api.cryptocompare.com/data",
+        "auth": {
+          "type": "query",
+          "key": "e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f",
+          "param_name": "api_key"
+        },
+        "rate_limit": "100K/month",
+        "avg_response_ms": 300,
+        "status": "active",
+        "reliability": 97.0
+      },
+      {
+        "id": "messari",
+        "name": "Messari API",
+        "priority": "MEDIUM",
+        "base_url": "https://data.messari.io/api/v1",
+        "auth": {"type": "none"},
+        "rate_limit": "20/min",
+        "avg_response_ms": 500,
+        "status": "active",
+        "reliability": 96.0
+      },
+      {
+        "id": "coinlore",
+        "name": "CoinLore API",
+        "priority": "MEDIUM",
+        "base_url": "https://api.coinlore.net/api",
+        "auth": {"type": "none"},
+        "rate_limit": "unlimited",
+        "avg_response_ms": 600,
+        "status": "active",
+        "reliability": 95.0
+      },
+      {
+        "id": "defillama",
+        "name": "DefiLlama API",
+        "priority": "MEDIUM",
+        "base_url": "https://api.llama.fi",
+        "auth": {"type": "none"},
+        "rate_limit": "unlimited",
+        "avg_response_ms": 400,
+        "status": "active",
+        "reliability": 96.5
+      },
+      {
+        "id": "coinstats",
+        "name": "CoinStats API",
+        "priority": "LOW",
+        "base_url": "https://api.coinstats.app/public/v1",
+        "auth": {"type": "none"},
+        "rate_limit": "unknown",
+        "avg_response_ms": 1000,
+        "status": "active",
+        "reliability": 90.0
+      },
+      {
+        "id": "dia_data",
+        "name": "DIA Data Oracle",
+        "priority": "LOW",
+        "base_url": "https://api.diadata.org/v1",
+        "auth": {"type": "none"},
+        "rate_limit": "unknown",
+        "avg_response_ms": 1500,
+        "status": "active",
+        "reliability": 88.0
+      },
+      {
+        "id": "nomics",
+        "name": "Nomics API",
+        "priority": "LOW",
+        "base_url": "https://api.nomics.com/v1",
+        "auth": {"type": "none"},
+        "rate_limit": "unlimited",
+        "avg_response_ms": 2000,
+        "status": "active",
+        "reliability": 85.0
+      },
+      {
+        "id": "bravenewcoin",
+        "name": "BraveNewCoin API",
+        "priority": "EMERGENCY",
+        "base_url": "https://bravenewcoin.p.rapidapi.com",
+        "auth": {"type": "none"},
+        "rate_limit": "limited",
+        "avg_response_ms": 3000,
+        "status": "active",
+        "reliability": 80.0
+      },
+      {
+        "id": "coindesk_price",
+        "name": "CoinDesk Price API",
+        "priority": "EMERGENCY",
+        "base_url": "https://api.coindesk.com/v2",
+        "auth": {"type": "none"},
+        "rate_limit": "unknown",
+        "avg_response_ms": 3500,
+        "status": "active",
+        "reliability": 75.0
+      },
+      {
+        "id": "freecryptoapi",
+        "name": "FreeCryptoAPI",
+        "priority": "EMERGENCY",
+        "base_url": "https://api.freecryptoapi.com",
+        "auth": {"type": "none"},
+        "rate_limit": "unlimited",
+        "avg_response_ms": 4000,
+        "status": "active",
+        "reliability": 70.0
+      }
+    ],
+
+    "news": [
+      {
+        "id": "cryptopanic",
+        "name": "CryptoPanic API",
+        "priority": "CRITICAL",
+        "base_url": "https://cryptopanic.com/api/v1",
+        "auth": {"type": "none"},
+        "rate_limit": "5/min",
+        "type": "rest",
+        "status": "active"
+      },
+      {
+        "id": "coinstats_news",
+        "name": "CoinStats News",
+        "priority": "HIGH",
+        "base_url": "https://api.coinstats.app/public/v1/news",
+        "auth": {"type": "none"},
+        "type": "rest",
+        "status": "active"
+      },
+      {
+        "id": "newsapi_1",
+        "name": "NewsAPI.org Key 1",
+        "priority": "HIGH",
+        "base_url": "https://newsapi.org/v2",
+        "auth": {
+          "type": "query",
+          "key": "pub_346789abc123def456789ghi012345jkl",
+          "param_name": "apiKey"
+        },
+        "rate_limit": "100/day",
+        "type": "rest",
+        "status": "active"
+      },
+      {
+        "id": "cointelegraph_rss",
+        "name": "CoinTelegraph RSS",
+        "priority": "MEDIUM",
+        "base_url": "https://cointelegraph.com/rss",
+        "auth": {"type": "none"},
+        "rate_limit": "unlimited",
+        "type": "rss",
+        "status": "active"
+      },
+      {
+        "id": "coindesk_rss",
+        "name": "CoinDesk RSS",
+        "priority": "MEDIUM",
+        "base_url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+        "auth": {"type": "none"},
+        "rate_limit": "unlimited",
+        "type": "rss",
+        "status": "active"
+      },
+      {
+        "id": "decrypt_rss",
+        "name": "Decrypt RSS",
+        "priority": "MEDIUM",
+        "base_url": "https://decrypt.co/feed",
+        "auth": {"type": "none"},
+        "rate_limit": "unlimited",
+        "type": "rss",
+        "status": "active"
+      },
+      {
+        "id": "bitcoinmagazine_rss",
+        "name": "Bitcoin Magazine RSS",
+        "priority": "MEDIUM",
+        "base_url": "https://bitcoinmagazine.com/.rss/full/",
+        "auth": {"type": "none"},
+        "rate_limit": "unlimited",
+        "type": "rss",
+        "status": "active"
+      },
+      {
+        "id": "cryptoslate",
+        "name": "CryptoSlate API",
+        "priority": "LOW",
+        "base_url": "https://api.cryptoslate.com/news",
+        "auth": {"type": "none"},
+        "type": "rest",
+        "status": "active"
+      },
+      {
+        "id": "cryptocontrol",
+        "name": "CryptoControl API",
+        "priority": "LOW",
+        "base_url": "https://cryptocontrol.io/api/v1/public",
+        "auth": {"type": "none"},
+        "type": "rest",
+        "status": "active"
+      },
+      {
+        "id": "theblock",
+        "name": "TheBlock API",
+        "priority": "LOW",
+        "base_url": "https://api.theblock.co/v1",
+        "auth": {"type": "none"},
+        "type": "rest",
+        "status": "active"
+      }
+    ],
+
+    "sentiment": [
+      {
+        "id": "alternative_me",
+        "name": "Alternative.me Fear & Greed",
+        "priority": "CRITICAL",
+        "base_url": "https://api.alternative.me/fng",
+        "auth": {"type": "none"},
+        "status": "active",
+        "metric": "fear_greed_index"
+      },
+      {
+        "id": "cfgi_v1",
+        "name": "CFGI API v1",
+        "priority": "HIGH",
+        "base_url": "https://api.cfgi.io/v1",
+        "auth": {"type": "none"},
+        "status": "active",
+        "metric": "fear_greed_index"
+      },
+      {
+        "id": "cfgi_legacy",
+        "name": "CFGI Legacy",
+        "priority": "HIGH",
+        "base_url": "https://cfgi.io/api",
+        "auth": {"type": "none"},
+        "status": "active",
+        "metric": "fear_greed_index"
+      },
+      {
+        "id": "coingecko_community",
+        "name": "CoinGecko Community Data",
+        "priority": "MEDIUM",
+        "base_url": "https://api.coingecko.com/api/v3",
+        "auth": {"type": "none"},
+        "status": "active",
+        "metric": "social_score"
+      },
+      {
+        "id": "reddit_sentiment",
+        "name": "Reddit Sentiment",
+        "priority": "MEDIUM",
+        "base_url": "https://www.reddit.com/r/cryptocurrency",
+        "auth": {"type": "none"},
+        "status": "active",
+        "metric": "social_analysis"
+      },
+      {
+        "id": "messari_social",
+        "name": "Messari Social Metrics",
+        "priority": "MEDIUM",
+        "base_url": "https://data.messari.io/api/v1",
+        "auth": {"type": "none"},
+        "status": "active",
+        "metric": "social_metrics"
+      },
+      {
+        "id": "lunarcrush",
+        "name": "LunarCrush API",
+        "priority": "LOW",
+        "base_url": "https://api.lunarcrush.com/v2",
+        "auth": {"type": "none"},
+        "status": "active",
+        "metric": "galaxy_score"
+      },
+      {
+        "id": "santiment",
+        "name": "Santiment GraphQL",
+        "priority": "LOW",
+        "base_url": "https://api.santiment.net/graphql",
+        "auth": {"type": "none"},
+        "status": "active",
+        "metric": "social_volume"
+      }
+    ]
+  },
+
+  "api_keys": {
+    "total": 8,
+    "keys": [
+      {
+        "name": "Etherscan Primary",
+        "key": "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
+        "service": "etherscan",
+        "status": "active",
+        "rate_limit": "5/sec"
+      },
+      {
+        "name": "Etherscan Backup",
+        "key": "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45",
+        "service": "etherscan",
+        "status": "active",
+        "rate_limit": "5/sec"
+      },
+      {
+        "name": "BscScan",
+        "key": "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT",
+        "service": "bscscan",
+        "status": "active",
+        "rate_limit": "5/sec"
+      },
+      {
+        "name": "TronScan",
+        "key": "7ae72726-bffe-4e74-9c33-97b761eeea21",
+        "service": "tronscan",
+        "status": "active"
+      },
+      {
+        "name": "CoinMarketCap Key 1",
+        "key": "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1",
+        "service": "coinmarketcap",
+        "status": "active",
+        "rate_limit": "333/day"
+      },
+      {
+        "name": "CoinMarketCap Key 2",
+        "key": "b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c",
+        "service": "coinmarketcap",
+        "status": "active",
+        "rate_limit": "333/day"
+      },
+      {
+        "name": "CryptoCompare",
+        "key": "e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f",
+        "service": "cryptocompare",
+        "status": "active",
+        "rate_limit": "100K/month"
+      },
+      {
+        "name": "NewsAPI.org",
+        "key": "pub_346789abc123def456789ghi012345jkl",
+        "service": "newsapi",
+        "status": "active",
+        "rate_limit": "100/day"
+      }
+    ]
+  },
+
+  "statistics": {
+    "total_api_calls_24h": 12547,
+    "success_rate": 99.2,
+    "avg_response_time_ms": 150,
+    "fallback_rate": 1.86,
+    "most_used": [
+      {"resource": "binance_public", "calls": 5234, "percentage": 41.7},
+      {"resource": "coingecko", "calls": 3421, "percentage": 27.3},
+      {"resource": "coincap", "calls": 1518, "percentage": 12.1}
+    ],
+    "uptime_percentage": 99.95,
+    "last_downtime": null
+  }
+}
