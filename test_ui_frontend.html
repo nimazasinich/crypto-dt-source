@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست UI و هماهنگی Frontend-Backend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+        .info { color: blue; }
+        pre {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 تست کامل UI و هماهنگی Frontend-Backend</h1>
+    
+    <div class="test-section">
+        <h2>1️⃣ تست اتصال به Backend</h2>
+        <button onclick="testHealth()">تست Health</button>
+        <div id="health-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2️⃣ تست بارگذاری داده‌ها</h2>
+        <button onclick="testStats()">تست آمار</button>
+        <div id="stats-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3️⃣ تست WebSocket (Background Service)</h2>
+        <button onclick="testWebSocket()">تست WebSocket</button>
+        <button onclick="closeWebSocket()">قطع اتصال</button>
+        <div id="ws-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4️⃣ تست تمام Endpoints</h2>
+        <button onclick="testAllEndpoints()">تست همه</button>
+        <div id="endpoints-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5️⃣ تست یک دسته خاص</h2>
+        <button onclick="testCategory('block_explorers')">Block Explorers</button>
+        <button onclick="testCategory('market_data_apis')">Market Data</button>
+        <button onclick="testCategory('news_apis')">News APIs</button>
+        <div id="category-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📊 خلاصه نتایج</h2>
+        <div id="summary"></div>
+    </div>
+    
+    <script>
+        let ws = null;
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            total: 0
+        };
+        
+        const BASE_URL = 'http://localhost:7860';
+        
+        function updateSummary() {
+            document.getElementById('summary').innerHTML = `
+                <p><strong>مجموع تست‌ها:</strong> ${testResults.total}</p>
+                <p class="pass">✅ موفق: ${testResults.passed}</p>
+                <p class="fail">❌ ناموفق: ${testResults.failed}</p>
+            `;
+        }
+        
+        function addResult(passed, testName) {
+            testResults.total++;
+            if (passed) {
+                testResults.passed++;
+            } else {
+                testResults.failed++;
+            }
+            updateSummary();
+        }
+        
+        async function testHealth() {
+            const result = document.getElementById('health-result');
+            result.innerHTML = '<p class="info">در حال تست...</p>';
+            
+            try {
+                const response = await fetch(`${BASE_URL}/health`);
+                const data = await response.json();
+                
+                result.innerHTML = `
+                    <p class="pass">✅ تست موفق</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                addResult(true, 'Health');
+            } catch (error) {
+                result.innerHTML = `<p class="fail">❌ خطا: ${error.message}</p>`;
+                addResult(false, 'Health');
+            }
+        }
+        
+        async function testStats() {
+            const result = document.getElementById('stats-result');
+            result.innerHTML = '<p class="info">در حال تست...</p>';
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/resources/stats`);
+                const data = await response.json();
+                
+                result.innerHTML = `
+                    <p class="pass">✅ داده‌ها بارگذاری شد</p>
+                    <p><strong>مجموع منابع:</strong> ${data.total_resources}</p>
+                    <p><strong>دسته‌بندی‌ها:</strong> ${data.total_categories}</p>
+                    <pre>${JSON.stringify(data.categories, null, 2)}</pre>
+                `;
+                addResult(true, 'Stats');
+            } catch (error) {
+                result.innerHTML = `<p class="fail">❌ خطا: ${error.message}</p>`;
+                addResult(false, 'Stats');
+            }
+        }
+        
+        function testWebSocket() {
+            const result = document.getElementById('ws-result');
+            result.innerHTML = '<p class="info">در حال اتصال...</p>';
+            
+            try {
+                ws = new WebSocket('ws://localhost:7860/ws');
+                
+                ws.onopen = () => {
+                    result.innerHTML += '<p class="pass">✅ اتصال برقرار شد</p>';
+                    addResult(true, 'WebSocket Connect');
+                };
+                
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    result.innerHTML += `
+                        <p class="info">📨 پیام دریافت شد:</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    addResult(true, 'WebSocket Message');
+                };
+                
+                ws.onerror = (error) => {
+                    result.innerHTML += `<p class="fail">❌ خطا در WebSocket</p>`;
+                    addResult(false, 'WebSocket');
+                };
+                
+                ws.onclose = () => {
+                    result.innerHTML += '<p class="info">اتصال قطع شد</p>';
+                };
+            } catch (error) {
+                result.innerHTML = `<p class="fail">❌ خطا: ${error.message}</p>`;
+                addResult(false, 'WebSocket');
+            }
+        }
+        
+        function closeWebSocket() {
+            if (ws) {
+                ws.close();
+                document.getElementById('ws-result').innerHTML += '<p class="info">اتصال به درخواست کاربر قطع شد</p>';
+            }
+        }
+        
+        async function testAllEndpoints() {
+            const result = document.getElementById('endpoints-result');
+            result.innerHTML = '<p class="info">در حال تست endpoints...</p>';
+            
+            const endpoints = [
+                '/',
+                '/health',
+                '/api/resources/stats',
+                '/api/categories',
+                '/api/resources/list'
+            ];
+            
+            let html = '<ul>';
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${BASE_URL}${endpoint}`);
+                    const status = response.status;
+                    
+                    if (status === 200) {
+                        html += `<li class="pass">✅ ${endpoint} - ${status} OK</li>`;
+                        addResult(true, `Endpoint ${endpoint}`);
+                    } else {
+                        html += `<li class="fail">❌ ${endpoint} - ${status}</li>`;
+                        addResult(false, `Endpoint ${endpoint}`);
+                    }
+                } catch (error) {
+                    html += `<li class="fail">❌ ${endpoint} - Error: ${error.message}</li>`;
+                    addResult(false, `Endpoint ${endpoint}`);
+                }
+            }
+            
+            html += '</ul>';
+            result.innerHTML = html;
+        }
+        
+        async function testCategory(category) {
+            const result = document.getElementById('category-result');
+            result.innerHTML = '<p class="info">در حال تست...</p>';
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/resources/category/${category}`);
+                const data = await response.json();
+                
+                result.innerHTML = `
+                    <p class="pass">✅ دسته ${category}</p>
+                    <p><strong>تعداد:</strong> ${data.total}</p>
+                    <p><strong>اولین مورد:</strong></p>
+                    <pre>${JSON.stringify(data.resources[0], null, 2)}</pre>
+                `;
+                addResult(true, `Category ${category}`);
+            } catch (error) {
+                result.innerHTML = `<p class="fail">❌ خطا: ${error.message}</p>`;
+                addResult(false, `Category ${category}`);
+            }
+        }
+        
+        // تست خودکار در شروع
+        window.onload = () => {
+            console.log('🚀 صفحه تست بارگذاری شد');
+        };
+    </script>
+</body>
+</html>
