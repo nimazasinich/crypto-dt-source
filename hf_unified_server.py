@@ -36,6 +36,7 @@ from backend.routers.trading_backtesting_api import router as trading_router
 from backend.routers.comprehensive_resources_api import router as comprehensive_resources_router
 from backend.routers.resource_hierarchy_api import router as resource_hierarchy_router
 from backend.routers.dynamic_model_api import router as dynamic_model_router
+from backend.routers.background_worker_api import router as background_worker_router
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -76,6 +77,9 @@ _OHLCV_VERIFICATION_CACHE: Optional[Dict[str, Any]] = _load_json_file(OHLCV_VERI
 # Resources Monitor - Dynamic monitoring
 from api.resources_monitor import get_resources_monitor
 
+# Background Worker for Data Collection
+from backend.workers import start_background_worker, stop_background_worker
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown"""
@@ -93,10 +97,26 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"⚠️ Failed to start resources monitor: {e}")
     
+    # Start background data collection worker
+    try:
+        worker = await start_background_worker()
+        logger.info("✅ Background data collection worker started")
+        logger.info("   📅 UI data collection: every 5 minutes")
+        logger.info("   📅 Historical data collection: every 15 minutes")
+    except Exception as e:
+        logger.error(f"⚠️ Failed to start background worker: {e}")
+    
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down HuggingFace Unified Server...")
+    
+    # Stop background worker
+    try:
+        await stop_background_worker()
+        logger.info("✅ Background worker stopped")
+    except Exception as e:
+        logger.error(f"⚠️ Error stopping background worker: {e}")
     try:
         monitor = get_resources_monitor()
         monitor.stop_monitoring()
@@ -289,6 +309,12 @@ try:
     logger.info("✓ ✅ Dynamic Model Loader Router loaded (Intelligent auto-detection & registration)")
 except Exception as e:
     logger.error(f"Failed to include dynamic_model_router: {e}")
+
+try:
+    app.include_router(background_worker_router)  # Background Data Collection Worker API
+    logger.info("✓ ✅ Background Worker Router loaded (Auto-collection every 5/15 min)")
+except Exception as e:
+    logger.error(f"Failed to include background_worker_router: {e}")
 
 try:
     from backend.routers.realtime_monitoring_api import router as realtime_monitoring_router
