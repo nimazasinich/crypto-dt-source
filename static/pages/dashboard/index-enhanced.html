@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Crypto Monitor ULTIMATE - Enhanced Dashboard with Modern UI">
+  <meta name="theme-color" content="#14b8a6">
+  <title>Enhanced Dashboard | Crypto Monitor</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232dd4bf'/%3E%3Cstop offset='50%25' stop-color='%2322d3ee'/%3E%3Cstop offset='100%25' stop-color='%233b82f6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='45' fill='url(%23g)'/%3E%3Cpath d='M50 25 L65 45 L50 40 L35 45 Z M50 75 L35 55 L50 60 L65 55 Z' fill='white'/%3E%3C/svg%3E">
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Critical CSS -->
+  <style>
+    :root{--teal-dark:#0d7377;--teal:#14b8a6;--teal-light:#2dd4bf;--cyan:#22d3ee;--text-primary:#0f2926;--text-secondary:#2a5f5a;--bg-main:#ffffff;--bg-secondary:#f8fdfc;--sidebar-width:200px}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:14px;-webkit-font-smoothing:antialiased}
+    body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5;color:var(--text-secondary);background:var(--bg-main);min-height:100vh}
+    .app-container{display:flex;min-height:100vh}
+    .main-content{flex:1;margin-left:var(--sidebar-width);min-height:100vh}
+    .page-content{padding:1.5rem;max-width:1400px;margin:0 auto}
+  </style>
+
+  <!-- Enhanced CSS -->
+  <link rel="stylesheet" href="/static/shared/css/design-system.css?v=3.0">
+  <link rel="stylesheet" href="/static/shared/css/global.css?v=3.0">
+  <link rel="stylesheet" href="/static/shared/css/components.css">
+  <link rel="stylesheet" href="/static/shared/css/layout-enhanced.css">
+  <link rel="stylesheet" href="/static/shared/css/ui-enhancements-v2.css">
+  <link rel="stylesheet" href="/static/pages/dashboard/dashboard.css?v=3.0">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside id="sidebar-container"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header id="header-container"></header>
+
+      <!-- Dashboard Content -->
+      <div class="page-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-title">
+            <h1>
+              <span class="page-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#iconGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <defs>
+                    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#2dd4bf"/>
+                      <stop offset="50%" stop-color="#22d3ee"/>
+                      <stop offset="100%" stop-color="#3b82f6"/>
+                    </linearGradient>
+                  </defs>
+                  <rect x="3" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="14" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/>
+                </svg>
+              </span>
+              Enhanced Dashboard
+            </h1>
+            <p class="page-subtitle">Real-time Market Data with Modern UI</p>
+          </div>
+          <div class="page-actions">
+            <button id="config-helper-btn" class="btn-icon hover-scale" title="API Configuration" aria-label="Show API configuration guide">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </button>
+            <button id="refresh-btn" class="btn-icon hover-scale" title="Refresh" aria-label="Refresh data">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+              </svg>
+            </button>
+            <button id="theme-toggle" class="btn-icon hover-scale" title="Toggle theme" aria-label="Toggle dark mode">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            </button>
+            <span id="last-update" class="last-update">Just now</span>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <!-- Stat Card 1 -->
+          <div class="stat-card-enhanced hover-lift" data-animate="entrance">
+            <div class="stat-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+            <div class="stat-value-animated" id="stat-value-1">0</div>
+            <div class="stat-label">Total Volume</div>
+            <div class="stat-change positive">+12.5%</div>
+          </div>
+
+          <!-- Stat Card 2 -->
+          <div class="stat-card-enhanced hover-lift" data-animate="entrance">
+            <div class="stat-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m22 7-8.5 8.5-5-5L2 17"/>
+                <path d="M16 7h6v6"/>
+              </svg>
+            </div>
+            <div class="stat-value-animated" id="stat-value-2">0</div>
+            <div class="stat-label">Active Traders</div>
+            <div class="stat-change positive">+8.3%</div>
+          </div>
+
+          <!-- Stat Card 3 -->
+          <div class="stat-card-enhanced hover-lift" data-animate="entrance">
+            <div class="stat-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4Z"/>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              </svg>
+            </div>
+            <div class="stat-value-animated" id="stat-value-3">0</div>
+            <div class="stat-label">AI Models</div>
+            <div class="stat-change">Active</div>
+          </div>
+
+          <!-- Stat Card 4 -->
+          <div class="stat-card-enhanced hover-lift" data-animate="entrance">
+            <div class="stat-icon-wrapper">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="9"/>
+              </svg>
+            </div>
+            <div class="stat-value-animated" id="stat-value-4">0</div>
+            <div class="stat-label">Sentiment Score</div>
+            <div class="stat-change positive">Bullish</div>
+          </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
+          <!-- Main Chart -->
+          <div class="col-span-8">
+            <div class="glass-card hover-lift chart-container" data-animate="entrance">
+              <div class="card-header">
+                <h3>Market Overview</h3>
+                <div class="badge-gradient badge-pulse">LIVE</div>
+              </div>
+              <div class="card-body">
+                <div id="main-chart" style="height: 300px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                  <div class="skeleton-enhanced" style="width: 100%; height: 100%; border-radius: 8px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="col-span-4">
+            <div class="glass-card hover-lift" data-animate="entrance">
+              <div class="card-header">
+                <h3>Quick Actions</h3>
+              </div>
+              <div class="card-body" style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn-gradient" id="btn-analyze">
+                  <span>🤖 AI Analysis</span>
+                </button>
+                <button class="btn-outline-gradient" id="btn-refresh">
+                  <span>🔄 Refresh Data</span>
+                </button>
+                <button class="btn-outline-gradient" id="btn-export">
+                  <span>📊 Export Report</span>
+                </button>
+                <button class="btn-outline-gradient" id="btn-settings">
+                  <span>⚙️ Settings</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="col-span-6">
+            <div class="glass-card hover-lift" data-animate="entrance">
+              <div class="card-header">
+                <h3>Recent Activity</h3>
+                <span class="pulse-dot"></span>
+              </div>
+              <div class="card-body">
+                <div class="activity-list" id="activity-list">
+                  <div class="skeleton-enhanced" style="height: 40px; margin-bottom: 8px;"></div>
+                  <div class="skeleton-enhanced" style="height: 40px; margin-bottom: 8px;"></div>
+                  <div class="skeleton-enhanced" style="height: 40px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Performers -->
+          <div class="col-span-6">
+            <div class="glass-card hover-lift" data-animate="entrance">
+              <div class="card-header">
+                <h3>Top Performers</h3>
+                <span class="badge-success">24h</span>
+              </div>
+              <div class="card-body">
+                <div class="performers-list" id="performers-list">
+                  <div class="skeleton-enhanced" style="height: 40px; margin-bottom: 8px;"></div>
+                  <div class="skeleton-enhanced" style="height: 40px; margin-bottom: 8px;"></div>
+                  <div class="skeleton-enhanced" style="height: 40px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Demo Section -->
+        <div style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(45, 212, 191, 0.05), rgba(34, 211, 238, 0.05)); border-radius: 12px; border: 1px solid var(--border-light);">
+          <h3 style="margin-bottom: 1rem;">🎨 UI Enhancement Demo</h3>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="btn-gradient" id="demo-success">Show Success</button>
+            <button class="btn-gradient" id="demo-error">Show Error</button>
+            <button class="btn-gradient" id="demo-warning">Show Warning</button>
+            <button class="btn-gradient" id="demo-confetti">🎉 Confetti</button>
+            <button class="btn-outline-gradient" id="demo-animate">Animate Stats</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module">
+    import { LayoutManager } from '/static/shared/js/core/layout-manager.js';
+    import { UIAnimations } from '/static/shared/js/ui-animations.js';
+    import notifications from '/static/shared/js/notification-system.js';
+    import { ConfigHelperModal } from '/static/shared/components/config-helper-modal.js';
+
+    // Initialize
+    async function init() {
+      try {
+        // Load layout
+        await LayoutManager.init('dashboard');
+        
+        // Initialize animations
+        UIAnimations.init();
+        
+        // Animate stats
+        setTimeout(() => {
+          UIAnimations.animateNumber(document.getElementById('stat-value-1'), 1234567, 1500, 'K');
+          UIAnimations.animateNumber(document.getElementById('stat-value-2'), 8945, 1500);
+          UIAnimations.animateNumber(document.getElementById('stat-value-3'), 12, 1500);
+          UIAnimations.animateNumber(document.getElementById('stat-value-4'), 87, 1500, '%');
+        }, 500);
+        
+        // Stagger entrance animations
+        const cards = document.querySelectorAll('[data-animate="entrance"]');
+        UIAnimations.staggerAnimation(cards, 100);
+        
+        // Initialize Config Helper Modal
+        const configHelper = new ConfigHelperModal();
+        document.getElementById('config-helper-btn')?.addEventListener('click', () => {
+          configHelper.show();
+        });
+        
+        // Show welcome notification
+        setTimeout(() => {
+          notifications.success('Dashboard loaded successfully!', 'Welcome Back', {
+            duration: 3000
+          });
+        }, 1000);
+        
+        // Demo buttons
+        document.getElementById('demo-success')?.addEventListener('click', () => {
+          notifications.success('Operation completed successfully!', 'Success');
+        });
+        
+        document.getElementById('demo-error')?.addEventListener('click', () => {
+          notifications.error('Something went wrong. Please try again.', 'Error');
+        });
+        
+        document.getElementById('demo-warning')?.addEventListener('click', () => {
+          notifications.warning('API rate limit approaching. Slow down requests.', 'Warning');
+        });
+        
+        document.getElementById('demo-confetti')?.addEventListener('click', () => {
+          UIAnimations.confetti({ particleCount: 100, spread: 90 });
+          notifications.success('Celebration time! 🎉', 'Awesome');
+        });
+        
+        document.getElementById('demo-animate')?.addEventListener('click', () => {
+          UIAnimations.animateNumber(document.getElementById('stat-value-1'), Math.floor(Math.random() * 2000000), 1000, 'K');
+          UIAnimations.animateNumber(document.getElementById('stat-value-2'), Math.floor(Math.random() * 10000), 1000);
+          UIAnimations.animateNumber(document.getElementById('stat-value-3'), Math.floor(Math.random() * 20), 1000);
+          UIAnimations.animateNumber(document.getElementById('stat-value-4'), Math.floor(Math.random() * 100), 1000, '%');
+        });
+        
+        // Quick action buttons
+        document.getElementById('btn-analyze')?.addEventListener('click', () => {
+          notifications.info('Starting AI analysis...', 'AI Analyst', { duration: 2000 });
+        });
+        
+        document.getElementById('btn-refresh')?.addEventListener('click', () => {
+          notifications.info('Refreshing data...', 'Refresh', { duration: 2000 });
+        });
+        
+        document.getElementById('btn-export')?.addEventListener('click', () => {
+          notifications.success('Report exported successfully!', 'Export', { duration: 2000 });
+        });
+        
+        // Theme toggle
+        document.getElementById('theme-toggle')?.addEventListener('click', () => {
+          LayoutManager.toggleTheme();
+        });
+        
+        // Refresh button
+        document.getElementById('refresh-btn')?.addEventListener('click', () => {
+          const btn = document.getElementById('refresh-btn');
+          btn.style.animation = 'spin 0.5s ease';
+          setTimeout(() => btn.style.animation = '', 500);
+          notifications.info('Refreshing dashboard...', 'Refresh');
+        });
+        
+      } catch (error) {
+        console.error('Failed to initialize dashboard:', error);
+      }
+    }
+
+    // Start initialization
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+
+  <style>
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .stat-change {
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    
+    .stat-change.positive {
+      color: var(--success);
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+  </style>
+</body>
+</html>

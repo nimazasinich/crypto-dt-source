@@ -1,0 +1,65 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Documentation (not needed in container)
+*.md
+!README.md
+
+# Archive
+archive/
+NewResourceApi/
+
+# Temporary files
+*.tmp
+*.bak
+*~
+.cache/
+
+# Data files (will be created in container)
+data/*.db
+*.sqlite
+*.sqlite3
+
+# Test files
+test_*.py
+*_test.py
+count_resources.py
+extract_docx_content.py
+
+# Results
+*_results.json
+*_test_results.json
+
+# Node modules (if any)
+node_modules/
+
+# Environment files (use HF Spaces secrets instead)
+.env
+.env.local
+.env.*.local

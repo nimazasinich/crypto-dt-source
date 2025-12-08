@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard 2 | Pro Trading Terminal</title>
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafb;
+            --bg-tertiary: #f0f4f7;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --border-color: rgba(0, 180, 180, 0.12);
+            --text-primary: #1a2b3c;
+            --text-secondary: #5a6b7c;
+            --text-muted: #8a9bac;
+            
+            --accent-cyan: #00d4d4;
+            --accent-teal: #00b4b4;
+            --accent-green: #00c896;
+            --accent-blue: #0088cc;
+            --accent-pink: #e91e8c;
+            --accent-purple: #9c27b0;
+            
+            --gradient-primary: linear-gradient(135deg, #00d4d4, #00b4b4, #00c896);
+            --success: #00c896;
+            --danger: #e91e8c;
+            --warning: #ffc107;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(ellipse at 10% 10%, rgba(0, 212, 212, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 90%, rgba(0, 200, 150, 0.05) 0%, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Layout - 3 columns */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr 280px;
+            min-height: 100vh;
+        }
+
+        /* Left Sidebar */
+        .left-sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Dashboard Switcher */
+        .dashboard-switcher {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 3px;
+        }
+
+        .switch-btn {
+            flex: 1;
+            padding: 0.4rem 0.5rem;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .switch-btn:hover { color: var(--text-primary); }
+        .switch-btn.active {
+            background: white;
+            color: var(--accent-cyan);
+            box-shadow: 0 2px 6px rgba(0, 180, 180, 0.15);
+        }
+
+        .switch-divider {
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            padding: 0 2px;
+        }
+
+        /* Sidebar Sections */
+        .sidebar-section {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 0.6rem 0.75rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .section-header.sentiment {
+            background: linear-gradient(135deg, rgba(0, 200, 150, 0.12), rgba(0, 212, 212, 0.08));
+            color: var(--success);
+            border-bottom: 2px solid var(--success);
+        }
+
+        .section-header.news {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), rgba(233, 30, 140, 0.06));
+            color: var(--accent-purple);
+            border-bottom: 2px solid var(--accent-purple);
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: currentColor;
+            border-radius: 50%;
+            margin-left: auto;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .section-content { padding: 0.6rem; }
+
+        /* Fear & Greed Gauge */
+        .fg-gauge {
+            text-align: center;
+            padding: 0.4rem;
+        }
+
+        .fg-score {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .fg-score.fear { color: #dc2626; }
+        .fg-score.neutral { color: #eab308; }
+        .fg-score.greed { color: #22c55e; }
+
+        .fg-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin: 0.3rem 0;
+        }
+
+        .fg-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #dc2626, #f97316, #eab308, #84cc16, #22c55e);
+            border-radius: 4px;
+            position: relative;
+            margin-top: 0.4rem;
+        }
+
+        .fg-indicator {
+            position: absolute;
+            top: -4px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: 3px solid #1a2b3c;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            transition: left 0.5s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* News Feed */
+        .news-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .news-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .news-item:hover {
+            transform: translateX(2px);
+            box-shadow: 0 2px 6px rgba(0, 180, 180, 0.1);
+        }
+
+        .news-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .news-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .news-icon.positive { color: #22c55e; }
+        .news-icon.negative { color: #e91e8c; }
+        .news-icon.neutral { color: #f59e0b; }
+
+        .news-score {
+            width: 26px;
+            height: 26px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.6rem;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        .news-score.positive { background: rgba(0, 200, 150, 0.15); color: var(--success); }
+        .news-score.negative { background: rgba(233, 30, 140, 0.15); color: var(--danger); }
+        .news-score.neutral { background: rgba(255, 193, 7, 0.15); color: var(--warning); }
+
+        .news-content { flex: 1; min-width: 0; }
+
+        .news-title {
+            font-size: 0.65rem;
+            font-weight: 500;
+            line-height: 1.25;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .news-meta {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            margin-top: 0.1rem;
+        }
+
+        /* Strategy Link */
+        .strategy-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem;
+            background: linear-gradient(135deg, rgba(0, 212, 212, 0.1), rgba(0, 200, 150, 0.1));
+            border: 1px solid var(--accent-cyan);
+            border-radius: 8px;
+            color: var(--accent-teal);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+            margin-top: auto;
+        }
+
+        .strategy-link:hover {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content { padding: 1rem; overflow-y: auto; }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .symbol-section {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .symbol-input {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            width: 100px;
+        }
+
+        .symbol-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .current-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .price-change {
+            padding: 0.2rem 0.4rem;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .price-change.positive { background: rgba(0, 200, 150, 0.15); color: var(--success); }
+        .price-change.negative { background: rgba(233, 30, 140, 0.15); color: var(--danger); }
+
+        .timeframes {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-tertiary);
+            padding: 2px;
+            border-radius: 6px;
+        }
+
+        .tf-btn {
+            padding: 0.3rem 0.55rem;
+            border: none;
+            border-radius: 5px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        .tf-btn:hover { color: var(--text-primary); }
+        .tf-btn.active { background: var(--gradient-primary); color: white; }
+
+        /* Widgets Row */
+        .widgets-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .widget {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.6rem;
+        }
+
+        .widget::before {
+            content: '';
+            display: block;
+            height: 2px;
+            margin: -0.6rem -0.6rem 0.5rem -0.6rem;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .widget.signal::before { background: var(--success); }
+        .widget.rsi::before { background: var(--accent-blue); }
+        .widget.macd::before { background: var(--accent-purple); }
+        .widget.trend::before { background: var(--accent-pink); }
+        .widget.price-action::before { background: linear-gradient(90deg, #ff6b35, #ffc107); }
+
+        .widget-title {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .widget-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .widget-value.bullish { color: var(--success); }
+        .widget-value.bearish { color: var(--danger); }
+        .widget-value.neutral { color: var(--warning); }
+
+        .widget-verdict {
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .widget-verdict {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.3rem 0.4rem;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .widget-verdict.bullish {
+            background: rgba(0, 200, 150, 0.2);
+            color: var(--success);
+        }
+
+        .widget-verdict.bullish-strong {
+            background: rgba(0, 200, 150, 0.35);
+            color: #00a070;
+            box-shadow: 0 0 8px rgba(0, 200, 150, 0.4);
+        }
+
+        .widget-verdict.bearish {
+            background: rgba(233, 30, 140, 0.2);
+            color: var(--danger);
+        }
+
+        .widget-verdict.bearish-strong {
+            background: rgba(233, 30, 140, 0.35);
+            color: #c01070;
+            box-shadow: 0 0 8px rgba(233, 30, 140, 0.4);
+        }
+
+        .widget-verdict.neutral {
+            background: rgba(255, 193, 7, 0.2);
+            color: var(--warning);
+        }
+
+        /* Consensus Bar */
+        .consensus-bar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.6rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .consensus-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .consensus-header span:last-child {
+            font-size: 0.85rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+        }
+
+        .consensus-header span.bullish { background: rgba(0, 200, 150, 0.15); color: var(--success); }
+        .consensus-header span.bearish { background: rgba(233, 30, 140, 0.15); color: var(--danger); }
+        .consensus-header span.neutral { background: rgba(255, 193, 7, 0.15); color: var(--warning); }
+
+        .consensus-votes {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .vote-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.15rem;
+        }
+
+        .vote-icon {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .vote-count {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .vote-label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+        }
+
+        /* Bull vs Bear Battle Panel */
+        .battle-panel {
+            background: linear-gradient(135deg, rgba(34,197,94,0.03), rgba(233,30,140,0.03));
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .battle-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0.8rem;
+            cursor: pointer;
+            background: linear-gradient(90deg, rgba(34,197,94,0.1), transparent, rgba(233,30,140,0.1));
+            transition: all 0.3s;
+        }
+
+        .battle-header:hover {
+            background: linear-gradient(90deg, rgba(34,197,94,0.15), transparent, rgba(233,30,140,0.15));
+        }
+
+        .battle-score {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        .bull-score { color: var(--success); }
+        .bear-score { color: var(--danger); }
+        .score-divider { color: var(--text-muted); font-weight: 400; }
+
+        .battle-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .battle-label.bullish { background: rgba(34,197,94,0.15); color: var(--success); }
+        .battle-label.bearish { background: rgba(233,30,140,0.15); color: var(--danger); }
+        .battle-label.neutral { background: rgba(245,158,11,0.15); color: var(--warning); }
+
+        .accordion-icon {
+            transition: transform 0.3s;
+            color: var(--text-muted);
+        }
+
+        .battle-panel.open .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .battle-arena {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .battle-panel.open .battle-arena {
+            max-height: 200px;
+        }
+
+        .arena-ring {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .fighter {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            z-index: 2;
+        }
+
+        .fighter-svg {
+            width: 60px;
+            height: 60px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+        }
+
+        .fighter.bull {
+            animation: bullPush 2s ease-in-out infinite;
+        }
+
+        .fighter.bear {
+            animation: bearPush 2s ease-in-out infinite;
+        }
+
+        @keyframes bullPush {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(15px) rotate(5deg); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(12px) rotate(3deg); }
+        }
+
+        @keyframes bearPush {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-15px) rotate(-5deg); }
+            50% { transform: translateX(-8px); }
+            75% { transform: translateX(-12px) rotate(-3deg); }
+        }
+
+        /* Steam animation */
+        .steam {
+            animation: steamPuff 1s ease-in-out infinite;
+            opacity: 0;
+        }
+
+        .steam.left { animation-delay: 0s; }
+        .steam.right { animation-delay: 0.5s; }
+
+        @keyframes steamPuff {
+            0% { opacity: 0; transform: translateY(0); }
+            50% { opacity: 0.8; transform: translateY(-5px); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* Claw animation */
+        .claw {
+            animation: clawSwipe 1.5s ease-in-out infinite;
+        }
+
+        .claw.left { animation-delay: 0.2s; }
+        .claw.right { animation-delay: 0.7s; }
+
+        @keyframes clawSwipe {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-3px) rotate(-5deg); }
+        }
+
+        /* Clash zone */
+        .clash-zone {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .push-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--warning);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        .push-indicator.bull-winning {
+            background: var(--success);
+            transform: translateX(15px);
+            box-shadow: 0 0 15px rgba(34,197,94,0.5);
+        }
+
+        .push-indicator.bear-winning {
+            background: var(--danger);
+            transform: translateX(-15px);
+            box-shadow: 0 0 15px rgba(233,30,140,0.5);
+        }
+
+        /* Power bars */
+        .power-bar {
+            width: 50px;
+            height: 6px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .power-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .bull-power {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+
+        .bear-power {
+            background: linear-gradient(90deg, #e91e8c, #db2777);
+        }
+
+        /* Winner state */
+        .fighter.winner {
+            animation: winnerBounce 0.5s ease-in-out infinite;
+        }
+
+        .fighter.winner .fighter-svg {
+            filter: drop-shadow(0 0 15px currentColor);
+        }
+
+        .fighter.bull.winner { color: var(--success); }
+        .fighter.bear.winner { color: var(--danger); }
+
+        @keyframes winnerBounce {
+            0%, 100% { transform: scale(1) translateX(0); }
+            50% { transform: scale(1.1) translateY(-5px); }
+        }
+
+        /* Chart */
+        .chart-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            height: calc(100vh - 180px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chart-tools { display: flex; gap: 0.25rem; }
+
+        .tool-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .tool-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: transparent;
+        }
+
+        #tradingChart { flex: 1; min-height: 0; }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .hidden { display: none !important; }
+
+        /* Right Sidebar - Analysis Panel */
+        .right-sidebar {
+            background: var(--bg-card);
+            border-left: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            overflow-y: auto;
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 0.6rem 0.75rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .panel-header.signal {
+            background: linear-gradient(135deg, rgba(0, 200, 150, 0.15), rgba(0, 212, 212, 0.1));
+            color: var(--success);
+            border-bottom: 2px solid var(--success);
+        }
+
+        .panel-header.indicators {
+            background: linear-gradient(135deg, rgba(0, 136, 204, 0.12), rgba(0, 180, 180, 0.08));
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+        }
+
+        .panel-header.levels {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), rgba(233, 30, 140, 0.06));
+            color: var(--accent-purple);
+            border-bottom: 2px solid var(--accent-purple);
+        }
+
+        .panel-body { padding: 0.75rem; }
+
+        .signal-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .signal-badge.buy { background: rgba(0, 200, 150, 0.2); color: var(--success); }
+        .signal-badge.sell { background: rgba(233, 30, 140, 0.2); color: var(--danger); }
+        .signal-badge.hold { background: rgba(255, 193, 7, 0.2); color: var(--warning); }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.75rem;
+        }
+
+        .metric-row:last-child { border-bottom: none; }
+        .metric-label { color: var(--text-secondary); }
+        .metric-value { font-weight: 600; }
+        .metric-value.bullish { color: var(--success); }
+        .metric-value.bearish { color: var(--danger); }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            min-width: 200px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease-out;
+            margin-bottom: 8px;
+        }
+
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.info { border-left: 3px solid var(--accent-cyan); }
+
+        @keyframes slideIn {
+            from { transform: translateX(200px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+    </style>
+    <!-- API Configuration - Smart Fallback System -->
+    <script src="/static/js/api-config.js"></script>
+    <script>
+        // Initialize API client
+        window.apiReady = new Promise((resolve) => {
+            if (window.apiClient) {
+                console.log('✅ API Client ready');
+                resolve(window.apiClient);
+            } else {
+                console.error('❌ API Client not loaded');
+            }
+        });
+    </script>
+
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="app-layout">
+        <!-- Left Sidebar -->
+        <aside class="left-sidebar">
+            <div class="sidebar-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#grad)" stroke-width="2">
+                    <defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#00d4d4"/><stop offset="100%" style="stop-color:#00c896"/></linearGradient></defs>
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                </svg>
+                <span class="sidebar-logo">Dashboard 2</span>
+            </div>
+
+            <div class="dashboard-switcher">
+                <a href="/static/pages/dashboard/index.html" class="switch-btn">D1</a>
+                <span class="switch-divider">/</span>
+                <a href="#" class="switch-btn active">D2</a>
+            </div>
+
+            <!-- Fear & Greed Gauge -->
+            <div class="sidebar-section">
+                <div class="section-header sentiment">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/></svg>
+                    Fear & Greed
+                    <span class="live-dot"></span>
+                </div>
+                <div class="section-content">
+                    <div class="fg-gauge">
+                        <div class="fg-score" id="fgScore">23</div>
+                        <div class="fg-label" id="fgLabel">Extreme Fear</div>
+                        <div class="fg-bar">
+                            <div class="fg-indicator" id="fgIndicator" style="left: 23%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News -->
+            <div class="sidebar-section" style="flex: 1;">
+                <div class="section-header news">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" stroke-width="2"/></svg>
+                    Latest News
+                    <span class="live-dot"></span>
+                </div>
+                <div class="section-content">
+                    <div class="news-list" id="newsFeed"></div>
+                </div>
+            </div>
+
+            <a href="/static/pages/strategy-builder/index.html" class="strategy-link">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke-width="2"/><path d="M2 17l10 5 10-5" stroke-width="2"/></svg>
+                Strategy Builder
+            </a>
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+            <div class="header">
+                <div class="symbol-section">
+                    <input type="text" class="symbol-input" id="symbolInput" value="BTCUSDT">
+                    <span class="current-price" id="currentPrice">$0.00</span>
+                    <span class="price-change positive" id="priceChange">+0.00%</span>
+                </div>
+                <div class="timeframes">
+                    <button class="tf-btn" data-tf="1m">1m</button>
+                    <button class="tf-btn" data-tf="5m">5m</button>
+                    <button class="tf-btn" data-tf="15m">15m</button>
+                    <button class="tf-btn" data-tf="1h">1h</button>
+                    <button class="tf-btn active" data-tf="4h">4h</button>
+                    <button class="tf-btn" data-tf="1d">1D</button>
+                </div>
+            </div>
+
+            <div class="widgets-row">
+                <div class="widget rsi" id="rsiWidget">
+                    <div class="widget-title">RSI</div>
+                    <div class="widget-verdict" id="rsiVerdict">--</div>
+                </div>
+                <div class="widget macd" id="macdWidget">
+                    <div class="widget-title">MACD</div>
+                    <div class="widget-verdict" id="macdVerdict">--</div>
+                </div>
+                <div class="widget trend" id="trendWidget">
+                    <div class="widget-title">EMA</div>
+                    <div class="widget-verdict" id="trendVerdict">--</div>
+                </div>
+                <div class="widget price-action" id="paWidget">
+                    <div class="widget-title">Pattern</div>
+                    <div class="widget-verdict" id="paVerdict">--</div>
+                </div>
+            </div>
+
+
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-tools">
+                        <button class="tool-btn active" data-tool="crosshair" title="Crosshair">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><line x1="22" y1="12" x2="18" y2="12" stroke-width="2"/><line x1="6" y1="12" x2="2" y2="12" stroke-width="2"/></svg>
+                        </button>
+                        <button class="tool-btn" data-tool="trendline" title="Trend Line">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 21L21 3" stroke-width="2"/></svg>
+                        </button>
+                        <button class="tool-btn" data-tool="horizontal" title="Horizontal">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="2" y1="12" x2="22" y2="12" stroke-width="2"/></svg>
+                        </button>
+                        <button class="tool-btn" data-tool="fib" title="Fibonacci">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="2" y1="5" x2="22" y2="5" stroke-width="1.5"/><line x1="2" y1="12" x2="22" y2="12" stroke-width="1.5"/><line x1="2" y1="19" x2="22" y2="19" stroke-width="1.5"/></svg>
+                        </button>
+                        <button class="tool-btn" data-tool="clear" title="Clear" style="color: var(--danger);">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" stroke-width="2"/></svg>
+                        </button>
+                    </div>
+                    <span style="font-size: 0.65rem; color: var(--text-muted);" id="lastUpdate">--:--</span>
+                </div>
+                <div id="tradingChart"></div>
+                <div class="loading-overlay" id="chartLoading"><div class="spinner"></div></div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="right-sidebar">
+            <!-- AI Signal Panel -->
+            <div class="panel">
+                <div class="panel-header signal">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-width="2"/></svg>
+                    AI Signal
+                </div>
+                <div class="panel-body">
+                    <div style="margin-bottom: 0.6rem;">
+                        <span class="signal-badge buy" id="signalBadge">STRONG BUY</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Confidence</span>
+                        <span class="metric-value bullish" id="panelConfidence">85%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Risk/Reward</span>
+                        <span class="metric-value" id="riskReward">1:2.5</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Success Rate</span>
+                        <span class="metric-value bullish">78%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicators Panel -->
+            <div class="panel">
+                <div class="panel-header indicators">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 3v18h18" stroke-width="2"/><path d="M19 9l-5 5-4-4-3 3" stroke-width="2"/></svg>
+                    Indicators
+                </div>
+                <div class="panel-body">
+                    <div class="metric-row">
+                        <span class="metric-label">RSI (14)</span>
+                        <span class="metric-value" id="panelRsi">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">MACD</span>
+                        <span class="metric-value" id="panelMacd">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">EMA Trend</span>
+                        <span class="metric-value" id="panelTrend">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Volume</span>
+                        <span class="metric-value" id="panelVolume">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Levels Panel -->
+            <div class="panel">
+                <div class="panel-header levels">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6" stroke-width="2"/><line x1="3" y1="12" x2="21" y2="12" stroke-width="2"/><line x1="3" y1="18" x2="21" y2="18" stroke-width="2"/></svg>
+                    Key Levels
+                </div>
+                <div class="panel-body">
+                    <div class="metric-row">
+                        <span class="metric-label">Resistance</span>
+                        <span class="metric-value bearish" id="resistance">$0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Current</span>
+                        <span class="metric-value" id="currentLevel">$0</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Support</span>
+                        <span class="metric-value bullish" id="support">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Action Panel -->
+            <div class="panel">
+                <div class="panel-header" style="background: linear-gradient(135deg, rgba(255,107,53,0.12), rgba(255,193,7,0.08)); color: #ff6b35; border-bottom: 2px solid #ff6b35;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" stroke-width="2"/></svg>
+                    Price Action
+                </div>
+                <div class="panel-body">
+                    <div class="metric-row">
+                        <span class="metric-label">Pattern</span>
+                        <span class="metric-value" id="paPattern">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Candle</span>
+                        <span class="metric-value" id="paCandle">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Structure</span>
+                        <span class="metric-value" id="paStructure">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Verdict</span>
+                        <span class="metric-value" id="paPanelVerdict">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bull vs Bear Battle -->
+            <div class="panel battle-panel">
+                <div class="battle-header" id="battleHeader">
+                    <div class="battle-score">
+                        <span class="bull-score" id="bullScore">0</span>
+                        <span class="score-divider">:</span>
+                        <span class="bear-score" id="bearScore">0</span>
+                    </div>
+                    <div class="battle-label" id="battleLabel">--</div>
+                    <svg class="accordion-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="battle-arena" id="battleArena">
+                    <div class="arena-ring">
+                        <div class="fighter bull" id="bullFighter">
+                            <svg viewBox="0 0 80 80" class="fighter-svg">
+                                <!-- Body -->
+                                <ellipse cx="40" cy="50" rx="25" ry="20" fill="#22c55e"/>
+                                <!-- Head -->
+                                <ellipse cx="40" cy="35" rx="18" ry="15" fill="#16a34a"/>
+                                <!-- Horns -->
+                                <path d="M12 18 Q18 30 24 28" stroke="#fbbf24" stroke-width="5" fill="none" stroke-linecap="round"/>
+                                <path d="M68 18 Q62 30 56 28" stroke="#fbbf24" stroke-width="5" fill="none" stroke-linecap="round"/>
+                                <!-- Eyes -->
+                                <circle cx="32" cy="32" r="4" fill="#fff"/>
+                                <circle cx="48" cy="32" r="4" fill="#fff"/>
+                                <circle cx="33" cy="33" r="2" fill="#0f172a"/>
+                                <circle cx="49" cy="33" r="2" fill="#0f172a"/>
+                                <!-- Nose ring -->
+                                <ellipse cx="40" cy="42" rx="8" ry="5" fill="#166534"/>
+                                <circle cx="40" cy="46" r="3" fill="none" stroke="#fbbf24" stroke-width="2"/>
+                                <!-- Nostrils -->
+                                <circle cx="36" cy="41" r="1.5" fill="#0f172a"/>
+                                <circle cx="44" cy="41" r="1.5" fill="#0f172a"/>
+                                <!-- Steam from nostrils -->
+                                <path class="steam left" d="M34 38 Q30 32 28 30" stroke="rgba(255,255,255,0.6)" stroke-width="2" fill="none"/>
+                                <path class="steam right" d="M46 38 Q50 32 52 30" stroke="rgba(255,255,255,0.6)" stroke-width="2" fill="none"/>
+                            </svg>
+                            <div class="power-bar">
+                                <div class="power-fill bull-power" id="bullPower"></div>
+                            </div>
+                        </div>
+
+                        <div class="clash-zone" id="clashZone">
+                            <div class="push-indicator" id="pushIndicator"></div>
+                        </div>
+
+                        <div class="fighter bear" id="bearFighter">
+                            <svg viewBox="0 0 80 80" class="fighter-svg">
+                                <!-- Ears -->
+                                <circle cx="18" cy="20" r="10" fill="#e91e8c"/>
+                                <circle cx="18" cy="20" r="5" fill="#db2777"/>
+                                <circle cx="62" cy="20" r="10" fill="#e91e8c"/>
+                                <circle cx="62" cy="20" r="5" fill="#db2777"/>
+                                <!-- Body -->
+                                <ellipse cx="40" cy="48" rx="26" ry="24" fill="#db2777"/>
+                                <!-- Head -->
+                                <ellipse cx="40" cy="38" rx="20" ry="18" fill="#e91e8c"/>
+                                <!-- Eyes -->
+                                <circle cx="30" cy="34" r="5" fill="#fff"/>
+                                <circle cx="50" cy="34" r="5" fill="#fff"/>
+                                <circle cx="31" cy="35" r="2.5" fill="#0f172a"/>
+                                <circle cx="51" cy="35" r="2.5" fill="#0f172a"/>
+                                <!-- Eyebrows (angry) -->
+                                <path d="M24 28 L34 31" stroke="#831843" stroke-width="3" stroke-linecap="round"/>
+                                <path d="M56 28 L46 31" stroke="#831843" stroke-width="3" stroke-linecap="round"/>
+                                <!-- Nose -->
+                                <ellipse cx="40" cy="46" rx="6" ry="4" fill="#0f172a"/>
+                                <!-- Mouth -->
+                                <path d="M32 52 Q40 56 48 52" stroke="#831843" stroke-width="2" fill="none"/>
+                                <!-- Claws -->
+                                <path class="claw left" d="M12 60 L8 68 M16 62 L14 70 M20 63 L20 71" stroke="#831843" stroke-width="2" stroke-linecap="round"/>
+                                <path class="claw right" d="M68 60 L72 68 M64 62 L66 70 M60 63 L60 71" stroke="#831843" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <div class="power-bar">
+                                <div class="power-fill bear-power" id="bearPower"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script type="module" src="./dashboard-2.js"></script>
+</body>
+</html>

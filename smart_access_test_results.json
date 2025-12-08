@@ -1,0 +1,98 @@
+{
+  "test_time": "2025-12-08T02:51:21.180824",
+  "binance_tests": [
+    {
+      "endpoint": "Binance Ticker (BTC/USDT)",
+      "url": "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT",
+      "status": "success",
+      "response_size": 556
+    },
+    {
+      "endpoint": "Binance Server Time",
+      "url": "https://api.binance.com/api/v3/time",
+      "status": "success",
+      "response_size": 28
+    },
+    {
+      "endpoint": "Binance Exchange Info",
+      "url": "https://api.binance.com/api/v3/exchangeInfo?symbol=BTCUSDT",
+      "status": "success",
+      "response_size": 5148
+    }
+  ],
+  "coingecko_tests": [
+    {
+      "endpoint": "CoinGecko Ping",
+      "url": "https://api.coingecko.com/api/v3/ping",
+      "status": "success",
+      "response_size": 34
+    },
+    {
+      "endpoint": "CoinGecko Bitcoin Price",
+      "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      "status": "success",
+      "response_size": 25
+    },
+    {
+      "endpoint": "CoinGecko Trending",
+      "url": "https://api.coingecko.com/api/v3/search/trending",
+      "status": "success",
+      "response_size": 55204
+    }
+  ],
+  "method_tests": [
+    {
+      "method": "direct",
+      "status": "success"
+    },
+    {
+      "method": "dns_cloudflare",
+      "status": "failed"
+    },
+    {
+      "method": "dns_google",
+      "status": "failed"
+    },
+    {
+      "method": "proxy",
+      "status": "failed"
+    },
+    {
+      "method": "dns_proxy",
+      "status": "failed"
+    }
+  ],
+  "statistics": {
+    "total_requests": 11,
+    "total_success": 7,
+    "total_failed": 4,
+    "success_rate": "63.6%",
+    "methods": {
+      "direct": {
+        "success": 7,
+        "failed": 0,
+        "success_rate": "100.0%"
+      },
+      "dns_cloudflare": {
+        "success": 0,
+        "failed": 1,
+        "success_rate": "0.0%"
+      },
+      "dns_google": {
+        "success": 0,
+        "failed": 1,
+        "success_rate": "0.0%"
+      },
+      "proxy": {
+        "success": 0,
+        "failed": 1,
+        "success_rate": "0.0%"
+      },
+      "dns_proxy": {
+        "success": 0,
+        "failed": 1,
+        "success_rate": "0.0%"
+      }
+    }
+  }
+}

@@ -1,0 +1,605 @@
+<!-- Dynamic Model Loader Tab Content -->
+<!-- بارگذاری هوشمند مدل - محتوای تب -->
+
+<div class="dynamic-loader-container">
+  
+  <!-- Header Section -->
+  <div class="section-header">
+    <h2>🚀 Dynamic Model Loader</h2>
+    <p class="subtitle">
+      Automatically detect and load any AI model from any source
+      <br>
+      <span class="highlight">Just paste your model configuration and let the system do the rest!</span>
+    </p>
+  </div>
+
+  <!-- Quick Action Buttons -->
+  <div class="quick-actions">
+    <button class="quick-btn" onclick="dynamicLoader.showPasteMode()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+      Paste Config
+    </button>
+    <button class="quick-btn" onclick="dynamicLoader.showManualMode()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+      Manual Config
+    </button>
+    <button class="quick-btn" onclick="dynamicLoader.showAutoMode()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      Auto from URL
+    </button>
+  </div>
+
+  <!-- Mode Panels -->
+  
+  <!-- Paste Mode -->
+  <div id="paste-mode" class="config-panel glass-panel" style="display: none;">
+    <div class="panel-header">
+      <h3>📋 Paste Configuration</h3>
+      <button class="close-btn" onclick="dynamicLoader.closeAllModes()">✕</button>
+    </div>
+    
+    <div class="panel-body">
+      <p class="info-text">
+        Paste your model configuration in any format (JSON, YAML, key-value pairs, cURL, etc.)
+      </p>
+      
+      <textarea 
+        id="paste-input" 
+        class="config-textarea" 
+        placeholder='Example (JSON):
+{
+  "model_id": "my-sentiment-model",
+  "model_name": "Custom Sentiment Analyzer",
+  "base_url": "https://api-inference.huggingface.co/models/distilbert-base-uncased",
+  "api_key": "hf_xxxxxxxxxxxxx",
+  "api_type": "huggingface"
+}
+
+Example (Key-Value):
+model_id: my-model
+base_url: https://api.example.com/model
+api_key: sk-xxxxx
+
+Example (cURL):
+curl -X POST https://api.example.com/predict \
+  -H "Authorization: Bearer sk-xxxxx" \
+  -d \'{"input": "text"}\'
+'
+        rows="12"
+      ></textarea>
+      
+      <div class="checkbox-group">
+        <label>
+          <input type="checkbox" id="auto-detect-paste" checked>
+          <span>Auto-detect API type and endpoints</span>
+        </label>
+      </div>
+      
+      <div class="button-group">
+        <button class="btn-primary" onclick="dynamicLoader.processPastedConfig()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Process & Register
+        </button>
+        <button class="btn-secondary" onclick="dynamicLoader.testPastedConfig()">
+          Test Connection First
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Mode -->
+  <div id="manual-mode" class="config-panel glass-panel" style="display: none;">
+    <div class="panel-header">
+      <h3>⚙️ Manual Configuration</h3>
+      <button class="close-btn" onclick="dynamicLoader.closeAllModes()">✕</button>
+    </div>
+    
+    <div class="panel-body">
+      <form id="manual-form" class="config-form">
+        <div class="form-group">
+          <label for="manual-model-id">Model ID *</label>
+          <input type="text" id="manual-model-id" class="form-input" placeholder="e.g., my-custom-model" required>
+          <small>Unique identifier for this model</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="manual-model-name">Model Name *</label>
+          <input type="text" id="manual-model-name" class="form-input" placeholder="e.g., My Custom Sentiment Model" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="manual-base-url">Base URL *</label>
+          <input type="url" id="manual-base-url" class="form-input" placeholder="https://api.example.com/models/my-model" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="manual-api-key">API Key (optional)</label>
+          <input type="password" id="manual-api-key" class="form-input" placeholder="sk-xxxxxxxxxxxxx or hf_xxxxxxxxxxxxx">
+          <small>Leave empty if no authentication required</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="manual-api-type">API Type</label>
+          <select id="manual-api-type" class="form-select">
+            <option value="auto">Auto-Detect</option>
+            <option value="huggingface">HuggingFace</option>
+            <option value="openai">OpenAI Compatible</option>
+            <option value="rest">Generic REST API</option>
+            <option value="graphql">GraphQL</option>
+            <option value="websocket">WebSocket</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="manual-endpoint">Custom Endpoint (optional)</label>
+          <input type="text" id="manual-endpoint" class="form-input" placeholder="e.g., /predict, /generate">
+          <small>Leave empty to use base URL directly</small>
+        </div>
+        
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" id="auto-discover-endpoints" checked>
+            <span>Auto-discover available endpoints</span>
+          </label>
+          <label>
+            <input type="checkbox" id="test-before-register" checked>
+            <span>Test connection before registering</span>
+          </label>
+        </div>
+        
+        <div class="button-group">
+          <button type="submit" class="btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            Register Model
+          </button>
+          <button type="button" class="btn-secondary" onclick="dynamicLoader.testManualConfig()">
+            Test Connection
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Auto Mode (URL Only) -->
+  <div id="auto-mode" class="config-panel glass-panel" style="display: none;">
+    <div class="panel-header">
+      <h3>⚡ Auto-Configure from URL</h3>
+      <button class="close-btn" onclick="dynamicLoader.closeAllModes()">✕</button>
+    </div>
+    
+    <div class="panel-body">
+      <p class="info-text">
+        Just provide the model URL and we'll handle everything else:
+        <ul class="feature-list">
+          <li>✅ Auto-detect API type</li>
+          <li>✅ Discover available endpoints</li>
+          <li>✅ Test connection</li>
+          <li>✅ Register if successful</li>
+        </ul>
+      </p>
+      
+      <div class="form-group">
+        <label for="auto-url">Model URL *</label>
+        <input 
+          type="url" 
+          id="auto-url" 
+          class="form-input" 
+          placeholder="https://api-inference.huggingface.co/models/bert-base-uncased"
+        >
+        <small>Examples:
+          <br>• HuggingFace: https://api-inference.huggingface.co/models/MODEL_NAME
+          <br>• OpenAI: https://api.openai.com/v1/chat/completions
+          <br>• Custom API: https://yourapi.com/endpoint
+        </small>
+      </div>
+      
+      <div class="button-group">
+        <button class="btn-gradient" onclick="dynamicLoader.autoConfigureFromURL()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          Auto-Configure & Register
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registered Models List -->
+  <div class="registered-models-section">
+    <div class="section-header">
+      <h3>📚 Registered Models</h3>
+      <button class="btn-secondary" onclick="dynamicLoader.refreshModelsList()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        Refresh
+      </button>
+    </div>
+    
+    <div id="models-list" class="models-list">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading models...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Panel -->
+  <div id="test-panel" class="test-panel glass-panel" style="display: none;">
+    <div class="panel-header">
+      <h3>🧪 Test Model</h3>
+      <button class="close-btn" onclick="dynamicLoader.closeTestPanel()">✕</button>
+    </div>
+    
+    <div class="panel-body">
+      <div class="form-group">
+        <label for="test-model-select">Select Model</label>
+        <select id="test-model-select" class="form-select">
+          <option value="">-- Select a model to test --</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="test-endpoint">Endpoint (optional)</label>
+        <input type="text" id="test-endpoint" class="form-input" placeholder="Leave empty for default">
+      </div>
+      
+      <div class="form-group">
+        <label for="test-payload">Test Payload (JSON)</label>
+        <textarea 
+          id="test-payload" 
+          class="config-textarea" 
+          rows="6"
+          placeholder='{"inputs": "Bitcoin is bullish!"}'
+        ></textarea>
+      </div>
+      
+      <button class="btn-primary" onclick="dynamicLoader.executeTest()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        Run Test
+      </button>
+      
+      <div id="test-result" class="test-result"></div>
+    </div>
+  </div>
+
+  <!-- Status Messages -->
+  <div id="status-messages" class="status-messages"></div>
+
+</div>
+
+<style>
+.dynamic-loader-container {
+  padding: var(--space-4);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  margin-bottom: var(--space-6);
+}
+
+.section-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.highlight {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.quick-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.quick-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-elevated);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.quick-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);
+}
+
+.config-panel {
+  margin-bottom: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.panel-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: var(--color-danger);
+}
+
+.panel-body {
+  padding: var(--space-2);
+}
+
+.info-text {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+  line-height: 1.6;
+}
+
+.feature-list {
+  margin-top: var(--space-2);
+  padding-left: var(--space-4);
+}
+
+.feature-list li {
+  margin-bottom: var(--space-2);
+}
+
+.config-textarea {
+  width: 100%;
+  padding: var(--space-3);
+  background: var(--surface-base);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  resize: vertical;
+}
+
+.config-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.config-form {
+  max-width: 600px;
+}
+
+.form-group {
+  margin-bottom: var(--space-4);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-group small {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: var(--space-2-5) var(--space-3);
+  background: var(--surface-base);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.checkbox-group {
+  margin: var(--space-4) 0;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.button-group {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.models-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.model-card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: all 0.3s;
+}
+
+.model-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.model-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: var(--space-3);
+}
+
+.model-info h4 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.model-type {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.model-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.model-details {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.model-meta {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+}
+
+.loading-state {
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--space-3);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.test-result {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: var(--surface-base);
+  border-radius: var(--radius-md);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.status-messages {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  min-width: 300px;
+}
+
+.status-message {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-2);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.status-message.success {
+  background: var(--color-success);
+  color: white;
+}
+
+.status-message.error {
+  background: var(--color-danger);
+  color: white;
+}
+
+.status-message.info {
+  background: var(--color-info);
+  color: white;
+}
+</style>
+

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTS Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+        .info { color: #3b82f6; }
+        button {
+            background: #2dd4bf;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5eead4;
+        }
+        pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+    </style>
+    <!-- API Configuration - Smart Fallback System -->
+    <script src="/static/js/api-config.js"></script>
+    <script>
+        // Initialize API client
+        window.apiReady = new Promise((resolve) => {
+            if (window.apiClient) {
+                console.log('✅ API Client ready');
+                resolve(window.apiClient);
+            } else {
+                console.error('❌ API Client not loaded');
+            }
+        });
+    </script>
+
+</head>
+<body>
+    <h1>🔥 HTS Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Import HTS Engine</h2>
+        <button onclick="testImport()">Run Test</button>
+        <pre id="test1-result">Not run yet</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Generate Demo OHLCV Data</h2>
+        <button onclick="testDemoData()">Run Test</button>
+        <pre id="test2-result">Not run yet</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Run HTS Analysis</h2>
+        <button onclick="testHTSAnalysis()">Run Test</button>
+        <pre id="test3-result">Not run yet</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Fetch Real Data from Binance</h2>
+        <button onclick="testRealData()">Run Test</button>
+        <pre id="test4-result">Not run yet</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Full Integration Test</h2>
+        <button onclick="testFullIntegration()">Run Test</button>
+        <pre id="test5-result">Not run yet</pre>
+    </div>
+
+    <script type="module">
+        import HTSEngine from './hts-engine.js';
+        
+        window.HTSEngine = HTSEngine;
+
+        window.testImport = function() {
+            try {
+                const engine = new HTSEngine();
+                document.getElementById('test1-result').innerHTML = 
+                    '<span class="success">✅ SUCCESS: HTS Engine imported and instantiated</span>\n' +
+                    JSON.stringify({
+                        baseWeights: engine.baseWeights,
+                        rsiPeriod: engine.rsiPeriod,
+                        macdFast: engine.macdFast,
+                        macdSlow: engine.macdSlow
+                    }, null, 2);
+            } catch (error) {
+                document.getElementById('test1-result').innerHTML = 
+                    '<span class="error">❌ ERROR: ' + error.message + '</span>';
+            }
+        };
+
+        window.testDemoData = function() {
+            try {
+                const data = generateDemoOHLCV(50000, 100);
+                document.getElementById('test2-result').innerHTML = 
+                    '<span class="success">✅ SUCCESS: Generated ' + data.length + ' candles</span>\n' +
+                    'First candle:\n' + JSON.stringify(data[0], null, 2) + '\n' +
+                    'Last candle:\n' + JSON.stringify(data[data.length - 1], null, 2);
+            } catch (error) {
+                document.getElementById('test2-result').innerHTML = 
+                    '<span class="error">❌ ERROR: ' + error.message + '</span>';
+            }
+        };
+
+        window.testHTSAnalysis = async function() {
+            try {
+                document.getElementById('test3-result').innerHTML = '<span class="info">⏳ Running analysis...</span>';
+                
+                const engine = new HTSEngine();
+                const data = generateDemoOHLCV(50000, 100);
+                const result = await engine.analyze(data, 'BTC');
+                
+                document.getElementById('test3-result').innerHTML = 
+                    '<span class="success">✅ SUCCESS: HTS Analysis completed</span>\n' +
+                    JSON.stringify({
+                        finalSignal: result.finalSignal,
+                        finalScore: result.finalScore,
+                        confidence: result.confidence,
+                        currentPrice: result.currentPrice,
+                        stopLoss: result.stopLoss,
+                        takeProfitLevels: result.takeProfitLevels,
+                        marketRegime: result.marketRegime,
+                        components: {
+                            rsiMacd: {
+                                signal: result.components.rsiMacd.signal,
+                                score: result.components.rsiMacd.score,
+                                weight: result.components.rsiMacd.weight
+                            },
+                            smc: {
+                                signal: result.components.smc.signal,
+                                score: result.components.smc.score,
+                                weight: result.components.smc.weight
+                            }
+                        }
+                    }, null, 2);
+            } catch (error) {
+                document.getElementById('test3-result').innerHTML = 
+                    '<span class="error">❌ ERROR: ' + error.message + '</span>\n' +
+                    error.stack;
+            }
+        };
+
+        window.testRealData = async function() {
+            try {
+                document.getElementById('test4-result').innerHTML = '<span class="info">⏳ Fetching from Binance...</span>';
+                
+                const url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=100';
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const ohlcv = data.map(item => ({
+                    timestamp: item[0],
+                    open: parseFloat(item[1]),
+                    high: parseFloat(item[2]),
+                    low: parseFloat(item[3]),
+                    close: parseFloat(item[4]),
+                    volume: parseFloat(item[5])
+                }));
+                
+                document.getElementById('test4-result').innerHTML = 
+                    '<span class="success">✅ SUCCESS: Fetched ' + ohlcv.length + ' candles from Binance</span>\n' +
+                    'Latest price: $' + ohlcv[ohlcv.length - 1].close.toFixed(2) + '\n' +
+                    'First candle:\n' + JSON.stringify(ohlcv[0], null, 2) + '\n' +
+                    'Last candle:\n' + JSON.stringify(ohlcv[ohlcv.length - 1], null, 2);
+            } catch (error) {
+                document.getElementById('test4-result').innerHTML = 
+                    '<span class="error">❌ ERROR: ' + error.message + '</span>';
+            }
+        };
+
+        window.testFullIntegration = async function() {
+            try {
+                document.getElementById('test5-result').innerHTML = '<span class="info">⏳ Running full integration test...</span>';
+                
+                // Step 1: Fetch real data
+                const url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=4h&limit=100';
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const ohlcv = data.map(item => ({
+                    timestamp: item[0],
+                    open: parseFloat(item[1]),
+                    high: parseFloat(item[2]),
+                    low: parseFloat(item[3]),
+                    close: parseFloat(item[4]),
+                    volume: parseFloat(item[5])
+                }));
+                
+                // Step 2: Run HTS analysis
+                const engine = new HTSEngine();
+                const result = await engine.analyze(ohlcv, 'BTC');
+                
+                document.getElementById('test5-result').innerHTML = 
+                    '<span class="success">✅ SUCCESS: Full integration test passed!</span>\n\n' +
+                    '<strong>🔥 HTS ANALYSIS RESULT:</strong>\n' +
+                    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' +
+                    'Signal: ' + result.finalSignal.toUpperCase() + '\n' +
+                    'Score: ' + result.finalScore.toFixed(2) + '/100\n' +
+                    'Confidence: ' + result.confidence.toFixed(2) + '%\n' +
+                    'Market Regime: ' + (result.marketRegime || 'neutral') + '\n' +
+                    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n' +
+                    '<strong>Current Price:</strong> $' + result.currentPrice.toFixed(2) + '\n' +
+                    '<strong>Stop Loss:</strong> $' + result.stopLoss.toFixed(2) + '\n' +
+                    '<strong>Take Profits:</strong>\n' +
+                    result.takeProfitLevels.map(tp => 
+                        '  ' + tp.type + ': $' + tp.level.toFixed(2) + ' (R:R ' + tp.riskReward.toFixed(2) + ')'
+                    ).join('\n') + '\n\n' +
+                    '<strong>Component Scores (with dynamic weights):</strong>\n' +
+                    '  RSI+MACD: ' + result.components.rsiMacd.score.toFixed(1) + ' (' + (result.components.rsiMacd.weight * 100).toFixed(0) + '%) - ' + result.components.rsiMacd.signal + '\n' +
+                    '  SMC: ' + result.components.smc.score.toFixed(1) + ' (' + (result.components.smc.weight * 100).toFixed(0) + '%) - ' + result.components.smc.signal + '\n' +
+                    '  Patterns: ' + result.components.patterns.score.toFixed(1) + ' (' + (result.components.patterns.weight * 100).toFixed(0) + '%) - ' + result.components.patterns.signal + '\n' +
+                    '  Sentiment: ' + result.components.sentiment.score.toFixed(1) + ' (' + (result.components.sentiment.weight * 100).toFixed(0) + '%) - ' + result.components.sentiment.signal + '\n' +
+                    '  ML: ' + result.components.ml.score.toFixed(1) + ' (' + (result.components.ml.weight * 100).toFixed(0) + '%) - ' + result.components.ml.signal + '\n\n' +
+                    '<strong>Indicators:</strong>\n' +
+                    '  RSI: ' + result.indicators.rsi.toFixed(2) + '\n' +
+                    '  MACD: ' + result.indicators.macd.macd.toFixed(4) + '\n' +
+                    '  ATR: ' + result.indicators.atr.toFixed(2) + '\n\n' +
+                    '<strong>SMC Levels:</strong>\n' +
+                    '  Order Blocks: ' + result.smcLevels.orderBlocks.length + '\n' +
+                    '  Liquidity Zones: ' + result.smcLevels.liquidityZones.length + '\n' +
+                    '  Breaker Blocks: ' + result.smcLevels.breakerBlocks.length + '\n\n' +
+                    '<strong>Patterns Detected:</strong> ' + result.patterns.length;
+            } catch (error) {
+                document.getElementById('test5-result').innerHTML = 
+                    '<span class="error">❌ ERROR: ' + error.message + '</span>\n' +
+                    error.stack;
+            }
+        };
+
+        function generateDemoOHLCV(basePrice, limit) {
+            const now = Date.now();
+            const interval = 14400000; // 4 hours in ms
+            const data = [];
+            
+            for (let i = limit - 1; i >= 0; i--) {
+                const volatility = basePrice * 0.02;
+                const trend = (Math.random() - 0.5) * volatility;
+                
+                const open = basePrice + trend;
+                const close = open + (Math.random() - 0.5) * volatility;
+                const high = Math.max(open, close) + Math.random() * volatility * 0.5;
+                const low = Math.min(open, close) - Math.random() * volatility * 0.5;
+                const volume = basePrice * (10000 + Math.random() * 5000);
+                
+                data.push({
+                    timestamp: now - (i * interval),
+                    open,
+                    high,
+                    low,
+                    close,
+                    volume
+                });
+                
+                basePrice = close;
+            }
+            
+            return data;
+        }
+    </script>
+</body>
+</html>
+
+
