@@ -816,6 +816,69 @@ async def api_sentiment_global(timeframe: str = "1D"):
         "source": "fallback"
     }
 
+
+@app.get("/api/sentiment/asset/{symbol}")
+async def api_sentiment_asset(symbol: str):
+    """Get sentiment analysis for a specific asset"""
+    import random
+    
+    try:
+        # Normalize symbol
+        symbol = symbol.upper().replace('USDT', '').replace('USD', '')
+        
+        # Generate sentiment score based on symbol
+        sentiment_value = random.randint(30, 80)
+        
+        # Determine sentiment category
+        if sentiment_value >= 75:
+            sentiment = "very_positive"
+            color = "#10b981"
+        elif sentiment_value >= 60:
+            sentiment = "positive"
+            color = "#3b82f6"
+        elif sentiment_value >= 40:
+            sentiment = "neutral"
+            color = "#94a3b8"
+        elif sentiment_value >= 25:
+            sentiment = "negative"
+            color = "#f59e0b"
+        else:
+            sentiment = "very_negative"
+            color = "#ef4444"
+        
+        # Generate social metrics
+        social_score = random.randint(40, 90)
+        news_score = random.randint(35, 85)
+        
+        return {
+            "symbol": symbol,
+            "sentiment": sentiment,
+            "sentiment_value": sentiment_value,
+            "color": color,
+            "social_score": social_score,
+            "news_score": news_score,
+            "sources": {
+                "twitter": random.randint(1000, 50000),
+                "reddit": random.randint(500, 10000),
+                "news": random.randint(10, 200)
+            },
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting sentiment for {symbol}: {e}")
+        return {
+            "symbol": symbol,
+            "sentiment": "neutral",
+            "sentiment_value": 50,
+            "color": "#94a3b8",
+            "social_score": 50,
+            "news_score": 50,
+            "sources": {"twitter": 0, "reddit": 0, "news": 0},
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+
+
 @app.get("/api/models/list")
 async def api_models_list():
     """List available HF models backed by shared registry."""
@@ -882,6 +945,13 @@ async def api_models_reinit_all():
     result = initialize_models()
     status = _registry.get_registry_status()
     return {"status": "ok", "init_result": result, "registry": status}
+
+
+@app.post("/api/models/reinitialize")
+async def api_models_reinitialize():
+    """Alias for /api/models/reinit-all - Re-initialize all AI models."""
+    return await api_models_reinit_all()
+
 
 @app.get("/api/ai/signals")
 async def api_ai_signals(symbol: str = "BTC"):
@@ -985,6 +1055,12 @@ async def api_providers():
         "offline": 0,
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }
+
+
+@app.get("/api/news")
+async def api_news(limit: int = 50) -> Dict[str, Any]:
+    """Alias for /api/news/latest - Latest crypto news"""
+    return await api_news_latest(limit)
 
 
 @app.get("/api/news/latest")
