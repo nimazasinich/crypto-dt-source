@@ -25,6 +25,9 @@ alembic==1.13.3
 asyncio==3.4.3
 aiofiles==24.1.0
 
+# Scheduling
+apscheduler==3.10.4
+
 # Utilities
 python-dateutil==2.9.0
 pytz==2024.2
