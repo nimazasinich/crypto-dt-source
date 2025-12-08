@@ -191,9 +191,13 @@ class SystemMonitor {
     }
     
     connectWebSocket() {
+        // برای localhost و production، از window.location.host استفاده می‌کنیم
+        // این مطمئن می‌شود که WebSocket به همان host متصل می‌شود
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Use /api/monitoring/ws (from realtime_monitoring_api router)
-        const wsUrl = `${protocol}//${window.location.host}/api/monitoring/ws`;
+        const host = window.location.host; // localhost:7860 یا your-space.hf.space
+        const wsUrl = `${protocol}//${host}/api/monitoring/ws`;
+        
+        console.log(`[SystemMonitor] Connecting to WebSocket: ${wsUrl}`);
         
         try {
             this.ws = new WebSocket(wsUrl);

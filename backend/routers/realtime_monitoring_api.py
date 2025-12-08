@@ -61,9 +61,9 @@ async def get_system_status():
         }
         
         # Data Sources Status
-        session = db_manager.get_session()
-        try:
-            from database.models import Provider, SourcePool, PoolMember
+        from database.models import Provider, SourcePool, PoolMember
+        
+        with db_manager.get_session() as session:
             providers = session.query(Provider).all()
             pools = session.query(SourcePool).all()
             
@@ -90,8 +90,6 @@ async def get_system_status():
                     "endpoint": provider.endpoint_url
                 })
                 sources_status["active"] += 1
-        finally:
-            session.close()
         
         # Database Status
         db_status = {
@@ -139,9 +137,9 @@ async def get_system_status():
 async def get_detailed_sources():
     """Get detailed source information with endpoints"""
     try:
-        session = db_manager.get_session()
-        try:
-            from database.models import Provider, SourcePool, PoolMember
+        from database.models import Provider, SourcePool, PoolMember
+        
+        with db_manager.get_session() as session:
             providers = session.query(Provider).all()
             
             sources = []
@@ -161,10 +159,8 @@ async def get_detailed_sources():
                 "sources": sources,
                 "total": len(sources)
             }
-        finally:
-            session.close()
     except Exception as e:
-        logger.error(f"Error getting detailed sources: {e}")
+        logger.error(f"Error getting detailed sources: {e}", exc_info=True)
         return {"success": False, "error": str(e)}
 
 
