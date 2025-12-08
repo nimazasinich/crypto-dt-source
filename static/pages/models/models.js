@@ -203,20 +203,30 @@ class ModelsPage {
 
       // Process models if we got any data
       if (Array.isArray(rawModels) && rawModels.length > 0) {
-        this.models = rawModels.map((m, idx) => ({
-          key: m.key || m.id || `model_${idx}`,
-          name: m.name || m.model_id || 'AI Model',
-          model_id: m.model_id || m.id || 'huggingface/model',
-          category: m.category || 'Hugging Face',
-          task: m.task || 'Sentiment Analysis',
-          loaded: m.loaded === true || m.status === 'ready' || m.status === 'healthy',
-          failed: m.failed === true || m.error || m.status === 'failed' || m.status === 'unavailable',
-          requires_auth: !!m.requires_auth,
-          status: m.loaded ? 'loaded' : m.failed ? 'failed' : 'available',
-          error_count: m.error_count || 0,
-          description: m.description || `${m.name || m.model_id || 'Model'} - ${m.task || 'AI Model'}`
-        }));
+        this.models = rawModels.map((m, idx) => {
+          // تشخیص status با دقت بیشتر
+          const isLoaded = m.loaded === true || m.status === 'ready' || m.status === 'healthy' || m.status === 'loaded';
+          const isFailed = m.failed === true || m.error || m.status === 'failed' || m.status === 'unavailable' || m.status === 'error';
+          
+          return {
+            key: m.key || m.id || m.model_id || `model_${idx}`,
+            name: m.name || m.model_name || m.model_id?.split('/').pop() || 'AI Model',
+            model_id: m.model_id || m.id || m.name || 'unknown/model',
+            category: m.category || m.provider || 'Hugging Face',
+            task: m.task || m.type || 'Sentiment Analysis',
+            loaded: isLoaded,
+            failed: isFailed,
+            requires_auth: Boolean(m.requires_auth || m.authentication || m.needs_token),
+            status: isLoaded ? 'loaded' : isFailed ? 'failed' : 'available',
+            error_count: Number(m.error_count || m.errors || 0),
+            description: m.description || m.desc || `${m.name || m.model_id || 'Model'} - ${m.task || 'AI Model'}`,
+            // فیلدهای اضافی برای debug
+            success_rate: m.success_rate || (isLoaded ? 100 : isFailed ? 0 : null),
+            last_used: m.last_used || m.last_access || null
+          };
+        });
         logger.info('Models', `Successfully processed ${this.models.length} models`);
+        logger.debug('Models', 'Sample model:', this.models[0]);
       } else {
         logger.warn('Models', 'No models found in any endpoint, using fallback data');
         this.models = this.getFallbackModels();
