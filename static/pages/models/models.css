@@ -414,19 +414,27 @@
 
 .models-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  /* بهبود responsive برای صفحات مختلف */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
   gap: var(--space-5);
+  /* اطمینان از نمایش درست در تمام اندازه‌ها */
+  width: 100%;
+  max-width: 100%;
 }
 
 .model-card {
   background: rgba(17, 24, 39, 0.7);
   backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-xl);
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   display: flex;
+  /* بهبود نمایش */
+  min-height: 320px;
+  max-width: 100%;
   flex-direction: column;
 }
 
