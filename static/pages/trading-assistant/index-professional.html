@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Permissions-Policy" content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()">
+    <meta name="description" content="Professional Trading Assistant - Real-time signals, Advanced strategies, Automated monitoring">
+    <title>Trading Assistant | Crypto Intelligence Hub</title>
+
+    <link rel="icon" type="image/svg+xml" href="/static/assets/icons/favicon.svg">
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="/static/shared/css/design-system.css">
+    <link rel="stylesheet" href="/static/shared/css/global.css">
+    <link rel="stylesheet" href="/static/shared/css/components.css">
+    <link rel="stylesheet" href="/static/shared/css/layout.css">
+    <link rel="stylesheet" href="/static/shared/css/utilities.css">
+
+    <!-- Page Styles -->
+    <link rel="stylesheet" href="/static/pages/trading-assistant/trading-assistant.css">
+
+    <style>
+        /* Strategy Cards */
+        .strategy-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .strategy-card {
+            background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1));
+            border: 2px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .strategy-card:hover {
+            border-color: rgba(45, 212, 191, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .strategy-card.active {
+            border-color: #2dd4bf;
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.1), rgba(59, 130, 246, 0.1));
+        }
+
+        .strategy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .strategy-header h4 {
+            margin: 0;
+            font-size: 1.125rem;
+            color: var(--text-primary);
+        }
+
+        .strategy-badge {
+            background: rgba(45, 212, 191, 0.2);
+            color: #2dd4bf;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .strategy-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .strategy-indicators {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .indicator-tag {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+
+        .strategy-timeframes {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Crypto List */
+        .crypto-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .crypto-btn {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .crypto-btn:hover {
+            border-color: rgba(45, 212, 191, 0.3);
+            background: rgba(0,0,0,0.3);
+        }
+
+        .crypto-btn.active {
+            border-color: #2dd4bf;
+            background: rgba(45, 212, 191, 0.1);
+        }
+
+        .crypto-symbol {
+            display: block;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .crypto-name {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .crypto-price {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #2dd4bf;
+        }
+
+        /* Signal Cards */
+        .signal-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .signal-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .signal-card.signal-buy {
+            border-left: 4px solid #22c55e;
+            background: linear-gradient(90deg, rgba(34, 197, 94, 0.1), transparent);
+        }
+
+        .signal-card.signal-sell {
+            border-left: 4px solid #ef4444;
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent);
+        }
+
+        .signal-card.signal-hold {
+            border-left: 4px solid #fbbf24;
+            background: linear-gradient(90deg, rgba(251, 191, 36, 0.1), transparent);
+        }
+
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .signal-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-buy { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .badge-sell { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .badge-hold { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+
+        .signal-symbol {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 1rem;
+        }
+
+        .signal-confidence {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .signal-time {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .signal-body {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .signal-price,
+        .signal-targets,
+        .signal-reasons {
+            font-size: 0.875rem;
+        }
+
+        .signal-targets {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .signal-reasons ul {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+        }
+
+        .signal-reasons li {
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            margin-bottom: 0.25rem;
+            font-size: 0.8125rem;
+        }
+
+        .signal-indicators {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .signal-indicators span {
+            background: rgba(0,0,0,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+        }
+
+        /* Action Buttons */
+        .action-panel {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            margin-bottom: 1rem;
+            color: var(--accent-cyan);
+        }
+    </style>
+    <!-- API Configuration - Smart Fallback System -->
+    <script src="/static/js/api-config.js"></script>
+    <script>
+        // Initialize API client
+        window.apiReady = new Promise((resolve) => {
+            if (window.apiClient) {
+                console.log('✅ API Client ready');
+                resolve(window.apiClient);
+            } else {
+                console.error('❌ API Client not loaded');
+            }
+        });
+    </script>
+
+</head>
+
+<body>
+    <div class="app-container">
+        <aside id="sidebar-container"></aside>
+
+        <main class="main-content">
+            <header id="header-container"></header>
+
+            <div class="page-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-title">
+                        <h1>
+                            <span class="page-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                </svg>
+                            </span>
+                            Professional Trading Assistant
+                        </h1>
+                        <p class="page-subtitle">Real-time signals, advanced strategies, and automated market monitoring</p>
+                    </div>
+                    <div class="page-actions">
+                        <button id="refresh-data" class="btn btn-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                        <button id="export-signals" class="btn btn-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Strategy Selection -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.125rem; color: var(--accent-cyan);">Select Trading Strategy</h3>
+                    <div id="strategy-cards" class="strategy-cards-grid"></div>
+                </div>
+
+                <!-- Crypto Selection -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.125rem; color: var(--accent-cyan);">Select Cryptocurrency</h3>
+                    <div id="crypto-list" class="crypto-list"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-panel">
+                    <button id="get-signals-btn" class="btn btn-primary btn-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        Get Trading Signals
+                    </button>
+                    <button id="toggle-monitor-btn" class="btn btn-secondary btn-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Start Monitoring
+                    </button>
+                </div>
+
+                <!-- Status Bar -->
+                <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div id="last-update-time" style="font-size: 0.875rem; color: var(--text-muted);">
+                        Ready to analyze
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        <span id="signals-count">0 signals</span>
+                    </div>
+                </div>
+
+                <!-- Signals Display -->
+                <div>
+                    <h3 style="margin-bottom: 1rem; font-size: 1.125rem; color: var(--accent-cyan);">
+                        Trading Signals
+                        <span style="font-size: 0.875rem; color: var(--text-muted); font-weight: normal;">(Latest first)</span>
+                    </h3>
+                    <div id="signals-list"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Shared Scripts -->
+    <script type="module" src="../../shared/js/layouts/sidebar.js"></script>
+    <script type="module" src="../../shared/js/layouts/header.js"></script>
+    <script type="module" src="../../shared/js/utils/sanitizer.js"></script>
+
+    <!-- Page Script -->
+    <script type="module" src="./trading-assistant-professional.js"></script>
+</body>
+
+</html>
+
+

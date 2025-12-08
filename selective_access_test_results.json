@@ -1,0 +1,76 @@
+{
+  "test_time": "2025-12-08T03:01:15.771249",
+  "kucoin_tests": [
+    {
+      "test": "health",
+      "status": "success"
+    },
+    {
+      "test": "ticker",
+      "status": "success",
+      "price": 89990.7
+    },
+    {
+      "test": "stats",
+      "status": "success"
+    }
+  ],
+  "binance_tests": [
+    {
+      "test": "ticker",
+      "status": "success",
+      "price": "90004.93"
+    },
+    {
+      "test": "ohlcv",
+      "status": "success"
+    }
+  ],
+  "unrestricted_tests": [
+    {
+      "api": "coingecko",
+      "status": "success"
+    },
+    {
+      "api": "coinpaprika",
+      "status": "success"
+    },
+    {
+      "api": "alternative_me",
+      "status": "success"
+    }
+  ],
+  "statistics": {
+    "total_requests": 6,
+    "total_success": 6,
+    "total_failed": 0,
+    "success_rate": "100.0%",
+    "methods": {
+      "direct": {
+        "success": 6,
+        "failed": 0,
+        "success_rate": "100.0%"
+      },
+      "dns_cloudflare": {
+        "success": 0,
+        "failed": 0,
+        "success_rate": "0.0%"
+      },
+      "dns_google": {
+        "success": 0,
+        "failed": 0,
+        "success_rate": "0.0%"
+      },
+      "proxy": {
+        "success": 0,
+        "failed": 0,
+        "success_rate": "0.0%"
+      },
+      "dns_proxy": {
+        "success": 0,
+        "failed": 0,
+        "success_rate": "0.0%"
+      }
+    }
+  }
+}

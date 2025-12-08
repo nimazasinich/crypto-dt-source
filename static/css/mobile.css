@@ -1,0 +1,172 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * MOBILE-FIRST RESPONSIVE — ULTRA ENTERPRISE EDITION
+ * Crypto Monitor HF — Mobile Optimization
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   BASE MOBILE (320px+)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+    /* Typography */
+    h1 {
+        font-size: var(--fs-2xl);
+    }
+
+    h2 {
+        font-size: var(--fs-xl);
+    }
+
+    h3 {
+        font-size: var(--fs-lg);
+    }
+
+    /* Buttons */
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        border-radius: var(--radius-md) !important;
+    }
+
+    /* Cards */
+    .card {
+        padding: var(--space-4);
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+
+    /* Tables */
+    .table-container {
+        font-size: var(--fs-xs);
+    }
+
+    .table th,
+    .table td {
+        padding: var(--space-2) var(--space-3);
+    }
+
+    /* Modal */
+    .modal {
+        max-width: 95vw;
+        max-height: 95vh;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: var(--space-5);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TABLET (640px - 768px)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 640px) and (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DESKTOP (1024px+)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TOUCH IMPROVEMENTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (hover: none) and (pointer: coarse) {
+    /* Increase touch targets */
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Remove hover effects on touch devices */
+    .btn:hover,
+    .card:hover,
+    .nav-tab-btn:hover {
+        transform: none;
+    }
+
+    /* Better tap feedback */
+    button:active,
+    a:active {
+        transform: scale(0.98);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LANDSCAPE MODE (Mobile)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .dashboard-header {
+        height: 50px;
+    }
+
+    .mobile-nav {
+        height: 60px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SAFE AREA (Notch Support)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@supports (padding: max(0px)) {
+    .dashboard-header {
+        padding-left: max(var(--space-6), env(safe-area-inset-left));
+        padding-right: max(var(--space-6), env(safe-area-inset-right));
+    }
+
+    .mobile-nav {
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+
+    .dashboard-main {
+        padding-left: max(var(--space-6), env(safe-area-inset-left));
+        padding-right: max(var(--space-6), env(safe-area-inset-right));
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   END OF MOBILE
+   ═══════════════════════════════════════════════════════════════════ */

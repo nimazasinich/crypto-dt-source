@@ -1,0 +1,420 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * BASE CSS — ULTRA ENTERPRISE EDITION
+ * Crypto Monitor HF — Core Resets, Typography, Utilities
+ * ═══════════════════════════════════════════════════════════════════
+ */
+
+/* Import Design System */
+@import './design-system.css';
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-main);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    color: var(--text-normal);
+    background: var(--background-main);
+    background-image: var(--background-gradient);
+    background-attachment: fixed;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TYPOGRAPHY
+   ═══════════════════════════════════════════════════════════════════ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-tight);
+    color: var(--text-strong);
+    margin-bottom: var(--space-4);
+}
+
+h1 {
+    font-size: var(--fs-4xl);
+    letter-spacing: var(--tracking-tight);
+}
+
+h2 {
+    font-size: var(--fs-3xl);
+    letter-spacing: var(--tracking-tight);
+}
+
+h3 {
+    font-size: var(--fs-2xl);
+}
+
+h4 {
+    font-size: var(--fs-xl);
+}
+
+h5 {
+    font-size: var(--fs-lg);
+}
+
+h6 {
+    font-size: var(--fs-base);
+}
+
+p {
+    margin-bottom: var(--space-4);
+    line-height: var(--lh-relaxed);
+}
+
+a {
+    color: var(--brand-cyan);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--brand-cyan-light);
+}
+
+a:focus-visible {
+    outline: 2px solid var(--brand-cyan);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+strong {
+    font-weight: var(--fw-semibold);
+}
+
+code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--surface-glass);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-xs);
+}
+
+pre {
+    font-family: var(--font-mono);
+    background: var(--surface-glass);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    border: 1px solid var(--border-light);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LISTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+ul,
+ol {
+    list-style: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   IMAGES
+   ═══════════════════════════════════════════════════════════════════ */
+
+img,
+picture,
+video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+svg {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUTTONS & INPUTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+button {
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--brand-cyan);
+    outline-offset: 2px;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+input,
+textarea,
+select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SCROLLBARS
+   ═══════════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--surface-glass-strong);
+    border-radius: var(--radius-full);
+    border: 2px solid var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-cyan);
+    box-shadow: var(--glow-cyan);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SELECTION
+   ═══════════════════════════════════════════════════════════════════ */
+
+::selection {
+    background: var(--brand-cyan);
+    color: var(--text-strong);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACCESSIBILITY
+   ═══════════════════════════════════════════════════════════════════ */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.sr-live-region {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--brand-cyan);
+    color: var(--text-strong);
+    padding: var(--space-3) var(--space-6);
+    text-decoration: none;
+    border-radius: 0 0 var(--radius-md) 0;
+    font-weight: var(--fw-semibold);
+    z-index: var(--z-tooltip);
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Display */
+.hidden {
+    display: none !important;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.block {
+    display: block;
+}
+
+.inline-block {
+    display: inline-block;
+}
+
+.flex {
+    display: flex;
+}
+
+.inline-flex {
+    display: inline-flex;
+}
+
+.grid {
+    display: grid;
+}
+
+/* Flex */
+.items-start {
+    align-items: flex-start;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.items-end {
+    align-items: flex-end;
+}
+
+.justify-start {
+    justify-content: flex-start;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+/* Gaps */
+.gap-1 {
+    gap: var(--space-1);
+}
+
+.gap-2 {
+    gap: var(--space-2);
+}
+
+.gap-3 {
+    gap: var(--space-3);
+}
+
+.gap-4 {
+    gap: var(--space-4);
+}
+
+.gap-6 {
+    gap: var(--space-6);
+}
+
+/* Text Align */
+.text-left {
+    text-align: left;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Font Weight */
+.font-light {
+    font-weight: var(--fw-light);
+}
+
+.font-normal {
+    font-weight: var(--fw-regular);
+}
+
+.font-medium {
+    font-weight: var(--fw-medium);
+}
+
+.font-semibold {
+    font-weight: var(--fw-semibold);
+}
+
+.font-bold {
+    font-weight: var(--fw-bold);
+}
+
+/* Text Color */
+.text-strong {
+    color: var(--text-strong);
+}
+
+.text-normal {
+    color: var(--text-normal);
+}
+
+.text-soft {
+    color: var(--text-soft);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-faint {
+    color: var(--text-faint);
+}
+
+/* Width */
+.w-full {
+    width: 100%;
+}
+
+.w-auto {
+    width: auto;
+}
+
+/* Truncate */
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   END OF BASE
+   ═══════════════════════════════════════════════════════════════════ */

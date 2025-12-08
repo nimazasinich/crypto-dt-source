@@ -1,0 +1,39 @@
+{
+  "name": "crypto-api-resource-monitor",
+  "version": "1.0.0",
+  "description": "Cryptocurrency Market Intelligence API Resource Manager - Monitor and manage all cryptocurrency data sources with health checks, failover chains, and real-time dashboards",
+  "main": "api-monitor.js",
+  "scripts": {
+    "monitor": "node api-monitor.js",
+    "monitor:watch": "node api-monitor.js --continuous",
+    "failover": "node failover-manager.js",
+    "dashboard": "python3 -m http.server 8080",
+    "full-check": "node api-monitor.js && node failover-manager.js && echo 'Open http://localhost:8080/dashboard.html in your browser' && python3 -m http.server 8080",
+    "test:free-resources": "node free_resources_selftest.mjs",
+    "test:free-resources:win": "powershell -NoProfile -ExecutionPolicy Bypass -File test_free_endpoints.ps1"
+  },
+  "keywords": [
+    "cryptocurrency",
+    "api",
+    "monitoring",
+    "blockchain",
+    "ethereum",
+    "bitcoin",
+    "market-data",
+    "health-check",
+    "failover",
+    "redundancy"
+  ],
+  "author": "Crypto Resource Monitor",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nimazasinich/crypto-dt-source.git"
+  },
+  "dependencies": {
+    "mcp-agent": "^0.0.1"
+  }
+}

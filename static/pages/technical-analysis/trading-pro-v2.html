@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Permissions-Policy" content="accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), sync-xhr=(), usb=(), web-share=()">
+    <title>Trading Pro | Crypto Intelligence Hub</title>
+    <link rel="icon" type="image/svg+xml" href="/static/assets/icons/favicon.svg">
+    
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="/static/shared/css/design-system.css">
+    <link rel="stylesheet" href="/static/shared/css/global.css">
+    <link rel="stylesheet" href="/static/shared/css/components.css">
+    <link rel="stylesheet" href="/static/shared/css/layout.css">
+    <link rel="stylesheet" href="/static/shared/css/utilities.css">
+    
+    <!-- TradingView Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <style>
+        /* Trading Pro Specific Styles */
+        .trading-terminal {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            grid-template-rows: auto 1fr 180px;
+            height: calc(100vh - 60px);
+            gap: 1px;
+            background: var(--border-color);
+        }
+
+        /* Top Bar */
+        .trading-top-bar {
+            grid-column: 1 / 4;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .symbol-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .symbol-input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            width: 140px;
+            transition: all 0.2s;
+        }
+
+        .symbol-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
+        }
+
+        .price-display {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .price-change {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .price-change.positive {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--accent-green);
+        }
+
+        .price-change.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .timeframe-buttons {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .timeframe-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.4rem 0.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .timeframe-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        .timeframe-btn.active {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            border-color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .status-indicators {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            background: var(--bg-tertiary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Left Panel - Tools */
+        .tools-panel {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .tool-section {
+            margin-bottom: 1.25rem;
+        }
+
+        .tool-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tool-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            margin-bottom: 0.35rem;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: rgba(45, 212, 191, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        .tool-btn.active {
+            background: rgba(45, 212, 191, 0.2);
+            border-color: var(--accent-cyan);
+        }
+
+        .tool-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .indicator-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-bottom: 0.35rem;
+            font-size: 0.8rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.on {
+            background: var(--accent-cyan);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.on .toggle-slider {
+            transform: translateX(20px);
+        }
+
+        /* Chart Area */
+        .chart-container {
+            background: var(--bg-secondary);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chart-tools {
+            display: flex;
+            gap: 0.35rem;
+        }
+
+        .chart-tool-btn {
+            padding: 0.4rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-tool-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .chart-tool-btn:hover {
+            background: rgba(45, 212, 191, 0.1);
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        .chart-tool-btn.active {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            border-color: var(--accent-cyan);
+        }
+
+        #tradingChart {
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Right Panel - Analysis */
+        .analysis-panel {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .analysis-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .analysis-card h3 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .signal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .signal-badge.buy {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--accent-green);
+        }
+
+        .signal-badge.sell {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .signal-badge.hold {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--accent-yellow);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.8rem;
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-weight: 600;
+        }
+
+        .metric-value.bullish { color: var(--accent-green); }
+        .metric-value.bearish { color: var(--accent-red); }
+        .metric-value.neutral { color: var(--accent-yellow); }
+
+        /* Bottom Panel - Strategies */
+        .strategies-panel {
+            grid-column: 1 / 4;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .strategy-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+
+        .strategy-tab {
+            padding: 0.6rem 1.25rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strategy-tab:hover {
+            color: var(--text-primary);
+            background: rgba(45, 212, 191, 0.05);
+        }
+
+        .strategy-tab.active {
+            color: var(--accent-cyan);
+            border-bottom-color: var(--accent-cyan);
+        }
+
+        .strategy-content {
+            flex: 1;
+            padding: 0.75rem;
+            overflow-y: auto;
+        }
+
+        .strategy-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .strategy-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .strategy-item:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .strategy-item.active {
+            background: rgba(45, 212, 191, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        .strategy-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .strategy-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .strategy-stats {
+            display: flex;
+            gap: 0.75rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .stat {
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-top: 0.15rem;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 14, 39, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 0.75rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            min-width: 280px;
+            max-width: 360px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success { border-left: 3px solid var(--accent-green); }
+        .toast.error { border-left: 3px solid var(--accent-red); }
+        .toast.info { border-left: 3px solid var(--accent-cyan); }
+        .toast.warning { border-left: 3px solid var(--accent-yellow); }
+
+        .toast-icon { width: 20px; height: 20px; flex-shrink: 0; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.15rem; }
+        .toast-message { font-size: 0.75rem; color: var(--text-secondary); }
+
+        .toast-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.removing {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+    </style>
+    <!-- API Configuration - Smart Fallback System -->
+    <script src="/static/js/api-config.js"></script>
+    <script>
+        // Initialize API client
+        window.apiReady = new Promise((resolve) => {
+            if (window.apiClient) {
+                console.log('✅ API Client ready');
+                resolve(window.apiClient);
+            } else {
+                console.error('❌ API Client not loaded');
+            }
+        });
+    </script>
+
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation (injected by LayoutManager) -->
+        <aside id="sidebar-container"></aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content" style="padding: 0;">
+            <!-- Header (injected by LayoutManager) -->
+            <header id="header-container"></header>
+
+            <!-- Toast Container -->
+            <div class="toast-container" id="toastContainer"></div>
+
+            <!-- Trading Terminal -->
+            <div class="trading-terminal">
+                <!-- Top Bar -->
+                <div class="trading-top-bar">
+                    <div class="symbol-selector">
+                        <input type="text" class="symbol-input" id="symbolInput" value="BTCUSDT" placeholder="Symbol">
+                        <div class="price-display" id="priceDisplay">
+                            <span id="currentPrice">$0.00</span>
+                            <span class="price-change positive" id="priceChange">+0.00%</span>
+                        </div>
+                    </div>
+
+                    <div class="timeframe-buttons">
+                        <button class="timeframe-btn" data-timeframe="1m">1m</button>
+                        <button class="timeframe-btn" data-timeframe="5m">5m</button>
+                        <button class="timeframe-btn" data-timeframe="15m">15m</button>
+                        <button class="timeframe-btn" data-timeframe="1h">1h</button>
+                        <button class="timeframe-btn active" data-timeframe="4h">4h</button>
+                        <button class="timeframe-btn" data-timeframe="1d">1D</button>
+                        <button class="timeframe-btn" data-timeframe="1w">1W</button>
+                    </div>
+
+                    <div class="status-indicators">
+                        <div class="status-badge">
+                            <div class="status-dot"></div>
+                            <span>Live</span>
+                        </div>
+                        <div class="status-badge">
+                            <span id="lastUpdate">--:--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tools Panel -->
+                <div class="tools-panel">
+                    <div class="tool-section">
+                        <h3>
+                            <svg class="tool-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                            Drawing
+                        </h3>
+                        <button class="tool-btn" data-tool="trendline">
+                            <svg class="tool-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            Trend Line
+                        </button>
+                        <button class="tool-btn" data-tool="horizontal">
+                            <svg class="tool-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                            Horizontal
+                        </button>
+                        <button class="tool-btn" data-tool="fibonacci">
+                            <svg class="tool-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 2v20M2 12h20"/></svg>
+                            Fibonacci
+                        </button>
+                        <button class="tool-btn" data-tool="rectangle">
+                            <svg class="tool-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/></svg>
+                            Rectangle
+                        </button>
+                    </div>
+
+                    <div class="tool-section">
+                        <h3>
+                            <svg class="tool-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            Indicators
+                        </h3>
+                        <div class="indicator-toggle">
+                            <span>RSI (14)</span>
+                            <div class="toggle-switch on" data-indicator="rsi"><div class="toggle-slider"></div></div>
+                        </div>
+                        <div class="indicator-toggle">
+                            <span>MACD</span>
+                            <div class="toggle-switch on" data-indicator="macd"><div class="toggle-slider"></div></div>
+                        </div>
+                        <div class="indicator-toggle">
+                            <span>BB (20,2)</span>
+                            <div class="toggle-switch" data-indicator="bb"><div class="toggle-slider"></div></div>
+                        </div>
+                        <div class="indicator-toggle">
+                            <span>EMA</span>
+                            <div class="toggle-switch on" data-indicator="ema"><div class="toggle-slider"></div></div>
+                        </div>
+                        <div class="indicator-toggle">
+                            <span>Volume</span>
+                            <div class="toggle-switch on" data-indicator="volume"><div class="toggle-slider"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="tool-section">
+                        <h3>
+                            <svg class="tool-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                            Patterns
+                        </h3>
+                        <div class="indicator-toggle">
+                            <span>Head & Shoulders</span>
+                            <div class="toggle-switch on" data-pattern="hs"><div class="toggle-slider"></div></div>
+                        </div>
+                        <div class="indicator-toggle">
+                            <span>Double Top</span>
+                            <div class="toggle-switch on" data-pattern="double"><div class="toggle-slider"></div></div>
+                        </div>
+                        <div class="indicator-toggle">
+                            <span>Triangles</span>
+                            <div class="toggle-switch on" data-pattern="triangle"><div class="toggle-slider"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Area -->
+                <div class="chart-container">
+                    <div class="chart-toolbar">
+                        <div class="chart-tools">
+                            <button class="chart-tool-btn" title="Cursor" data-mode="cursor">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+                            </button>
+                            <button class="chart-tool-btn active" title="Crosshair" data-mode="crosshair">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><line x1="22" y1="12" x2="18" y2="12" stroke-width="2"/><line x1="6" y1="12" x2="2" y2="12" stroke-width="2"/><line x1="12" y1="6" x2="12" y2="2" stroke-width="2"/><line x1="12" y1="22" x2="12" y2="18" stroke-width="2"/></svg>
+                            </button>
+                            <button class="chart-tool-btn" title="Zoom In" id="btnZoomIn">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35"/><line x1="11" y1="8" x2="11" y2="14" stroke-width="2"/><line x1="8" y1="11" x2="14" y2="11" stroke-width="2"/></svg>
+                            </button>
+                            <button class="chart-tool-btn" title="Zoom Out" id="btnZoomOut">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35"/><line x1="8" y1="11" x2="14" y2="11" stroke-width="2"/></svg>
+                            </button>
+                            <button class="chart-tool-btn" title="Fit" id="btnFit">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="tradingChart"></div>
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div class="spinner"></div>
+                        <div class="loading-text">Loading market data...</div>
+                    </div>
+                </div>
+
+                <!-- Analysis Panel -->
+                <div class="analysis-panel">
+                    <div class="analysis-card">
+                        <h3>
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            Signal
+                        </h3>
+                        <div style="margin: 0.5rem 0;">
+                            <span class="signal-badge buy" id="currentSignal">STRONG BUY</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Confidence</span>
+                            <span class="metric-value bullish" id="confidence">85%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Strength</span>
+                            <span class="metric-value bullish" id="strength">Strong</span>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card">
+                        <h3>
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            Key Levels
+                        </h3>
+                        <div class="metric-row">
+                            <span class="metric-label">Resistance</span>
+                            <span class="metric-value bearish" id="r1">$0</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Current</span>
+                            <span class="metric-value" id="cp">$0</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Support</span>
+                            <span class="metric-value bullish" id="s1">$0</span>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card">
+                        <h3>
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                            Indicators
+                        </h3>
+                        <div class="metric-row">
+                            <span class="metric-label">RSI (14)</span>
+                            <span class="metric-value neutral" id="rsiValue">--</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">MACD</span>
+                            <span class="metric-value" id="macdValue">--</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">EMA Trend</span>
+                            <span class="metric-value" id="emaValue">--</span>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card">
+                        <h3>
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Stats
+                        </h3>
+                        <div class="metric-row">
+                            <span class="metric-label">24h Vol</span>
+                            <span class="metric-value" id="volume24h">$0</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Volatility</span>
+                            <span class="metric-value" id="volatility">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategies Panel -->
+                <div class="strategies-panel">
+                    <div class="strategy-tabs">
+                        <div class="strategy-tab active" data-tab="strategies">
+                            <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                            Strategies
+                        </div>
+                        <div class="strategy-tab" data-tab="signals">
+                            <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            Signals
+                        </div>
+                        <div class="strategy-tab" data-tab="history">
+                            <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            History
+                        </div>
+                        <div class="strategy-tab" data-tab="backtests">
+                            <svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            Backtest
+                        </div>
+                    </div>
+                    <div class="strategy-content" id="strategyContent">
+                        <div class="strategy-list" id="strategyList"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Layout Manager + Trading Pro -->
+    <script type="module">
+        // Import layout manager
+        import { LayoutManager } from '/static/shared/js/core/layout-manager.js?v=2025-12-02-3';
+        
+        // Initialize layouts (sidebar + header)
+        await LayoutManager.init('trading-pro');
+        
+        // Import and initialize Trading Pro
+        const { default: TradingProV2 } = await import('./trading-pro-v2.js');
+    </script>
+</body>
+</html>

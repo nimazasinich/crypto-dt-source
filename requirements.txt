@@ -1,0 +1,48 @@
+# Core dependencies for Hugging Face Space
+fastapi==0.104.1
+uvicorn 
+flask==3.0.0
+flask-cors==4.0.0
+python-multipart==0.0.6
+python-dotenv==1.0.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+feedparser
+# Database
+sqlalchemy==2.0.23
+aiosqlite==0.19.0
+dnspython
+# HTTP and async
+aiohttp==3.9.1
+httpx==0.25.2
+requests==2.31.0
+
+# AI/ML - HuggingFace
+transformers==4.36.0
+torch==2.1.1 
+sentencepiece==0.1.99
+huggingface-hub==0.19.4
+datasets==2.16.1
+
+# Utilities
+numpy==1.26.2
+pandas==2.1.4
+python-dateutil==2.8.2
+watchdog==3.0.0
+
+# WebSocket support
+websockets==12.0
+
+# Rate limiting and caching
+slowapi==0.1.9
+cachetools==5.3.2
+
+# Data validation
+jsonschema==4.20.0
+
+# Testing (optional)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Production server
+gunicorn==21.2.0

@@ -1,0 +1,257 @@
+{
+  "exportDate": "2025-12-06T05:04:30.348Z",
+  "totalSignals": 1,
+  "signals": [
+    {
+      "timestamp": "2025-12-06T05:03:54.640Z",
+      "symbol": "BTC",
+      "strategy": "🔥 HTS Hybrid System",
+      "action": "HOLD",
+      "confidence": 29,
+      "reasons": [
+        "Patterns: 3 bullish, 4 bearish",
+        "Market Regime: neutral",
+        "Final Score: 42.5/100"
+      ],
+      "price": 89718.41,
+      "entryPrice": 89718.41,
+      "stopLoss": 92073.15,
+      "takeProfit": 87952.35500000001,
+      "takeProfits": [
+        {
+          "level": 87952.35500000001,
+          "type": "TP1",
+          "riskReward": 0.75
+        },
+        {
+          "level": 86774.985,
+          "type": "TP2",
+          "riskReward": 1.2525
+        },
+        {
+          "level": 85008.93000000001,
+          "type": "TP3",
+          "riskReward": 2.0025
+        }
+      ],
+      "indicators": {
+        "rsi": "15.16",
+        "macd": "-140.5521",
+        "atr": "1177.37"
+      },
+      "htsDetails": {
+        "finalScore": 42.469724611555726,
+        "components": {
+          "rsiMacd": {
+            "score": 50,
+            "signal": "hold",
+            "confidence": 30,
+            "weight": 0.4,
+            "details": {
+              "rsi": "15.16",
+              "macd": "-140.5521",
+              "signal": "430.2184",
+              "histogram": "-570.7706"
+            }
+          },
+          "smc": {
+            "score": 50,
+            "signal": "hold",
+            "confidence": 0,
+            "weight": 0.25,
+            "levels": {
+              "orderBlocks": 10,
+              "liquidityZones": 5,
+              "breakerBlocks": 5
+            }
+          },
+          "patterns": {
+            "score": 10,
+            "signal": "sell",
+            "confidence": 80,
+            "weight": 0.2,
+            "detected": 7,
+            "bullish": 3,
+            "bearish": 4
+          },
+          "sentiment": {
+            "score": 50,
+            "signal": "hold",
+            "confidence": 0,
+            "weight": 0.1,
+            "sentiment": 0
+          },
+          "ml": {
+            "score": 59.39449223111458,
+            "signal": "buy",
+            "confidence": 18.788984462229166,
+            "weight": 0.05,
+            "features": {
+              "rsiMacdStrength": 0,
+              "smcStrength": 0,
+              "patternStrength": 0.8,
+              "sentimentStrength": 0,
+              "volumeTrend": 0.30278006612145114,
+              "priceMomentum": -0.02388161989853417
+            }
+          }
+        },
+        "smcLevels": {
+          "orderBlocks": [
+            {
+              "index": 10,
+              "high": 84709.89,
+              "low": 81648,
+              "volume": 16184.92659
+            },
+            {
+              "index": 11,
+              "high": 85496,
+              "low": 80600,
+              "volume": 23041.35364
+            },
+            {
+              "index": 12,
+              "high": 85572.82,
+              "low": 82333,
+              "volume": 8107.54282
+            },
+            {
+              "index": 42,
+              "high": 90418.39,
+              "low": 86956.61,
+              "volume": 7510.43418
+            },
+            {
+              "index": 68,
+              "high": 90417,
+              "low": 86161.61,
+              "volume": 10249.65966
+            },
+            {
+              "index": 71,
+              "high": 86674,
+              "low": 83822.76,
+              "volume": 8124.37241
+            },
+            {
+              "index": 77,
+              "high": 91200,
+              "low": 87032.75,
+              "volume": 9300.50019
+            },
+            {
+              "index": 78,
+              "high": 92307.65,
+              "low": 90201,
+              "volume": 6152.68006
+            },
+            {
+              "index": 83,
+              "high": 93700,
+              "low": 91697,
+              "volume": 6523.23972
+            },
+            {
+              "index": 96,
+              "high": 90498.59,
+              "low": 88056,
+              "volume": 6507.53794
+            }
+          ],
+          "liquidityZones": [
+            {
+              "level": 82333,
+              "type": "support",
+              "strength": 1
+            },
+            {
+              "level": 86956.61,
+              "type": "support",
+              "strength": 1
+            },
+            {
+              "level": 84030.95,
+              "type": "support",
+              "strength": 1
+            },
+            {
+              "level": 85007.69,
+              "type": "support",
+              "strength": 1
+            },
+            {
+              "level": 87032.75,
+              "type": "support",
+              "strength": 1
+            }
+          ],
+          "breakerBlocks": [
+            {
+              "type": "bullish",
+              "level": 85129.43,
+              "index": 20
+            },
+            {
+              "type": "bullish",
+              "level": 87935.05,
+              "index": 42
+            },
+            {
+              "type": "bearish",
+              "level": 90360,
+              "index": 68
+            },
+            {
+              "type": "bearish",
+              "level": 86149.15,
+              "index": 71
+            },
+            {
+              "type": "bullish",
+              "level": 90850.01,
+              "index": 78
+            }
+          ]
+        },
+        "patterns": [
+          {
+            "type": "bearish",
+            "name": "Double Top",
+            "confidence": 65
+          },
+          {
+            "type": "bearish",
+            "name": "Descending Triangle",
+            "confidence": 60
+          },
+          {
+            "type": "bearish",
+            "name": "Shooting Star",
+            "confidence": 55
+          },
+          {
+            "type": "bullish",
+            "name": "Bullish Engulfing",
+            "confidence": 60
+          },
+          {
+            "type": "bullish",
+            "name": "Bullish Engulfing",
+            "confidence": 60
+          },
+          {
+            "type": "bearish",
+            "name": "Bearish Engulfing",
+            "confidence": 60
+          },
+          {
+            "type": "bullish",
+            "name": "Hammer",
+            "confidence": 55
+          }
+        ]
+      }
+    }
+  ]
+}
