@@ -43,6 +43,10 @@ huggingface-hub==1.2.2
 python-dateutil==2.9.0
 pytz==2024.2
 
+# Security and Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
 # OPTIONAL HEAVY DEPENDENCIES (comment out for lightweight deployment)
 # torch==2.0.0  # Only needed for local AI model inference
 # transformers==4.30.0  # Only needed for local AI model inference
