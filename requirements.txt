@@ -20,7 +20,7 @@ feedparser==6.0.11
 # Database
 sqlalchemy==2.0.35
 alembic==1.13.3
-
+torch
 # Async Support
 asyncio==3.4.3
 aiofiles==24.1.0
