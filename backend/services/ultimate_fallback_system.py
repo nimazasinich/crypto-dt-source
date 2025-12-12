@@ -932,7 +932,6 @@ class UltimateFallbackSystem:
                 base_url="https://api-inference.huggingface.co/models/ElKulako/cryptobert",
                 category="hf_models", priority=Priority.CRITICAL,
                 auth_type="apiKeyHeaderOptional",
-                api_key="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",
                 api_key_env="HF_TOKEN",
                 header_name="Authorization",
                 features=["crypto-sentiment", "bullish-bearish-neutral"]
@@ -942,7 +941,6 @@ class UltimateFallbackSystem:
                 base_url="https://api-inference.huggingface.co/models/kk08/CryptoBERT",
                 category="hf_models", priority=Priority.CRITICAL,
                 auth_type="apiKeyHeaderOptional",
-                api_key="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",
                 api_key_env="HF_TOKEN",
                 header_name="Authorization",
                 features=["crypto-sentiment"]
@@ -1408,27 +1406,8 @@ class UltimateFallbackSystem:
             if vars_list:
                 lines.append(f"# ─── {cat_name} ───")
                 for var in vars_list:
-                    # کلیدهای موجود را تنظیم می‌کنیم
-                    if var == "HF_TOKEN":
-                        lines.append(f"{var}=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")
-                    elif var == "COINMARKETCAP_KEY_1":
-                        lines.append(f"{var}=04cf4b5b-9868-465c-8ba0-9f2e78c92eb1")
-                    elif var == "COINMARKETCAP_KEY_2":
-                        lines.append(f"{var}=b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c")
-                    elif var == "CRYPTOCOMPARE_KEY":
-                        lines.append(f"{var}=e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f")
-                    elif var == "ETHERSCAN_KEY_1":
-                        lines.append(f"{var}=SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2")
-                    elif var == "ETHERSCAN_KEY_2":
-                        lines.append(f"{var}=T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45")
-                    elif var == "BSCSCAN_KEY":
-                        lines.append(f"{var}=K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT")
-                    elif var == "TRONSCAN_KEY":
-                        lines.append(f"{var}=7ae72726-bffe-4e74-9c33-97b761eeea21")
-                    elif var == "NEWSAPI_KEY":
-                        lines.append(f"{var}=pub_346789abc123def456789ghi012345jkl")
-                    else:
-                        lines.append(f"{var}=your_key_here")
+                    # Never emit real keys in repo; keep placeholders only
+                    lines.append(f"{var}=")
                 lines.append("")
         
         lines.append("# ═══════════════════════════════════════════════════════════")

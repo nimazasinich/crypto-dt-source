@@ -17,6 +17,9 @@ from pathlib import Path
 # Import Orchestrator
 from backend.orchestration.provider_manager import provider_manager
 
+# Ensure real providers are registered (side-effect import)
+from backend.live_data import providers as _live_providers  # noqa: F401
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["HF Space Complete API"])
@@ -160,8 +163,9 @@ async def get_ohlc(
     if not response["success"]:
         raise HTTPException(status_code=503, detail=response["error"])
 
-    # Transform Binance Klines to standard OHLC
-    # [time, open, high, low, close, volume, ...]
+    # Transform provider-specific format to standard OHLC
+    # - Binance klines: [time, open, high, low, close, volume, ...]
+    # - CoinGecko OHLC: [timestamp, open, high, low, close]
     klines = response["data"]
     ohlc_data = []
     
@@ -176,6 +180,26 @@ async def get_ohlc(
                     "close": float(k[4]),
                     "volume": float(k[5])
                 })
+            elif isinstance(k, list) and len(k) == 5:
+                # CoinGecko OHLC (ms timestamp)
+                ts_raw = k[0]
+                try:
+                    ts = int(ts_raw / 1000) if isinstance(ts_raw, (int, float)) and ts_raw > 10**11 else int(ts_raw)
+                except Exception:
+                    continue
+                try:
+                    ohlc_data.append(
+                        {
+                            "ts": ts,
+                            "open": float(k[1]),
+                            "high": float(k[2]),
+                            "low": float(k[3]),
+                            "close": float(k[4]),
+                            "volume": 0.0,
+                        }
+                    )
+                except Exception:
+                    continue
 
     return {
         "symbol": symbol,

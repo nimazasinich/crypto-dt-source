@@ -2,7 +2,6 @@ import asyncio
 import logging
 import time
 import json
-import random
 import os
 from enum import Enum
 from typing import Dict, List, Any, Optional, Callable, Awaitable
@@ -13,12 +12,31 @@ from backend.cache.ttl_cache import ttl_cache
 
 # Configure logging
 def setup_provider_logger(name, log_file):
-    handler = logging.FileHandler(log_file)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
+    """
+    Create a provider logger.
+
+    HF Spaces safety:
+    - Ensure the logs/ directory exists
+    - If file logging fails (read-only FS), fall back to a NullHandler
+    """
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
+
+    # Avoid duplicate handlers on repeated imports/reloads
+    if logger.handlers:
+        return logger
+
+    try:
+        log_dir = os.path.dirname(log_file) or "."
+        os.makedirs(log_dir, exist_ok=True)
+        handler = logging.FileHandler(log_file)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    except Exception:
+        # Last-resort: do not break app import/startup
+        logger.addHandler(logging.NullHandler())
+
     return logger
 
 health_logger = setup_provider_logger("provider_health", "logs/provider_health.log")
@@ -142,6 +160,9 @@ class ProviderManager:
             "rpc": []
         }
         self._lock = asyncio.Lock()
+        # Smooth weighted round-robin state per category
+        # key: category -> provider_name -> current_weight
+        self._swr_state: Dict[str, Dict[str, int]] = {}
 
     def register_provider(self, category: str, config: ProviderConfig, fetch_func: Callable[..., Awaitable[Any]]):
         if category not in self.providers:
@@ -150,6 +171,41 @@ class ProviderManager:
         provider = Provider(config, fetch_func)
         self.providers[category].append(provider)
         main_logger.info(f"Registered provider: {config.name} for category: {category}")
+
+        # Initialize SWRR state slot
+        self._swr_state.setdefault(category, {}).setdefault(config.name, 0)
+
+    def _select_provider_smooth_weighted_rr(self, category: str, available: List[Provider]) -> Optional[Provider]:
+        """
+        Smooth Weighted Round Robin (SWRR).
+        Deterministic and matches configured weights over time.
+        """
+        if not available:
+            return None
+
+        state = self._swr_state.setdefault(category, {})
+
+        total_weight = 0
+        best: Optional[Provider] = None
+        best_cw: Optional[int] = None
+
+        for p in available:
+            w = int(getattr(p.config, "weight", 1) or 1)
+            if w < 1:
+                w = 1
+            total_weight += w
+
+            cw = state.get(p.config.name, 0) + w
+            state[p.config.name] = cw
+
+            if best is None or cw > (best_cw if best_cw is not None else -10**18):
+                best = p
+                best_cw = cw
+
+        if best is not None and total_weight > 0:
+            state[best.config.name] = state.get(best.config.name, 0) - total_weight
+
+        return best
 
     async def get_next_provider(self, category: str) -> Optional[Provider]:
         async with self._lock:
@@ -161,19 +217,40 @@ class ProviderManager:
             # Then we move it to the end of the list to rotate
             
             queue = self.providers[category]
-            available_provider = None
-            
-            for i in range(len(queue)):
-                provider = queue[i]
-                if await provider.is_available():
-                    available_provider = provider
-                    # Move to end of queue (Rotate)
-                    queue.pop(i)
-                    queue.append(provider)
-                    rotation_logger.info(f"ROTATION: Selected {provider.config.name} for {category}. Queue rotated.")
-                    break
-            
-            return available_provider
+
+            # Resolve availability first (async)
+            available: List[Provider] = []
+            for p in queue:
+                if await p.is_available():
+                    available.append(p)
+
+            if not available:
+                return None
+
+            # If weights are configured (not all equal), use SWRR; else simple RR.
+            weights = [int(getattr(p.config, "weight", 1) or 1) for p in available]
+            use_weighted = len(set(weights)) > 1
+
+            selected: Optional[Provider]
+            if use_weighted:
+                selected = self._select_provider_smooth_weighted_rr(category, available)
+            else:
+                selected = available[0]
+
+            if selected is None:
+                return None
+
+            # Rotate queue order for observability/debug parity with QA expectations
+            try:
+                idx = queue.index(selected)
+                queue.pop(idx)
+            except ValueError:
+                # Shouldn't happen, but don't fail selection
+                pass
+            queue.append(selected)
+            rotation_logger.info(f"ROTATION: Selected {selected.config.name} for {category}. Queue rotated.")
+
+            return selected
 
     async def fetch_data(self, category: str, params: Dict[str, Any] = None, use_cache: bool = True, ttl: int = 60) -> Dict[str, Any]:
         """
@@ -254,6 +331,9 @@ class ProviderManager:
                 # If it's a critical failure (401, 403, 429), maybe longer cooldown?
                 if "429" in error_msg:
                     provider.enter_cooldown("Rate limit hit", duration=300)
+                # Geo-blocked providers should be cooled down aggressively to avoid retry storms
+                if "451" in error_msg or "Geo-blocked" in error_msg:
+                    provider.enter_cooldown("Geo-blocked / restricted", duration=3600)
                 
                 continue
 

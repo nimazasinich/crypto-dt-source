@@ -8,6 +8,18 @@ from backend.orchestration.provider_manager import provider_manager, ProviderCon
 
 logger = logging.getLogger(__name__)
 
+# Minimal mapping for common coins used by HF endpoints
+_COINGECKO_ID_TO_BINANCE_SYMBOL: Dict[str, str] = {
+    "bitcoin": "BTCUSDT",
+    "ethereum": "ETHUSDT",
+    "tron": "TRXUSDT",
+    "solana": "SOLUSDT",
+    "binancecoin": "BNBUSDT",
+    "ripple": "XRPUSDT",
+}
+
+_BINANCE_SYMBOL_TO_COINGECKO_ID: Dict[str, str] = {v.replace("USDT", "").lower(): k for k, v in _COINGECKO_ID_TO_BINANCE_SYMBOL.items()}
+
 # ==============================================================================
 # FETCH IMPLEMENTATIONS
 # ==============================================================================
@@ -37,6 +49,59 @@ async def fetch_coingecko_market(config: ProviderConfig, **kwargs) -> Any:
                 raise Exception("Rate limit exceeded (429)")
             response.raise_for_status()
             return await response.json()
+
+async def fetch_binance_market(config: ProviderConfig, **kwargs) -> Any:
+    """
+    Build a CoinGecko-like market list from Binance 24hr ticker endpoints.
+
+    This exists to allow provider rotation/failover for `/api/market` without returning fake data.
+    """
+    ids_raw = kwargs.get("ids", "bitcoin,ethereum")
+    ids = [i.strip().lower() for i in str(ids_raw).split(",") if i.strip()]
+    vs_currency = str(kwargs.get("vs_currency", "usd")).lower()
+
+    # Binance market is typically quoted in USDT; if caller asks for non-usd, we still return the USDT quote.
+    if vs_currency not in {"usd", "usdt"}:
+        logger.warning("Binance market provider only supports USD/USDT quoting. Requested: %s", vs_currency)
+
+    symbols: List[str] = []
+    for coin_id in ids:
+        sym = _COINGECKO_ID_TO_BINANCE_SYMBOL.get(coin_id)
+        if sym:
+            symbols.append(sym)
+
+    if not symbols:
+        return []
+
+    url = f"{config.base_url}/ticker/24hr"
+    results: List[Dict[str, Any]] = []
+
+    async with aiohttp.ClientSession() as session:
+        for sym in symbols:
+            params = {"symbol": sym}
+            async with session.get(url, params=params, timeout=config.timeout) as response:
+                if response.status == 451:
+                    raise Exception("Geo-blocked (451)")
+                response.raise_for_status()
+                data = await response.json()
+
+                base_symbol = str(data.get("symbol", "")).replace("USDT", "")
+                try:
+                    results.append(
+                        {
+                            "id": _BINANCE_SYMBOL_TO_COINGECKO_ID.get(base_symbol.lower(), base_symbol.lower()),
+                            "symbol": base_symbol.lower(),
+                            "name": base_symbol.upper(),
+                            "current_price": float(data.get("lastPrice", 0)),
+                            "price_change_percentage_24h": float(data.get("priceChangePercent", 0)),
+                            "total_volume": float(data.get("quoteVolume", 0)),
+                        }
+                    )
+                except Exception:
+                    # Skip malformed entry rather than inventing values
+                    continue
+
+    return results
 
 async def fetch_coingecko_price(config: ProviderConfig, **kwargs) -> Any:
     coin_id = kwargs.get("coin_id", "bitcoin")
@@ -85,6 +150,73 @@ async def fetch_binance_klines(config: ProviderConfig, **kwargs) -> Any:
                 raise Exception("Geo-blocked (451)")
             response.raise_for_status()
             return await response.json()
+
+async def fetch_coingecko_ohlc(config: ProviderConfig, **kwargs) -> Any:
+    """
+    Fetch OHLC candles from CoinGecko.
+
+    CoinGecko endpoint: /coins/{id}/ohlc?vs_currency=usd&days=1|7|14|30|90|180|365|max
+    Returns: [[timestamp, open, high, low, close], ...]
+    """
+    symbol = str(kwargs.get("symbol", "BTC")).strip().lower()
+    interval = str(kwargs.get("interval", "1h")).strip().lower()
+    limit = int(kwargs.get("limit", 100))
+
+    # Best-effort mapping; if unknown, treat symbol as a coin id.
+    coin_id = _BINANCE_SYMBOL_TO_COINGECKO_ID.get(symbol.lower(), symbol.lower())
+
+    # Determine days bucket based on interval*limit
+    minutes_per_candle = 60
+    if interval.endswith("m"):
+        try:
+            minutes_per_candle = int(interval[:-1])
+        except Exception:
+            minutes_per_candle = 60
+    elif interval.endswith("h"):
+        try:
+            minutes_per_candle = int(interval[:-1]) * 60
+        except Exception:
+            minutes_per_candle = 60
+    elif interval.endswith("d"):
+        try:
+            minutes_per_candle = int(interval[:-1]) * 1440
+        except Exception:
+            minutes_per_candle = 1440
+
+    total_days = max(1, int((minutes_per_candle * max(1, limit)) / 1440))
+    # Coingecko allowed buckets
+    if total_days <= 1:
+        days = 1
+    elif total_days <= 7:
+        days = 7
+    elif total_days <= 14:
+        days = 14
+    elif total_days <= 30:
+        days = 30
+    elif total_days <= 90:
+        days = 90
+    elif total_days <= 180:
+        days = 180
+    else:
+        days = 365
+
+    url = f"{config.base_url}/coins/{coin_id}/ohlc"
+    params = {"vs_currency": "usd", "days": days}
+
+    # Pro API key support (only if provided)
+    if config.api_key:
+        params["x_cg_pro_api_key"] = config.api_key
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, params=params, timeout=config.timeout) as response:
+            if response.status == 429:
+                raise Exception("Rate limit exceeded (429)")
+            response.raise_for_status()
+            data = await response.json()
+            # Respect requested limit if possible
+            if isinstance(data, list) and limit > 0:
+                return data[-limit:]
+            return data
 
 async def fetch_cryptopanic_news(config: ProviderConfig, **kwargs) -> Any:
     filter_type = kwargs.get("filter", "hot")
@@ -157,19 +289,6 @@ def initialize_providers():
         ),
         fetch_coingecko_market
     )
-    
-    provider_manager.register_provider(
-        "market_pro",
-        ProviderConfig(
-            name="coingecko_pro",
-            category="market",
-            base_url="https://pro-api.coingecko.com/api/v3", # Assuming Pro URL
-            api_key=os.getenv("COINGECKO_PRO_API_KEY", "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1"),
-            rate_limit_per_min=500,
-            weight=200
-        ),
-        fetch_coingecko_market
-    )
 
     provider_manager.register_provider(
         "market",
@@ -180,8 +299,24 @@ def initialize_providers():
             rate_limit_per_min=1200,
             weight=90
         ),
-        fetch_binance_ticker  # Note: This fetch function behaves differently (ticker vs market list), router needs to handle
+        fetch_binance_market
     )
+
+    # Optional CoinGecko Pro provider (only if key present)
+    cg_pro_key = os.getenv("COINGECKO_PRO_API_KEY", "").strip()
+    if cg_pro_key:
+        provider_manager.register_provider(
+            "market",
+            ProviderConfig(
+                name="coingecko_pro",
+                category="market",
+                base_url="https://pro-api.coingecko.com/api/v3",
+                api_key=cg_pro_key,
+                rate_limit_per_min=500,
+                weight=200,
+            ),
+            fetch_coingecko_market,
+        )
 
     # OHLC Providers
     provider_manager.register_provider(
@@ -195,33 +330,52 @@ def initialize_providers():
         ),
         fetch_binance_klines
     )
+    provider_manager.register_provider(
+        "ohlc",
+        ProviderConfig(
+            name="coingecko_ohlc",
+            category="ohlc",
+            base_url="https://api.coingecko.com/api/v3",
+            rate_limit_per_min=30,
+            weight=70,
+        ),
+        fetch_coingecko_ohlc,
+    )
 
     # News Providers
-    provider_manager.register_provider(
-        "news",
-        ProviderConfig(
-            name="cryptopanic",
-            category="news",
-            base_url="https://cryptopanic.com/api/v1",
-            api_key=os.getenv("CRYPTOPANIC_API_KEY", "7832690f05026639556837583758"), # Placeholder if env not set
-            rate_limit_per_min=60,
-            weight=100
-        ),
-        fetch_cryptopanic_news
-    )
-    
-    provider_manager.register_provider(
-        "news",
-        ProviderConfig(
-            name="newsapi",
-            category="news",
-            base_url="https://newsapi.org/v2",
-            api_key=os.getenv("NEWS_API_KEY", "968a5e25552b4cb5ba3280361d8444ab"),
-            rate_limit_per_min=100,
-            weight=90
-        ),
-        fetch_newsapi
-    )
+    cryptopanic_key = os.getenv("CRYPTOPANIC_API_KEY", "").strip()
+    if cryptopanic_key:
+        provider_manager.register_provider(
+            "news",
+            ProviderConfig(
+                name="cryptopanic",
+                category="news",
+                base_url="https://cryptopanic.com/api/v1",
+                api_key=cryptopanic_key,
+                rate_limit_per_min=60,
+                weight=100,
+            ),
+            fetch_cryptopanic_news,
+        )
+    else:
+        logger.info("CryptoPanic API key not set; skipping cryptopanic provider registration")
+
+    newsapi_key = os.getenv("NEWS_API_KEY", "").strip()
+    if newsapi_key:
+        provider_manager.register_provider(
+            "news",
+            ProviderConfig(
+                name="newsapi",
+                category="news",
+                base_url="https://newsapi.org/v2",
+                api_key=newsapi_key,
+                rate_limit_per_min=100,
+                weight=90,
+            ),
+            fetch_newsapi,
+        )
+    else:
+        logger.info("NewsAPI key not set; skipping newsapi provider registration")
 
     # Sentiment
     provider_manager.register_provider(
@@ -237,31 +391,39 @@ def initialize_providers():
     )
 
     # OnChain / RPC
-    provider_manager.register_provider(
-        "onchain",
-        ProviderConfig(
-            name="etherscan",
-            category="onchain",
-            base_url="https://api.etherscan.io/api",
-            api_key=os.getenv("ETHERSCAN_API_KEY", "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2"),
-            rate_limit_per_min=5, # Free tier limit
-            weight=100
-        ),
-        fetch_etherscan_gas
-    )
-    
-    provider_manager.register_provider(
-        "onchain",
-        ProviderConfig(
-            name="etherscan_backup",
-            category="onchain",
-            base_url="https://api.etherscan.io/api",
-            api_key=os.getenv("ETHERSCAN_API_KEY_2", "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45"),
-            rate_limit_per_min=5,
-            weight=90
-        ),
-        fetch_etherscan_gas
-    )
+    etherscan_key = os.getenv("ETHERSCAN_API_KEY", "").strip()
+    if etherscan_key:
+        provider_manager.register_provider(
+            "onchain",
+            ProviderConfig(
+                name="etherscan",
+                category="onchain",
+                base_url="https://api.etherscan.io/api",
+                api_key=etherscan_key,
+                rate_limit_per_min=5,  # Free tier limit
+                weight=100,
+            ),
+            fetch_etherscan_gas,
+        )
+    else:
+        logger.info("Etherscan API key not set; skipping etherscan provider registration")
+
+    etherscan_key_2 = os.getenv("ETHERSCAN_API_KEY_2", "").strip()
+    if etherscan_key_2:
+        provider_manager.register_provider(
+            "onchain",
+            ProviderConfig(
+                name="etherscan_backup",
+                category="onchain",
+                base_url="https://api.etherscan.io/api",
+                api_key=etherscan_key_2,
+                rate_limit_per_min=5,
+                weight=90,
+            ),
+            fetch_etherscan_gas,
+        )
+    else:
+        logger.info("Etherscan backup key not set; skipping etherscan_backup provider registration")
 
 # Auto-initialize
 initialize_providers()

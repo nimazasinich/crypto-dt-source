@@ -3,6 +3,7 @@
 .env.production
 .env.local
 *.key
+config/api_keys.json
 
 # Python
 __pycache__/

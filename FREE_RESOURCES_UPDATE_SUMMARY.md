@@ -11,16 +11,16 @@
 
 | سرویس | کلید API | وضعیت |
 |-------|---------|--------|
-| **Etherscan** | `SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2` | ✅ فعال |
-| **Etherscan (Backup)** | `T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45` | ✅ فعال |
-| **BscScan** | `K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT` | ✅ فعال |
-| **TronScan** | `7ae72726-bffe-4e74-9c33-97b761eeea21` | ✅ فعال |
-| **CoinMarketCap #1** | `a35ffaec-c66c-4f16-81e3-41a717e4822f` | ✅ فعال |
-| **CoinMarketCap #2** | `04cf4b5b-9868-465c-8ba0-9f2e78c92eb1` | ✅ فعال |
-| **NewsAPI** | `968a5e25552b4cb5ba3280361d8444ab` | ✅ فعال |
-| **Sentiment API** | `vltdvdho63uqnjgf_fq75qbks72e3wfmx` | ✅ فعال |
-| **HuggingFace** | `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` | ✅ فعال |
-| **Telegram Bot** | `7437859619:AAGeGG3ZkLM0OVaw-Exx1uMRE55JtBCZZCY` | ✅ فعال |
+| **Etherscan** | `[REDACTED]` | ✅ فعال |
+| **Etherscan (Backup)** | `[REDACTED]` | ✅ فعال |
+| **BscScan** | `[REDACTED]` | ✅ فعال |
+| **TronScan** | `[REDACTED]` | ✅ فعال |
+| **CoinMarketCap #1** | `[REDACTED]` | ✅ فعال |
+| **CoinMarketCap #2** | `[REDACTED]` | ✅ فعال |
+| **NewsAPI** | `[REDACTED]` | ✅ فعال |
+| **Sentiment API** | `[REDACTED]` | ✅ فعال |
+| **HuggingFace** | `[REDACTED]` | ✅ فعال |
+| **Telegram Bot** | `[REDACTED]` | ✅ فعال |
 
 ---
 

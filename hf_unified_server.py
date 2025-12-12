@@ -24,22 +24,98 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Environment detection (kept lightweight)
+from utils.environment_detector import is_huggingface_space
+
 # Import routers
-from backend.routers.unified_service_api import router as service_router
-from backend.routers.real_data_api import router as real_data_router
-from backend.routers.direct_api import router as direct_api_router
-from backend.routers.crypto_api_hub_router import router as crypto_hub_router
-from backend.routers.crypto_api_hub_self_healing import router as self_healing_router
-from backend.routers.futures_api import router as futures_router
-from backend.routers.ai_api import router as ai_router
-from backend.routers.config_api import router as config_router
-from backend.routers.multi_source_api import router as multi_source_router
-from backend.routers.trading_backtesting_api import router as trading_router
-from backend.routers.comprehensive_resources_api import router as comprehensive_resources_router
-from backend.routers.resource_hierarchy_api import router as resource_hierarchy_router
-from backend.routers.dynamic_model_api import router as dynamic_model_router
-from backend.routers.background_worker_api import router as background_worker_router
-from backend.routers.intelligent_provider_api import router as intelligent_provider_router  # NEW: Intelligent load-balanced providers
+HF_MINIMAL = os.getenv("HF_MINIMAL", "false").lower() == "true" or is_huggingface_space()
+
+# Router placeholders (avoid ImportError killing app import)
+service_router = None
+real_data_router = None
+direct_api_router = None
+crypto_hub_router = None
+self_healing_router = None
+futures_router = None
+ai_router = None
+config_router = None
+multi_source_router = None
+trading_router = None
+comprehensive_resources_router = None
+resource_hierarchy_router = None
+dynamic_model_router = None
+background_worker_router = None
+intelligent_provider_router = None
+hf_space_router = None
+
+if HF_MINIMAL:
+    # Minimal, HF-safe router set (no heavy deps at import)
+    try:
+        from backend.routers.hf_space_api import router as hf_space_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import hf_space_api router: {e}")
+else:
+    # Full local/dev router set
+    try:
+        from backend.routers.unified_service_api import router as service_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import unified_service_api router: {e}")
+    try:
+        from backend.routers.real_data_api import router as real_data_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import real_data_api router: {e}")
+    try:
+        from backend.routers.direct_api import router as direct_api_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import direct_api router: {e}")
+    try:
+        from backend.routers.crypto_api_hub_router import router as crypto_hub_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import crypto_api_hub_router: {e}")
+    try:
+        from backend.routers.crypto_api_hub_self_healing import router as self_healing_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import crypto_api_hub_self_healing router: {e}")
+    try:
+        from backend.routers.futures_api import router as futures_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import futures_api router: {e}")
+    try:
+        from backend.routers.ai_api import router as ai_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import ai_api router: {e}")
+    try:
+        from backend.routers.config_api import router as config_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import config_api router: {e}")
+    try:
+        from backend.routers.multi_source_api import router as multi_source_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import multi_source_api router: {e}")
+    try:
+        from backend.routers.trading_backtesting_api import router as trading_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import trading_backtesting_api router: {e}")
+    try:
+        from backend.routers.comprehensive_resources_api import router as comprehensive_resources_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import comprehensive_resources_api router: {e}")
+    try:
+        from backend.routers.resource_hierarchy_api import router as resource_hierarchy_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import resource_hierarchy_api router: {e}")
+    try:
+        from backend.routers.dynamic_model_api import router as dynamic_model_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import dynamic_model_api router: {e}")
+    try:
+        from backend.routers.background_worker_api import router as background_worker_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import background_worker_api router: {e}")
+    try:
+        from backend.routers.intelligent_provider_api import router as intelligent_provider_router
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Failed to import intelligent_provider_api router: {e}")
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -73,15 +149,40 @@ def _load_json_file(path: Path) -> Optional[Dict[str, Any]]:
   return None
 
 
-_RESOURCES_CACHE: Optional[Dict[str, Any]] = _load_json_file(RESOURCES_FILE)
-_OHLCV_VERIFICATION_CACHE: Optional[Dict[str, Any]] = _load_json_file(OHLCV_VERIFICATION_FILE)
+_RESOURCES_CACHE: Optional[Dict[str, Any]] = None
+_OHLCV_VERIFICATION_CACHE: Optional[Dict[str, Any]] = None
+
+def get_resources_cache() -> Optional[Dict[str, Any]]:
+  """Lazy-load workspace resources JSON (avoid HF startup overhead)."""
+  global _RESOURCES_CACHE
+  if _RESOURCES_CACHE is None:
+    _RESOURCES_CACHE = _load_json_file(RESOURCES_FILE)
+  return _RESOURCES_CACHE
+
+def get_ohlcv_verification_cache() -> Optional[Dict[str, Any]]:
+  """Lazy-load OHLCV verification JSON (avoid HF startup overhead)."""
+  global _OHLCV_VERIFICATION_CACHE
+  if _OHLCV_VERIFICATION_CACHE is None:
+    _OHLCV_VERIFICATION_CACHE = _load_json_file(OHLCV_VERIFICATION_FILE)
+  return _OHLCV_VERIFICATION_CACHE
 
 
-# Resources Monitor - Dynamic monitoring
-from api.resources_monitor import get_resources_monitor
+# Resources Monitor - Dynamic monitoring (optional)
+get_resources_monitor = None
+if not HF_MINIMAL:
+    try:
+        from api.resources_monitor import get_resources_monitor  # type: ignore
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Resources monitor import disabled: {e}")
 
-# Background Worker for Data Collection
-from backend.workers import start_background_worker, stop_background_worker
+# Background Worker for Data Collection (optional)
+start_background_worker = None
+stop_background_worker = None
+if not HF_MINIMAL:
+    try:
+        from backend.workers import start_background_worker, stop_background_worker  # type: ignore
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Background worker import disabled: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -104,43 +205,45 @@ async def lifespan(app: FastAPI):
     logger.info(f"   Platform: {platform.system()} {platform.release()}")
     logger.info("=" * 70)
     
-    # Start resources monitor (non-critical)
-    try:
-        monitor = get_resources_monitor()
-        # Run initial check
-        await monitor.check_all_resources()
-        # Start periodic monitoring (every 1 hour)
-        monitor.start_monitoring()
-        logger.info("✅ Resources monitor started (checks every 1 hour)")
-    except Exception as e:
-        logger.warning(f"⚠️  Resources monitor disabled: {e}")
-    
-    # Initialize AI models on startup (CRITICAL FIX)
-    try:
-        from ai_models import initialize_models
-        logger.info("🤖 Initializing AI models on startup...")
-        init_result = initialize_models(force_reload=False, max_models=5)
-        logger.info(f"   Status: {init_result.get('status')}")
-        logger.info(f"   Models loaded: {init_result.get('models_loaded', 0)}")
-        logger.info(f"   Models failed: {init_result.get('models_failed', 0)}")
-        if init_result.get('status') == 'ok':
-            logger.info("✅ AI models initialized successfully")
-        elif init_result.get('status') == 'fallback_only':
-            logger.warning("⚠️  AI models using fallback mode (transformers not available)")
-        else:
-            logger.warning(f"⚠️  AI model initialization: {init_result.get('error', 'Unknown error')}")
-    except Exception as e:
-        logger.error(f"❌ AI model initialization failed: {e}")
-        logger.warning("   Continuing with fallback sentiment analysis...")
-    
-    # Start background data collection worker (non-critical)
-    try:
-        worker = await start_background_worker()
-        logger.info("✅ Background data collection worker started")
-        logger.info("   📅 UI data collection: every 5 minutes")
-        logger.info("   📅 Historical data collection: every 15 minutes")
-    except Exception as e:
-        logger.warning(f"⚠️  Background worker disabled: {e}")
+    hf_space = is_huggingface_space()
+
+    # HF Spaces readiness: avoid blocking startup with network/model/background work.
+    enable_resources_monitor = os.getenv("ENABLE_RESOURCES_MONITOR", "false").lower() == "true"
+    init_models_on_startup = os.getenv("INIT_MODELS_ON_STARTUP", "false").lower() == "true"
+    start_bg_worker = os.getenv("START_BACKGROUND_WORKER", "false").lower() == "true"
+
+    # Start resources monitor (optional, non-blocking)
+    if enable_resources_monitor and not hf_space and get_resources_monitor:
+        try:
+            monitor = get_resources_monitor()
+            asyncio.create_task(monitor.check_all_resources())
+            monitor.start_monitoring()
+            logger.info("✅ Resources monitor started (non-blocking)")
+        except Exception as e:
+            logger.warning(f"⚠️  Resources monitor disabled: {e}")
+    else:
+        logger.info("ℹ️  Resources monitor disabled for HF/fast startup")
+
+    # Initialize AI models (optional, non-blocking)
+    if init_models_on_startup and not hf_space:
+        try:
+            from ai_models import initialize_models
+            logger.info("🤖 Scheduling AI model initialization (non-blocking)...")
+            asyncio.create_task(asyncio.to_thread(initialize_models, False, 5))
+        except Exception as e:
+            logger.warning(f"⚠️  AI model initialization not scheduled: {e}")
+    else:
+        logger.info("ℹ️  AI model initialization disabled for HF/fast startup")
+
+    # Start background data collection worker (optional, non-blocking)
+    if start_bg_worker and not hf_space and start_background_worker:
+        try:
+            asyncio.create_task(start_background_worker())
+            logger.info("✅ Background worker scheduled (non-blocking)")
+        except Exception as e:
+            logger.warning(f"⚠️  Background worker disabled: {e}")
+    else:
+        logger.info("ℹ️  Background worker disabled for HF/fast startup")
     
     yield
     
@@ -226,13 +329,14 @@ async def rate_limit_middleware(request: Request, call_next):
     # Log request for monitoring (only API endpoints, not static files)
     if request.url.path.startswith("/api/") and not request.url.path.startswith("/api/monitoring/status"):
         try:
-            from backend.routers.realtime_monitoring_api import add_request_log
-            add_request_log({
-                "method": request.method,
-                "endpoint": request.url.path,
-                "status": response.status_code,
-                "client": client_id
-            })
+            if not HF_MINIMAL:
+                from backend.routers.realtime_monitoring_api import add_request_log
+                add_request_log({
+                    "method": request.method,
+                    "endpoint": request.url.path,
+                    "status": response.status_code,
+                    "client": client_id
+                })
         except Exception as e:
             # Silently fail - don't break requests if monitoring fails
             pass
@@ -252,127 +356,137 @@ async def rate_limit_middleware(request: Request, call_next):
     return response
 
 # Include routers
-try:
-    app.include_router(service_router)  # Main unified service
-except Exception as e:
-    logger.error(f"Failed to include service_router: {e}")
+if HF_MINIMAL:
+    try:
+        if hf_space_router is not None:
+            app.include_router(hf_space_router)
+            logger.info("✓ ✅ HF Space router loaded (minimal mode)")
+        else:
+            logger.warning("HF minimal mode enabled but hf_space_router is unavailable")
+    except Exception as e:
+        logger.error(f"Failed to include hf_space_router: {e}")
+else:
+    try:
+        app.include_router(service_router)  # Main unified service
+    except Exception as e:
+        logger.error(f"Failed to include service_router: {e}")
 
-try:
-    app.include_router(real_data_router, prefix="/real")  # Existing real data endpoints
-except Exception as e:
-    logger.error(f"Failed to include real_data_router: {e}")
+    try:
+        app.include_router(real_data_router, prefix="/real")  # Existing real data endpoints
+    except Exception as e:
+        logger.error(f"Failed to include real_data_router: {e}")
 
-try:
-    app.include_router(direct_api_router)  # NEW: Direct API with external services and HF models
-except Exception as e:
-    logger.error(f"Failed to include direct_api_router: {e}")
+    try:
+        app.include_router(direct_api_router)  # NEW: Direct API with external services and HF models
+    except Exception as e:
+        logger.error(f"Failed to include direct_api_router: {e}")
 
-try:
-    app.include_router(crypto_hub_router)  # Crypto API Hub Dashboard API
-except Exception as e:
-    logger.error(f"Failed to include crypto_hub_router: {e}")
+    try:
+        app.include_router(crypto_hub_router)  # Crypto API Hub Dashboard API
+    except Exception as e:
+        logger.error(f"Failed to include crypto_hub_router: {e}")
 
-try:
-    app.include_router(self_healing_router)  # Self-Healing Crypto API Hub
-except Exception as e:
-    logger.error(f"Failed to include self_healing_router: {e}")
+    try:
+        app.include_router(self_healing_router)  # Self-Healing Crypto API Hub
+    except Exception as e:
+        logger.error(f"Failed to include self_healing_router: {e}")
 
-try:
-    app.include_router(futures_router)  # Futures Trading API
-    logger.info("✓ ✅ Futures Trading Router loaded")
-except Exception as e:
-    logger.error(f"Failed to include futures_router: {e}")
+    try:
+        app.include_router(futures_router)  # Futures Trading API
+        logger.info("✓ ✅ Futures Trading Router loaded")
+    except Exception as e:
+        logger.error(f"Failed to include futures_router: {e}")
 
-try:
-    app.include_router(ai_router)  # AI & ML API (Backtesting, Training)
-    logger.info("✓ ✅ AI & ML Router loaded")
-except Exception as e:
-    logger.error(f"Failed to include ai_router: {e}")
+    try:
+        app.include_router(ai_router)  # AI & ML API (Backtesting, Training)
+        logger.info("✓ ✅ AI & ML Router loaded")
+    except Exception as e:
+        logger.error(f"Failed to include ai_router: {e}")
 
-try:
-    app.include_router(config_router)  # Configuration Management API
-    logger.info("✓ ✅ Configuration Router loaded")
-except Exception as e:
-    logger.error(f"Failed to include config_router: {e}")
+    try:
+        app.include_router(config_router)  # Configuration Management API
+        logger.info("✓ ✅ Configuration Router loaded")
+    except Exception as e:
+        logger.error(f"Failed to include config_router: {e}")
 
-try:
-    app.include_router(multi_source_router)  # Multi-Source Fallback API (137+ sources)
-    logger.info("✓ ✅ Multi-Source Fallback Router loaded (137+ sources)")
-except Exception as e:
-    logger.error(f"Failed to include multi_source_router: {e}")
+    try:
+        app.include_router(multi_source_router)  # Multi-Source Fallback API (137+ sources)
+        logger.info("✓ ✅ Multi-Source Fallback Router loaded (137+ sources)")
+    except Exception as e:
+        logger.error(f"Failed to include multi_source_router: {e}")
 
-try:
-    app.include_router(trading_router)  # Trading & Backtesting API (Smart Binance & KuCoin)
-    logger.info("✓ ✅ Trading & Backtesting Router loaded (Smart Exchange Integration)")
-except Exception as e:
-    logger.error(f"Failed to include trading_router: {e}")
+    try:
+        app.include_router(trading_router)  # Trading & Backtesting API (Smart Binance & KuCoin)
+        logger.info("✓ ✅ Trading & Backtesting Router loaded (Smart Exchange Integration)")
+    except Exception as e:
+        logger.error(f"Failed to include trading_router: {e}")
 
-try:
-    from api.resources_endpoint import router as resources_router
-    app.include_router(resources_router)  # Resources Statistics API
-    logger.info("✓ ✅ Resources Statistics Router loaded")
-except Exception as e:
-    logger.error(f"Failed to include resources_router: {e}")
+    try:
+        from api.resources_endpoint import router as resources_router
+        app.include_router(resources_router)  # Resources Statistics API
+        logger.info("✓ ✅ Resources Statistics Router loaded")
+    except Exception as e:
+        logger.error(f"Failed to include resources_router: {e}")
 
-try:
-    from backend.routers.market_api import router as market_api_router
-    app.include_router(market_api_router)  # Market API (Price, OHLC, Sentiment, WebSocket)
-    logger.info("✓ ✅ Market API Router loaded (Price, OHLC, Sentiment, WebSocket)")
-except Exception as e:
-    logger.error(f"Failed to include market_api_router: {e}")
+    try:
+        from backend.routers.market_api import router as market_api_router
+        app.include_router(market_api_router)  # Market API (Price, OHLC, Sentiment, WebSocket)
+        logger.info("✓ ✅ Market API Router loaded (Price, OHLC, Sentiment, WebSocket)")
+    except Exception as e:
+        logger.error(f"Failed to include market_api_router: {e}")
 
-try:
-    from backend.routers.technical_analysis_api import router as technical_router
-    app.include_router(technical_router)  # Technical Analysis API
-    logger.info("✓ ✅ Technical Analysis Router loaded (TA Quick, FA Eval, On-Chain Health, Risk Assessment, Comprehensive)")
-except Exception as e:
-    logger.error(f"Failed to include technical_router: {e}")
+    try:
+        from backend.routers.technical_analysis_api import router as technical_router
+        app.include_router(technical_router)  # Technical Analysis API
+        logger.info("✓ ✅ Technical Analysis Router loaded (TA Quick, FA Eval, On-Chain Health, Risk Assessment, Comprehensive)")
+    except Exception as e:
+        logger.error(f"Failed to include technical_router: {e}")
 
-try:
-    app.include_router(comprehensive_resources_router)  # Comprehensive Resources API (ALL free resources)
-    logger.info("✓ ✅ Comprehensive Resources Router loaded (51+ FREE resources: Market Data, News, Sentiment, On-Chain, HF Datasets)")
-except Exception as e:
-    logger.error(f"Failed to include comprehensive_resources_router: {e}")
+    try:
+        app.include_router(comprehensive_resources_router)  # Comprehensive Resources API (ALL free resources)
+        logger.info("✓ ✅ Comprehensive Resources Router loaded (51+ FREE resources: Market Data, News, Sentiment, On-Chain, HF Datasets)")
+    except Exception as e:
+        logger.error(f"Failed to include comprehensive_resources_router: {e}")
 
-try:
-    app.include_router(resource_hierarchy_router)  # Resource Hierarchy Monitoring API
-    logger.info("✓ ✅ Resource Hierarchy Router loaded (86+ resources in 5-level hierarchy - NO IDLE RESOURCES)")
-except Exception as e:
-    logger.error(f"Failed to include resource_hierarchy_router: {e}")
+    try:
+        app.include_router(resource_hierarchy_router)  # Resource Hierarchy Monitoring API
+        logger.info("✓ ✅ Resource Hierarchy Router loaded (86+ resources in 5-level hierarchy - NO IDLE RESOURCES)")
+    except Exception as e:
+        logger.error(f"Failed to include resource_hierarchy_router: {e}")
 
-try:
-    app.include_router(dynamic_model_router)  # Dynamic Model Loader API
-    logger.info("✓ ✅ Dynamic Model Loader Router loaded (Intelligent auto-detection & registration)")
-except Exception as e:
-    logger.error(f"Failed to include dynamic_model_router: {e}")
+    try:
+        app.include_router(dynamic_model_router)  # Dynamic Model Loader API
+        logger.info("✓ ✅ Dynamic Model Loader Router loaded (Intelligent auto-detection & registration)")
+    except Exception as e:
+        logger.error(f"Failed to include dynamic_model_router: {e}")
 
-try:
-    app.include_router(background_worker_router)  # Background Data Collection Worker API
-    logger.info("✓ ✅ Background Worker Router loaded (Auto-collection every 5/15 min)")
-except Exception as e:
-    logger.error(f"Failed to include background_worker_router: {e}")
+    try:
+        app.include_router(background_worker_router)  # Background Data Collection Worker API
+        logger.info("✓ ✅ Background Worker Router loaded (Auto-collection every 5/15 min)")
+    except Exception as e:
+        logger.error(f"Failed to include background_worker_router: {e}")
 
-# Intelligent Provider API with TRUE Load Balancing (NEW - CRITICAL FIX)
-try:
-    app.include_router(intelligent_provider_router)  # Intelligent round-robin load balancing
-    logger.info("✓ ✅ Intelligent Provider Router loaded (Round-robin, health-based, no fake data)")
-except Exception as e:
-    logger.error(f"Failed to include intelligent_provider_router: {e}")
+    # Intelligent Provider API with TRUE Load Balancing (NEW - CRITICAL FIX)
+    try:
+        app.include_router(intelligent_provider_router)  # Intelligent round-robin load balancing
+        logger.info("✓ ✅ Intelligent Provider Router loaded (Round-robin, health-based, no fake data)")
+    except Exception as e:
+        logger.error(f"Failed to include intelligent_provider_router: {e}")
 
-try:
-    from backend.routers.realtime_monitoring_api import router as realtime_monitoring_router
-    app.include_router(realtime_monitoring_router)  # Real-Time Monitoring API
-    logger.info("✓ ✅ Real-Time Monitoring Router loaded (Animated Dashboard)")
-except Exception as e:
-    logger.error(f"Failed to include realtime_monitoring_router: {e}")
+    try:
+        from backend.routers.realtime_monitoring_api import router as realtime_monitoring_router
+        app.include_router(realtime_monitoring_router)  # Real-Time Monitoring API
+        logger.info("✓ ✅ Real-Time Monitoring Router loaded (Animated Dashboard)")
+    except Exception as e:
+        logger.error(f"Failed to include realtime_monitoring_router: {e}")
 
-# Technical Indicators Services API
-try:
-    from backend.routers.indicators_api import router as indicators_router
-    app.include_router(indicators_router)  # Technical Indicators API (BB, StochRSI, ATR, SMA, EMA, MACD, RSI)
-    logger.info("✓ ✅ Technical Indicators Router loaded (Bollinger Bands, StochRSI, ATR, SMA, EMA, MACD, RSI)")
-except Exception as e:
-    logger.error(f"Failed to include indicators_router: {e}")
+    # Technical Indicators Services API
+    try:
+        from backend.routers.indicators_api import router as indicators_router
+        app.include_router(indicators_router)  # Technical Indicators API (BB, StochRSI, ATR, SMA, EMA, MACD, RSI)
+        logger.info("✓ ✅ Technical Indicators Router loaded (Bollinger Bands, StochRSI, ATR, SMA, EMA, MACD, RSI)")
+    except Exception as e:
+        logger.error(f"Failed to include indicators_router: {e}")
 
 # Add routers status endpoint
 @app.get("/api/routers")
@@ -726,7 +840,8 @@ async def api_resources_categories() -> Dict[str, Any]:
 @app.get("/api/resources/category/{category_name}")
 async def api_resources_by_category(category_name: str) -> Dict[str, Any]:
     """Get detailed entries for a specific registry category."""
-    if not _RESOURCES_CACHE:
+    registry_blob = get_resources_cache() or {}
+    if not registry_blob:
         return {
             "category": category_name,
             "items": [],
@@ -734,7 +849,7 @@ async def api_resources_by_category(category_name: str) -> Dict[str, Any]:
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
-    registry = _RESOURCES_CACHE.get("registry", {})
+    registry = registry_blob.get("registry", {})
     items = registry.get(category_name, [])
     return {
         "category": category_name,
@@ -744,6 +859,16 @@ async def api_resources_by_category(category_name: str) -> Dict[str, Any]:
     }
 
 # Health check endpoint
+@app.get("/health")
+async def health_check_root():
+    """Root health endpoint (HF-friendly)."""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "service": "unified_query_service",
+        "version": "1.0.0",
+    }
+
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
@@ -807,9 +932,6 @@ async def api_market_trending():
 @app.get("/api/sentiment/global")
 async def api_sentiment_global(timeframe: str = "1D"):
     """Global market sentiment - REAL DATA with historical data"""
-    import random
-    from datetime import timedelta
-    
     try:
         # Try to get real Fear & Greed Index from Alternative.me
         import httpx
@@ -856,25 +978,8 @@ async def api_sentiment_global(timeframe: str = "1D"):
                     history.append({
                         "timestamp": timestamp_val,
                         "sentiment": sentiment_val,
-                        "volume": random.randint(50000, 150000)
+                        "volume": 0
                     })
-                
-                # If we need more data points, interpolate
-                if len(history) < data_points:
-                    base_time = int(datetime.utcnow().timestamp() * 1000)
-                    interval = {
-                        "1D": 3600000,      # 1 hour in ms
-                        "7D": 3600000,      # 1 hour in ms
-                        "30D": 86400000,    # 1 day in ms
-                        "1Y": 86400000      # 1 day in ms
-                    }.get(timeframe, 3600000)
-                    
-                    for i in range(len(history), data_points):
-                        history.append({
-                            "timestamp": base_time - (i * interval),
-                            "sentiment": fng_value + random.randint(-10, 10),
-                            "volume": random.randint(50000, 150000)
-                        })
                 
                 # Sort by timestamp
                 history.sort(key=lambda x: x["timestamp"])
@@ -894,9 +999,10 @@ async def api_sentiment_global(timeframe: str = "1D"):
     # Fallback - return error or empty (NO MOCK DATA)
     logger.warning("Sentiment data unavailable and mock data is disabled.")
     return {
-        "fear_greed_index": 50,
-        "sentiment": "neutral",
-        "market_mood": "neutral",
+        "success": False,
+        "fear_greed_index": None,
+        "sentiment": "unavailable",
+        "market_mood": "unavailable",
         "confidence": 0,
         "history": [],
         "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -1189,20 +1295,13 @@ async def api_market(limit: Optional[int] = None):
         }
     except Exception as e:
         logger.error(f"Failed to fetch market data: {e}")
-        # Return fallback data
+        # No mock fallback
         return {
             "success": False,
-            "total_market_cap": 2_450_000_000_000,
-            "totalMarketCap": 2_450_000_000_000,
-            "total_volume": 98_500_000_000,
-            "totalVolume": 98_500_000_000,
-            "btc_dominance": 52.3,
-            "eth_dominance": 17.8,
-            "active_coins": 100,
-            "activeCoins": 100,
+            "error": "Real market data unavailable",
+            "details": str(e),
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "source": "fallback",
-            "error": str(e)
+            "source": "unavailable",
         }
 
 @app.get("/api/coins/top")
@@ -1260,70 +1359,26 @@ async def api_coins_top(limit: int = 50):
         }
     except Exception as e:
         logger.error(f"Failed to fetch top coins: {e}")
-        # Return minimal fallback data with proper CoinGecko image URLs
-        import random
-        fallback_coins = []
-        # (symbol, name, price, mcap, coingecko_id, image_url)
-        coin_data = [
-            ("BTC", "Bitcoin", 67850, 1_280_000_000_000, "bitcoin", "https://assets.coingecko.com/coins/images/1/small/bitcoin.png"),
-            ("ETH", "Ethereum", 3420, 410_000_000_000, "ethereum", "https://assets.coingecko.com/coins/images/279/small/ethereum.png"),
-            ("BNB", "BNB", 585, 88_000_000_000, "binancecoin", "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png"),
-            ("SOL", "Solana", 145, 65_000_000_000, "solana", "https://assets.coingecko.com/coins/images/4128/small/solana.png"),
-            ("XRP", "XRP", 0.62, 34_000_000_000, "ripple", "https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png"),
-            ("ADA", "Cardano", 0.58, 21_000_000_000, "cardano", "https://assets.coingecko.com/coins/images/975/small/cardano.png"),
-            ("AVAX", "Avalanche", 38, 14_500_000_000, "avalanche-2", "https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png"),
-            ("DOT", "Polkadot", 7.2, 9_800_000_000, "polkadot", "https://assets.coingecko.com/coins/images/12171/small/polkadot.png"),
-            ("MATIC", "Polygon", 0.88, 8_200_000_000, "matic-network", "https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png"),
-            ("LINK", "Chainlink", 15.4, 8_900_000_000, "chainlink", "https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png")
-        ]
-        
-        for i in range(min(limit, len(coin_data) * 5)):
-            symbol, name, price, mcap, coingecko_id, image = coin_data[i % len(coin_data)]
-            fallback_coins.append({
-                "id": coingecko_id,
-                "rank": i + 1,
-                "market_cap_rank": i + 1,
-                "symbol": symbol,
-                "name": name,
-                "image": image,  # Correct CoinGecko image URL
-                "price": price,
-                "current_price": price,
-                "market_cap": mcap,
-                "volume": mcap * 0.08,
-                "total_volume": mcap * 0.08,
-                "volume_24h": mcap * 0.08,
-                "change_24h": round(random.uniform(-8, 15), 2),
-                "price_change_percentage_24h": round(random.uniform(-8, 15), 2),
-                "change_7d": round(random.uniform(-20, 30), 2),
-                "price_change_percentage_7d": round(random.uniform(-20, 30), 2),
-                "price_change_percentage_7d_in_currency": round(random.uniform(-20, 30), 2),
-                "sparkline": []
-            })
-        
+        # No mock fallback
         return {
-            "coins": fallback_coins,
-            "data": fallback_coins,
-            "total": len(fallback_coins),
+            "success": False,
+            "coins": [],
+            "data": [],
+            "total": 0,
             "limit": limit,
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "source": "fallback",
-            "error": str(e)
+            "source": "unavailable",
+            "error": "Real top-coins data unavailable",
+            "details": str(e),
         }
 
 @app.post("/api/models/test")
 async def api_models_test():
     """Test a model with input"""
-    import random
-    sentiments = ["bullish", "bearish", "neutral"]
     return {
-        "success": True,
-        "model": "cryptobert_elkulako",
-        "result": {
-            "sentiment": random.choice(sentiments),
-            "score": round(random.uniform(0.65, 0.95), 2),
-            "confidence": round(random.uniform(0.7, 0.95), 2)
-        },
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "success": False,
+        "error": "Model test endpoint disabled (no mock responses)",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
     }
 
 

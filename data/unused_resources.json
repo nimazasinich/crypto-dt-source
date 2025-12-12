@@ -1457,7 +1457,7 @@
         "base_url": "https://api-inference.huggingface.co/models/ElKulako/cryptobert",
         "auth": {
           "type": "apiKeyHeaderOptional",
-          "key": "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",
+          "key": "",
           "header_name": "Authorization"
         },
         "docs_url": "https://huggingface.co/ElKulako/cryptobert",
@@ -1473,7 +1473,7 @@
         "base_url": "https://api-inference.huggingface.co/models/kk08/CryptoBERT",
         "auth": {
           "type": "apiKeyHeaderOptional",
-          "key": "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",
+          "key": "",
           "header_name": "Authorization"
         },
         "docs_url": "https://huggingface.co/kk08/CryptoBERT",
