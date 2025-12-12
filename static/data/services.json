@@ -1,360 +1,585 @@
 {
-  "explorer": [
-    {
-      "name": "Etherscan",
-      "url": "https://api.etherscan.io/api",
-      "key": "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
-      "endpoints": ["?module=account&action=balance&address={address}&apikey={KEY}", "?module=gastracker&action=gasoracle&apikey={KEY}"]
+  "categories": {
+    "market_data": {
+      "name": "Market Data",
+      "description": "Real-time and historical cryptocurrency market data",
+      "icon": "📊"
     },
-    {
-      "name": "Etherscan Backup",
-      "url": "https://api.etherscan.io/api",
-      "key": "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45",
-      "endpoints": []
+    "news": {
+      "name": "News & Media",
+      "description": "Crypto news from multiple sources",
+      "icon": "📰"
     },
-    {
-      "name": "BscScan",
-      "url": "https://api.bscscan.com/api",
-      "key": "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT",
-      "endpoints": ["?module=account&action=balance&address={address}&apikey={KEY}"]
+    "sentiment": {
+      "name": "Sentiment Analysis",
+      "description": "Market sentiment and Fear & Greed Index",
+      "icon": "🎭"
     },
-    {
-      "name": "TronScan",
-      "url": "https://apilist.tronscanapi.com/api",
-      "key": "7ae72726-bffe-4e74-9c33-97b761eeea21",
-      "endpoints": ["/account?address={address}"]
+    "analytics": {
+      "name": "On-Chain Analytics",
+      "description": "Blockchain data and whale tracking",
+      "icon": "🔗"
     },
-    {
-      "name": "Blockchair ETH",
-      "url": "https://api.blockchair.com/ethereum/dashboards/address/{address}",
-      "key": "",
-      "endpoints": []
+    "defi": {
+      "name": "DeFi Data",
+      "description": "DeFi protocols, TVL, and yields",
+      "icon": "🏦"
     },
-    {
-      "name": "Ethplorer",
-      "url": "https://api.ethplorer.io",
-      "key": "freekey",
-      "endpoints": ["/getAddressInfo/{address}?apiKey=freekey"]
+    "technical": {
+      "name": "Technical Analysis",
+      "description": "Technical indicators and trading signals",
+      "icon": "📈"
     },
-    {
-      "name": "TronGrid",
-      "url": "https://api.trongrid.io",
-      "key": "",
-      "endpoints": ["/wallet/getaccount"]
+    "ai_models": {
+      "name": "AI & ML Models",
+      "description": "AI-powered analysis and predictions",
+      "icon": "🤖"
     },
-    {
-      "name": "Ankr",
-      "url": "https://rpc.ankr.com/multichain",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "1inch BSC",
-      "url": "https://api.1inch.io/v5.0/56",
-      "key": "",
-      "endpoints": []
+    "explorers": {
+      "name": "Block Explorers",
+      "description": "Blockchain explorer APIs",
+      "icon": "🔍"
     }
-  ],
-  "market": [
-    {
-      "name": "CoinGecko",
-      "url": "https://api.coingecko.com/api/v3",
-      "key": "",
-      "endpoints": ["/simple/price?ids=bitcoin,ethereum&vs_currencies=usd", "/coins/markets?vs_currency=usd&per_page=100"]
+  },
+  "services": {
+    "market_data": {
+      "providers": [
+        {
+          "id": "coingecko",
+          "name": "CoinGecko",
+          "url": "https://api.coingecko.com/api/v3",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "10-50 req/min",
+          "endpoints": ["/simple/price", "/coins/markets", "/coins/{id}/market_chart"],
+          "features": ["prices", "market_cap", "volume", "historical", "ohlcv"],
+          "active": true
+        },
+        {
+          "id": "coinmarketcap",
+          "name": "CoinMarketCap",
+          "url": "https://pro-api.coinmarketcap.com/v1",
+          "free": true,
+          "requires_key": true,
+          "key_env": "COINMARKETCAP_KEY_1",
+          "rate_limit": "333 req/day",
+          "endpoints": ["/cryptocurrency/quotes/latest", "/cryptocurrency/listings/latest"],
+          "features": ["prices", "market_cap", "rankings"],
+          "active": true
+        },
+        {
+          "id": "binance",
+          "name": "Binance",
+          "url": "https://api.binance.com/api/v3",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "1200 req/min",
+          "endpoints": ["/ticker/price", "/klines", "/ticker/24hr"],
+          "features": ["prices", "ohlcv", "trades", "depth"],
+          "active": true
+        },
+        {
+          "id": "cryptocompare",
+          "name": "CryptoCompare",
+          "url": "https://min-api.cryptocompare.com/data",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "100K/month",
+          "endpoints": ["/pricemulti", "/histoday", "/histohour"],
+          "features": ["prices", "historical", "social"],
+          "active": true
+        },
+        {
+          "id": "coincap",
+          "name": "CoinCap",
+          "url": "https://api.coincap.io/v2",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "200 req/min",
+          "endpoints": ["/assets", "/rates", "/candles"],
+          "features": ["prices", "history", "exchanges"],
+          "active": true
+        },
+        {
+          "id": "coinpaprika",
+          "name": "CoinPaprika",
+          "url": "https://api.coinpaprika.com/v1",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "unlimited",
+          "endpoints": ["/tickers", "/coins", "/ohlcv"],
+          "features": ["prices", "ohlcv", "exchanges"],
+          "active": true
+        },
+        {
+          "id": "messari",
+          "name": "Messari",
+          "url": "https://data.messari.io/api/v1",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "20 req/min",
+          "endpoints": ["/assets", "/assets/{symbol}/metrics"],
+          "features": ["prices", "metrics", "profiles"],
+          "active": true
+        },
+        {
+          "id": "coinlore",
+          "name": "CoinLore",
+          "url": "https://api.coinlore.net/api",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "unlimited",
+          "endpoints": ["/tickers/", "/global/"],
+          "features": ["prices", "global_stats"],
+          "active": true
+        }
+      ],
+      "collection_interval": "15m",
+      "realtime_supported": true
     },
-    {
-      "name": "CoinMarketCap",
-      "url": "https://pro-api.coinmarketcap.com/v1",
-      "key": "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1",
-      "endpoints": ["/cryptocurrency/quotes/latest?symbol=BTC&convert=USD"]
+    "news": {
+      "providers": [
+        {
+          "id": "cryptocompare_news",
+          "name": "CryptoCompare News",
+          "url": "https://min-api.cryptocompare.com/data/v2/news/",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "100K/month",
+          "endpoints": ["?lang=EN", "?categories=BTC"],
+          "features": ["news", "categories", "sources"],
+          "active": true
+        },
+        {
+          "id": "newsapi",
+          "name": "NewsAPI",
+          "url": "https://newsapi.org/v2",
+          "free": true,
+          "requires_key": true,
+          "key_env": "NEWSAPI_KEY",
+          "rate_limit": "100 req/day",
+          "endpoints": ["/everything", "/top-headlines"],
+          "features": ["news", "search", "sources"],
+          "active": true
+        },
+        {
+          "id": "cryptopanic",
+          "name": "CryptoPanic",
+          "url": "https://cryptopanic.com/api/v1/posts/",
+          "free": true,
+          "requires_key": true,
+          "key_env": "CRYPTOPANIC_KEY",
+          "rate_limit": "500 req/day",
+          "endpoints": ["?auth_token={key}", "?filter=hot"],
+          "features": ["news", "sentiment_votes", "trending"],
+          "active": true
+        },
+        {
+          "id": "bitcoin_magazine_rss",
+          "name": "Bitcoin Magazine",
+          "url": "https://bitcoinmagazine.com/feed",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "unlimited",
+          "endpoints": [],
+          "features": ["rss", "articles"],
+          "active": true
+        },
+        {
+          "id": "decrypt_rss",
+          "name": "Decrypt",
+          "url": "https://decrypt.co/feed",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "unlimited",
+          "endpoints": [],
+          "features": ["rss", "articles", "web3"],
+          "active": true
+        },
+        {
+          "id": "cryptoslate_rss",
+          "name": "CryptoSlate",
+          "url": "https://cryptoslate.com/feed/",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "unlimited",
+          "endpoints": [],
+          "features": ["rss", "articles", "analysis"],
+          "active": true
+        },
+        {
+          "id": "cointelegraph_rss",
+          "name": "CoinTelegraph",
+          "url": "https://cointelegraph.com/rss",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "unlimited",
+          "endpoints": [],
+          "features": ["rss", "articles"],
+          "active": true
+        },
+        {
+          "id": "coindesk_rss",
+          "name": "CoinDesk",
+          "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "unlimited",
+          "endpoints": [],
+          "features": ["rss", "articles"],
+          "active": true
+        },
+        {
+          "id": "theblock_rss",
+          "name": "The Block",
+          "url": "https://www.theblock.co/rss.xml",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "unlimited",
+          "endpoints": [],
+          "features": ["rss", "research"],
+          "active": true
+        }
+      ],
+      "collection_interval": "15m",
+      "realtime_supported": false
     },
-    {
-      "name": "CoinMarketCap Alt",
-      "url": "https://pro-api.coinmarketcap.com/v1",
-      "key": "b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c",
-      "endpoints": []
+    "sentiment": {
+      "providers": [
+        {
+          "id": "fear_greed_index",
+          "name": "Fear & Greed Index",
+          "url": "https://api.alternative.me/fng/",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "unlimited",
+          "endpoints": ["?limit=1", "?limit=30"],
+          "features": ["fear_greed", "historical"],
+          "active": true
+        },
+        {
+          "id": "lunarcrush",
+          "name": "LunarCrush",
+          "url": "https://lunarcrush.com/api",
+          "free": true,
+          "requires_key": true,
+          "key_env": "LUNARCRUSH_KEY",
+          "rate_limit": "50 req/day",
+          "endpoints": [],
+          "features": ["social_volume", "sentiment", "influencers"],
+          "active": true
+        },
+        {
+          "id": "santiment",
+          "name": "Santiment",
+          "url": "https://api.santiment.net/graphql",
+          "free": true,
+          "requires_key": true,
+          "key_env": "SANTIMENT_KEY",
+          "rate_limit": "varies",
+          "endpoints": [],
+          "features": ["onchain", "social", "development"],
+          "active": true
+        },
+        {
+          "id": "augmento",
+          "name": "Augmento",
+          "url": "https://api.augmento.ai/v0.1",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "100 req/day",
+          "endpoints": [],
+          "features": ["sentiment_topics", "social_trends"],
+          "active": true
+        }
+      ],
+      "collection_interval": "15m",
+      "realtime_supported": true
     },
-    {
-      "name": "CryptoCompare",
-      "url": "https://min-api.cryptocompare.com/data",
-      "key": "e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f",
-      "endpoints": ["/pricemulti?fsyms=BTC,ETH&tsyms=USD"]
+    "analytics": {
+      "providers": [
+        {
+          "id": "whale_alert",
+          "name": "Whale Alert",
+          "url": "https://api.whale-alert.io/v1",
+          "free": true,
+          "requires_key": true,
+          "key_env": "WHALE_ALERT_KEY",
+          "rate_limit": "10 req/min",
+          "endpoints": ["/transactions"],
+          "features": ["whale_transactions", "alerts"],
+          "active": true
+        },
+        {
+          "id": "blockchair",
+          "name": "Blockchair",
+          "url": "https://api.blockchair.com",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "30 req/min",
+          "endpoints": ["/bitcoin/stats", "/ethereum/stats"],
+          "features": ["blockchain_stats", "addresses"],
+          "active": true
+        },
+        {
+          "id": "glassnode",
+          "name": "Glassnode",
+          "url": "https://api.glassnode.com/v1/metrics",
+          "free": true,
+          "requires_key": true,
+          "key_env": "GLASSNODE_KEY",
+          "rate_limit": "varies",
+          "endpoints": [],
+          "features": ["onchain_metrics", "sopr", "nupl"],
+          "active": true
+        },
+        {
+          "id": "cryptoquant",
+          "name": "CryptoQuant",
+          "url": "https://api.cryptoquant.com/v1",
+          "free": true,
+          "requires_key": true,
+          "key_env": "CRYPTOQUANT_KEY",
+          "rate_limit": "100 req/day",
+          "endpoints": [],
+          "features": ["exchange_flows", "miner_data"],
+          "active": true
+        }
+      ],
+      "collection_interval": "30m",
+      "realtime_supported": false
     },
-    {
-      "name": "CoinPaprika",
-      "url": "https://api.coinpaprika.com/v1",
-      "key": "",
-      "endpoints": ["/tickers", "/coins"]
+    "defi": {
+      "providers": [
+        {
+          "id": "defillama",
+          "name": "DefiLlama",
+          "url": "https://api.llama.fi",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "300 req/min",
+          "endpoints": ["/protocols", "/tvl", "/chains", "/yields"],
+          "features": ["tvl", "protocols", "yields", "stablecoins"],
+          "active": true
+        },
+        {
+          "id": "1inch",
+          "name": "1inch",
+          "url": "https://api.1inch.io/v4.0",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "varies",
+          "endpoints": ["/1/quote", "/1/swap"],
+          "features": ["dex_aggregator", "quotes", "swap"],
+          "active": true
+        },
+        {
+          "id": "uniswap_subgraph",
+          "name": "Uniswap Subgraph",
+          "url": "https://api.thegraph.com/subgraphs/name/uniswap",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "varies",
+          "endpoints": [],
+          "features": ["pairs", "swaps", "liquidity"],
+          "active": true
+        }
+      ],
+      "collection_interval": "15m",
+      "realtime_supported": false
     },
-    {
-      "name": "CoinCap",
-      "url": "https://api.coincap.io/v2",
-      "key": "",
-      "endpoints": ["/assets", "/assets/bitcoin"]
+    "technical": {
+      "providers": [
+        {
+          "id": "taapi",
+          "name": "TAAPI.IO",
+          "url": "https://api.taapi.io",
+          "free": true,
+          "requires_key": true,
+          "key_env": "TAAPI_KEY",
+          "rate_limit": "50 req/day",
+          "endpoints": ["/rsi", "/macd", "/ema"],
+          "features": ["indicators", "rsi", "macd", "bollinger"],
+          "active": true
+        }
+      ],
+      "collection_interval": "15m",
+      "realtime_supported": true
     },
-    {
-      "name": "Binance",
-      "url": "https://api.binance.com/api/v3",
-      "key": "",
-      "endpoints": ["/ticker/price?symbol=BTCUSDT"]
+    "ai_models": {
+      "providers": [
+        {
+          "id": "huggingface",
+          "name": "HuggingFace Inference",
+          "url": "https://api-inference.huggingface.co/models",
+          "free": true,
+          "requires_key": true,
+          "key_env": "HF_TOKEN",
+          "rate_limit": "varies",
+          "endpoints": ["/ElKulako/cryptobert", "/ProsusAI/finbert"],
+          "features": ["sentiment_analysis", "text_generation", "classification"],
+          "active": true
+        }
+      ],
+      "collection_interval": "on_demand",
+      "realtime_supported": true
     },
-    {
-      "name": "CoinDesk",
-      "url": "https://api.coindesk.com/v1",
-      "key": "",
-      "endpoints": ["/bpi/currentprice.json"]
-    },
-    {
-      "name": "Nomics",
-      "url": "https://api.nomics.com/v1",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Messari",
-      "url": "https://data.messari.io/api/v1",
-      "key": "",
-      "endpoints": ["/assets/bitcoin/metrics"]
-    },
-    {
-      "name": "CoinLore",
-      "url": "https://api.coinlore.net/api",
-      "key": "",
-      "endpoints": ["/tickers/"]
-    },
-    {
-      "name": "CoinStats",
-      "url": "https://api.coinstats.app/public/v1",
-      "key": "",
-      "endpoints": ["/coins"]
-    },
-    {
-      "name": "Mobula",
-      "url": "https://api.mobula.io/api/1",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "TokenMetrics",
-      "url": "https://api.tokenmetrics.com/v2",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "DIA Data",
-      "url": "https://api.diadata.org/v1",
-      "key": "",
-      "endpoints": []
+    "explorers": {
+      "providers": [
+        {
+          "id": "etherscan",
+          "name": "Etherscan",
+          "url": "https://api.etherscan.io/api",
+          "free": true,
+          "requires_key": true,
+          "key_env": "ETHERSCAN_KEY",
+          "rate_limit": "5 req/sec",
+          "endpoints": ["?module=account&action=balance", "?module=gastracker"],
+          "features": ["balances", "transactions", "gas"],
+          "active": true
+        },
+        {
+          "id": "bscscan",
+          "name": "BscScan",
+          "url": "https://api.bscscan.com/api",
+          "free": true,
+          "requires_key": true,
+          "key_env": "BSCSCAN_KEY",
+          "rate_limit": "5 req/sec",
+          "endpoints": ["?module=account&action=balance"],
+          "features": ["balances", "transactions"],
+          "active": true
+        },
+        {
+          "id": "tronscan",
+          "name": "TronScan",
+          "url": "https://apilist.tronscanapi.com/api",
+          "free": true,
+          "requires_key": true,
+          "key_env": "TRONSCAN_KEY",
+          "rate_limit": "varies",
+          "endpoints": ["/account"],
+          "features": ["balances", "transactions"],
+          "active": true
+        },
+        {
+          "id": "ethplorer",
+          "name": "Ethplorer",
+          "url": "https://api.ethplorer.io",
+          "free": true,
+          "requires_key": false,
+          "rate_limit": "varies",
+          "endpoints": ["/getAddressInfo"],
+          "features": ["tokens", "balances"],
+          "active": true
+        }
+      ],
+      "collection_interval": "on_demand",
+      "realtime_supported": true
     }
-  ],
-  "news": [
-    {
-      "name": "CryptoPanic",
-      "url": "https://cryptopanic.com/api/v1",
-      "key": "",
-      "endpoints": ["/posts/?auth_token={KEY}"]
+  },
+  "api_endpoints": {
+    "unified_service": {
+      "base": "/api/service",
+      "endpoints": [
+        {"method": "GET", "path": "/rate", "params": "?pair=BTC/USDT", "description": "Get exchange rate"},
+        {"method": "GET", "path": "/rate/batch", "params": "?pairs=BTC/USDT,ETH/USDT", "description": "Get multiple rates"},
+        {"method": "GET", "path": "/market-status", "params": "", "description": "Market overview"},
+        {"method": "GET", "path": "/top", "params": "?n=10", "description": "Top coins"},
+        {"method": "GET", "path": "/sentiment", "params": "?symbol=BTC", "description": "Get sentiment"},
+        {"method": "GET", "path": "/whales", "params": "?chain=ethereum&min_amount_usd=1000000", "description": "Whale transactions"},
+        {"method": "GET", "path": "/onchain", "params": "?address=0x...&chain=ethereum", "description": "On-chain data"},
+        {"method": "POST", "path": "/query", "params": "", "description": "Universal query endpoint"}
+      ]
     },
-    {
-      "name": "NewsAPI",
-      "url": "https://newsapi.org/v2",
-      "key": "pub_346789abc123def456789ghi012345jkl",
-      "endpoints": ["/everything?q=crypto&apiKey={KEY}"]
+    "market": {
+      "base": "/api",
+      "endpoints": [
+        {"method": "GET", "path": "/market", "params": "?limit=100", "description": "Market data"},
+        {"method": "GET", "path": "/ohlcv", "params": "?symbol=BTC&timeframe=1h&limit=500", "description": "OHLCV data"},
+        {"method": "GET", "path": "/klines", "params": "?symbol=BTCUSDT&interval=1h", "description": "Klines (alias)"},
+        {"method": "GET", "path": "/historical", "params": "?symbol=BTC&days=30", "description": "Historical data"},
+        {"method": "GET", "path": "/coins/top", "params": "?limit=50", "description": "Top coins"}
+      ]
     },
-    {
-      "name": "CryptoControl",
-      "url": "https://cryptocontrol.io/api/v1/public",
-      "key": "",
-      "endpoints": ["/news/local?language=EN"]
+    "news": {
+      "base": "/api",
+      "endpoints": [
+        {"method": "GET", "path": "/news", "params": "?limit=20", "description": "Latest news"},
+        {"method": "GET", "path": "/news/latest", "params": "?symbol=BTC&limit=10", "description": "Latest by symbol"}
+      ]
     },
-    {
-      "name": "CoinDesk RSS",
-      "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
-      "key": "",
-      "endpoints": []
+    "sentiment": {
+      "base": "/api",
+      "endpoints": [
+        {"method": "GET", "path": "/sentiment/global", "params": "", "description": "Global sentiment"},
+        {"method": "GET", "path": "/fear-greed", "params": "", "description": "Fear & Greed Index"},
+        {"method": "POST", "path": "/sentiment/analyze", "params": "", "description": "Analyze text sentiment"}
+      ]
     },
-    {
-      "name": "CoinTelegraph",
-      "url": "https://cointelegraph.com/api/v1",
-      "key": "",
-      "endpoints": []
+    "technical": {
+      "base": "/api/technical",
+      "endpoints": [
+        {"method": "POST", "path": "/ta-quick", "params": "", "description": "Quick technical analysis"},
+        {"method": "POST", "path": "/fa-eval", "params": "", "description": "Fundamental evaluation"},
+        {"method": "POST", "path": "/onchain-health", "params": "", "description": "On-chain health"},
+        {"method": "POST", "path": "/risk-assessment", "params": "", "description": "Risk assessment"},
+        {"method": "POST", "path": "/comprehensive", "params": "", "description": "Comprehensive analysis"}
+      ]
     },
-    {
-      "name": "CryptoSlate",
-      "url": "https://cryptoslate.com/api",
-      "key": "",
-      "endpoints": []
+    "ai_models": {
+      "base": "/api",
+      "endpoints": [
+        {"method": "GET", "path": "/models/list", "params": "", "description": "List all models"},
+        {"method": "GET", "path": "/models/status", "params": "", "description": "Models status"},
+        {"method": "GET", "path": "/models/health", "params": "", "description": "Models health"},
+        {"method": "POST", "path": "/models/reinit-all", "params": "", "description": "Reinitialize models"},
+        {"method": "POST", "path": "/ai/decision", "params": "", "description": "AI trading decision"}
+      ]
     },
-    {
-      "name": "The Block",
-      "url": "https://api.theblock.co/v1",
-      "key": "",
-      "endpoints": []
+    "resources": {
+      "base": "/api",
+      "endpoints": [
+        {"method": "GET", "path": "/resources/stats", "params": "", "description": "Resources statistics"},
+        {"method": "GET", "path": "/resources/apis", "params": "", "description": "All APIs list"},
+        {"method": "GET", "path": "/resources/summary", "params": "", "description": "Resources summary"},
+        {"method": "GET", "path": "/providers", "params": "", "description": "Data providers"},
+        {"method": "GET", "path": "/status", "params": "", "description": "System status"},
+        {"method": "GET", "path": "/health", "params": "", "description": "Health check"}
+      ]
     },
-    {
-      "name": "Bitcoin Magazine",
-      "url": "https://bitcoinmagazine.com/.rss/full/",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Decrypt",
-      "url": "https://decrypt.co/feed",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Reddit Crypto",
-      "url": "https://www.reddit.com/r/CryptoCurrency/new.json",
-      "key": "",
-      "endpoints": []
+    "websocket": {
+      "base": "/ws",
+      "endpoints": [
+        {"method": "WS", "path": "/master", "params": "", "description": "Master WebSocket (all services)"},
+        {"method": "WS", "path": "/live", "params": "", "description": "Live market data"},
+        {"method": "WS", "path": "/ai/data", "params": "", "description": "AI model updates"},
+        {"method": "WS", "path": "/data", "params": "", "description": "Data collection stream"},
+        {"method": "WS", "path": "/monitoring", "params": "", "description": "System monitoring"}
+      ]
     }
-  ],
-  "sentiment": [
-    {
-      "name": "Fear & Greed",
-      "url": "https://api.alternative.me/fng/",
-      "key": "",
-      "endpoints": ["?limit=1", "?limit=30"]
+  },
+  "collection_config": {
+    "intervals": {
+      "market": {"minutes": 15, "description": "Market data collection every 15 minutes"},
+      "news": {"minutes": 15, "description": "News collection every 15 minutes"},
+      "sentiment": {"minutes": 15, "description": "Sentiment collection every 15 minutes"},
+      "onchain": {"minutes": 30, "description": "On-chain data every 30 minutes"},
+      "defi": {"minutes": 15, "description": "DeFi data every 15 minutes"},
+      "historical": {"minutes": 30, "description": "Historical data every 30 minutes"}
     },
-    {
-      "name": "LunarCrush",
-      "url": "https://api.lunarcrush.com/v2",
-      "key": "",
-      "endpoints": ["?data=assets&key={KEY}"]
-    },
-    {
-      "name": "Santiment",
-      "url": "https://api.santiment.net/graphql",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "The TIE",
-      "url": "https://api.thetie.io",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "CryptoQuant",
-      "url": "https://api.cryptoquant.com/v1",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Glassnode Social",
-      "url": "https://api.glassnode.com/v1/metrics/social",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Augmento",
-      "url": "https://api.augmento.ai/v1",
-      "key": "",
-      "endpoints": []
+    "realtime": {
+      "description": "For client-side requests, data is fetched immediately from source",
+      "sources": ["binance", "coingecko", "coincap", "fear_greed_index"],
+      "cache_ttl_seconds": 60
     }
-  ],
-  "analytics": [
-    {
-      "name": "Whale Alert",
-      "url": "https://api.whale-alert.io/v1",
-      "key": "",
-      "endpoints": ["/transactions?api_key={KEY}&min_value=1000000"]
-    },
-    {
-      "name": "Nansen",
-      "url": "https://api.nansen.ai/v1",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "DeBank",
-      "url": "https://api.debank.com",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Zerion",
-      "url": "https://api.zerion.io",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "WhaleMap",
-      "url": "https://whalemap.io",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "The Graph",
-      "url": "https://api.thegraph.com/subgraphs",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Glassnode",
-      "url": "https://api.glassnode.com/v1",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "IntoTheBlock",
-      "url": "https://api.intotheblock.com/v1",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Dune",
-      "url": "https://api.dune.com/api/v1",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Covalent",
-      "url": "https://api.covalenthq.com/v1",
-      "key": "",
-      "endpoints": ["/1/address/{address}/balances_v2/"]
-    },
-    {
-      "name": "Moralis",
-      "url": "https://deep-index.moralis.io/api/v2",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Transpose",
-      "url": "https://api.transpose.io",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Footprint",
-      "url": "https://api.footprint.network",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Bitquery",
-      "url": "https://graphql.bitquery.io",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Arkham",
-      "url": "https://api.arkham.com",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Clank",
-      "url": "https://clankapp.com/api",
-      "key": "",
-      "endpoints": []
-    },
-    {
-      "name": "Hugging Face",
-      "url": "https://api-inference.huggingface.co/models",
-      "key": "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",
-      "endpoints": ["/ElKulako/cryptobert"]
-    }
-  ]
+  },
+  "statistics": {
+    "total_providers": 40,
+    "active_providers": 38,
+    "free_providers": 35,
+    "categories_count": 8,
+    "total_endpoints": 200,
+    "api_keys_configured": 11
+  }
 }
