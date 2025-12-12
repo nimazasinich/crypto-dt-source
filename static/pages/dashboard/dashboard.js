@@ -549,11 +549,16 @@ class DashboardPage {
       const data = res1.value?.summary || res1.value || {};
       const models = res2.value || {};
       
+      // FIX: Calculate actual provider count correctly
+      const providerCount = data.by_category ? 
+        Object.keys(data.by_category || {}).length : 
+        (data.available_providers || data.total_providers || 0);
+      
       return {
         total_resources: data.total_resources || 0,
         api_keys: data.total_api_keys || 0,
         models_loaded: models.models_loaded || data.models_available || 0,
-        active_providers: data.total_resources || 0
+        active_providers: providerCount // FIX: Use actual provider count, not total_resources
       };
     } catch (error) {
       console.error('[Dashboard] Stats fetch failed:', error);
