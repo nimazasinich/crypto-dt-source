@@ -123,6 +123,20 @@
         </a>
       </li>
 
+      <!-- Indicator Services -->
+      <li class="nav-item">
+        <a href="/static/pages/services/index.html" class="nav-link" data-page="services">
+          <span class="nav-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </span>
+          <span class="nav-label">Services</span>
+          <span class="nav-badge" style="background: linear-gradient(135deg, #14b8a6, #06b6d4); color: white; font-size: 8px; padding: 2px 6px; border-radius: 8px; margin-left: auto;">NEW</span>
+        </a>
+      </li>
+
       <!-- Trading Assistant -->
       <li class="nav-item">
         <a href="/static/pages/trading-assistant/index.html" class="nav-link" data-page="trading-assistant">
@@ -212,6 +226,113 @@
     </ul>
   </nav>
 
+  <!-- Services Menu (Dollar Sign) -->
+  <div class="services-menu-container">
+    <button id="services-toggle" class="services-toggle-btn" title="Premium Services">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23"></line>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+      </svg>
+    </button>
+    
+    <!-- Services Popup Menu -->
+    <div id="services-popup" class="services-popup" style="display: none;">
+      <div class="services-popup-header">
+        <h4>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          Indicator Services
+        </h4>
+        <button class="services-close-btn" id="services-close">×</button>
+      </div>
+      <div class="services-popup-body">
+        <div class="services-grid">
+          <!-- Bollinger Bands -->
+          <a href="/static/pages/services/index.html?service=bollinger_bands" class="service-card" data-service="bollinger_bands">
+            <span class="service-icon">📊</span>
+            <div class="service-info">
+              <span class="service-name">Bollinger Bands</span>
+              <span class="service-desc">Volatility bands analysis</span>
+            </div>
+          </a>
+          
+          <!-- Stochastic RSI -->
+          <a href="/static/pages/services/index.html?service=stoch_rsi" class="service-card" data-service="stoch_rsi">
+            <span class="service-icon">📈</span>
+            <div class="service-info">
+              <span class="service-name">Stochastic RSI</span>
+              <span class="service-desc">Momentum oscillator</span>
+            </div>
+          </a>
+          
+          <!-- ATR -->
+          <a href="/static/pages/services/index.html?service=atr" class="service-card" data-service="atr">
+            <span class="service-icon">📉</span>
+            <div class="service-info">
+              <span class="service-name">ATR</span>
+              <span class="service-desc">Average True Range</span>
+            </div>
+          </a>
+          
+          <!-- SMA -->
+          <a href="/static/pages/services/index.html?service=sma" class="service-card" data-service="sma">
+            <span class="service-icon">〰️</span>
+            <div class="service-info">
+              <span class="service-name">SMA</span>
+              <span class="service-desc">Simple Moving Average</span>
+            </div>
+          </a>
+          
+          <!-- EMA -->
+          <a href="/static/pages/services/index.html?service=ema" class="service-card" data-service="ema">
+            <span class="service-icon">📐</span>
+            <div class="service-info">
+              <span class="service-name">EMA</span>
+              <span class="service-desc">Exponential MA</span>
+            </div>
+          </a>
+          
+          <!-- MACD -->
+          <a href="/static/pages/services/index.html?service=macd" class="service-card" data-service="macd">
+            <span class="service-icon">🔀</span>
+            <div class="service-info">
+              <span class="service-name">MACD</span>
+              <span class="service-desc">Trend momentum</span>
+            </div>
+          </a>
+          
+          <!-- RSI -->
+          <a href="/static/pages/services/index.html?service=rsi" class="service-card" data-service="rsi">
+            <span class="service-icon">💪</span>
+            <div class="service-info">
+              <span class="service-name">RSI</span>
+              <span class="service-desc">Relative Strength</span>
+            </div>
+          </a>
+          
+          <!-- Comprehensive -->
+          <a href="/static/pages/services/index.html?service=comprehensive" class="service-card featured" data-service="comprehensive">
+            <span class="service-icon">🎯</span>
+            <div class="service-info">
+              <span class="service-name">Full Analysis</span>
+              <span class="service-desc">All indicators combined</span>
+            </div>
+            <span class="service-badge">PRO</span>
+          </a>
+        </div>
+      </div>
+      <div class="services-popup-footer">
+        <a href="/static/pages/services/index.html" class="view-all-btn">
+          View All Services
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
   <!-- Sidebar Footer -->
   <div class="sidebar-footer">
     <div class="sidebar-status">
@@ -220,3 +341,35 @@
     </div>
   </div>
 </aside>
+
+<script>
+  // Services Menu Toggle
+  document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('services-toggle');
+    const popup = document.getElementById('services-popup');
+    const closeBtn = document.getElementById('services-close');
+    
+    if (toggleBtn && popup) {
+      toggleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+        toggleBtn.classList.toggle('active');
+      });
+      
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+          popup.style.display = 'none';
+          toggleBtn.classList.remove('active');
+        });
+      }
+      
+      // Close on outside click
+      document.addEventListener('click', function(e) {
+        if (!popup.contains(e.target) && !toggleBtn.contains(e.target)) {
+          popup.style.display = 'none';
+          toggleBtn.classList.remove('active');
+        }
+      });
+    }
+  });
+</script>

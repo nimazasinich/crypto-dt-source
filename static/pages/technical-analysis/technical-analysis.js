@@ -944,6 +944,7 @@ class TechnicalAnalysisPage {
     } catch (error) {
       logger.warn('TechnicalAnalysis', 'Failed to draw support/resistance:', error);
     }
+  }
   
   renderAnalysis() {
     if (!this.analysisData) return;

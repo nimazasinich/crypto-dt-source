@@ -133,13 +133,21 @@ class CoinGeckoClient:
                     prices = []
                     for coin in data:
                         prices.append({
+                            "id": coin.get("id", ""),
                             "symbol": coin.get("symbol", "").upper(),
                             "name": coin.get("name", ""),
+                            "image": coin.get("image", ""),  # CoinGecko provides real image URLs
                             "price": coin.get("current_price", 0),
                             "change24h": coin.get("price_change_24h", 0),
                             "changePercent24h": coin.get("price_change_percentage_24h", 0),
                             "volume24h": coin.get("total_volume", 0),
                             "marketCap": coin.get("market_cap", 0),
+                            "market_cap_rank": coin.get("market_cap_rank", 0),
+                            "circulating_supply": coin.get("circulating_supply", 0),
+                            "total_supply": coin.get("total_supply", 0),
+                            "max_supply": coin.get("max_supply", 0),
+                            "ath": coin.get("ath", 0),
+                            "atl": coin.get("atl", 0),
                             "source": "coingecko",
                             "timestamp": int(datetime.utcnow().timestamp() * 1000)
                         })
