@@ -63,33 +63,44 @@ async def get_system_status():
         # Data Sources Status
         from database.models import Provider, SourcePool, PoolMember
         
-        with db_manager.get_session() as session:
-            providers = session.query(Provider).all()
-            pools = session.query(SourcePool).all()
-            
+        try:
+            with db_manager.get_session() as session:
+                providers = session.query(Provider).all()
+                pools = session.query(SourcePool).all()
+                
+                sources_status = {
+                    "total": len(providers),
+                    "active": 0,
+                    "inactive": 0,
+                    "categories": {},
+                    "pools": len(pools),
+                    "sources": []
+                }
+                
+                for provider in providers:
+                    category = provider.category or "unknown"
+                    if category not in sources_status["categories"]:
+                        sources_status["categories"][category] = {"total": 0, "active": 0}
+                    
+                    sources_status["categories"][category]["total"] += 1
+                    sources_status["sources"].append({
+                        "id": provider.id,
+                        "name": provider.name,
+                        "category": category,
+                        "status": "active",  # TODO: Check actual status
+                        "endpoint": provider.endpoint_url
+                    })
+                    sources_status["active"] += 1
+        except Exception as db_error:
+            logger.warning(f"Failed to get providers from database: {db_error}")
             sources_status = {
-                "total": len(providers),
+                "total": 0,
                 "active": 0,
                 "inactive": 0,
                 "categories": {},
-                "pools": len(pools),
+                "pools": 0,
                 "sources": []
             }
-            
-            for provider in providers:
-                category = provider.category or "unknown"
-                if category not in sources_status["categories"]:
-                    sources_status["categories"][category] = {"total": 0, "active": 0}
-                
-                sources_status["categories"][category]["total"] += 1
-                sources_status["sources"].append({
-                    "id": provider.id,
-                    "name": provider.name,
-                    "category": category,
-                    "status": "active",  # TODO: Check actual status
-                    "endpoint": provider.endpoint_url
-                })
-                sources_status["active"] += 1
         
         # Database Status
         db_status = {
@@ -139,25 +150,34 @@ async def get_detailed_sources():
     try:
         from database.models import Provider, SourcePool, PoolMember
         
-        with db_manager.get_session() as session:
-            providers = session.query(Provider).all()
-            
-            sources = []
-            for provider in providers:
-                sources.append({
-                    "id": provider.id,
-                    "name": provider.name,
-                    "category": provider.category,
-                    "endpoint": provider.endpoint_url,
-                    "status": "active",  # TODO: Check health
-                    "priority": provider.priority_tier,
-                    "requires_key": provider.requires_key
-                })
+        try:
+            with db_manager.get_session() as session:
+                providers = session.query(Provider).all()
+                
+                sources = []
+                for provider in providers:
+                    sources.append({
+                        "id": provider.id,
+                        "name": provider.name,
+                        "category": provider.category,
+                        "endpoint": provider.endpoint_url,
+                        "status": "active",  # TODO: Check health
+                        "priority": provider.priority_tier,
+                        "requires_key": provider.requires_key
+                    })
             
             return {
                 "success": True,
                 "sources": sources,
                 "total": len(sources)
+            }
+        except Exception as db_error:
+            logger.warning(f"Failed to get providers from database: {db_error}")
+            return {
+                "success": True,
+                "sources": [],
+                "total": 0,
+                "error": "Database unavailable"
             }
     except Exception as e:
         logger.error(f"Error getting detailed sources: {e}", exc_info=True)
