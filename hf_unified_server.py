@@ -891,118 +891,36 @@ async def api_sentiment_global(timeframe: str = "1D"):
     except Exception as e:
         logger.error(f"Failed to fetch Fear & Greed Index: {e}")
     
-    # Fallback to generated data
-    base_sentiment = random.randint(40, 70)
-    history = []
-    base_time = int(datetime.utcnow().timestamp() * 1000)
-    
-    data_points = {
-        "1D": 24,
-        "7D": 168,
-        "30D": 30,
-        "1Y": 365
-    }.get(timeframe, 24)
-    
-    interval = {
-        "1D": 3600000,      # 1 hour
-        "7D": 3600000,      # 1 hour
-        "30D": 86400000,    # 1 day
-        "1Y": 86400000      # 1 day
-    }.get(timeframe, 3600000)
-    
-    for i in range(data_points):
-        history.append({
-            "timestamp": base_time - ((data_points - i) * interval),
-            "sentiment": max(20, min(80, base_sentiment + random.randint(-10, 10))),
-            "volume": random.randint(50000, 150000)
-        })
-    
-    if base_sentiment >= 65:
-        sentiment = "greed"
-        market_mood = "bullish"
-    elif base_sentiment >= 45:
-        sentiment = "neutral"
-        market_mood = "neutral"
-    else:
-        sentiment = "fear"
-        market_mood = "bearish"
-    
+    # Fallback - return error or empty (NO MOCK DATA)
+    logger.warning("Sentiment data unavailable and mock data is disabled.")
     return {
-        "fear_greed_index": base_sentiment,
-        "sentiment": sentiment,
-        "market_mood": market_mood,
-        "confidence": 0.72,
-        "history": history,
+        "fear_greed_index": 50,
+        "sentiment": "neutral",
+        "market_mood": "neutral",
+        "confidence": 0,
+        "history": [],
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "source": "fallback"
+        "source": "unavailable",
+        "error": "Real data unavailable"
     }
 
 
 @app.get("/api/sentiment/asset/{symbol}")
 async def api_sentiment_asset(symbol: str):
     """Get sentiment analysis for a specific asset"""
-    import random
-    
-    try:
-        # Normalize symbol
-        symbol = symbol.upper().replace('USDT', '').replace('USD', '')
-        
-        # Generate sentiment score based on symbol (with some consistency based on symbol hash)
-        hash_val = sum(ord(c) for c in symbol) % 50
-        sentiment_value = 40 + hash_val + random.randint(-10, 10)
-        sentiment_value = max(20, min(90, sentiment_value))
-        
-        # Determine sentiment category
-        if sentiment_value >= 75:
-            sentiment = "very_positive"
-            color = "#10b981"
-        elif sentiment_value >= 60:
-            sentiment = "positive"
-            color = "#3b82f6"
-        elif sentiment_value >= 40:
-            sentiment = "neutral"
-            color = "#94a3b8"
-        elif sentiment_value >= 25:
-            sentiment = "negative"
-            color = "#f59e0b"
-        else:
-            sentiment = "very_negative"
-            color = "#ef4444"
-        
-        # Generate social metrics
-        social_score = random.randint(40, 90)
-        news_score = random.randint(35, 85)
-        
-        return {
-            "success": True,
-            "symbol": symbol,
-            "sentiment": sentiment,
-            "sentiment_value": sentiment_value,
-            "color": color,
-            "social_score": social_score,
-            "news_score": news_score,
-            "sources": {
-                "twitter": random.randint(1000, 50000),
-                "reddit": random.randint(500, 10000),
-                "news": random.randint(10, 200)
-            },
-            "timestamp": datetime.utcnow().isoformat() + "Z"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error getting sentiment for {symbol}: {e}")
-        return {
-            "success": False,
-            "symbol": symbol,
-            "sentiment": "neutral",
-            "sentiment_value": 50,
-            "color": "#94a3b8",
-            "social_score": 50,
-            "news_score": 50,
-            "sources": {"twitter": 0, "reddit": 0, "news": 0},
-            "error": str(e),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
-        }
+    # NO MOCK DATA
+    return {
+        "success": False,
+        "symbol": symbol,
+        "sentiment": "neutral",
+        "sentiment_value": 50,
+        "color": "#94a3b8",
+        "social_score": 0,
+        "news_score": 0,
+        "sources": {"twitter": 0, "reddit": 0, "news": 0},
+        "error": "Asset sentiment unavailable (mock data removed)",
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
 
 
 @app.get("/api/models/list")
@@ -1085,26 +1003,16 @@ async def api_models_reinitialize():
 
 @app.get("/api/ai/signals")
 async def api_ai_signals(symbol: str = "BTC"):
-    """AI trading signals for a symbol"""
-    import random
+    """AI trading signals for a symbol - Real signals only"""
+    # No mock signals
     signals = []
-    signal_types = ["buy", "sell", "hold"]
-    for i in range(3):
-        signals.append({
-            "id": f"sig_{int(time.time())}_{i}",
-            "symbol": symbol,
-            "type": random.choice(signal_types),
-            "score": round(random.uniform(0.65, 0.95), 2),
-            "model": ["cryptobert_elkulako", "finbert", "twitter_sentiment"][i % 3],
-            "created_at": datetime.utcnow().isoformat() + "Z",
-            "confidence": round(random.uniform(0.7, 0.95), 2)
-        })
     
     return {
         "symbol": symbol,
         "signals": signals,
-        "total": len(signals),
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "total": 0,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "message": "No active signals from real models"
     }
 
 
@@ -1120,34 +1028,18 @@ class AIDecisionRequest(BaseModel):
 @app.post("/api/ai/decision")
 async def api_ai_decision(payload: AIDecisionRequest) -> Dict[str, Any]:
     """AI trading decision for AI Analyst page."""
-    import random
-
-    base_conf = 0.7
-    risk = payload.risk_tolerance.lower()
-    confidence = base_conf + (0.1 if risk == "aggressive" else -0.05 if risk == "conservative" else 0.0)
-    confidence = max(0.5, min(confidence, 0.95))
-
+    
+    # NO MOCK DATA - Return safe default
     decision = "HOLD"
-    if confidence > 0.8:
-        decision = "BUY"
-    elif confidence < 0.6:
-        decision = "SELL"
-
-    summary = (
-        f"Based on recent market conditions and a {payload.horizon} horizon, "
-        f"the AI suggests a {decision} stance for {payload.symbol} with "
-        f"{int(confidence * 100)}% confidence."
-    )
+    confidence = 0.0
+    summary = "AI analysis unavailable. Real models required."
 
     signals: List[Dict[str, Any]] = [
-        {"type": "bullish" if decision == "BUY" else "bearish" if decision == "SELL" else "neutral",
-         "text": f"Primary signal indicates {decision} bias."},
-        {"type": "neutral", "text": "Consider position sizing according to your risk tolerance."},
+        {"type": "neutral", "text": "AI models not connected or unavailable."},
     ]
 
     risks: List[str] = [
-        "Market volatility may increase around major macro events.",
-        "On-chain or regulatory news can invalidate this view quickly.",
+        "Data unavailable.",
     ]
 
     targets = {

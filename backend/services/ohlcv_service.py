@@ -7,6 +7,7 @@ import logging
 from typing import Dict, List, Any, Optional
 from fastapi import HTTPException
 from .api_fallback_manager import get_fallback_manager
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class OHLCVService:
     
     def _setup_providers(self):
         """Setup OHLCV providers in priority order"""
-        # Priority 1: Binance (fastest, most reliable - but may have regional restrictions)
+        # Priority 1: Binance (fastest, most reliable)
         self.manager.add_provider(
             name="Binance",
             priority=1,
@@ -29,7 +30,7 @@ class OHLCVService:
             max_failures=3
         )
         
-        # Priority 2: CoinGecko (reliable alternative, no geo-restrictions)
+        # Priority 2: CoinGecko (reliable alternative)
         self.manager.add_provider(
             name="CoinGecko",
             priority=2,
@@ -38,7 +39,7 @@ class OHLCVService:
             max_failures=3
         )
         
-        # Priority 3: HuggingFace Space (fallback)
+        # Priority 3: HuggingFace Space (proxy to other services)
         self.manager.add_provider(
             name="HuggingFace",
             priority=3,
@@ -47,16 +48,7 @@ class OHLCVService:
             max_failures=5
         )
         
-        # Priority 4: Mock/Demo data (always available)
-        self.manager.add_provider(
-            name="Demo",
-            priority=999,
-            fetch_function=self._fetch_demo,
-            cooldown_seconds=0,
-            max_failures=999  # Never fails
-        )
-        
-        logger.info("✅ OHLCV Service initialized with 4 providers (Binance, CoinGecko, HuggingFace, Demo)")
+        logger.info("✅ OHLCV Service initialized with 3 providers (Binance, CoinGecko, HuggingFace)")
     
     async def _fetch_binance(self, symbol: str, timeframe: str, limit: int = 100) -> Dict:
         """Fetch from Binance API"""
@@ -128,10 +120,10 @@ class OHLCVService:
             candles.append({
                 "timestamp": int(timestamp),
                 "open": price,
-                "high": price * 1.01,  # Approximate
-                "low": price * 0.99,   # Approximate
+                "high": price,  # Approximate
+                "low": price,   # Approximate
                 "close": price,
-                "volume": 0  # CoinGecko doesn't provide volume in this endpoint
+                "volume": 0
             })
         
         return candles
@@ -139,7 +131,6 @@ class OHLCVService:
     async def _fetch_huggingface(self, symbol: str, timeframe: str, limit: int = 100) -> Dict:
         """Fetch from HuggingFace Space"""
         import httpx
-        import os
         
         base_url = os.getenv("HF_SPACE_BASE_URL", "https://really-amin-datasourceforcryptocurrency.hf.space")
         token = os.getenv("HF_API_TOKEN", "").strip()
@@ -155,43 +146,6 @@ class OHLCVService:
             )
             response.raise_for_status()
             return response.json()
-    
-    async def _fetch_demo(self, symbol: str, timeframe: str, limit: int = 100) -> Dict:
-        """Fetch demo/fallback data"""
-        import time
-        import random
-        
-        # Generate realistic demo candles
-        base_price = 50000 if symbol.upper() == "BTC" else 3000
-        candles = []
-        
-        for i in range(limit):
-            timestamp = int(time.time()) - (i * 3600)  # 1 hour intervals
-            open_price = base_price + random.uniform(-1000, 1000)
-            close_price = open_price + random.uniform(-500, 500)
-            high_price = max(open_price, close_price) + random.uniform(0, 300)
-            low_price = min(open_price, close_price) - random.uniform(0, 300)
-            volume = random.uniform(1000, 10000)
-            
-            candles.append({
-                "t": timestamp * 1000,
-                "o": round(open_price, 2),
-                "h": round(high_price, 2),
-                "l": round(low_price, 2),
-                "c": round(close_price, 2),
-                "v": round(volume, 2)
-            })
-        
-        return {
-            "symbol": symbol.upper(),
-            "timeframe": timeframe,
-            "interval": timeframe,
-            "limit": limit,
-            "count": len(candles),
-            "ohlcv": candles[::-1],  # Reverse to oldest first
-            "source": "demo",
-            "warning": "Using demo data - live data unavailable"
-        }
     
     async def get_ohlcv(
         self,
@@ -236,4 +190,3 @@ def get_ohlcv_service() -> OHLCVService:
     if _ohlcv_service is None:
         _ohlcv_service = OHLCVService()
     return _ohlcv_service
-

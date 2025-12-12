@@ -1,23 +1,18 @@
-"""
-WebSocket Data Broadcaster
-Broadcasts real-time cryptocurrency data from database to connected clients
-"""
-
 import asyncio
 import logging
 from datetime import datetime
 from typing import Dict, Any
 
-from database.db_manager import db_manager
+from backend.orchestration.provider_manager import provider_manager
 from backend.services.ws_service_manager import ws_manager, ServiceType
 from utils.logger import setup_logger
 
 logger = setup_logger("ws_data_broadcaster")
 
-
 class DataBroadcaster:
     """
     Broadcasts cryptocurrency data updates to WebSocket clients
+    using the Provider Orchestrator for data fetching.
     """
 
     def __init__(self):
@@ -37,7 +32,6 @@ class DataBroadcaster:
             self.broadcast_market_data(),
             self.broadcast_news(),
             self.broadcast_sentiment(),
-            self.broadcast_whales(),
             self.broadcast_gas_prices()
         ]
 
@@ -59,25 +53,49 @@ class DataBroadcaster:
 
         while self.is_running:
             try:
-                prices = db_manager.get_latest_prices(limit=50)
+                # Use Orchestrator to fetch market data
+                # Using 30s TTL to prevent provider spam, but broadcast often
+                response = await provider_manager.fetch_data(
+                    "market",
+                    params={"ids": "bitcoin,ethereum,tron,solana,binancecoin,ripple", "vs_currency": "usd"},
+                    use_cache=True,
+                    ttl=10 # Short TTL for live prices if provider allows
+                )
 
-                if prices:
+                if response["success"] and response["data"]:
+                    coins = response["data"]
+                    
                     # Format data for broadcast
+                    prices = {}
+                    price_changes = {}
+                    volumes = {}
+                    market_caps = {}
+                    
+                    for coin in coins:
+                        symbol = coin.get("symbol", "").upper()
+                        prices[symbol] = coin.get("current_price")
+                        price_changes[symbol] = coin.get("price_change_percentage_24h")
+                        volumes[symbol] = coin.get("total_volume")
+                        market_caps[symbol] = coin.get("market_cap")
+
                     data = {
                         "type": "market_data",
                         "data": {
-                            "prices": {p.symbol: p.price_usd for p in prices},
-                            "volumes": {p.symbol: p.volume_24h for p in prices if p.volume_24h},
-                            "market_caps": {p.symbol: p.market_cap for p in prices if p.market_cap},
-                            "price_changes": {p.symbol: p.price_change_24h for p in prices if p.price_change_24h}
+                            "prices": prices,
+                            "volumes": volumes,
+                            "market_caps": market_caps,
+                            "price_changes": price_changes
                         },
-                        "count": len(prices),
-                        "timestamp": datetime.utcnow().isoformat()
+                        "count": len(coins),
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "source": response["source"]
                     }
+
+                    # Diff check could be here (optimization)
 
                     # Broadcast to subscribed clients
                     await ws_manager.broadcast_to_service(ServiceType.MARKET_DATA, data)
-                    logger.debug(f"Broadcasted {len(prices)} price updates")
+                    logger.debug(f"Broadcasted {len(coins)} price updates from {response['source']}")
 
             except Exception as e:
                 logger.error(f"Error broadcasting market data: {e}", exc_info=True)
@@ -87,113 +105,98 @@ class DataBroadcaster:
     async def broadcast_news(self):
         """Broadcast news updates"""
         logger.info("Starting news broadcast...")
-        last_news_id = 0
-
+        
         while self.is_running:
             try:
-                news = db_manager.get_latest_news(limit=10)
+                response = await provider_manager.fetch_data(
+                    "news",
+                    params={"filter": "hot"},
+                    use_cache=True,
+                    ttl=300
+                )
 
-                if news and (not last_news_id or news[0].id != last_news_id):
-                    # New news available
-                    last_news_id = news[0].id
+                if response["success"] and response["data"]:
+                    # Transform/Normalize
+                    data = response["data"]
+                    articles = []
+                    
+                    if "results" in data: # CryptoPanic
+                        for post in data.get('results', [])[:5]:
+                            articles.append({
+                                "id": str(post.get('id')),
+                                "title": post.get('title', ''),
+                                "source": post.get('source', {}).get('title', 'Unknown'),
+                                "url": post.get('url', ''),
+                                "published_at": post.get('published_at', datetime.now().isoformat())
+                            })
+                    elif "articles" in data: # NewsAPI
+                        for post in data.get('articles', [])[:5]:
+                            articles.append({
+                                "id": str(hash(post.get('url', ''))),
+                                "title": post.get('title', ''),
+                                "source": post.get('source', {}).get('name', 'Unknown'),
+                                "url": post.get('url', ''),
+                                "published_at": post.get('publishedAt', datetime.now().isoformat())
+                            })
 
-                    data = {
-                        "type": "news",
-                        "data": {
-                            "articles": [
-                                {
-                                    "id": article.id,
-                                    "title": article.title,
-                                    "source": article.source,
-                                    "url": article.url,
-                                    "published_at": article.published_at.isoformat(),
-                                    "sentiment": article.sentiment
-                                }
-                                for article in news[:5]  # Only send 5 latest
-                            ]
-                        },
-                        "count": len(news[:5]),
-                        "timestamp": datetime.utcnow().isoformat()
-                    }
+                    if articles:
+                        payload = {
+                            "type": "news",
+                            "data": {"articles": articles},
+                            "count": len(articles),
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "source": response["source"]
+                        }
 
-                    await ws_manager.broadcast_to_service(ServiceType.NEWS, data)
-                    logger.info(f"Broadcasted {len(news[:5])} news articles")
+                        await ws_manager.broadcast_to_service(ServiceType.NEWS, payload)
+                        logger.info(f"Broadcasted {len(articles)} news articles from {response['source']}")
 
             except Exception as e:
                 logger.error(f"Error broadcasting news: {e}", exc_info=True)
 
-            await asyncio.sleep(30)  # Check every 30 seconds
+            await asyncio.sleep(60)
 
     async def broadcast_sentiment(self):
         """Broadcast sentiment updates"""
         logger.info("Starting sentiment broadcast...")
-        last_sentiment_value = None
 
         while self.is_running:
             try:
-                sentiment = db_manager.get_latest_sentiment()
+                response = await provider_manager.fetch_data(
+                    "sentiment",
+                    params={"limit": 1},
+                    use_cache=True,
+                    ttl=3600
+                )
 
-                if sentiment and sentiment.value != last_sentiment_value:
-                    last_sentiment_value = sentiment.value
+                if response["success"] and response["data"]:
+                    data = response["data"]
+                    fng_value = 50
+                    classification = "Neutral"
+                    
+                    if data.get('data'):
+                        item = data['data'][0]
+                        fng_value = int(item.get('value', 50))
+                        classification = item.get('value_classification', 'Neutral')
 
-                    data = {
+                    payload = {
                         "type": "sentiment",
                         "data": {
-                            "fear_greed_index": sentiment.value,
-                            "classification": sentiment.classification,
-                            "metric_name": sentiment.metric_name,
-                            "source": sentiment.source,
-                            "timestamp": sentiment.timestamp.isoformat()
+                            "fear_greed_index": fng_value,
+                            "classification": classification,
+                            "timestamp": datetime.utcnow().isoformat()
                         },
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "source": response["source"]
                     }
 
-                    await ws_manager.broadcast_to_service(ServiceType.SENTIMENT, data)
-                    logger.info(f"Broadcasted sentiment: {sentiment.value} ({sentiment.classification})")
+                    await ws_manager.broadcast_to_service(ServiceType.SENTIMENT, payload)
+                    logger.info(f"Broadcasted sentiment: {fng_value} from {response['source']}")
 
             except Exception as e:
                 logger.error(f"Error broadcasting sentiment: {e}", exc_info=True)
 
-            await asyncio.sleep(60)  # Check every minute
-
-    async def broadcast_whales(self):
-        """Broadcast whale transaction updates"""
-        logger.info("Starting whale transaction broadcast...")
-        last_whale_id = 0
-
-        while self.is_running:
-            try:
-                whales = db_manager.get_whale_transactions(limit=5)
-
-                if whales and (not last_whale_id or whales[0].id != last_whale_id):
-                    last_whale_id = whales[0].id
-
-                    data = {
-                        "type": "whale_transaction",
-                        "data": {
-                            "transactions": [
-                                {
-                                    "id": tx.id,
-                                    "blockchain": tx.blockchain,
-                                    "amount_usd": tx.amount_usd,
-                                    "from_address": tx.from_address[:20] + "...",
-                                    "to_address": tx.to_address[:20] + "...",
-                                    "timestamp": tx.timestamp.isoformat()
-                                }
-                                for tx in whales
-                            ]
-                        },
-                        "count": len(whales),
-                        "timestamp": datetime.utcnow().isoformat()
-                    }
-
-                    await ws_manager.broadcast_to_service(ServiceType.WHALE_TRACKING, data)
-                    logger.info(f"Broadcasted {len(whales)} whale transactions")
-
-            except Exception as e:
-                logger.error(f"Error broadcasting whales: {e}", exc_info=True)
-
-            await asyncio.sleep(15)  # Check every 15 seconds
+            await asyncio.sleep(60)
 
     async def broadcast_gas_prices(self):
         """Broadcast gas price updates"""
@@ -201,23 +204,37 @@ class DataBroadcaster:
 
         while self.is_running:
             try:
-                gas_prices = db_manager.get_latest_gas_prices()
+                response = await provider_manager.fetch_data(
+                    "onchain",
+                    params={},
+                    use_cache=True,
+                    ttl=15
+                )
 
-                if gas_prices:
-                    data = {
-                        "type": "gas_prices",
-                        "data": gas_prices,
-                        "timestamp": datetime.utcnow().isoformat()
-                    }
+                if response["success"] and response["data"]:
+                    data = response["data"]
+                    result = data.get("result", {})
+                    
+                    if result:
+                        payload = {
+                            "type": "gas_prices",
+                            "data": {
+                                "fast": result.get("FastGasPrice"),
+                                "standard": result.get("ProposeGasPrice"),
+                                "slow": result.get("SafeGasPrice")
+                            },
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "source": response["source"]
+                        }
 
-                    # Broadcast to RPC_NODES service type (gas prices are blockchain-related)
-                    await ws_manager.broadcast_to_service(ServiceType.RPC_NODES, data)
-                    logger.debug("Broadcasted gas prices")
+                        # Broadcast to RPC_NODES service type (gas prices are blockchain-related)
+                        await ws_manager.broadcast_to_service(ServiceType.RPC_NODES, payload)
+                        logger.debug(f"Broadcasted gas prices from {response['source']}")
 
             except Exception as e:
                 logger.error(f"Error broadcasting gas prices: {e}", exc_info=True)
 
-            await asyncio.sleep(30)  # Every 30 seconds
+            await asyncio.sleep(30)
 
 
 # Global broadcaster instance
