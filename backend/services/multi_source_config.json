@@ -1,7 +1,39 @@
 {
   "api_sources": {
+    "aggregated_sources": {
+      "primary": [
+        {
+          "name": "hf_crypto_resources_api",
+          "url": "https://really-amin-crypto-api-clean.hf.space",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 1,
+          "timeout": 15,
+          "description": "Comprehensive crypto data API on HuggingFace Spaces",
+          "endpoints": {
+            "top_coins": "/api/coins/top",
+            "trending": "/api/trending",
+            "market_overview": "/api/market",
+            "sentiment_global": "/api/sentiment/global",
+            "resources_stats": "/api/resources/stats",
+            "categories": "/api/categories",
+            "resources_by_category": "/api/resources/category/{category}"
+          },
+          "provides": ["market_data", "sentiment", "trending", "resource_database"]
+        }
+      ]
+    },
     "market_prices": {
       "primary": [
+        {
+          "name": "hf_crypto_resources_api",
+          "url": "https://really-amin-crypto-api-clean.hf.space/api/coins/top",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 0,
+          "timeout": 15,
+          "note": "Aggregated source - pulls from CoinGecko"
+        },
         {
           "name": "coingecko",
           "url": "https://api.coingecko.com/api/v3",
@@ -555,6 +587,15 @@
     },
     "sentiment_data": {
       "primary": [
+        {
+          "name": "hf_crypto_resources_api_sentiment",
+          "url": "https://really-amin-crypto-api-clean.hf.space/api/sentiment/global",
+          "auth_required": false,
+          "rate_limit": "unlimited",
+          "priority": 0,
+          "timeout": 15,
+          "note": "Aggregated source - pulls from Alternative.me"
+        },
         {
           "name": "alternative_me_fng",
           "url": "https://api.alternative.me/fng/",
