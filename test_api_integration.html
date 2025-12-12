@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Integration Test - Crypto Hub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .test-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .endpoint {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        .endpoint-method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 10px;
+            min-width: 50px;
+            text-align: center;
+        }
+        .method-get { background: #4caf50; color: white; }
+        .method-post { background: #ff9800; color: white; }
+        .endpoint-path {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #333;
+        }
+        .test-btn {
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .test-btn:hover { background: #5568d3; }
+        .test-btn:active { transform: scale(0.95); }
+        .test-btn.loading {
+            background: #999;
+            cursor: not-allowed;
+        }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+        .status-pending { background: #e3f2fd; color: #1976d2; }
+        .status-success { background: #e8f5e9; color: #2e7d32; }
+        .status-error { background: #ffebee; color: #c62828; }
+        .result {
+            margin-top: 10px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        .result.show { display: block; }
+        .result pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .summary {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            color: white;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        .summary-item {
+            text-align: center;
+        }
+        .summary-value {
+            font-size: 32px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .summary-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        .test-all-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+        .test-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 API Integration Test Suite</h1>
+        <p class="subtitle">Testing all backend API endpoints for HuggingFace Space deployment</p>
+        
+        <div class="summary">
+            <div class="summary-item">
+                <span class="summary-value" id="total-tests">0</span>
+                <span class="summary-label">Total Tests</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value" id="passed-tests">0</span>
+                <span class="summary-label">Passed ✓</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value" id="failed-tests">0</span>
+                <span class="summary-label">Failed ✗</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-value" id="pending-tests">0</span>
+                <span class="summary-label">Pending</span>
+            </div>
+        </div>
+
+        <button class="test-all-btn" onclick="testAllEndpoints()">🧪 Run All Tests</button>
+
+        <!-- Health & Status -->
+        <div class="test-section">
+            <h2>🏥 Health & Status</h2>
+            <div class="endpoint" data-endpoint="/api/health" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/health</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/status" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/status</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/routers" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/routers</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+        </div>
+
+        <!-- Market Data -->
+        <div class="test-section">
+            <h2>📈 Market Data</h2>
+            <div class="endpoint" data-endpoint="/api/market" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/market</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/coins/top?limit=10" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/coins/top?limit=10</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/trending" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/trending</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/service/rate?pair=BTC/USDT" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/service/rate?pair=BTC/USDT</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+        </div>
+
+        <!-- Sentiment & AI -->
+        <div class="test-section">
+            <h2>🧠 Sentiment & AI</h2>
+            <div class="endpoint" data-endpoint="/api/sentiment/global?timeframe=1D" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/sentiment/global?timeframe=1D</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/sentiment/asset/BTC" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/sentiment/asset/BTC</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/ai/signals?symbol=BTC" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/ai/signals?symbol=BTC</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/ai/decision" data-method="POST" data-body='{"symbol":"BTC","horizon":"swing","risk_tolerance":"moderate"}'>
+                <span class="endpoint-method method-post">POST</span>
+                <span class="endpoint-path">/api/ai/decision</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+        </div>
+
+        <!-- News -->
+        <div class="test-section">
+            <h2>📰 News</h2>
+            <div class="endpoint" data-endpoint="/api/news?limit=10" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/news?limit=10</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/news/latest?limit=10" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/news/latest?limit=10</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+        </div>
+
+        <!-- Models -->
+        <div class="test-section">
+            <h2>🤖 AI Models</h2>
+            <div class="endpoint" data-endpoint="/api/models/list" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/models/list</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/models/status" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/models/status</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/models/summary" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/models/summary</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/models/health" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/models/health</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+        </div>
+
+        <!-- Resources -->
+        <div class="test-section">
+            <h2>📚 Resources</h2>
+            <div class="endpoint" data-endpoint="/api/resources" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/resources</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/resources/summary" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/resources/summary</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/resources/categories" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/resources/categories</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+            <div class="endpoint" data-endpoint="/api/providers" data-method="GET">
+                <span class="endpoint-method method-get">GET</span>
+                <span class="endpoint-path">/api/providers</span>
+                <button class="test-btn" onclick="testEndpoint(this)">Test</button>
+                <span class="status status-pending">Pending</span>
+                <div class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let totalTests = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+        let pendingTests = 0;
+
+        function updateSummary() {
+            document.getElementById('total-tests').textContent = totalTests;
+            document.getElementById('passed-tests').textContent = passedTests;
+            document.getElementById('failed-tests').textContent = failedTests;
+            document.getElementById('pending-tests').textContent = pendingTests;
+        }
+
+        function countTests() {
+            totalTests = document.querySelectorAll('.endpoint').length;
+            pendingTests = totalTests;
+            updateSummary();
+        }
+
+        async function testEndpoint(button) {
+            const container = button.closest('.endpoint');
+            const endpoint = container.dataset.endpoint;
+            const method = container.dataset.method;
+            const body = container.dataset.body;
+            const statusEl = container.querySelector('.status');
+            const resultEl = container.querySelector('.result');
+
+            button.textContent = 'Testing...';
+            button.classList.add('loading');
+            button.disabled = true;
+            statusEl.className = 'status status-pending';
+            statusEl.textContent = 'Testing...';
+
+            try {
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                
+                if (body && method === 'POST') {
+                    options.body = body;
+                }
+
+                const response = await fetch(endpoint, options);
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusEl.className = 'status status-success';
+                    statusEl.textContent = `✓ ${response.status} OK`;
+                    passedTests++;
+                    pendingTests--;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                resultEl.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                resultEl.classList.add('show');
+
+            } catch (error) {
+                statusEl.className = 'status status-error';
+                statusEl.textContent = `✗ ${error.message}`;
+                resultEl.innerHTML = `<pre style="color: #c62828;">Error: ${error.message}</pre>`;
+                resultEl.classList.add('show');
+                failedTests++;
+                pendingTests--;
+            }
+
+            button.textContent = 'Test';
+            button.classList.remove('loading');
+            button.disabled = false;
+            updateSummary();
+        }
+
+        async function testAllEndpoints() {
+            const buttons = document.querySelectorAll('.test-btn');
+            for (const button of buttons) {
+                await testEndpoint(button);
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        }
+
+        // Initialize
+        countTests();
+    </script>
+</body>
+</html>
