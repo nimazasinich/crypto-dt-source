@@ -366,6 +366,14 @@ try:
 except Exception as e:
     logger.error(f"Failed to include realtime_monitoring_router: {e}")
 
+# Technical Indicators Services API
+try:
+    from backend.routers.indicators_api import router as indicators_router
+    app.include_router(indicators_router)  # Technical Indicators API (BB, StochRSI, ATR, SMA, EMA, MACD, RSI)
+    logger.info("✓ ✅ Technical Indicators Router loaded (Bollinger Bands, StochRSI, ATR, SMA, EMA, MACD, RSI)")
+except Exception as e:
+    logger.error(f"Failed to include indicators_router: {e}")
+
 # Add routers status endpoint
 @app.get("/api/routers")
 async def get_routers_status():
@@ -383,6 +391,7 @@ async def get_routers_status():
         "trading_backtesting": "loaded" if trading_router else "not_available",
         "market_api": "loaded",
         "technical_analysis": "loaded",
+        "technical_indicators": "loaded",  # NEW: BB, StochRSI, ATR, SMA, EMA, MACD, RSI
         "dynamic_model_loader": "loaded" if dynamic_model_router else "not_available"
     }
     return {
