@@ -39,7 +39,7 @@ from backend.routers.comprehensive_resources_api import router as comprehensive_
 from backend.routers.resource_hierarchy_api import router as resource_hierarchy_router
 from backend.routers.dynamic_model_api import router as dynamic_model_router
 from backend.routers.background_worker_api import router as background_worker_router
-from backend.routers.smart_provider_api import router as smart_provider_router  # NEW: Smart provider rotation
+from backend.routers.intelligent_provider_api import router as intelligent_provider_router  # NEW: Intelligent load-balanced providers
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -352,12 +352,12 @@ try:
 except Exception as e:
     logger.error(f"Failed to include background_worker_router: {e}")
 
-# Smart Provider API with Rate Limiting & Intelligent Fallback (NEW - CRITICAL FIX)
+# Intelligent Provider API with TRUE Load Balancing (NEW - CRITICAL FIX)
 try:
-    app.include_router(smart_provider_router)  # Smart Provider Rotation (Binance→CoinCap→CoinGecko)
-    logger.info("✓ ✅ Smart Provider Router loaded (Priority-based fallback, rate limit handling)")
+    app.include_router(intelligent_provider_router)  # Intelligent round-robin load balancing
+    logger.info("✓ ✅ Intelligent Provider Router loaded (Round-robin, health-based, no fake data)")
 except Exception as e:
-    logger.error(f"Failed to include smart_provider_router: {e}")
+    logger.error(f"Failed to include intelligent_provider_router: {e}")
 
 try:
     from backend.routers.realtime_monitoring_api import router as realtime_monitoring_router

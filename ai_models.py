@@ -11,18 +11,62 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 from config import HUGGINGFACE_MODELS, get_settings
 
+# Import environment detector
 try:
-    from transformers import pipeline
-    TRANSFORMERS_AVAILABLE = True
+    from utils.environment_detector import (
+        get_environment_detector,
+        should_use_ai_models,
+        get_device,
+        is_huggingface_space
+    )
+    ENV_DETECTOR_AVAILABLE = True
 except ImportError:
-    TRANSFORMERS_AVAILABLE = False
+    ENV_DETECTOR_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("Environment detector not available")
 
-try:
-    from huggingface_hub.errors import RepositoryNotFoundError
-    HF_HUB_AVAILABLE = True
-except ImportError:
-    HF_HUB_AVAILABLE = False
-    RepositoryNotFoundError = Exception
+# Only import transformers if we should use AI models
+TRANSFORMERS_AVAILABLE = False
+HF_HUB_AVAILABLE = False
+
+if ENV_DETECTOR_AVAILABLE:
+    env_detector = get_environment_detector()
+    # Log environment info
+    env_detector.log_environment()
+    
+    # Only import if we should use AI models
+    if should_use_ai_models():
+        try:
+            from transformers import pipeline
+            TRANSFORMERS_AVAILABLE = True
+            logger.info("✅ Transformers imported successfully")
+        except ImportError:
+            logger.warning("⚠️  Transformers not installed - using fallback mode")
+            TRANSFORMERS_AVAILABLE = False
+        
+        try:
+            from huggingface_hub.errors import RepositoryNotFoundError
+            HF_HUB_AVAILABLE = True
+        except ImportError:
+            HF_HUB_AVAILABLE = False
+            RepositoryNotFoundError = Exception
+    else:
+        logger.info("ℹ️  AI models disabled - using fallback mode only")
+        TRANSFORMERS_AVAILABLE = False
+else:
+    # Fallback to old behavior if environment detector not available
+    try:
+        from transformers import pipeline
+        TRANSFORMERS_AVAILABLE = True
+    except ImportError:
+        TRANSFORMERS_AVAILABLE = False
+    
+    try:
+        from huggingface_hub.errors import RepositoryNotFoundError
+        HF_HUB_AVAILABLE = True
+    except ImportError:
+        HF_HUB_AVAILABLE = False
+        RepositoryNotFoundError = Exception
 
 try:
     import requests
@@ -34,10 +78,14 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 HF_TOKEN_ENV = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
-_is_hf_space = bool(os.getenv("SPACE_ID"))
-# Changed default to "public" to enable models by default
-_default_hf_mode = "public"
-HF_MODE = os.getenv("HF_MODE", _default_hf_mode).lower()
+_is_hf_space = is_huggingface_space() if ENV_DETECTOR_AVAILABLE else bool(os.getenv("SPACE_ID"))
+
+# Determine HF_MODE based on environment
+if ENV_DETECTOR_AVAILABLE and not should_use_ai_models():
+    HF_MODE = "off"  # Disable if environment says so
+else:
+    _default_hf_mode = "public" if TRANSFORMERS_AVAILABLE else "off"
+    HF_MODE = os.getenv("HF_MODE", _default_hf_mode).lower()
 
 if HF_MODE not in ("off", "public", "auth"):
     HF_MODE = "off"
@@ -502,6 +550,27 @@ class ModelRegistry:
                     "task": spec.task,
                     "model": spec.model_id,
                 }
+                
+                # Add device configuration (GPU detection)
+                if ENV_DETECTOR_AVAILABLE:
+                    device = get_device()
+                    if device == "cuda":
+                        pipeline_kwargs["device"] = 0  # Use first GPU
+                        logger.info(f"Loading {spec.model_id} on GPU")
+                    else:
+                        pipeline_kwargs["device"] = -1  # Use CPU
+                        logger.info(f"Loading {spec.model_id} on CPU")
+                else:
+                    # Fallback: try to detect GPU manually
+                    try:
+                        import torch
+                        if torch.cuda.is_available():
+                            pipeline_kwargs["device"] = 0
+                            logger.info(f"Loading {spec.model_id} on GPU (fallback detection)")
+                        else:
+                            pipeline_kwargs["device"] = -1
+                    except:
+                        pipeline_kwargs["device"] = -1  # CPU fallback
                 
                 # Only add token if we have one and it's needed
                 if auth_token:

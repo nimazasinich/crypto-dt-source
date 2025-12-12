@@ -47,7 +47,8 @@ pytz==2024.2
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
-# AI/ML DEPENDENCIES (needed for AI model inference)
-torch==2.5.1  # Required for transformers
-transformers==4.47.1  # Required for HuggingFace models
-# numpy==1.26.0  # Auto-installed with pandas and torch
+# AI/ML DEPENDENCIES (OPTIONAL - only install if on HuggingFace Space or GPU available)
+# torch==2.5.1  # Only for HuggingFace Space with GPU
+# transformers==4.47.1  # Only for HuggingFace Space
+# numpy==1.26.0  # Auto-installed with pandas
+# To install AI dependencies: pip install torch transformers (only if needed)
