@@ -235,26 +235,9 @@ class ProviderFallbackManager:
         
         try:
             # This would call actual HF models/datasets
-            # For now, simulate HF response
-            logger.debug(f"Attempting HF for {endpoint}")
-            
-            # Simulate HF response based on endpoint
-            if "/pair" in endpoint:
-                # Pair metadata MUST come from HF
-                return {
-                    "pair": params.get("pair", "BTC/USDT"),
-                    "base": "BTC",
-                    "quote": "USDT",
-                    "tick_size": 0.01,
-                    "min_qty": 0.00001
-                }, None
-            
-            # For other endpoints, simulate occasional failure to test fallback
-            import random
-            if random.random() > 0.3:  # 70% success rate for testing
-                return None, "HF data not available"
-            
-            return {"source": "hf", "data": "sample"}, None
+            # For now, HF integration is not fully implemented in this method
+            # Return None to trigger fallback to external providers
+            return None, "HF integration pending"
             
         except Exception as e:
             logger.debug(f"HF call failed: {e}")
