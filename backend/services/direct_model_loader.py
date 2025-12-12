@@ -9,11 +9,20 @@ import logging
 import os
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-import torch
-import numpy as np
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Try to import torch (optional for HF Space deployment)
+try:
+    import torch
+    import numpy as np
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    logger.warning("⚠️  Torch not available. Direct model loading will be disabled.")
+    torch = None
+    np = None
 
 # Try to import transformers
 try:
@@ -27,7 +36,7 @@ try:
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
-    logger.error("❌ Transformers library not available. Install with: pip install transformers torch")
+    logger.warning("⚠️  Transformers library not available. Install with: pip install transformers torch")
 
 
 class DirectModelLoader:
@@ -43,13 +52,16 @@ class DirectModelLoader:
         Args:
             cache_dir: Directory to cache models (default: ~/.cache/huggingface)
         """
-        if not TRANSFORMERS_AVAILABLE:
-            raise ImportError("Transformers library is required. Install with: pip install transformers torch")
+        if not TRANSFORMERS_AVAILABLE or not TORCH_AVAILABLE:
+            logger.warning("⚠️  Direct Model Loader disabled: transformers or torch not available")
+            self.enabled = False
+        else:
+            self.enabled = True
         
         self.cache_dir = cache_dir or os.path.expanduser("~/.cache/huggingface")
         self.models = {}
         self.tokenizers = {}
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = "cuda" if (torch and torch.cuda.is_available()) else "cpu"
         
         logger.info(f"🚀 Direct Model Loader initialized")
         logger.info(f"   Device: {self.device}")
@@ -96,6 +108,10 @@ class DirectModelLoader:
             }
         }
     
+    def is_enabled(self) -> bool:
+        """Check if direct model loader is enabled"""
+        return getattr(self, 'enabled', False) and TRANSFORMERS_AVAILABLE and TORCH_AVAILABLE
+    
     async def load_model(self, model_key: str) -> Dict[str, Any]:
         """
         Load a specific model directly (NO PIPELINE)
@@ -106,6 +122,11 @@ class DirectModelLoader:
         Returns:
             Status dict with model info
         """
+        if not self.is_enabled():
+            return {
+                "success": False,
+                "error": "Direct model loader is disabled (transformers or torch not available)"
+            }
         if model_key not in self.model_configs:
             raise ValueError(f"Unknown model: {model_key}")
         
