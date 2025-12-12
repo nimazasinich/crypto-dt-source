@@ -39,6 +39,7 @@ from backend.routers.comprehensive_resources_api import router as comprehensive_
 from backend.routers.resource_hierarchy_api import router as resource_hierarchy_router
 from backend.routers.dynamic_model_api import router as dynamic_model_router
 from backend.routers.background_worker_api import router as background_worker_router
+from backend.routers.intelligent_provider_api import router as intelligent_provider_router  # NEW: Intelligent load-balanced providers
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -113,6 +114,24 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Resources monitor started (checks every 1 hour)")
     except Exception as e:
         logger.warning(f"⚠️  Resources monitor disabled: {e}")
+    
+    # Initialize AI models on startup (CRITICAL FIX)
+    try:
+        from ai_models import initialize_models
+        logger.info("🤖 Initializing AI models on startup...")
+        init_result = initialize_models(force_reload=False, max_models=5)
+        logger.info(f"   Status: {init_result.get('status')}")
+        logger.info(f"   Models loaded: {init_result.get('models_loaded', 0)}")
+        logger.info(f"   Models failed: {init_result.get('models_failed', 0)}")
+        if init_result.get('status') == 'ok':
+            logger.info("✅ AI models initialized successfully")
+        elif init_result.get('status') == 'fallback_only':
+            logger.warning("⚠️  AI models using fallback mode (transformers not available)")
+        else:
+            logger.warning(f"⚠️  AI model initialization: {init_result.get('error', 'Unknown error')}")
+    except Exception as e:
+        logger.error(f"❌ AI model initialization failed: {e}")
+        logger.warning("   Continuing with fallback sentiment analysis...")
     
     # Start background data collection worker (non-critical)
     try:
@@ -332,6 +351,13 @@ try:
     logger.info("✓ ✅ Background Worker Router loaded (Auto-collection every 5/15 min)")
 except Exception as e:
     logger.error(f"Failed to include background_worker_router: {e}")
+
+# Intelligent Provider API with TRUE Load Balancing (NEW - CRITICAL FIX)
+try:
+    app.include_router(intelligent_provider_router)  # Intelligent round-robin load balancing
+    logger.info("✓ ✅ Intelligent Provider Router loaded (Round-robin, health-based, no fake data)")
+except Exception as e:
+    logger.error(f"Failed to include intelligent_provider_router: {e}")
 
 try:
     from backend.routers.realtime_monitoring_api import router as realtime_monitoring_router
