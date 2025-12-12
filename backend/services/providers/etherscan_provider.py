@@ -13,21 +13,23 @@ API Documentation: https://docs.etherscan.io/
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
+import os
+
 from .base import BaseProvider, create_success_response, create_error_response
 
 
 class EtherscanProvider(BaseProvider):
     """Etherscan REST API provider for Ethereum blockchain data"""
     
-    # API Keys (temporary hardcoded - will be secured later)
-    API_KEY_PRIMARY = "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2"
-    API_KEY_SECONDARY = "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45"
+    # API key must be provided via env (never hardcode secrets)
+    API_KEY_PRIMARY = os.getenv("ETHERSCAN_API_KEY", "").strip()
+    API_KEY_SECONDARY = os.getenv("ETHERSCAN_API_KEY_2", "").strip()
     
     def __init__(self, api_key: Optional[str] = None):
         super().__init__(
             name="etherscan",
             base_url="https://api.etherscan.io/api",
-            api_key=api_key or self.API_KEY_PRIMARY,
+            api_key=(api_key or self.API_KEY_PRIMARY or "").strip(),
             timeout=10.0,
             cache_ttl=30.0
         )

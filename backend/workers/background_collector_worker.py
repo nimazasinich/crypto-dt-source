@@ -18,6 +18,11 @@ from utils.logger import setup_logger
 
 logger = setup_logger("background_worker")
 
+# Prevent httpx from logging full request URLs at INFO (can leak querystring API keys).
+# Default: quiet httpx unless explicitly enabled.
+if logging.getLogger("httpx").level <= logging.INFO:
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
 
 class BackgroundCollectorWorker:
     """Background worker for automated data collection"""

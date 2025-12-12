@@ -8,6 +8,8 @@ import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import httpx
+import os
+import time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import insert
 
@@ -25,7 +27,25 @@ class DataCollectorService:
     
     def __init__(self, db_session: AsyncSession):
         self.db_session = db_session
-        self.client = httpx.AsyncClient(timeout=10.0)
+        # Follow redirects (CryptoPanic moved endpoints) and keep timeouts conservative
+        self.client = httpx.AsyncClient(timeout=10.0, follow_redirects=True)
+
+        # Simple in-memory cache to reduce upstream rate-limit pressure
+        # key -> (value, expiry_epoch)
+        self._cache: Dict[str, Any] = {}
+        self._cache_expiry: Dict[str, float] = {}
+        self._last_call: Dict[str, float] = {}
+
+        # Feature toggles (keep noisy/fragile sources opt-in)
+        self.enable_coincap = os.getenv("ENABLE_COINCAP", "false").lower() == "true"
+
+        # Secrets via env (never hardcode)
+        self.coingecko_pro_key = os.getenv("COINGECKO_PRO_API_KEY", "").strip()
+        self.cryptopanic_key = (
+            os.getenv("CRYPTOPANIC_API_KEY", "").strip()
+            or os.getenv("CRYPTOPANIC_TOKEN", "").strip()
+        )
+        self.etherscan_key = os.getenv("ETHERSCAN_API_KEY", "").strip()
         
         # API endpoints configuration
         self.apis = {
@@ -55,8 +75,9 @@ class DataCollectorService:
             'news': [
                 {
                     'name': 'CryptoPanic',
-                    'url': 'https://cryptopanic.com/api/v1/posts/',
-                    'params': {'auth_token': 'free', 'public': 'true'}
+                    # CryptoPanic moved to developer v2 endpoints; use new stable path
+                    'url': 'https://cryptopanic.com/api/developer/v2/posts/',
+                    'params': {'auth_token': '', 'public': 'true'}
                 }
             ],
             'sentiment': [
@@ -73,11 +94,100 @@ class DataCollectorService:
                     'params': {
                         'module': 'gastracker',
                         'action': 'gasoracle',
-                        'apikey': 'SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2'
+                        'apikey': ''
                     }
                 }
             ]
         }
+
+        # Inject optional auth at runtime
+        if self.coingecko_pro_key:
+            # CoinGecko Pro uses this param name even on free endpoints for higher tiers
+            self.apis["market_data"][0]["params"]["x_cg_pro_api_key"] = self.coingecko_pro_key
+        if self.cryptopanic_key:
+            self.apis["news"][0]["params"]["auth_token"] = self.cryptopanic_key
+        if self.etherscan_key:
+            self.apis["gas"][0]["params"]["apikey"] = self.etherscan_key
+
+    def _cache_key(self, url: str, params: Dict[str, Any]) -> str:
+        items = "&".join(f"{k}={params[k]}" for k in sorted(params.keys()))
+        return f"{url}?{items}"
+
+    async def _get_json_with_backoff(
+        self,
+        source_name: str,
+        url: str,
+        params: Dict[str, Any],
+        *,
+        cache_ttl_s: int = 60,
+        min_interval_s: int = 10,
+        max_retries: int = 3,
+    ) -> Any:
+        """
+        Fetch JSON with:
+        - basic per-source throttling (min_interval_s)
+        - short in-memory caching (cache_ttl_s)
+        - exponential backoff on 429/503
+        """
+        now = time.time()
+
+        ck = self._cache_key(url, params)
+        exp = self._cache_expiry.get(ck, 0)
+        if exp > now and ck in self._cache:
+            return self._cache[ck]
+
+        last = self._last_call.get(source_name, 0)
+        if now - last < min_interval_s:
+            # Within throttle window: return cached if available, else skip call
+            if ck in self._cache:
+                return self._cache[ck]
+            raise RuntimeError(f"Throttled {source_name} (min_interval_s={min_interval_s})")
+
+        self._last_call[source_name] = now
+
+        attempt = 0
+        backoff = 1.5
+        while True:
+            attempt += 1
+            try:
+                resp = await self.client.get(url, params=params)
+                # Some providers (e.g., Binance) can be geo-blocked in certain environments
+                if resp.status_code == 451:
+                    raise httpx.HTTPStatusError(
+                        "Geo-blocked (451)",
+                        request=resp.request,
+                        response=resp,
+                    )
+                # Explicitly treat 429 as retryable with backoff
+                if resp.status_code == 429:
+                    retry_after = resp.headers.get("Retry-After")
+                    sleep_s = float(retry_after) if retry_after and retry_after.isdigit() else backoff
+                    if attempt <= max_retries:
+                        await asyncio.sleep(sleep_s)
+                        backoff *= 2
+                        continue
+                resp.raise_for_status()
+                data = resp.json()
+                # Cache
+                self._cache[ck] = data
+                self._cache_expiry[ck] = time.time() + max(1, cache_ttl_s)
+                return data
+            except httpx.HTTPStatusError as e:
+                status = e.response.status_code if e.response is not None else None
+                if status == 451:
+                    # Not retryable; bubble up as-is for caller to downgrade to warning
+                    raise
+                if status in (429, 503, 502, 504) and attempt <= max_retries:
+                    await asyncio.sleep(backoff)
+                    backoff *= 2
+                    continue
+                raise
+            except Exception:
+                if attempt <= max_retries:
+                    await asyncio.sleep(backoff)
+                    backoff *= 2
+                    continue
+                raise
     
     async def collect_market_data(self) -> Dict[str, Any]:
         """Collect market data from all sources"""
@@ -90,12 +200,40 @@ class DataCollectorService:
         
         for api_config in self.apis['market_data']:
             try:
-                response = await self.client.get(
-                    api_config['url'],
-                    params=api_config['params']
-                )
-                response.raise_for_status()
-                data = response.json()
+                # CoinCap is frequently blocked/unresolvable in some environments; keep it opt-in
+                if api_config["name"] == "CoinCap" and not self.enable_coincap:
+                    continue
+
+                # Reduce rate-limit pressure:
+                # - CoinGecko: cache longer and throttle
+                # - Binance: short cache
+                if api_config["name"] == "CoinGecko":
+                    data = await self._get_json_with_backoff(
+                        api_config["name"],
+                        api_config["url"],
+                        api_config["params"],
+                        cache_ttl_s=60,
+                        min_interval_s=20,
+                        max_retries=4,
+                    )
+                elif api_config["name"] == "Binance":
+                    data = await self._get_json_with_backoff(
+                        api_config["name"],
+                        api_config["url"],
+                        api_config["params"],
+                        cache_ttl_s=15,
+                        min_interval_s=5,
+                        max_retries=2,
+                    )
+                else:
+                    data = await self._get_json_with_backoff(
+                        api_config["name"],
+                        api_config["url"],
+                        api_config["params"],
+                        cache_ttl_s=30,
+                        min_interval_s=10,
+                        max_retries=2,
+                    )
                 
                 results['sources'][api_config['name']] = data
                 
@@ -106,6 +244,11 @@ class DataCollectorService:
                 logger.info(f"✓ Collected market data from {api_config['name']}")
                 
             except Exception as e:
+                # Downgrade geo-blocked providers to warnings (expected in some regions/HF)
+                if isinstance(e, httpx.HTTPStatusError) and getattr(e.response, "status_code", None) == 451:
+                    logger.warning(f"⚠️ {api_config['name']} geo-blocked (451); skipping")
+                    continue
+
                 error_msg = f"Failed to collect from {api_config['name']}: {str(e)}"
                 logger.error(error_msg)
                 results['errors'].append(error_msg)
@@ -195,6 +338,10 @@ class DataCollectorService:
         
         for api_config in self.apis['news']:
             try:
+                if api_config["name"] == "CryptoPanic" and not self.cryptopanic_key:
+                    # Avoid calling with 'free' tokens which redirect/fail
+                    continue
+
                 response = await self.client.get(
                     api_config['url'],
                     params=api_config['params']
@@ -317,6 +464,9 @@ class DataCollectorService:
         
         for api_config in self.apis['gas']:
             try:
+                if api_config["name"] == "Etherscan Gas" and not self.etherscan_key:
+                    continue
+
                 response = await self.client.get(
                     api_config['url'],
                     params=api_config['params']
@@ -345,7 +495,21 @@ class DataCollectorService:
         
         try:
             if source == 'Etherscan Gas':
+                # Etherscan returns:
+                # {"status":"1","message":"OK","result":{...}}
+                # or {"status":"0","message":"NOTOK","result":"Max rate limit reached"}
+                if not isinstance(data, dict):
+                    raise ValueError("Etherscan response is not a JSON object")
+
+                status = data.get("status")
+                message = data.get("message", "")
                 result = data.get('result', {})
+
+                if status != "1" or not isinstance(result, dict):
+                    # Do not crash/save invalid data
+                    logger.warning(f"Etherscan gas not available: status={status} message={message} result_type={type(result).__name__}")
+                    return 0
+
                 gas_price = GasPrice(
                     blockchain='ethereum',
                     gas_price_gwei=float(result.get('SafeGasPrice', 0)),
