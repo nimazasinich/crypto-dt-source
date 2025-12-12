@@ -16,18 +16,34 @@ python-socketio==5.11.4
 pydantic==2.9.2
 python-dotenv==1.0.1
 feedparser==6.0.11
+pandas==2.3.3
 
 # Database
 sqlalchemy==2.0.35
 alembic==1.13.3
-torch
+aiosqlite==0.20.0
+
 # Async Support
-asyncio==3.4.3
 aiofiles==24.1.0
 
 # Scheduling
 apscheduler==3.10.4
 
+# File watching
+watchdog==6.0.0
+
+# DNS resolution
+dnspython==2.8.0
+
+# HuggingFace (optional - for AI models)
+datasets==4.4.1
+huggingface-hub==1.2.2
+
 # Utilities
 python-dateutil==2.9.0
 pytz==2024.2
+
+# OPTIONAL HEAVY DEPENDENCIES (comment out for lightweight deployment)
+# torch==2.0.0  # Only needed for local AI model inference
+# transformers==4.30.0  # Only needed for local AI model inference
+# numpy==1.26.0  # Auto-installed with pandas

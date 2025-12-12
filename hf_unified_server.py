@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 import time
 import json
 import asyncio
+import sys
+import os
 from typing import List, Dict, Any, Optional, Tuple
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -84,9 +86,24 @@ from backend.workers import start_background_worker, stop_background_worker
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown"""
     # Startup
+    logger.info("=" * 70)
     logger.info("🚀 Starting HuggingFace Unified Server...")
+    logger.info("=" * 70)
     
-    # Start resources monitor
+    # Startup Diagnostics
+    logger.info("📊 STARTUP DIAGNOSTICS:")
+    logger.info(f"   PORT: {os.getenv('PORT', '7860')}")
+    logger.info(f"   HOST: {os.getenv('HOST', '0.0.0.0')}")
+    logger.info(f"   Static dir exists: {os.path.exists('static')}")
+    logger.info(f"   Templates dir exists: {os.path.exists('templates')}")
+    logger.info(f"   Database path: data/api_monitor.db")
+    logger.info(f"   Python version: {sys.version}")
+    
+    import platform
+    logger.info(f"   Platform: {platform.system()} {platform.release()}")
+    logger.info("=" * 70)
+    
+    # Start resources monitor (non-critical)
     try:
         monitor = get_resources_monitor()
         # Run initial check
@@ -95,16 +112,16 @@ async def lifespan(app: FastAPI):
         monitor.start_monitoring()
         logger.info("✅ Resources monitor started (checks every 1 hour)")
     except Exception as e:
-        logger.error(f"⚠️ Failed to start resources monitor: {e}")
+        logger.warning(f"⚠️  Resources monitor disabled: {e}")
     
-    # Start background data collection worker
+    # Start background data collection worker (non-critical)
     try:
         worker = await start_background_worker()
         logger.info("✅ Background data collection worker started")
         logger.info("   📅 UI data collection: every 5 minutes")
         logger.info("   📅 Historical data collection: every 15 minutes")
     except Exception as e:
-        logger.error(f"⚠️ Failed to start background worker: {e}")
+        logger.warning(f"⚠️  Background worker disabled: {e}")
     
     yield
     

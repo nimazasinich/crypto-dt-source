@@ -36,7 +36,10 @@ class CryptoDatasetLoader:
             cache_dir: Directory to cache datasets (default: ~/.cache/huggingface/datasets)
         """
         if not DATASETS_AVAILABLE:
-            raise ImportError("Datasets library is required. Install with: pip install datasets")
+            logger.warning("⚠️  Dataset Loader disabled: datasets library not available")
+            self.enabled = False
+        else:
+            self.enabled = True
         
         self.cache_dir = cache_dir or os.path.expanduser("~/.cache/huggingface/datasets")
         self.datasets = {}
