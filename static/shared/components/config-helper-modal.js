@@ -1,6 +1,16 @@
 /**
- * Configuration Helper Modal
+ * Configuration Helper Modal - Updated with All Services
  * Shows users how to configure and use all backend services
+ * 
+ * Services Include:
+ * - Market Data (8+ providers)
+ * - News (9+ sources)
+ * - Sentiment Analysis (4+ providers)
+ * - On-Chain Analytics (4+ providers)
+ * - DeFi Data (3+ providers)
+ * - Technical Analysis
+ * - AI Models
+ * - Block Explorers
  */
 
 export class ConfigHelperModal {
@@ -13,135 +23,264 @@ export class ConfigHelperModal {
     const baseUrl = window.location.origin;
     
     return [
+      // ===== UNIFIED SERVICE API =====
+      {
+        name: 'Unified Service API',
+        category: 'Core Services',
+        description: 'Single entry point for all cryptocurrency data needs',
+        endpoints: [
+          { method: 'GET', path: '/api/service/rate?pair=BTC/USDT', desc: 'Get exchange rate' },
+          { method: 'GET', path: '/api/service/rate/batch?pairs=BTC/USDT,ETH/USDT', desc: 'Multiple rates' },
+          { method: 'GET', path: '/api/service/market-status', desc: 'Market overview' },
+          { method: 'GET', path: '/api/service/top?n=10', desc: 'Top cryptocurrencies' },
+          { method: 'GET', path: '/api/service/sentiment?symbol=BTC', desc: 'Get sentiment' },
+          { method: 'GET', path: '/api/service/whales?chain=ethereum&min_amount_usd=1000000', desc: 'Whale transactions' },
+          { method: 'GET', path: '/api/service/onchain?address=0x...&chain=ethereum', desc: 'On-chain data' },
+          { method: 'POST', path: '/api/service/query', desc: 'Universal query endpoint' }
+        ],
+        example: `// Get BTC price
+fetch('${baseUrl}/api/service/rate?pair=BTC/USDT')
+  .then(res => res.json())
+  .then(data => console.log('BTC Price:', data.data.price));
+
+// Get multiple prices
+fetch('${baseUrl}/api/service/rate/batch?pairs=BTC/USDT,ETH/USDT,BNB/USDT')
+  .then(res => res.json())
+  .then(data => data.data.forEach(r => console.log(r.pair + ': $' + r.price)));`
+      },
+      
+      // ===== MARKET DATA =====
       {
         name: 'Market Data API',
-        category: 'Core Services',
-        description: 'Real-time cryptocurrency market data',
+        category: 'Market Data',
+        description: 'Real-time prices, OHLCV, and market statistics from 8+ providers',
         endpoints: [
-          { method: 'GET', path: '/api/market/top', desc: 'Top cryptocurrencies' },
-          { method: 'GET', path: '/api/market/trending', desc: 'Trending coins' },
-          { method: 'GET', path: '/api/coins/top?limit=50', desc: 'Top coins with limit' }
+          { method: 'GET', path: '/api/market?limit=100', desc: 'Market data with prices' },
+          { method: 'GET', path: '/api/ohlcv?symbol=BTC&timeframe=1h&limit=500', desc: 'OHLCV candlestick data' },
+          { method: 'GET', path: '/api/klines?symbol=BTCUSDT&interval=1h', desc: 'Klines (alias for OHLCV)' },
+          { method: 'GET', path: '/api/historical?symbol=BTC&days=30', desc: 'Historical price data' },
+          { method: 'GET', path: '/api/coins/top?limit=50', desc: 'Top coins by market cap' },
+          { method: 'GET', path: '/api/trending', desc: 'Trending cryptocurrencies' }
         ],
-        example: `fetch('${baseUrl}/api/market/top')
+        example: `// Get OHLCV data for charting
+fetch('${baseUrl}/api/ohlcv?symbol=BTC&timeframe=1h&limit=100')
   .then(res => res.json())
-  .then(data => console.log(data));`
+  .then(data => {
+    console.log('OHLCV data:', data.data);
+    // Each candle: { t, o, h, l, c, v }
+  });`
       },
-      {
-        name: 'Sentiment Analysis API',
-        category: 'AI Services',
-        description: 'AI-powered sentiment analysis',
-        endpoints: [
-          { method: 'GET', path: '/api/sentiment/global', desc: 'Global market sentiment' },
-          { method: 'GET', path: '/api/sentiment/asset/{symbol}', desc: 'Asset sentiment' },
-          { method: 'POST', path: '/api/sentiment/analyze', desc: 'Analyze custom text' }
-        ],
-        example: `fetch('${baseUrl}/api/sentiment/global')
-  .then(res => res.json())
-  .then(data => console.log(data));`
-      },
+      
+      // ===== NEWS =====
       {
         name: 'News Aggregator API',
-        category: 'Data Services',
-        description: 'Crypto news from multiple sources',
+        category: 'News & Media',
+        description: 'Crypto news from 9+ sources including RSS feeds',
         endpoints: [
-          { method: 'GET', path: '/api/news', desc: 'Latest crypto news' },
-          { method: 'GET', path: '/api/news/latest?limit=10', desc: 'News with limit' },
-          { method: 'GET', path: '/api/news?source=CoinDesk', desc: 'Filter by source' }
+          { method: 'GET', path: '/api/news?limit=20', desc: 'Latest crypto news' },
+          { method: 'GET', path: '/api/news/latest?symbol=BTC&limit=10', desc: 'News filtered by symbol' },
+          { method: 'GET', path: '/api/news?source=decrypt', desc: 'News from specific source' }
         ],
-        example: `fetch('${baseUrl}/api/news?limit=10')
+        example: `// Get latest news
+fetch('${baseUrl}/api/news?limit=10')
   .then(res => res.json())
-  .then(data => console.log(data));`
+  .then(data => {
+    data.articles.forEach(article => {
+      console.log(article.title, '-', article.source);
+    });
+  });`
       },
+      
+      // ===== SENTIMENT =====
       {
-        name: 'OHLCV Data API',
-        category: 'Trading Data',
-        description: 'Historical price data (OHLCV)',
+        name: 'Sentiment Analysis API',
+        category: 'Sentiment',
+        description: 'Fear & Greed Index, social sentiment, and AI-powered analysis',
         endpoints: [
-          { method: 'GET', path: '/api/ohlcv/{symbol}', desc: 'OHLCV for symbol' },
-          { method: 'GET', path: '/api/ohlcv/multi', desc: 'Multiple symbols' },
-          { method: 'GET', path: '/api/market/ohlc?symbol=BTC', desc: 'OHLC data' }
+          { method: 'GET', path: '/api/sentiment/global', desc: 'Global market sentiment' },
+          { method: 'GET', path: '/api/fear-greed', desc: 'Fear & Greed Index' },
+          { method: 'GET', path: '/api/sentiment/asset/{symbol}', desc: 'Asset-specific sentiment' },
+          { method: 'POST', path: '/api/sentiment/analyze', desc: 'Analyze custom text' }
         ],
-        example: `fetch('${baseUrl}/api/ohlcv/bitcoin')
+        example: `// Get Fear & Greed Index
+fetch('${baseUrl}/api/fear-greed')
   .then(res => res.json())
-  .then(data => console.log(data));`
+  .then(data => {
+    console.log('Fear & Greed:', data.value, '-', data.classification);
+  });
+
+// Analyze text sentiment
+fetch('${baseUrl}/api/sentiment/analyze', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ text: 'Bitcoin is going to the moon!' })
+})
+  .then(res => res.json())
+  .then(data => console.log('Sentiment:', data.label, data.score));`
       },
+      
+      // ===== ON-CHAIN ANALYTICS =====
       {
-        name: 'AI Models API',
-        category: 'AI Services',
-        description: 'AI model management and status',
+        name: 'On-Chain Analytics API',
+        category: 'Analytics',
+        description: 'Blockchain data, whale tracking, and network statistics',
         endpoints: [
-          { method: 'GET', path: '/api/models/status', desc: 'Models status' },
-          { method: 'GET', path: '/api/models/list', desc: 'List all models' },
-          { method: 'GET', path: '/api/ai/signals', desc: 'AI trading signals' }
+          { method: 'GET', path: '/api/whale', desc: 'Whale transactions' },
+          { method: 'GET', path: '/api/whales/transactions?limit=50', desc: 'Recent whale moves' },
+          { method: 'GET', path: '/api/whales/stats?hours=24', desc: 'Whale activity statistics' },
+          { method: 'GET', path: '/api/blockchain/gas?chain=ethereum', desc: 'Gas prices' }
         ],
-        example: `fetch('${baseUrl}/api/models/status')
+        example: `// Get whale transactions
+fetch('${baseUrl}/api/service/whales?chain=ethereum&min_amount_usd=1000000&limit=20')
   .then(res => res.json())
-  .then(data => console.log(data));`
+  .then(data => {
+    data.data.forEach(tx => {
+      console.log('Whale:', tx.amount_usd, 'USD', tx.chain);
+    });
+  });`
       },
-      {
-        name: 'Trading & Backtesting API',
-        category: 'Trading Services',
-        description: 'Smart trading and backtesting',
-        endpoints: [
-          { method: 'GET', path: '/api/trading/backtest', desc: 'Backtest strategy' },
-          { method: 'GET', path: '/api/futures/positions', desc: 'Futures positions' },
-          { method: 'POST', path: '/api/ai/decision', desc: 'AI trading decision' }
-        ],
-        example: `fetch('${baseUrl}/api/trading/backtest?symbol=BTC')
-  .then(res => res.json())
-  .then(data => console.log(data));`
-      },
-      {
-        name: 'Multi-Source Fallback API',
-        category: 'Advanced Services',
-        description: '137+ data sources with fallback',
-        endpoints: [
-          { method: 'GET', path: '/api/multi-source/data/{symbol}', desc: 'Multi-source data' },
-          { method: 'GET', path: '/api/sources/all', desc: 'All sources' },
-          { method: 'GET', path: '/api/test-source/{source_id}', desc: 'Test source' }
-        ],
-        example: `fetch('${baseUrl}/api/sources/all')
-  .then(res => res.json())
-  .then(data => console.log(data));`
-      },
+      
+      // ===== TECHNICAL ANALYSIS =====
       {
         name: 'Technical Analysis API',
         category: 'Analysis Services',
-        description: 'Technical indicators and analysis',
+        description: '5 analysis modes: Quick TA, Fundamental, On-Chain, Risk, Comprehensive',
         endpoints: [
-          { method: 'GET', path: '/api/technical/quick/{symbol}', desc: 'Quick TA' },
-          { method: 'GET', path: '/api/technical/comprehensive/{symbol}', desc: 'Full analysis' },
-          { method: 'GET', path: '/api/technical/risk/{symbol}', desc: 'Risk assessment' }
+          { method: 'POST', path: '/api/technical/ta-quick', desc: 'Quick technical analysis' },
+          { method: 'POST', path: '/api/technical/fa-eval', desc: 'Fundamental evaluation' },
+          { method: 'POST', path: '/api/technical/onchain-health', desc: 'On-chain network health' },
+          { method: 'POST', path: '/api/technical/risk-assessment', desc: 'Risk & volatility assessment' },
+          { method: 'POST', path: '/api/technical/comprehensive', desc: 'Comprehensive analysis' }
         ],
-        example: `fetch('${baseUrl}/api/technical/quick/bitcoin')
+        example: `// Quick Technical Analysis
+const ohlcv = await fetch('${baseUrl}/api/ohlcv?symbol=BTC&timeframe=4h&limit=200')
+  .then(r => r.json()).then(d => d.data);
+
+fetch('${baseUrl}/api/technical/ta-quick', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    symbol: 'BTC',
+    timeframe: '4h',
+    ohlcv: ohlcv
+  })
+})
   .then(res => res.json())
-  .then(data => console.log(data));`
+  .then(data => {
+    console.log('Trend:', data.trend);
+    console.log('RSI:', data.rsi);
+    console.log('Entry Range:', data.entry_range);
+  });`
       },
+      
+      // ===== AI MODELS =====
       {
-        name: 'Resources API',
-        category: 'System Services',
-        description: 'API resources and statistics',
+        name: 'AI Models API',
+        category: 'AI Services',
+        description: 'HuggingFace AI models for sentiment, analysis, and predictions',
         endpoints: [
+          { method: 'GET', path: '/api/models/status', desc: 'Models status' },
+          { method: 'GET', path: '/api/models/list', desc: 'List all models' },
+          { method: 'GET', path: '/api/models/health', desc: 'Model health check' },
+          { method: 'POST', path: '/api/models/reinit-all', desc: 'Reinitialize models' },
+          { method: 'POST', path: '/api/ai/decision', desc: 'AI trading decision' }
+        ],
+        example: `// Get AI trading decision
+fetch('${baseUrl}/api/ai/decision', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ symbol: 'BTC', timeframe: '1h' })
+})
+  .then(res => res.json())
+  .then(data => {
+    console.log('Decision:', data.decision);
+    console.log('Confidence:', data.confidence);
+    console.log('Signals:', data.signals);
+  });`
+      },
+      
+      // ===== DEFI DATA =====
+      {
+        name: 'DeFi Data API',
+        category: 'DeFi Services',
+        description: 'DefiLlama TVL, protocols, yields, and stablecoins',
+        endpoints: [
+          { method: 'GET', path: '/api/defi/tvl', desc: 'Total Value Locked' },
+          { method: 'GET', path: '/api/defi/protocols?limit=20', desc: 'Top DeFi protocols' },
+          { method: 'GET', path: '/api/defi/yields', desc: 'DeFi yields' }
+        ],
+        example: `// Get DeFi TVL data
+fetch('${baseUrl}/api/defi/protocols?limit=10')
+  .then(res => res.json())
+  .then(data => {
+    data.protocols.forEach(p => {
+      console.log(p.name, '- TVL:', p.tvl);
+    });
+  });`
+      },
+      
+      // ===== RESOURCES & MONITORING =====
+      {
+        name: 'Resources & Monitoring API',
+        category: 'System Services',
+        description: 'API resources, providers status, and system health',
+        endpoints: [
+          { method: 'GET', path: '/api/resources/stats', desc: 'Resources statistics' },
+          { method: 'GET', path: '/api/resources/apis', desc: 'All APIs list' },
           { method: 'GET', path: '/api/resources/summary', desc: 'Resources summary' },
-          { method: 'GET', path: '/api/resources/stats', desc: 'Detailed stats' },
-          { method: 'GET', path: '/api/resources/apis', desc: 'All APIs list' }
-        ],
-        example: `fetch('${baseUrl}/api/resources/summary')
-  .then(res => res.json())
-  .then(data => console.log(data));`
-      },
-      {
-        name: 'Real-Time Monitoring API',
-        category: 'System Services',
-        description: 'System monitoring and health',
-        endpoints: [
-          { method: 'GET', path: '/api/health', desc: 'Health check' },
+          { method: 'GET', path: '/api/providers', desc: 'Data providers list' },
           { method: 'GET', path: '/api/status', desc: 'System status' },
-          { method: 'GET', path: '/api/monitoring/status', desc: 'Monitoring data' }
+          { method: 'GET', path: '/api/health', desc: 'Health check' }
         ],
-        example: `fetch('${baseUrl}/api/health')
+        example: `// Check system health
+fetch('${baseUrl}/api/health')
   .then(res => res.json())
-  .then(data => console.log(data));`
+  .then(data => {
+    console.log('Status:', data.status);
+    console.log('Providers:', data.providers);
+  });
+
+// Get resources stats
+fetch('${baseUrl}/api/resources/stats')
+  .then(res => res.json())
+  .then(data => {
+    console.log('Total APIs:', data.total_functional);
+    console.log('Success Rate:', data.success_rate + '%');
+  });`
+      },
+      
+      // ===== WEBSOCKET =====
+      {
+        name: 'WebSocket API (Optional)',
+        category: 'Real-time Services',
+        description: 'Optional real-time streaming via WebSocket (HTTP polling recommended)',
+        endpoints: [
+          { method: 'WS', path: '/ws/master', desc: 'Master endpoint (all services)' },
+          { method: 'WS', path: '/ws/live', desc: 'Live market data' },
+          { method: 'WS', path: '/ws/ai/data', desc: 'AI model updates' },
+          { method: 'WS', path: '/ws/monitoring', desc: 'System monitoring' }
+        ],
+        example: `// WebSocket connection (optional - HTTP works fine)
+const ws = new WebSocket('wss://${window.location.host}/ws/master');
+
+ws.onopen = () => {
+  ws.send(JSON.stringify({
+    action: 'subscribe',
+    service: 'market_data'
+  }));
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Real-time update:', data);
+};
+
+// Alternative: HTTP polling (recommended)
+setInterval(async () => {
+  const data = await fetch('${baseUrl}/api/market?limit=100')
+    .then(r => r.json());
+  console.log('Market data:', data);
+}, 30000);`
       }
     ];
   }
@@ -185,7 +324,7 @@ export class ConfigHelperModal {
         
         <div class="config-helper-body">
           <div class="config-helper-intro">
-            <p>Copy and paste these configurations to use our services in your application.</p>
+            <p>Access <strong>40+ data providers</strong> through our unified API. Copy and paste these examples to get started.</p>
             <div class="config-helper-base-url">
               <strong>Base URL:</strong> 
               <code>${window.location.origin}</code>
@@ -195,6 +334,12 @@ export class ConfigHelperModal {
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                 </svg>
               </button>
+            </div>
+            <div class="config-helper-stats">
+              <span>📊 8+ Market Providers</span>
+              <span>📰 9+ News Sources</span>
+              <span>🎭 4+ Sentiment APIs</span>
+              <span>🔗 4+ On-Chain APIs</span>
             </div>
           </div>
 
@@ -435,6 +580,7 @@ style.textContent = `
     background: var(--bg-secondary, #f3f4f6);
     border-radius: 8px;
     font-size: 14px;
+    margin-bottom: 12px;
   }
 
   .config-helper-base-url code {
@@ -444,6 +590,23 @@ style.textContent = `
     border-radius: 4px;
     font-family: 'Courier New', monospace;
     font-size: 13px;
+  }
+
+  .config-helper-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .config-helper-stats span {
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 4px;
   }
 
   .service-category {
@@ -556,16 +719,23 @@ style.textContent = `
     color: white;
   }
 
+  .method-badge.ws {
+    background: #8b5cf6;
+    color: white;
+  }
+
   .endpoint-path {
     flex: 1;
     font-family: 'Courier New', monospace;
     font-size: 12px;
     color: var(--text-primary, #0f2926);
+    word-break: break-all;
   }
 
   .endpoint-desc {
     color: var(--text-muted, #6b7280);
     font-size: 12px;
+    white-space: nowrap;
   }
 
   .code-example {
@@ -630,6 +800,11 @@ style.textContent = `
     .endpoint-desc {
       width: 100%;
       margin-top: 4px;
+      white-space: normal;
+    }
+
+    .config-helper-stats {
+      flex-direction: column;
     }
   }
 `;
