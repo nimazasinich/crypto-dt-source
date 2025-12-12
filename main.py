@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 current_dir = Path(__file__).resolve().parent
 sys.path.insert(0, str(current_dir))
 
-# Configuration
+# Configuration - HF Space Port (CRITICAL for HF Space deployment)
 HOST = os.getenv("HOST", "0.0.0.0")
-PORT = int(os.getenv("PORT", os.getenv("HF_PORT", "7860")))
+PORT = int(os.getenv("PORT", "7860"))  # HF Space requires port 7860
 
 # Import the unified server app with fallback
 try:
