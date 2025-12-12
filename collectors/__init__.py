@@ -41,6 +41,9 @@ __all__ = [
     "get_blockchair_data",
     "get_glassnode_metrics",
     "collect_onchain_data",
+    # HuggingFace Space Crypto API
+    "HFCryptoAPIClient",
+    "get_hf_crypto_client",
 ]
 
 _EXPORT_MAP: Dict[str, Tuple[str, str]] = {
@@ -61,6 +64,9 @@ _EXPORT_MAP: Dict[str, Tuple[str, str]] = {
     "get_blockchair_data": ("collectors.onchain", "get_blockchair_data"),
     "get_glassnode_metrics": ("collectors.onchain", "get_glassnode_metrics"),
     "collect_onchain_data": ("collectors.onchain", "collect_onchain_data"),
+    # HuggingFace Space Crypto API
+    "HFCryptoAPIClient": ("collectors.hf_crypto_api_client", "HFCryptoAPIClient"),
+    "get_hf_crypto_client": ("collectors.hf_crypto_api_client", "get_hf_crypto_client"),
 }
 
 
