@@ -9,21 +9,22 @@
  * - ES6 module exports
  */
 
-import { CONFIG, API_ENDPOINTS, buildApiUrl, getCacheKey } from './config.js';
+import { CONFIG, API_BASE_URL, API_ENDPOINTS, CACHE_TTL, buildApiUrl, getCacheKey } from './config.js';
 
 /**
  * Base API Client with caching and retry
  */
 class APIClient {
-  constructor(baseURL = CONFIG.API_BASE_URL) {
+  constructor(baseURL = API_BASE_URL) {
     this.baseURL = baseURL;
     this.cache = new Map();
-    this.cacheTTL = CONFIG.CACHE_TTL;
-    this.maxRetries = CONFIG.MAX_RETRIES;
-    this.retryDelay = CONFIG.RETRY_DELAY;
+    this.cacheTTL = CACHE_TTL.market || 30000;
+    this.maxRetries = CONFIG.MAX_RETRIES || 3;
+    this.retryDelay = CONFIG.RETRY_DELAY || 1000;
     this.requestLog = [];
     this.errorLog = [];
     this.maxLogSize = 100;
+    this.pendingRequests = new Map();
   }
 
   /**
@@ -32,6 +33,7 @@ class APIClient {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const method = options.method || 'GET';
+    const cacheKey = this._getCacheKey(url, options.params);
     const startTime = performance.now();
 
     // Check cache for GET requests (but skip cache for models/status to get fresh data)
@@ -42,53 +44,64 @@ class APIClient {
                              options.forceRefresh;
       
       if (!shouldSkipCache) {
-        const cached = this._getFromCache(endpoint);
+        const cached = this._getFromCache(cacheKey, options.ttl);
         if (cached) {
           console.log(`[APIClient] Cache hit: ${endpoint}`);
           return cached;
         }
       }
     }
+    
+    // Deduplicate pending requests
+    if (this.pendingRequests.has(cacheKey)) {
+      console.log(`[APIClient] Deduplicating request: ${endpoint}`);
+      return this.pendingRequests.get(cacheKey);
+    }
+    
+    // Build URL with params
+    const urlWithParams = this._buildURL(url, options.params);
 
     // Retry logic
     let lastError;
-    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            ...options.headers,
-          },
-          body: options.body ? JSON.stringify(options.body) : undefined,
-          signal: options.signal,
-        });
+    const requestPromise = (async () => {
+      for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+        try {
+          const response = await fetch(urlWithParams, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              ...options.headers,
+            },
+            body: options.body ? JSON.stringify(options.body) : undefined,
+            signal: options.signal,
+          });
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
 
-        const data = await response.json();
-        const duration = performance.now() - startTime;
+          const data = await response.json();
+          const duration = performance.now() - startTime;
 
-        // Cache successful GET responses (but not models status/summary)
-        if (method === 'GET' && !endpoint.includes('/models/status') && !endpoint.includes('/models/summary')) {
-          this._saveToCache(endpoint, data);
-        }
+          // Cache successful GET responses (but not models status/summary)
+          if (method === 'GET' && !endpoint.includes('/models/status') && !endpoint.includes('/models/summary')) {
+            this._saveToCache(cacheKey, data, options.ttl);
+          }
 
-        // Log successful request
-        this._logRequest({
-          method,
-          endpoint,
-          status: response.status,
-          duration: Math.round(duration),
-          timestamp: Date.now(),
-        });
+          // Log successful request
+          this._logRequest({
+            method,
+            endpoint,
+            status: response.status,
+            duration: Math.round(duration),
+            timestamp: Date.now(),
+          });
+          
+          this.pendingRequests.delete(cacheKey);
+          return data;
 
-        return data;
-
-      } catch (error) {
-        lastError = error;
+        } catch (error) {
+          lastError = error;
         const errorDetails = {
           attempt,
           maxRetries: this.maxRetries,
@@ -111,18 +124,24 @@ class APIClient {
       }
     }
 
-    // All retries failed - return fallback data instead of throwing
-    const duration = performance.now() - startTime;
-    this._logError({
-      method,
-      endpoint,
-      message: lastError?.message || lastError?.toString() || 'Unknown error',
-      duration: Math.round(duration),
-      timestamp: Date.now(),
-    });
+      // All retries failed - return fallback data instead of throwing
+      const duration = performance.now() - startTime;
+      this._logError({
+        method,
+        endpoint,
+        message: lastError?.message || lastError?.toString() || 'Unknown error',
+        duration: Math.round(duration),
+        timestamp: Date.now(),
+      });
 
-    // Return fallback data based on endpoint type
-    return this._getFallbackData(endpoint, lastError);
+      this.pendingRequests.delete(cacheKey);
+      
+      // Return fallback data based on endpoint type
+      return this._getFallbackData(endpoint, lastError);
+    })();
+    
+    this.pendingRequests.set(cacheKey, requestPromise);
+    return requestPromise;
   }
 
   /**
@@ -168,15 +187,15 @@ class APIClient {
   /**
    * Get data from cache if not expired
    */
-  _getFromCache(key) {
-    const cacheKey = getCacheKey(key);
-    const cached = this.cache.get(cacheKey);
+  _getFromCache(key, ttl) {
+    const cached = this.cache.get(key);
 
     if (!cached) return null;
 
     const now = Date.now();
-    if (now - cached.timestamp > this.cacheTTL) {
-      this.cache.delete(cacheKey);
+    const cacheTTL = ttl || this.cacheTTL;
+    if (now - cached.timestamp > cacheTTL) {
+      this.cache.delete(key);
       return null;
     }
 
@@ -186,12 +205,36 @@ class APIClient {
   /**
    * Save data to cache with timestamp
    */
-  _saveToCache(key, data) {
-    const cacheKey = getCacheKey(key);
-    this.cache.set(cacheKey, {
+  _saveToCache(key, data, ttl) {
+    this.cache.set(key, {
       data,
       timestamp: Date.now(),
+      ttl: ttl || this.cacheTTL
     });
+  }
+  
+  /**
+   * Build URL with query params
+   * @private
+   */
+  _buildURL(url, params) {
+    if (!params || Object.keys(params).length === 0) return url;
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== null && value !== undefined) {
+        searchParams.append(key, String(value));
+      }
+    }
+    const queryString = searchParams.toString();
+    return queryString ? `${url}?${queryString}` : url;
+  }
+  
+  /**
+   * Get cache key for request
+   * @private
+   */
+  _getCacheKey(url, params) {
+    return params ? `${url}?${JSON.stringify(params)}` : url;
   }
 
   /**

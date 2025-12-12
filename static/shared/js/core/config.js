@@ -17,86 +17,133 @@ export const API_KEYS = {
   HUGGINGFACE: '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'
 };
 
-// API Endpoints configuration
+// Backend API Endpoints (HuggingFace Space)
+export const API_BASE_URL = window.location.origin;
+
+// Complete API Endpoints mapping
 export const API_ENDPOINTS = {
+  // Health & Status
+  health: '/api/health',
+  status: '/api/status',
+  routers: '/api/routers',
+  monitoring: '/api/monitoring/status',
+  
   // Market Data
-  coingecko: {
-    baseUrl: 'https://api.coingecko.com/api/v3',
-    endpoints: {
-      simplePrice: '/simple/price',
-      coins: '/coins',
-      trending: '/search/trending',
-      global: '/global'
-    }
-  },
+  rate: '/api/service/rate',
+  rateBatch: '/api/service/rate/batch',
+  coinsTop: '/api/coins/top',
+  trending: '/api/trending',
+  market: '/api/market',
+  marketTop: '/api/market/top',
+  marketTrending: '/api/market/trending',
+  history: '/api/service/history',
+  ohlc: '/api/market/ohlc',
   
-  coinmarketcap: {
-    baseUrl: 'https://pro-api.coinmarketcap.com/v1',
-    key: API_KEYS.CMC,
-    endpoints: {
-      quotes: '/cryptocurrency/quotes/latest',
-      listings: '/cryptocurrency/listings/latest'
-    }
-  },
-  
-  binance: {
-    baseUrl: 'https://api.binance.com/api/v3',
-    endpoints: {
-      ticker: '/ticker/price',
-      ticker24hr: '/ticker/24hr',
-      klines: '/klines'
-    }
-  },
-  
-  coincap: {
-    baseUrl: 'https://api.coincap.io/v2',
-    endpoints: {
-      assets: '/assets',
-      history: '/assets/{id}/history'
-    }
-  },
+  // Sentiment & AI
+  sentimentGlobal: '/api/sentiment/global',
+  sentimentAsset: '/api/sentiment/asset',
+  sentimentAnalyze: '/api/service/sentiment',
+  aiSignals: '/api/ai/signals',
+  aiDecision: '/api/ai/decision',
   
   // News
-  cryptopanic: {
-    baseUrl: 'https://cryptopanic.com/api/v1',
-    endpoints: {
-      posts: '/posts'
-    }
-  },
+  news: '/api/news',
+  newsLatest: '/api/news/latest',
   
-  // Sentiment
-  alternativeMe: {
-    baseUrl: 'https://api.alternative.me',
-    endpoints: {
-      fng: '/fng'
-    }
-  },
+  // Models
+  modelsList: '/api/models/list',
+  modelsStatus: '/api/models/status',
+  modelsSummary: '/api/models/summary',
+  modelsHealth: '/api/models/health',
+  modelsTest: '/api/models/test',
+  modelsReinitialize: '/api/models/reinitialize',
   
-  // Block Explorers
-  etherscan: {
-    baseUrl: 'https://api.etherscan.io/api',
-    key: API_KEYS.ETHERSCAN,
-    endpoints: {
-      balance: '?module=account&action=balance',
-      txlist: '?module=account&action=txlist'
-    }
-  },
+  // Trading
+  ohlcv: '/api/ohlcv',
+  backtest: '/api/trading/backtest',
+  futuresPositions: '/api/futures/positions',
   
-  bscscan: {
-    baseUrl: 'https://api.bscscan.com/api',
-    key: API_KEYS.BSCSCAN,
-    endpoints: {
-      balance: '?module=account&action=balance',
-      txlist: '?module=account&action=txlist'
-    }
-  },
+  // Technical Analysis
+  technicalQuick: '/api/technical/quick',
+  technicalComprehensive: '/api/technical/comprehensive',
+  technicalRisk: '/api/technical/risk',
   
-  tronscan: {
-    baseUrl: 'https://apilist.tronscanapi.com/api',
-    key: API_KEYS.TRONSCAN,
-    endpoints: {
-      account: '/account',
-      transactions: '/transaction'
+  // Resources
+  resources: '/api/resources',
+  resourcesSummary: '/api/resources/summary',
+  resourcesStats: '/api/resources/stats',
+  resourcesCategories: '/api/resources/categories',
+  resourcesCategory: '/api/resources/category',
+  resourcesApis: '/api/resources/apis',
+  providers: '/api/providers',
+  
+  // Advanced
+  multiSourceData: '/api/multi-source/data',
+  sourcesAll: '/api/sources/all',
+  testSource: '/api/test-source',
+  
+  // External APIs (for reference)
+  external: {
+    coingecko: {
+      baseUrl: 'https://api.coingecko.com/api/v3',
+      endpoints: {
+        simplePrice: '/simple/price',
+        coins: '/coins',
+        trending: '/search/trending',
+        global: '/global'
+      }
+    },
+    
+    coinmarketcap: {
+      baseUrl: 'https://pro-api.coinmarketcap.com/v1',
+      key: API_KEYS.CMC,
+      endpoints: {
+        quotes: '/cryptocurrency/quotes/latest',
+        listings: '/cryptocurrency/listings/latest'
+      }
+    },
+    
+    binance: {
+      baseUrl: 'https://api.binance.com/api/v3',
+      endpoints: {
+        ticker: '/ticker/price',
+        ticker24hr: '/ticker/24hr',
+        klines: '/klines'
+      }
+    },
+    
+    alternativeMe: {
+      baseUrl: 'https://api.alternative.me',
+      endpoints: {
+        fng: '/fng'
+      }
+    },
+    
+    etherscan: {
+      baseUrl: 'https://api.etherscan.io/api',
+      key: API_KEYS.ETHERSCAN,
+      endpoints: {
+        balance: '?module=account&action=balance',
+        txlist: '?module=account&action=txlist'
+      }
+    },
+    
+    bscscan: {
+      baseUrl: 'https://api.bscscan.com/api',
+      key: API_KEYS.BSCSCAN,
+      endpoints: {
+        balance: '?module=account&action=balance',
+        txlist: '?module=account&action=txlist'
+      }
+    },
+    
+    tronscan: {
+      baseUrl: 'https://apilist.tronscanapi.com/api',
+      key: API_KEYS.TRONSCAN,
+      endpoints: {
+        account: '/account',
+        transactions: '/transaction'
+      }
     }
   }
 };
@@ -104,17 +151,34 @@ export const API_ENDPOINTS = {
 // Page metadata for navigation
 export const PAGE_METADATA = [
   { page: 'dashboard', title: 'Dashboard | Crypto Hub', icon: 'dashboard' },
-  { page: 'market', title: 'Market | Crypto Hub', icon: 'trending_up' },
+  { page: 'market', title: 'Market Data | Crypto Hub', icon: 'trending_up' },
   { page: 'models', title: 'AI Models | Crypto Hub', icon: 'psychology' },
-  { page: 'sentiment', title: 'Sentiment | Crypto Hub', icon: 'mood' },
-  { page: 'ai-analyst', title: 'AI Analyst | Crypto Hub', icon: 'analytics' },
-  { page: 'technical-analysis', title: 'Technical Analysis | Crypto Hub', icon: 'show_chart' },
-  { page: 'trading-assistant', title: 'Trading | Crypto Hub', icon: 'attach_money' },
-  { page: 'news', title: 'News | Crypto Hub', icon: 'newspaper' },
-  { page: 'providers', title: 'Providers | Crypto Hub', icon: 'cloud' },
-  { page: 'help', title: 'Help | Crypto Hub', icon: 'help' },
-  { page: 'settings', title: 'Settings | Crypto Hub', icon: 'settings' }
+  { page: 'sentiment', title: 'Sentiment Analysis | Crypto Hub', icon: 'sentiment_satisfied' },
+  { page: 'ai-analyst', title: 'AI Analyst | Crypto Hub', icon: 'smart_toy' },
+  { page: 'trading-assistant', title: 'Trading Assistant | Crypto Hub', icon: 'show_chart' },
+  { page: 'news', title: 'Crypto News | Crypto Hub', icon: 'article' },
+  { page: 'providers', title: 'API Providers | Crypto Hub', icon: 'cloud' },
+  { page: 'diagnostics', title: 'System Diagnostics | Crypto Hub', icon: 'monitor_heart' },
+  { page: 'api-explorer', title: 'API Explorer | Crypto Hub', icon: 'code' }
 ];
+
+// Polling intervals (milliseconds)
+export const POLLING_INTERVALS = {
+  health: 30000,      // 30 seconds
+  market: 10000,      // 10 seconds
+  sentiment: 60000,   // 1 minute
+  news: 300000,       // 5 minutes
+  models: 60000       // 1 minute
+};
+
+// Cache TTL (milliseconds)
+export const CACHE_TTL = {
+  health: 10000,      // 10 seconds
+  market: 30000,      // 30 seconds
+  sentiment: 60000,   // 1 minute
+  news: 300000,       // 5 minutes
+  static: 3600000     // 1 hour
+};
 
 // API configuration
 export const API_CONFIG = {
