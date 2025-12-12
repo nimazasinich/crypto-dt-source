@@ -1,0 +1,91 @@
+{
+  "description": "API Keys Configuration for Crypto Intelligence Hub",
+  "last_updated": "2025-12-12",
+  
+  "block_explorers": {
+    "etherscan": {
+      "key": "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
+      "backup_key": "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45",
+      "url": "https://api.etherscan.io/api",
+      "rate_limit": "5 req/sec"
+    },
+    "bscscan": {
+      "key": "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT",
+      "url": "https://api.bscscan.com/api",
+      "rate_limit": "5 req/sec"
+    },
+    "tronscan": {
+      "key": "7ae72726-bffe-4e74-9c33-97b761eeea21",
+      "url": "https://apilist.tronscanapi.com/api",
+      "rate_limit": "varies"
+    }
+  },
+  
+  "market_data": {
+    "coinmarketcap": {
+      "keys": [
+        "a35ffaec-c66c-4f16-81e3-41a717e4822f",
+        "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1"
+      ],
+      "url": "https://pro-api.coinmarketcap.com/v1",
+      "rate_limit": "333 req/day per key",
+      "endpoints": {
+        "listings": "/cryptocurrency/listings/latest",
+        "quotes": "/cryptocurrency/quotes/latest",
+        "info": "/cryptocurrency/info"
+      }
+    }
+  },
+  
+  "news": {
+    "newsapi": {
+      "key": "968a5e25552b4cb5ba3280361d8444ab",
+      "url": "https://newsapi.org/v2",
+      "rate_limit": "100 req/day (free)",
+      "endpoints": {
+        "everything": "/everything",
+        "top_headlines": "/top-headlines"
+      }
+    }
+  },
+  
+  "sentiment": {
+    "custom_sentiment_api": {
+      "key": "vltdvdho63uqnjgf_fq75qbks72e3wfmx",
+      "description": "Custom sentiment analysis API"
+    }
+  },
+  
+  "ai_models": {
+    "huggingface": {
+      "key": "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",
+      "url": "https://api-inference.huggingface.co/models",
+      "rate_limit": "varies"
+    }
+  },
+  
+  "notifications": {
+    "telegram": {
+      "enabled": true,
+      "bot_token": "7437859619:AAGeGG3ZkLM0OVaw-Exx1uMRE55JtBCZZCY",
+      "chat_id": "-1002228627548"
+    }
+  },
+  
+  "environment_variables": {
+    "description": "Set these in your environment or .env file",
+    "variables": [
+      "ETHERSCAN_KEY=SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
+      "ETHERSCAN_BACKUP_KEY=T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45",
+      "BSCSCAN_KEY=K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT",
+      "TRONSCAN_KEY=7ae72726-bffe-4e74-9c33-97b761eeea21",
+      "COINMARKETCAP_KEY_1=a35ffaec-c66c-4f16-81e3-41a717e4822f",
+      "COINMARKETCAP_KEY_2=04cf4b5b-9868-465c-8ba0-9f2e78c92eb1",
+      "NEWSAPI_KEY=968a5e25552b4cb5ba3280361d8444ab",
+      "SENTIMENT_API_KEY=vltdvdho63uqnjgf_fq75qbks72e3wfmx",
+      "HF_TOKEN=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",
+      "TELEGRAM_BOT_TOKEN=7437859619:AAGeGG3ZkLM0OVaw-Exx1uMRE55JtBCZZCY",
+      "TELEGRAM_CHAT_ID=-1002228627548"
+    ]
+  }
+}
