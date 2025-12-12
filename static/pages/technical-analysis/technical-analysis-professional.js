@@ -682,9 +682,106 @@ class TechnicalAnalysisProfessional {
 
         // Calculate EMA
         this.indicators.ema = this.calculateEMA(ohlcvData, 20);
+        
+        // Calculate Bollinger Bands
+        this.indicators.bollingerBands = this.calculateBollingerBands(ohlcvData);
+        
+        // Calculate SMA
+        this.indicators.sma20 = this.calculateSMA(ohlcvData, 20);
+        this.indicators.sma50 = this.calculateSMA(ohlcvData, 50);
+        
+        // Calculate Stochastic RSI
+        this.indicators.stochRsi = this.calculateStochRSI(ohlcvData);
+        
+        // Calculate ATR (Average True Range)
+        this.indicators.atr = this.calculateATR(ohlcvData);
 
         // Update indicator displays
         this.updateIndicatorDisplays();
+    }
+    
+    /**
+     * Calculate Bollinger Bands
+     */
+    calculateBollingerBands(data, period = 20, stdDev = 2) {
+        if (data.length < period) return null;
+        
+        const closes = data.map(d => d.close);
+        const sma = this.calculateSMA(data, period);
+        
+        // Calculate standard deviation
+        const slice = closes.slice(-period);
+        const mean = slice.reduce((a, b) => a + b, 0) / period;
+        const variance = slice.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / period;
+        const std = Math.sqrt(variance);
+        
+        return {
+            upper: sma + (stdDev * std),
+            middle: sma,
+            lower: sma - (stdDev * std),
+            bandwidth: ((sma + (stdDev * std)) - (sma - (stdDev * std))) / sma * 100
+        };
+    }
+    
+    /**
+     * Calculate Simple Moving Average
+     */
+    calculateSMA(data, period) {
+        if (data.length < period) return null;
+        const closes = data.slice(-period).map(d => d.close);
+        return closes.reduce((a, b) => a + b, 0) / period;
+    }
+    
+    /**
+     * Calculate Stochastic RSI
+     */
+    calculateStochRSI(data, rsiPeriod = 14, stochPeriod = 14) {
+        if (data.length < rsiPeriod + stochPeriod) return null;
+        
+        // First calculate RSI values for last stochPeriod+1 candles
+        const rsiValues = [];
+        for (let i = data.length - stochPeriod - 1; i < data.length; i++) {
+            const slice = data.slice(Math.max(0, i - rsiPeriod), i + 1);
+            if (slice.length >= rsiPeriod) {
+                const rsi = this.calculateRSI(slice, rsiPeriod);
+                if (rsi !== null) rsiValues.push(rsi);
+            }
+        }
+        
+        if (rsiValues.length < 2) return null;
+        
+        const minRsi = Math.min(...rsiValues);
+        const maxRsi = Math.max(...rsiValues);
+        const currentRsi = rsiValues[rsiValues.length - 1];
+        
+        if (maxRsi === minRsi) return 50;
+        
+        return ((currentRsi - minRsi) / (maxRsi - minRsi)) * 100;
+    }
+    
+    /**
+     * Calculate Average True Range (ATR)
+     */
+    calculateATR(data, period = 14) {
+        if (data.length < period + 1) return null;
+        
+        const trueRanges = [];
+        for (let i = 1; i < data.length; i++) {
+            const high = data[i].high;
+            const low = data[i].low;
+            const prevClose = data[i - 1].close;
+            
+            const tr = Math.max(
+                high - low,
+                Math.abs(high - prevClose),
+                Math.abs(low - prevClose)
+            );
+            trueRanges.push(tr);
+        }
+        
+        // Calculate ATR as SMA of true ranges
+        const recentTR = trueRanges.slice(-period);
+        return recentTR.reduce((a, b) => a + b, 0) / period;
     }
 
     /**
@@ -791,6 +888,129 @@ class TechnicalAnalysisProfessional {
         if (emaElement && this.indicators.ema !== null) {
             emaElement.textContent = safeFormatCurrency(this.indicators.ema);
         }
+        
+        // Create or update extended indicators panel
+        this.renderExtendedIndicators();
+    }
+    
+    /**
+     * Render extended indicators panel
+     */
+    renderExtendedIndicators() {
+        // Find or create extended indicators container
+        let container = document.getElementById('extended-indicators');
+        if (!container) {
+            const indicatorsSection = document.querySelector('.page-content');
+            if (indicatorsSection) {
+                const analysisResults = document.getElementById('analysis-results');
+                if (analysisResults) {
+                    container = document.createElement('div');
+                    container.id = 'extended-indicators';
+                    container.style.cssText = 'background: rgba(0,0,0,0.2); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem;';
+                    analysisResults.parentNode.insertBefore(container, analysisResults);
+                }
+            }
+        }
+        
+        if (!container) return;
+        
+        const bb = this.indicators.bollingerBands;
+        const stochRsi = this.indicators.stochRsi;
+        const atr = this.indicators.atr;
+        const sma20 = this.indicators.sma20;
+        const sma50 = this.indicators.sma50;
+        const latestPrice = this.ohlcvData.length > 0 ? this.ohlcvData[this.ohlcvData.length - 1].close : 0;
+        
+        // Determine BB position
+        let bbPosition = 'neutral';
+        let bbColor = '#fbbf24';
+        if (bb && latestPrice) {
+            if (latestPrice >= bb.upper) {
+                bbPosition = 'Upper Band';
+                bbColor = '#ef4444';
+            } else if (latestPrice <= bb.lower) {
+                bbPosition = 'Lower Band';
+                bbColor = '#22c55e';
+            } else {
+                const midDistance = (latestPrice - bb.lower) / (bb.upper - bb.lower);
+                if (midDistance > 0.7) {
+                    bbPosition = 'Near Upper';
+                    bbColor = '#f59e0b';
+                } else if (midDistance < 0.3) {
+                    bbPosition = 'Near Lower';
+                    bbColor = '#10b981';
+                } else {
+                    bbPosition = 'Middle Band';
+                    bbColor = '#3b82f6';
+                }
+            }
+        }
+        
+        // Determine trend from SMAs
+        let smaTrend = 'neutral';
+        let smaColor = '#fbbf24';
+        if (sma20 && sma50) {
+            if (sma20 > sma50) {
+                smaTrend = 'Bullish (20 > 50)';
+                smaColor = '#22c55e';
+            } else {
+                smaTrend = 'Bearish (20 < 50)';
+                smaColor = '#ef4444';
+            }
+        }
+        
+        container.innerHTML = `
+            <h3 style="margin: 0 0 1rem 0; font-size: 1.125rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Advanced Indicators
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <!-- Bollinger Bands -->
+                <div style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem; border-left: 4px solid ${bbColor};">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">Bollinger Bands (20,2)</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: ${bbColor};">${bbPosition}</div>
+                    ${bb ? `
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        Upper: ${safeFormatCurrency(bb.upper)}<br>
+                        Middle: ${safeFormatCurrency(bb.middle)}<br>
+                        Lower: ${safeFormatCurrency(bb.lower)}<br>
+                        Bandwidth: ${bb.bandwidth.toFixed(2)}%
+                    </div>` : ''}
+                </div>
+                
+                <!-- Stochastic RSI -->
+                <div style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem; border-left: 4px solid ${stochRsi > 80 ? '#ef4444' : stochRsi < 20 ? '#22c55e' : '#fbbf24'};">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">Stochastic RSI</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: ${stochRsi > 80 ? '#ef4444' : stochRsi < 20 ? '#22c55e' : '#fbbf24'};">
+                        ${stochRsi !== null ? stochRsi.toFixed(1) : '--'}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        ${stochRsi > 80 ? 'Overbought' : stochRsi < 20 ? 'Oversold' : 'Neutral'}
+                    </div>
+                </div>
+                
+                <!-- ATR -->
+                <div style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem; border-left: 4px solid #3b82f6;">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">ATR (14)</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">${atr !== null ? safeFormatCurrency(atr) : '--'}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        Volatility: ${atr && latestPrice ? (atr / latestPrice * 100).toFixed(2) + '%' : '--'}
+                    </div>
+                </div>
+                
+                <!-- SMA Crossover -->
+                <div style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem; border-left: 4px solid ${smaColor};">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">SMA Crossover</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: ${smaColor};">${smaTrend}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        SMA20: ${sma20 ? safeFormatCurrency(sma20) : '--'}<br>
+                        SMA50: ${sma50 ? safeFormatCurrency(sma50) : '--'}
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     /**
@@ -854,17 +1074,48 @@ class TechnicalAnalysisProfessional {
         const rsi = this.indicators.rsi;
         const macd = this.indicators.macd;
         const ema = this.indicators.ema;
+        const bb = this.indicators.bollingerBands;
+        const stochRsi = this.indicators.stochRsi;
+        const atr = this.indicators.atr;
+        const sma20 = this.indicators.sma20;
+        const sma50 = this.indicators.sma50;
 
-        // Determine trend
+        // Determine trend - use multiple indicators
         let trend = 'neutral';
         let trendDescription = 'Market is consolidating';
+        let trendSignals = { bullish: 0, bearish: 0 };
         
+        // EMA trend
         if (latestCandle.close > ema) {
-            trend = 'bullish';
-            trendDescription = 'Price is above EMA - Bullish trend';
+            trendSignals.bullish++;
         } else if (latestCandle.close < ema) {
+            trendSignals.bearish++;
+        }
+        
+        // SMA crossover trend
+        if (sma20 && sma50) {
+            if (sma20 > sma50) {
+                trendSignals.bullish++;
+            } else {
+                trendSignals.bearish++;
+            }
+        }
+        
+        // Bollinger Bands position
+        if (bb) {
+            if (latestCandle.close > bb.middle) {
+                trendSignals.bullish++;
+            } else {
+                trendSignals.bearish++;
+            }
+        }
+        
+        if (trendSignals.bullish > trendSignals.bearish) {
+            trend = 'bullish';
+            trendDescription = `Uptrend detected: Price above EMA${sma20 > sma50 ? ', SMA20 > SMA50' : ''}${bb && latestCandle.close > bb.middle ? ', Above BB middle' : ''}`;
+        } else if (trendSignals.bearish > trendSignals.bullish) {
             trend = 'bearish';
-            trendDescription = 'Price is below EMA - Bearish trend';
+            trendDescription = `Downtrend detected: Price below EMA${sma20 < sma50 ? ', SMA20 < SMA50' : ''}${bb && latestCandle.close < bb.middle ? ', Below BB middle' : ''}`;
         }
 
         // Generate indicator analysis
@@ -908,40 +1159,153 @@ class TechnicalAnalysisProfessional {
                 interpretation: emaStatus === 'bullish' ? 'Price above EMA' : 'Price below EMA'
             });
         }
+        
+        // Add Bollinger Bands analysis
+        if (bb) {
+            let bbStatus, bbInterpretation;
+            const bbPosition = (latestCandle.close - bb.lower) / (bb.upper - bb.lower);
+            
+            if (latestCandle.close >= bb.upper) {
+                bbStatus = 'overbought';
+                bbInterpretation = 'At upper band - possible reversal';
+            } else if (latestCandle.close <= bb.lower) {
+                bbStatus = 'oversold';
+                bbInterpretation = 'At lower band - possible bounce';
+            } else if (bbPosition > 0.7) {
+                bbStatus = 'bearish';
+                bbInterpretation = 'Near upper band - caution';
+            } else if (bbPosition < 0.3) {
+                bbStatus = 'bullish';
+                bbInterpretation = 'Near lower band - potential buy';
+            } else {
+                bbStatus = 'neutral';
+                bbInterpretation = 'Within bands - no signal';
+            }
+            
+            indicators.push({
+                name: 'Bollinger Bands',
+                value: `${(bbPosition * 100).toFixed(0)}%`,
+                status: bbStatus,
+                interpretation: bbInterpretation
+            });
+        }
+        
+        // Add Stochastic RSI
+        if (stochRsi !== null) {
+            let stochStatus, stochInterpretation;
+            if (stochRsi > 80) {
+                stochStatus = 'overbought';
+                stochInterpretation = 'Extreme overbought';
+            } else if (stochRsi < 20) {
+                stochStatus = 'oversold';
+                stochInterpretation = 'Extreme oversold';
+            } else {
+                stochStatus = 'neutral';
+                stochInterpretation = 'Normal range';
+            }
+            
+            indicators.push({
+                name: 'Stoch RSI',
+                value: stochRsi.toFixed(1),
+                status: stochStatus,
+                interpretation: stochInterpretation
+            });
+        }
+        
+        // Add SMA crossover
+        if (sma20 && sma50) {
+            const smaStatus = sma20 > sma50 ? 'bullish' : 'bearish';
+            indicators.push({
+                name: 'SMA Cross',
+                value: sma20 > sma50 ? 'Golden' : 'Death',
+                status: smaStatus,
+                interpretation: sma20 > sma50 ? 'Bullish crossover' : 'Bearish crossover'
+            });
+        }
+        
+        // Add ATR for volatility
+        if (atr !== null) {
+            const atrPercent = (atr / latestCandle.close) * 100;
+            let atrStatus, atrInterpretation;
+            
+            if (atrPercent > 5) {
+                atrStatus = 'high';
+                atrInterpretation = 'High volatility - increase stop loss';
+            } else if (atrPercent < 1) {
+                atrStatus = 'low';
+                atrInterpretation = 'Low volatility - breakout expected';
+            } else {
+                atrStatus = 'neutral';
+                atrInterpretation = 'Normal volatility';
+            }
+            
+            indicators.push({
+                name: 'ATR (14)',
+                value: `${atrPercent.toFixed(2)}%`,
+                status: atrStatus,
+                interpretation: atrInterpretation
+            });
+        }
 
-        // Generate signal
+        // Generate signal - count all indicator signals
         let signal = 'hold';
         let recommendation = 'Wait for clearer signals';
         
         const bullishSignals = indicators.filter(i => i.status === 'bullish' || i.status === 'oversold').length;
         const bearishSignals = indicators.filter(i => i.status === 'bearish' || i.status === 'overbought').length;
+        const totalSignals = indicators.length;
 
-        if (bullishSignals > bearishSignals && bullishSignals >= 2) {
+        if (bullishSignals >= totalSignals * 0.5 && bullishSignals > bearishSignals) {
             signal = 'buy';
-            recommendation = 'Strong buy signals detected. Consider entering a long position with proper risk management.';
-        } else if (bearishSignals > bullishSignals && bearishSignals >= 2) {
+            recommendation = `Strong buy signals detected (${bullishSignals}/${totalSignals} indicators bullish). Consider entering a long position with proper risk management. Use ATR for stop loss placement.`;
+        } else if (bearishSignals >= totalSignals * 0.5 && bearishSignals > bullishSignals) {
             signal = 'sell';
-            recommendation = 'Strong sell signals detected. Consider taking profits or shorting with proper risk management.';
+            recommendation = `Strong sell signals detected (${bearishSignals}/${totalSignals} indicators bearish). Consider taking profits or shorting with proper risk management.`;
+        } else {
+            recommendation = `Mixed signals (${bullishSignals} bullish, ${bearishSignals} bearish). Wait for clearer direction or trade cautiously.`;
         }
 
-        // Calculate risk
+        // Calculate risk based on all indicators
         let riskScore = 50;
         let risk = 'medium';
         
+        // RSI extreme adds risk
         if (rsi !== null) {
-            if (rsi > 70 || rsi < 30) riskScore += 20;
+            if (rsi > 80 || rsi < 20) riskScore += 15;
+            else if (rsi > 70 || rsi < 30) riskScore += 10;
         }
         
+        // Stoch RSI extreme adds risk
+        if (stochRsi !== null) {
+            if (stochRsi > 90 || stochRsi < 10) riskScore += 15;
+            else if (stochRsi > 80 || stochRsi < 20) riskScore += 10;
+        }
+        
+        // High volatility adds risk
+        if (atr !== null) {
+            const atrPercent = (atr / latestCandle.close) * 100;
+            if (atrPercent > 5) riskScore += 15;
+            else if (atrPercent > 3) riskScore += 10;
+        }
+        
+        // At Bollinger Band extremes adds risk
+        if (bb) {
+            if (latestCandle.close >= bb.upper || latestCandle.close <= bb.lower) {
+                riskScore += 10;
+            }
+        }
+        
+        // Aligned signals reduce risk
         if (trend === 'bullish' && signal === 'buy') {
-            riskScore -= 10;
+            riskScore -= 15;
         } else if (trend === 'bearish' && signal === 'sell') {
-            riskScore -= 10;
+            riskScore -= 15;
         }
 
         riskScore = Math.max(10, Math.min(90, riskScore));
 
-        if (riskScore < 40) risk = 'low';
-        else if (riskScore > 60) risk = 'high';
+        if (riskScore < 35) risk = 'low';
+        else if (riskScore > 65) risk = 'high';
 
         return {
             trend,
