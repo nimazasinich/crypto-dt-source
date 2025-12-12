@@ -1316,13 +1316,19 @@ async def api_coins_top(limit: int = 50):
         # Transform to expected format with all required fields
         coins = []
         for idx, coin in enumerate(market_data):
+            # Use the real CoinGecko image URL if available
+            image_url = coin.get("image", "")
+            if not image_url:
+                # Fallback to a generated URL
+                image_url = f"https://assets.coingecko.com/coins/images/1/small/{coin.get('id', coin.get('symbol', '').lower())}.png"
+            
             coins.append({
-                "id": coin.get("symbol", "").lower(),
-                "rank": idx + 1,
-                "market_cap_rank": idx + 1,
+                "id": coin.get("id", coin.get("symbol", "").lower()),
+                "rank": coin.get("market_cap_rank", idx + 1),
+                "market_cap_rank": coin.get("market_cap_rank", idx + 1),
                 "symbol": coin.get("symbol", ""),
                 "name": coin.get("name", coin.get("symbol", "")),
-                "image": f"https://assets.coingecko.com/coins/images/1/small/{coin.get('symbol', '').lower()}.png",
+                "image": image_url,  # Real image URL from CoinGecko
                 "price": coin.get("price", 0),
                 "current_price": coin.get("price", 0),
                 "market_cap": coin.get("marketCap", 0),
@@ -1333,12 +1339,13 @@ async def api_coins_top(limit: int = 50):
                 "price_change_percentage_24h": coin.get("changePercent24h", 0),
                 "change_7d": 0,  # Will be populated if available
                 "price_change_percentage_7d": 0,
+                "price_change_percentage_7d_in_currency": 0,
                 "sparkline": [],  # Can be populated from separate API call if needed
-                "circulating_supply": 0,
-                "total_supply": 0,
-                "max_supply": 0,
-                "ath": 0,
-                "atl": 0,
+                "circulating_supply": coin.get("circulating_supply", 0),
+                "total_supply": coin.get("total_supply", 0),
+                "max_supply": coin.get("max_supply", 0),
+                "ath": coin.get("ath", 0),
+                "atl": coin.get("atl", 0),
                 "last_updated": coin.get("timestamp", int(datetime.utcnow().timestamp() * 1000))
             })
         
@@ -1352,31 +1359,32 @@ async def api_coins_top(limit: int = 50):
         }
     except Exception as e:
         logger.error(f"Failed to fetch top coins: {e}")
-        # Return minimal fallback data
+        # Return minimal fallback data with proper CoinGecko image URLs
         import random
         fallback_coins = []
+        # (symbol, name, price, mcap, coingecko_id, image_url)
         coin_data = [
-            ("BTC", "Bitcoin", 67850, 1_280_000_000_000),
-            ("ETH", "Ethereum", 3420, 410_000_000_000),
-            ("BNB", "Binance Coin", 585, 88_000_000_000),
-            ("SOL", "Solana", 145, 65_000_000_000),
-            ("XRP", "Ripple", 0.62, 34_000_000_000),
-            ("ADA", "Cardano", 0.58, 21_000_000_000),
-            ("AVAX", "Avalanche", 38, 14_500_000_000),
-            ("DOT", "Polkadot", 7.2, 9_800_000_000),
-            ("MATIC", "Polygon", 0.88, 8_200_000_000),
-            ("LINK", "Chainlink", 15.4, 8_900_000_000)
+            ("BTC", "Bitcoin", 67850, 1_280_000_000_000, "bitcoin", "https://assets.coingecko.com/coins/images/1/small/bitcoin.png"),
+            ("ETH", "Ethereum", 3420, 410_000_000_000, "ethereum", "https://assets.coingecko.com/coins/images/279/small/ethereum.png"),
+            ("BNB", "BNB", 585, 88_000_000_000, "binancecoin", "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png"),
+            ("SOL", "Solana", 145, 65_000_000_000, "solana", "https://assets.coingecko.com/coins/images/4128/small/solana.png"),
+            ("XRP", "XRP", 0.62, 34_000_000_000, "ripple", "https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png"),
+            ("ADA", "Cardano", 0.58, 21_000_000_000, "cardano", "https://assets.coingecko.com/coins/images/975/small/cardano.png"),
+            ("AVAX", "Avalanche", 38, 14_500_000_000, "avalanche-2", "https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png"),
+            ("DOT", "Polkadot", 7.2, 9_800_000_000, "polkadot", "https://assets.coingecko.com/coins/images/12171/small/polkadot.png"),
+            ("MATIC", "Polygon", 0.88, 8_200_000_000, "matic-network", "https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png"),
+            ("LINK", "Chainlink", 15.4, 8_900_000_000, "chainlink", "https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png")
         ]
         
         for i in range(min(limit, len(coin_data) * 5)):
-            symbol, name, price, mcap = coin_data[i % len(coin_data)]
+            symbol, name, price, mcap, coingecko_id, image = coin_data[i % len(coin_data)]
             fallback_coins.append({
-                "id": symbol.lower(),
+                "id": coingecko_id,
                 "rank": i + 1,
                 "market_cap_rank": i + 1,
                 "symbol": symbol,
                 "name": name,
-                "image": f"https://assets.coingecko.com/coins/images/1/small/{symbol.lower()}.png",
+                "image": image,  # Correct CoinGecko image URL
                 "price": price,
                 "current_price": price,
                 "market_cap": mcap,
@@ -1387,6 +1395,7 @@ async def api_coins_top(limit: int = 50):
                 "price_change_percentage_24h": round(random.uniform(-8, 15), 2),
                 "change_7d": round(random.uniform(-20, 30), 2),
                 "price_change_percentage_7d": round(random.uniform(-20, 30), 2),
+                "price_change_percentage_7d_in_currency": round(random.uniform(-20, 30), 2),
                 "sparkline": []
             })
         
