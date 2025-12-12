@@ -40,6 +40,7 @@ from backend.routers.resource_hierarchy_api import router as resource_hierarchy_
 from backend.routers.dynamic_model_api import router as dynamic_model_router
 from backend.routers.background_worker_api import router as background_worker_router
 from backend.routers.intelligent_provider_api import router as intelligent_provider_router  # NEW: Intelligent load-balanced providers
+from backend.routers.hf_space_crypto_api import router as hf_space_crypto_router  # HuggingFace Space Crypto Resources API
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -373,6 +374,13 @@ try:
     logger.info("✓ ✅ Technical Indicators Router loaded (Bollinger Bands, StochRSI, ATR, SMA, EMA, MACD, RSI)")
 except Exception as e:
     logger.error(f"Failed to include indicators_router: {e}")
+
+# HuggingFace Space Crypto Resources API (External aggregated source)
+try:
+    app.include_router(hf_space_crypto_router)  # HF Space Crypto API (market, sentiment, resources database)
+    logger.info("✓ ✅ HF Space Crypto Router loaded (281 resources, 12 categories, market data, sentiment)")
+except Exception as e:
+    logger.error(f"Failed to include hf_space_crypto_router: {e}")
 
 # Add routers status endpoint
 @app.get("/api/routers")

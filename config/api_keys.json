@@ -64,6 +64,43 @@
     }
   },
   
+  "aggregated_sources": {
+    "hf_crypto_resources_api": {
+      "name": "Crypto Resources API (HuggingFace Space)",
+      "url": "https://really-amin-crypto-api-clean.hf.space",
+      "docs_url": "https://really-amin-crypto-api-clean.hf.space/docs",
+      "auth_required": false,
+      "rate_limit": "unlimited",
+      "endpoints": {
+        "health": "/health",
+        "top_coins": "/api/coins/top",
+        "trending": "/api/trending",
+        "market_overview": "/api/market",
+        "sentiment_global": "/api/sentiment/global",
+        "sentiment_asset": "/api/sentiment/asset/{symbol}",
+        "resources_stats": "/api/resources/stats",
+        "categories": "/api/categories",
+        "resources_by_category": "/api/resources/category/{category}",
+        "providers": "/api/providers",
+        "system_status": "/api/status"
+      },
+      "categories_available": [
+        "rpc_nodes",
+        "block_explorers", 
+        "market_data_apis",
+        "news_apis",
+        "sentiment_apis",
+        "onchain_analytics_apis",
+        "whale_tracking_apis",
+        "hf_resources",
+        "free_http_endpoints",
+        "cors_proxies"
+      ],
+      "verified": true,
+      "last_verified": "2025-12-12"
+    }
+  },
+  
   "notifications": {
     "telegram": {
       "enabled": true,
