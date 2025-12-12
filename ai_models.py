@@ -11,6 +11,9 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 from config import HUGGINGFACE_MODELS, get_settings
 
+# Module logger must exist before any import-time logging below.
+logger = logging.getLogger(__name__)
+
 # Import environment detector
 try:
     from utils.environment_detector import (
@@ -22,7 +25,6 @@ try:
     ENV_DETECTOR_AVAILABLE = True
 except ImportError:
     ENV_DETECTOR_AVAILABLE = False
-    logger = logging.getLogger(__name__)
     logger.warning("Environment detector not available")
 
 # Only import transformers if we should use AI models
@@ -74,7 +76,6 @@ try:
 except ImportError:
     REQUESTS_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
 settings = get_settings()
 
 HF_TOKEN_ENV = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN")
