@@ -1,7 +1,7 @@
 """
 HF Space Complete API Router
 Implements all required endpoints for Hugging Face Space deployment
-using REAL data providers.
+using REAL data providers managed by the Orchestrator.
 """
 from fastapi import APIRouter, HTTPException, Query, Body, Depends
 from fastapi.responses import JSONResponse
@@ -14,14 +14,8 @@ import json
 import os
 from pathlib import Path
 
-# Import Real Data Providers
-from backend.live_data.providers import (
-    coingecko_provider, 
-    binance_provider, 
-    cryptopanic_provider, 
-    alternative_me_provider
-)
-from backend.cache.cache_manager import cache_manager
+# Import Orchestrator
+from backend.orchestration.provider_manager import provider_manager
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +30,7 @@ class MetaInfo(BaseModel):
     cache_ttl_seconds: int = Field(default=30, description="Cache TTL in seconds")
     generated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     source: str = Field(default="live", description="Data source")
+    latency_ms: Optional[float] = None
 
 class MarketItem(BaseModel):
     """Market ticker item"""
@@ -94,39 +89,42 @@ class GasResponse(BaseModel):
 async def get_market_snapshot():
     """
     Get current market snapshot with prices, changes, and volumes.
-    Uses CoinGecko API.
+    Uses Provider Orchestrator (CoinGecko, Binance, etc.)
     """
-    cache_key = "market_snapshot"
-    cached = await cache_manager.get(cache_key)
-    if cached:
-        return cached
-
-    try:
-        data = await coingecko_provider.get_market_data(ids="bitcoin,ethereum,tron,solana,binancecoin,ripple")
+    response = await provider_manager.fetch_data(
+        "market",
+        params={"ids": "bitcoin,ethereum,tron,solana,binancecoin,ripple", "vs_currency": "usd"},
+        use_cache=True,
+        ttl=60
+    )
+    
+    if not response["success"]:
+        raise HTTPException(status_code=503, detail=response["error"])
         
-        items = []
+    data = response["data"]
+    items = []
+    
+    # Handle different provider formats if needed, but fetch functions should normalize
+    # Assuming coingecko format for "market" category list
+    if isinstance(data, list):
         for coin in data:
             items.append(MarketItem(
                 symbol=coin.get('symbol', '').upper(),
                 price=coin.get('current_price', 0),
                 change_24h=coin.get('price_change_percentage_24h', 0),
                 volume_24h=coin.get('total_volume', 0),
-                source="coingecko"
+                source=response["source"]
             ))
-        
-        response = MarketResponse(
-            last_updated=datetime.now().isoformat(),
-            items=items,
-            meta=MetaInfo(cache_ttl_seconds=60, source="coingecko")
+            
+    return MarketResponse(
+        last_updated=response["timestamp"],
+        items=items,
+        meta=MetaInfo(
+            cache_ttl_seconds=60, 
+            source=response["source"],
+            latency_ms=response.get("latency_ms")
         )
-        
-        await cache_manager.set(cache_key, response, ttl=60)
-        return response
-    
-    except Exception as e:
-        logger.error(f"Error in get_market_snapshot: {e}")
-        # Return empty list or cached stale data if available, but NEVER fake data
-        raise HTTPException(status_code=503, detail="Market data unavailable")
+    )
 
 @router.get("/api/market/ohlc")
 async def get_ohlc(
@@ -134,55 +132,61 @@ async def get_ohlc(
     interval: int = Query(60, description="Interval in minutes"),
     limit: int = Query(100, description="Number of candles")
 ):
-    """Get OHLC candlestick data from Binance"""
-    cache_key = f"ohlc_{symbol}_{interval}_{limit}"
-    cached = await cache_manager.get(cache_key)
-    if cached:
-        return cached
+    """Get OHLC candlestick data via Orchestrator"""
+    
+    # Map minutes to common string format if needed by providers, 
+    # but fetch_binance_klines handles it.
+    interval_str = "1h"
+    if interval < 60:
+        interval_str = f"{interval}m"
+    elif interval == 60:
+        interval_str = "1h"
+    elif interval == 240:
+        interval_str = "4h"
+    elif interval == 1440:
+        interval_str = "1d"
 
-    try:
-        # Map minutes to Binance intervals
-        binance_interval = "1h"
-        if interval == 1: binance_interval = "1m"
-        elif interval == 5: binance_interval = "5m"
-        elif interval == 15: binance_interval = "15m"
-        elif interval == 60: binance_interval = "1h"
-        elif interval == 240: binance_interval = "4h"
-        elif interval == 1440: binance_interval = "1d"
-
-        # Binance symbol needs to be e.g., BTCUSDT
-        formatted_symbol = symbol.upper()
-        if not formatted_symbol.endswith("USDT") and not formatted_symbol.endswith("USD"):
-             formatted_symbol += "USDT"
-        
-        klines = await binance_provider.get_klines(formatted_symbol, interval=binance_interval, limit=limit)
-        
-        ohlc_data = []
-        for k in klines:
-            # Binance kline: [open_time, open, high, low, close, volume, ...]
-            ohlc_data.append({
-                "ts": int(k[0] / 1000),
-                "open": float(k[1]),
-                "high": float(k[2]),
-                "low": float(k[3]),
-                "close": float(k[4]),
-                "volume": float(k[5])
-            })
-        
-        response = {
+    response = await provider_manager.fetch_data(
+        "ohlc",
+        params={
             "symbol": symbol,
-            "interval": interval,
-            "data": ohlc_data,
-            "meta": MetaInfo(cache_ttl_seconds=60, source="binance").dict()
-        }
-        
-        await cache_manager.set(cache_key, response, ttl=60)
-        return response
+            "interval": interval_str,
+            "limit": limit
+        },
+        use_cache=True,
+        ttl=60
+    )
 
-    except Exception as e:
-        logger.error(f"Error in get_ohlc: {e}")
-        # Try fallbacks? For now, fail gracefully.
-        raise HTTPException(status_code=503, detail="OHLC data unavailable")
+    if not response["success"]:
+        raise HTTPException(status_code=503, detail=response["error"])
+
+    # Transform Binance Klines to standard OHLC
+    # [time, open, high, low, close, volume, ...]
+    klines = response["data"]
+    ohlc_data = []
+    
+    if isinstance(klines, list):
+        for k in klines:
+            if isinstance(k, list) and len(k) >= 6:
+                ohlc_data.append({
+                    "ts": int(k[0] / 1000),
+                    "open": float(k[1]),
+                    "high": float(k[2]),
+                    "low": float(k[3]),
+                    "close": float(k[4]),
+                    "volume": float(k[5])
+                })
+
+    return {
+        "symbol": symbol,
+        "interval": interval,
+        "data": ohlc_data,
+        "meta": MetaInfo(
+            cache_ttl_seconds=60, 
+            source=response["source"],
+            latency_ms=response.get("latency_ms")
+        ).dict()
+    }
 
 # ============================================================================
 # News & Sentiment Endpoints
@@ -193,19 +197,24 @@ async def get_news(
     limit: int = Query(20, description="Number of articles"),
     source: Optional[str] = Query(None, description="Filter by source")
 ):
-    """Get cryptocurrency news from CryptoPanic"""
-    cache_key = f"news_{limit}_{source}"
-    cached = await cache_manager.get(cache_key)
-    if cached:
-        return cached
+    """Get cryptocurrency news via Orchestrator"""
+    
+    response = await provider_manager.fetch_data(
+        "news",
+        params={"filter": "hot", "query": "crypto"}, # Params for different providers
+        use_cache=True,
+        ttl=300
+    )
+    
+    if not response["success"]:
+        return NewsResponse(articles=[], meta=MetaInfo(source="error"))
 
-    try:
-        data = await cryptopanic_provider.get_news()
-        
-        articles = []
-        results = data.get('results', [])[:limit]
-        
-        for post in results:
+    data = response["data"]
+    articles = []
+    
+    # Normalize CryptoPanic / NewsAPI formats
+    if "results" in data: # CryptoPanic
+        for post in data.get('results', [])[:limit]:
             articles.append(NewsArticle(
                 id=str(post.get('id')),
                 title=post.get('title', ''),
@@ -214,49 +223,60 @@ async def get_news(
                 summary=post.get('slug', ''),
                 published_at=post.get('published_at', datetime.now().isoformat())
             ))
-        
-        response = NewsResponse(
-            articles=articles,
-            meta=MetaInfo(cache_ttl_seconds=300, source="cryptopanic")
+    elif "articles" in data: # NewsAPI
+        for post in data.get('articles', [])[:limit]:
+            articles.append(NewsArticle(
+                id=str(hash(post.get('url', ''))),
+                title=post.get('title', ''),
+                url=post.get('url', ''),
+                source=post.get('source', {}).get('name', 'Unknown'),
+                summary=post.get('description', ''),
+                published_at=post.get('publishedAt', datetime.now().isoformat())
+            ))
+
+    return NewsResponse(
+        articles=articles,
+        meta=MetaInfo(
+            cache_ttl_seconds=300, 
+            source=response["source"],
+            latency_ms=response.get("latency_ms")
         )
-        
-        await cache_manager.set(cache_key, response, ttl=300)
-        return response
-    
-    except Exception as e:
-        logger.error(f"Error in get_news: {e}")
-        return NewsResponse(articles=[], meta=MetaInfo(source="error"))
+    )
 
 
 @router.get("/api/sentiment/global")
 async def get_global_sentiment():
-    """Get global market sentiment (Fear & Greed Index)"""
-    cache_key = "sentiment_global"
-    cached = await cache_manager.get(cache_key)
-    if cached:
-        return cached
+    """Get global market sentiment via Orchestrator"""
+    
+    response = await provider_manager.fetch_data(
+        "sentiment",
+        params={"limit": 1},
+        use_cache=True,
+        ttl=3600
+    )
+    
+    if not response["success"]:
+        raise HTTPException(status_code=503, detail=response["error"])
         
-    try:
-        data = await alternative_me_provider.get_fear_and_greed()
-        fng_value = 50
-        classification = "Neutral"
+    data = response["data"]
+    fng_value = 50
+    classification = "Neutral"
+    
+    # Alternative.me format
+    if data.get('data'):
+        item = data['data'][0]
+        fng_value = int(item.get('value', 50))
+        classification = item.get('value_classification', 'Neutral')
         
-        if data.get('data'):
-            item = data['data'][0]
-            fng_value = int(item.get('value', 50))
-            classification = item.get('value_classification', 'Neutral')
-            
-        result = {
-            "score": fng_value,
-            "label": classification,
-            "meta": MetaInfo(cache_ttl_seconds=3600, source="alternative.me").dict()
-        }
-        
-        await cache_manager.set(cache_key, result, ttl=3600)
-        return result
-    except Exception as e:
-        logger.error(f"Error in get_global_sentiment: {e}")
-        raise HTTPException(status_code=503, detail="Sentiment data unavailable")
+    return {
+        "score": fng_value,
+        "label": classification,
+        "meta": MetaInfo(
+            cache_ttl_seconds=3600, 
+            source=response["source"],
+            latency_ms=response.get("latency_ms")
+        ).dict()
+    }
 
 # ============================================================================
 # Blockchain Endpoints
@@ -264,14 +284,56 @@ async def get_global_sentiment():
 
 @router.get("/api/crypto/blockchain/gas", response_model=GasResponse)
 async def get_gas_prices(chain: str = Query("ethereum", description="Blockchain network")):
-    """Get gas prices - Placeholder for real implementation"""
-    # TODO: Implement Etherscan or similar provider
-    # For now, return empty/null to indicate no data rather than fake data
+    """Get gas prices via Orchestrator"""
+    
+    if chain.lower() != "ethereum":
+        # Fallback or implement other chains
+        return GasResponse(
+            chain=chain,
+            gas_prices=None,
+            timestamp=datetime.now().isoformat(),
+            meta=MetaInfo(source="unavailable")
+        )
+
+    response = await provider_manager.fetch_data(
+        "onchain",
+        params={},
+        use_cache=True,
+        ttl=15
+    )
+    
+    if not response["success"]:
+        return GasResponse(
+            chain=chain,
+            gas_prices=None,
+            timestamp=datetime.now().isoformat(),
+            meta=MetaInfo(source="unavailable")
+        )
+        
+    data = response["data"]
+    result = data.get("result", {})
+    
+    gas_price = None
+    if result:
+        # Etherscan returns data in result
+        try:
+            gas_price = GasPrice(
+                fast=float(result.get("FastGasPrice", 0)),
+                standard=float(result.get("ProposeGasPrice", 0)),
+                slow=float(result.get("SafeGasPrice", 0))
+            )
+        except:
+            pass
+
     return GasResponse(
         chain=chain,
-        gas_prices=None,
+        gas_prices=gas_price,
         timestamp=datetime.now().isoformat(),
-        meta=MetaInfo(source="unavailable")
+        meta=MetaInfo(
+            cache_ttl_seconds=15, 
+            source=response["source"],
+            latency_ms=response.get("latency_ms")
+        )
     )
 
 # ============================================================================
@@ -281,14 +343,12 @@ async def get_gas_prices(chain: str = Query("ethereum", description="Blockchain 
 @router.get("/api/status")
 async def get_system_status():
     """Get overall system status"""
-    from backend.live_data.providers import get_all_providers_status
-    
-    provider_status = await get_all_providers_status()
+    stats = provider_manager.get_stats()
     
     return {
         'status': 'operational',
         'timestamp': datetime.now().isoformat(),
-        'providers': provider_status,
-        'version': '1.0.0',
+        'providers': stats,
+        'version': '2.0.0',
         'meta': MetaInfo(source="system").dict()
     }
