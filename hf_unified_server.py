@@ -64,6 +64,7 @@ RESOURCES_FILE = WORKSPACE_ROOT / "crypto_resources_unified_2025-11-11.json"
 OHLCV_VERIFICATION_FILE = WORKSPACE_ROOT / "ohlcv_verification_results_20251127_003016.json"
 FAULT_LOG_FILE = WORKSPACE_ROOT / "fualt.txt"
 REAL_ENDPOINTS_FILE = WORKSPACE_ROOT / "realendpoint.txt"
+API_KEYS_CONFIG_FILE = WORKSPACE_ROOT / "config" / "api_keys.json"
 
 
 def _load_json_file(path: Path) -> Optional[Dict[str, Any]]:
@@ -104,6 +105,60 @@ def _read_text_file_tail(path: Path, tail: Optional[int] = None) -> Dict[str, An
         "content": text,
         "lines": lines,
     }
+
+
+def _count_configured_api_keys() -> Dict[str, Any]:
+    """
+    Count API keys configured via environment variables referenced in config/api_keys.json.
+    Values in the config are typically placeholders like "${ETHERSCAN_KEY}".
+    """
+    try:
+        if not API_KEYS_CONFIG_FILE.exists():
+            return {
+                "config_exists": False,
+                "total_key_refs": 0,
+                "configured_keys": 0,
+                "missing_keys": [],
+            }
+
+        raw = API_KEYS_CONFIG_FILE.read_text(encoding="utf-8", errors="replace")
+        cfg = json.loads(raw) if raw.strip() else {}
+
+        pattern = re.compile(r"\$\{([A-Z0-9_]+)\}")
+        referenced: List[str] = []
+
+        def walk(obj: Any) -> None:
+            if isinstance(obj, dict):
+                for v in obj.values():
+                    walk(v)
+            elif isinstance(obj, list):
+                for v in obj:
+                    walk(v)
+            elif isinstance(obj, str):
+                for m in pattern.finditer(obj):
+                    referenced.append(m.group(1))
+
+        walk(cfg)
+        # Unique + stable order
+        refs = sorted(set(referenced))
+        configured = [k for k in refs if (os.getenv(k) or "").strip() not in ("", "null", "None")]
+        missing = [k for k in refs if k not in configured]
+
+        return {
+            "config_exists": True,
+            "total_key_refs": len(refs),
+            "configured_keys": len(configured),
+            "missing_keys": missing,
+        }
+    except Exception as e:
+        logger.error(f"Failed to count configured API keys: {e}")
+        return {
+            "config_exists": bool(API_KEYS_CONFIG_FILE.exists()),
+            "total_key_refs": 0,
+            "configured_keys": 0,
+            "missing_keys": [],
+            "error": str(e),
+        }
 
 
 _RESOURCES_CACHE: Optional[Dict[str, Any]] = _load_json_file(RESOURCES_FILE)
@@ -773,6 +828,7 @@ async def api_resources_summary() -> Dict[str, Any]:
     """Resources summary endpoint for dashboard (compatible with frontend)."""
     try:
         summary, categories = _summarize_resources()
+        keys_info = _count_configured_api_keys()
         
         # Format for frontend compatibility
         return {
@@ -782,6 +838,10 @@ async def api_resources_summary() -> Dict[str, Any]:
                 "free_resources": summary.get("free", 0),
                 "premium_resources": summary.get("premium", 0),
                 "models_available": summary.get("models_available", 0),
+                # API key status (for dashboard)
+                "total_api_keys": keys_info.get("total_key_refs", 0),
+                "configured_api_keys": keys_info.get("configured_keys", 0),
+                "api_keys_config_loaded": keys_info.get("config_exists", False),
                 "local_routes_count": summary.get("local_routes_count", 0),
                 "categories": {
                     cat["name"].lower().replace(" ", "_"): {
@@ -805,6 +865,9 @@ async def api_resources_summary() -> Dict[str, Any]:
                 "free_resources": 180,
                 "premium_resources": 68,
                 "models_available": 8,
+                "total_api_keys": 0,
+                "configured_api_keys": 0,
+                "api_keys_config_loaded": False,
                 "local_routes_count": 24,
                 "categories": {
                     "market_data": {"count": 15, "type": "external"},
