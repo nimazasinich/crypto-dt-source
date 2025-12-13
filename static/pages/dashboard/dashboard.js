@@ -19,7 +19,6 @@ class DashboardPage {
     this.consecutiveFailures = 0;
     this.isOffline = false;
     this.expandedNews = new Set();
-    this.systemMonitor = null;
     
     this.config = {
       refreshInterval: 30000,
@@ -39,7 +38,7 @@ class DashboardPage {
       
       // Defer Chart.js loading until after initial render
       this.injectEnhancedLayout();
-      this.initSystemMonitor();
+      this.initSystemStatusModal();
       this.bindEvents();
       
       // Add smooth fade-in delay for better UX
@@ -93,10 +92,6 @@ class DashboardPage {
     if (this.updateInterval) clearInterval(this.updateInterval);
     Object.values(this.charts).forEach(chart => chart?.destroy());
     this.charts = {};
-    if (this.systemMonitor) {
-      this.systemMonitor.destroy();
-      this.systemMonitor = null;
-    }
     this.savePersistedData();
   }
 
@@ -308,11 +303,6 @@ class DashboardPage {
         </div>
       </section>
 
-      <!-- System Monitor Section -->
-      <section class="system-monitor-section" id="system-monitor-section">
-        <div id="system-monitor-container"></div>
-      </section>
-
       <!-- Main Dashboard Grid -->
       <div class="dashboard-grid">
         <!-- Left Column -->
@@ -424,27 +414,34 @@ class DashboardPage {
     `;
   }
 
-  initSystemMonitor() {
-    // Initialize the system monitor component
+  initSystemStatusModal() {
+    // Initialize the system status modal component
     try {
-      if (typeof SystemMonitor !== 'undefined') {
-        this.systemMonitor = new SystemMonitor('system-monitor-container', {
-          updateInterval: 2000, // 2 seconds
-          autoStart: true,
+      if (typeof SystemStatusModal !== 'undefined') {
+        window.systemStatusModal = new SystemStatusModal({
+          apiEndpoint: '/api/system/status',
+          updateInterval: 3000, // 3 seconds
           onError: (error) => {
-            logger.error('Dashboard', 'System monitor error:', error);
+            logger.error('Dashboard', 'System status modal error:', error);
           }
         });
-        logger.info('Dashboard', 'System monitor initialized');
+        logger.info('Dashboard', 'System status modal initialized');
       } else {
-        logger.warn('Dashboard', 'SystemMonitor class not available');
+        logger.warn('Dashboard', 'SystemStatusModal class not available');
       }
     } catch (error) {
-      logger.error('Dashboard', 'Failed to initialize system monitor:', error);
+      logger.error('Dashboard', 'Failed to initialize system status modal:', error);
     }
   }
 
   bindEvents() {
+    // System Status button
+    document.getElementById('system-status-btn')?.addEventListener('click', () => {
+      if (window.systemStatusModal) {
+        window.systemStatusModal.open();
+      }
+    });
+    
     // Refresh button
     document.getElementById('refresh-btn')?.addEventListener('click', () => {
       this.showToast('Refreshing...', 'info');

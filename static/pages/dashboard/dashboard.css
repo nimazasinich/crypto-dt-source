@@ -1749,21 +1749,22 @@
 }
 
 /* ============================================================================
-   SYSTEM MONITOR SECTION
+   SYSTEM STATUS BUTTON
    ============================================================================ */
 
-.system-monitor-section {
-  margin: var(--space-6, 1.5rem) 0;
-  animation: fadeInUp 0.6s ease-out;
+.btn-system-status {
+  position: relative;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.btn-system-status:hover {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(34, 211, 238, 0.08));
+  border-color: rgba(45, 212, 191, 0.3);
+}
+
+.btn-system-status:active {
+  transform: scale(0.95);
+}
+
+.btn-system-status svg {
+  color: var(--teal, #14b8a6);
 }

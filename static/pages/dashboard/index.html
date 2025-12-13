@@ -42,12 +42,12 @@
   <noscript><link rel="stylesheet" href="/static/shared/css/layout.css"></noscript>
   <link rel="stylesheet" href="/static/pages/dashboard/dashboard.css?v=3.0" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="/static/pages/dashboard/dashboard.css?v=3.0"></noscript>
-  <link rel="stylesheet" href="/static/shared/css/system-monitor.css" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="/static/shared/css/system-monitor.css"></noscript>
+  <link rel="stylesheet" href="/static/shared/css/system-status-modal.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/static/shared/css/system-status-modal.css"></noscript>
     <!-- Error Suppressor - Suppress external service errors (load first) -->
     <script src="/static/shared/js/utils/error-suppressor.js"></script>
-    <!-- System Monitor Component -->
-    <script src="/static/shared/js/components/system-monitor.js"></script>
+    <!-- System Status Modal Component -->
+    <script src="/static/shared/js/components/system-status-modal.js"></script>
     <!-- Crypto Icons Library -->
     <script src="/static/assets/icons/crypto-icons.js"></script>
     <!-- API Configuration - Smart Fallback System -->
@@ -102,6 +102,11 @@
             <p class="page-subtitle">Real-time Market Data & AI Analysis</p>
           </div>
           <div class="page-actions">
+            <button id="system-status-btn" class="btn-icon btn-system-status" title="System Status" aria-label="Open system status modal">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+            </button>
             <button id="refresh-btn" class="btn-icon" title="Refresh" aria-label="Refresh data">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
