@@ -5,10 +5,22 @@
 
 import { CONFIG } from '../core/config.js';
 
+const TOAST_DEFAULTS = {
+  MAX_VISIBLE: 3,
+  DEFAULT_DURATION: 3500,
+  ERROR_DURATION: 6000,
+};
+
+// CONFIG.TOAST is optional in some builds/pages; keep Toast resilient.
+const TOAST_CONFIG = {
+  ...TOAST_DEFAULTS,
+  ...(CONFIG?.TOAST || {}),
+};
+
 export class Toast {
   static container = null;
   static toasts = [];
-  static maxToasts = CONFIG.TOAST.MAX_VISIBLE;
+  static maxToasts = TOAST_CONFIG.MAX_VISIBLE;
 
   /**
    * Initialize toast container
@@ -35,7 +47,9 @@ export class Toast {
       id: Date.now() + Math.random(),
       message,
       type,
-      duration: options.duration || (type === 'error' ? CONFIG.TOAST.ERROR_DURATION : CONFIG.TOAST.DEFAULT_DURATION),
+      duration:
+        options.duration ??
+        (type === 'error' ? TOAST_CONFIG.ERROR_DURATION : TOAST_CONFIG.DEFAULT_DURATION),
       dismissible: options.dismissible !== false,
       action: options.action || null,
     };
