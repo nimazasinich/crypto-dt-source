@@ -42,6 +42,8 @@ from backend.routers.dynamic_model_api import router as dynamic_model_router
 from backend.routers.background_worker_api import router as background_worker_router
 from backend.routers.intelligent_provider_api import router as intelligent_provider_router  # NEW: Intelligent load-balanced providers
 from backend.routers.hf_space_crypto_api import router as hf_space_crypto_router  # HuggingFace Space Crypto Resources API
+from backend.routers.health_monitor_api import router as health_monitor_router  # NEW: Service Health Monitor
+from backend.routers.indicators_api import router as indicators_router  # Technical Indicators API
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -461,6 +463,14 @@ try:
     logger.info("✓ ✅ Technical Indicators Router loaded (Bollinger Bands, StochRSI, ATR, SMA, EMA, MACD, RSI)")
 except Exception as e:
     logger.error(f"Failed to include indicators_router: {e}")
+
+# Service Health Monitor API
+try:
+    from backend.routers.health_monitor_api import router as health_monitor_router
+    app.include_router(health_monitor_router)  # Service Health Monitor (real-time status of all services)
+    logger.info("✓ ✅ Service Health Monitor Router loaded (Real-time service status monitoring)")
+except Exception as e:
+    logger.error(f"Failed to include health_monitor_router: {e}")
 
 # HuggingFace Space Crypto Resources API (External aggregated source)
 try:
