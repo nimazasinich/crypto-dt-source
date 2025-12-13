@@ -45,6 +45,10 @@ from backend.routers.hf_space_crypto_api import router as hf_space_crypto_router
 from backend.routers.health_monitor_api import router as health_monitor_router  # NEW: Service Health Monitor
 from backend.routers.indicators_api import router as indicators_router  # Technical Indicators API
 from backend.routers.new_sources_api import router as new_sources_router  # NEW: Integrated data sources (Crypto API Clean + Crypto DT Source)
+from backend.routers.system_metrics_api import router as system_metrics_router  # System metrics and monitoring
+
+# Import metrics middleware
+from backend.middleware import MetricsMiddleware
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -270,6 +274,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add metrics tracking middleware (for system monitoring)
+app.add_middleware(MetricsMiddleware)
+
 # Add rate limiting middleware
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
@@ -480,6 +487,13 @@ try:
     logger.info("✓ ✅ New Sources Router loaded (Crypto API Clean: 281+ resources | Crypto DT Source: Unified API v2.0)")
 except Exception as e:
     logger.error(f"Failed to include new_sources_router: {e}")
+
+# SYSTEM METRICS & MONITORING (Real-time system monitoring)
+try:
+    app.include_router(system_metrics_router)  # System metrics API (CPU, memory, requests, response times)
+    logger.info("✓ ✅ System Metrics Router loaded (Real-time CPU, Memory, Request Rate, Response Time, Error Rate)")
+except Exception as e:
+    logger.error(f"Failed to include system_metrics_router: {e}")
 
 # Add routers status endpoint
 @app.get("/api/routers")
