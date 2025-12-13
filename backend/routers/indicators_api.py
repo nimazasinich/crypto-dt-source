@@ -961,14 +961,27 @@ async def get_comprehensive_analysis(
 ):
     """Get comprehensive analysis with all indicators"""
     try:
-        from backend.services.coingecko_client import coingecko_client
+        # Try to import coingecko client
+        try:
+            from backend.services.coingecko_client import coingecko_client
+            client_available = True
+        except ImportError as import_err:
+            logger.error(f"CoinGecko client import failed: {import_err}")
+            client_available = False
         
-        # Get historical data
-        ohlcv = await coingecko_client.get_ohlcv(symbol, days=365)
+        # Try to get historical data if client is available
+        ohlcv = None
+        if client_available:
+            try:
+                ohlcv = await coingecko_client.get_ohlcv(symbol, days=365)
+            except Exception as fetch_err:
+                logger.error(f"Failed to fetch OHLCV data: {fetch_err}")
+                ohlcv = None
         
         if not ohlcv or "prices" not in ohlcv:
-            # Return comprehensive fallback
+            # Return comprehensive fallback with real structure
             current_price = 67500 if symbol.upper() == "BTC" else 3400 if symbol.upper() == "ETH" else 100
+            logger.warning(f"Using fallback data for {symbol} - API unavailable")
             return {
                 "success": True,
                 "symbol": symbol.upper(),
@@ -994,9 +1007,10 @@ async def get_comprehensive_analysis(
                 },
                 "overall_signal": "HOLD",
                 "confidence": 60,
-                "recommendation": "Mixed signals - wait for clearer direction",
+                "recommendation": "Mixed signals - wait for clearer direction. Note: Using fallback data as API is temporarily unavailable.",
                 "timestamp": datetime.utcnow().isoformat() + "Z",
-                "source": "fallback"
+                "source": "fallback",
+                "warning": "API temporarily unavailable - using fallback data"
             }
         
         prices = [p[1] for p in ohlcv["prices"]]
@@ -1128,4 +1142,36 @@ async def get_comprehensive_analysis(
         
     except Exception as e:
         logger.error(f"Comprehensive analysis error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Instead of raising 500, return a proper error response with structure
+        current_price = 67500 if symbol.upper() == "BTC" else 3400 if symbol.upper() == "ETH" else 100
+        return {
+            "success": False,
+            "error": "Analysis failed - using fallback data",
+            "error_detail": str(e),
+            "symbol": symbol.upper(),
+            "timeframe": timeframe,
+            "current_price": current_price,
+            "indicators": {
+                "bollinger_bands": {"upper": current_price * 1.05, "middle": current_price, "lower": current_price * 0.95, "bandwidth": 10, "percent_b": 50},
+                "stoch_rsi": {"value": 50, "k_line": 50, "d_line": 50},
+                "atr": {"value": current_price * 0.02, "percent": 2.0},
+                "sma": {"sma20": current_price, "sma50": current_price * 0.98, "sma200": current_price * 0.95},
+                "ema": {"ema12": current_price, "ema26": current_price * 0.99},
+                "macd": {"macd_line": 50, "signal_line": 45, "histogram": 5},
+                "rsi": {"value": 55}
+            },
+            "signals": {
+                "bollinger_bands": "neutral",
+                "stoch_rsi": "neutral",
+                "atr": "medium_volatility",
+                "sma": "bullish",
+                "ema": "bullish",
+                "macd": "bullish",
+                "rsi": "neutral"
+            },
+            "overall_signal": "HOLD",
+            "confidence": 0,
+            "recommendation": "Unable to perform analysis due to technical error. Please try again later.",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "error_fallback"
+        }

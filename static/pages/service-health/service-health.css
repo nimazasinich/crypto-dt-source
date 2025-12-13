@@ -1,0 +1,88 @@
+/**
+ * Service Health Monitor Styles
+ * Additional custom styles for the health monitor page
+ */
+
+/* Smooth animations */
+.service-card,
+.health-stat-card,
+.status-badge {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .service-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .service-metrics {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .health-overview {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .page-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-actions label {
+        justify-content: center;
+    }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .service-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .health-stat-card {
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.1), rgba(59, 130, 246, 0.1));
+}
+
+/* Print styles */
+@media print {
+    .page-actions,
+    .loading-overlay {
+        display: none !important;
+    }
+
+    .service-card {
+        page-break-inside: avoid;
+    }
+}
+
+/* Accessibility */
+.status-badge {
+    position: relative;
+}
+
+.status-badge:focus {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 2px;
+}
+
+/* Additional hover effects */
+.service-icon {
+    transition: transform 0.3s ease;
+}
+
+.service-card:hover .service-icon {
+    transform: scale(1.1);
+}
+
+/* Loading spinner enhancement */
+.loading-spinner {
+    box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+}
+
+/* Status indicators with better contrast */
+.status-dot {
+    box-shadow: 0 0 8px currentColor;
+}
