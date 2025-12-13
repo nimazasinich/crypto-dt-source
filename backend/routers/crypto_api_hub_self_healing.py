@@ -246,8 +246,6 @@ async def clear_failures():
     """
     Clear all failure records (admin function)
     """
-    global failed_endpoints, recovery_log
-    
     cleared = len(failed_endpoints)
     failed_endpoints.clear()
     recovery_log.clear()

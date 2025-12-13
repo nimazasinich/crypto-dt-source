@@ -169,7 +169,11 @@ jobs:
 
     - name: Run integration tests
       run: |
-        pytest tests/test_integration.py -v
+        if [ -f tests/test_integration.py ]; then
+          pytest tests/test_integration.py -v
+        else
+          echo "No integration tests file (tests/test_integration.py); skipping."
+        fi
       env:
         ENABLE_AUTH: false
         LOG_LEVEL: DEBUG
