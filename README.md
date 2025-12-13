@@ -53,6 +53,59 @@ The platform is integrated with the following real-time data sources:
 | **Sentiment**| **Alternative.me** | - | Fear & Greed Index |
 | **On-Chain** | **Etherscan** | Backup Etherscan Key | Gas Prices (Fast/Std/Slow) |
 
+## 🆕 Newly Integrated Data Sources (Dec 2025)
+
+### 1. **Crypto API Clean** - Resource Database
+- **URL**: https://really-amin-crypto-api-clean-fixed.hf.space
+- **Resources**: 281+ cryptocurrency resources
+- **Categories**: 12 comprehensive categories
+- **Priority**: 2 (High)
+- **Features**:
+  - 24 RPC Nodes (Ethereum, Polygon, BSC, Arbitrum, etc.)
+  - 33 Block Explorers (Etherscan, BscScan, PolygonScan, etc.)
+  - 33 Market Data APIs
+  - 17 News APIs  
+  - 14 Sentiment APIs
+  - 14 On-Chain Analytics APIs
+  - 10 Whale Tracking APIs
+  - 9 HuggingFace Resources
+  - 13 Free HTTP Endpoints
+  - 7 CORS Proxies
+  - 106 Local Backend Routes
+  - 1 Community Sentiment API
+- **Endpoints**: `/api/new-sources/crypto-api-clean/*`
+
+### 2. **Crypto DT Source** - Unified Data API v2.0.0
+- **URL**: https://crypto-dt-source.onrender.com
+- **Description**: Unified cryptocurrency data API with AI models
+- **Priority**: 2 (High)
+- **Features**:
+  - **4 AI Sentiment Models**:
+    - kk08/CryptoBERT
+    - cardiffnlp/twitter-roberta-base-sentiment-latest
+    - ProsusAI/finbert
+    - ElKulako/cryptobert
+  - **5 Crypto Datasets**:
+    - linxy/CryptoCoin
+    - WinkingFace/CryptoLM-Bitcoin-BTC-USDT
+    - WinkingFace/CryptoLM-Ethereum-ETH-USDT
+    - WinkingFace/CryptoLM-Solana-SOL-USDT
+    - WinkingFace/CryptoLM-Ripple-XRP-USDT
+  - **Real-Time Data**:
+    - CoinGecko prices (100+ cryptocurrencies)
+    - Binance candlestick/OHLCV data
+    - Fear & Greed Index (Alternative.me)
+    - Reddit posts (r/cryptocurrency)
+    - RSS news feeds (5 sources)
+- **Endpoints**: `/api/new-sources/crypto-dt-source/*`
+
+### Combined Resources
+- **Total Resources**: 283+ (281 new + 2 base)
+- **AI Models**: 4 sentiment analysis models
+- **Datasets**: 5 comprehensive crypto datasets
+- **New API Endpoints**: 20+
+- **Automatic Fallback**: Integrated with health tracking
+
 ## 🚀 Installation & Usage
 
 ### 1. Prerequisites
