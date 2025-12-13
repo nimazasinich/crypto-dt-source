@@ -18,6 +18,7 @@ import json
 import asyncio
 import sys
 import os
+import re
 from typing import List, Dict, Any, Optional, Tuple
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -1022,6 +1023,46 @@ async def api_sentiment_global(timeframe: str = "1D"):
     }
 
 
+@app.get("/api/fear-greed")
+async def api_fear_greed(limit: int = 1) -> Dict[str, Any]:
+    """
+    Convenience endpoint for Fear & Greed Index (Alternative.me).
+    This keeps client integrations simple and is safe to call from the dashboard.
+    """
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get("https://api.alternative.me/fng/", params={"limit": str(limit)})
+            response.raise_for_status()
+            payload = response.json()
+
+        data = payload.get("data") or []
+        latest = data[0] if isinstance(data, list) and data else {}
+
+        value = int(latest.get("value", 50))
+        classification = latest.get("value_classification", "Neutral")
+
+        return {
+            "success": True,
+            "value": value,
+            "classification": classification,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "alternative.me",
+            "data": data[: min(len(data), 30)],
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch Fear & Greed Index: {e}")
+        return {
+            "success": False,
+            "value": 50,
+            "classification": "Neutral",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "unavailable",
+            "error": str(e),
+        }
+
+
 @app.get("/api/sentiment/asset/{symbol}")
 async def api_sentiment_asset(symbol: str):
     """Get sentiment analysis for a specific asset"""
@@ -1269,6 +1310,66 @@ async def api_news_latest(limit: int = 50) -> Dict[str, Any]:
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "error": str(e)
         }
+
+
+# ============================================================================
+# DeFi (public, no keys) - DefiLlama
+# ============================================================================
+
+@app.get("/api/defi/tvl")
+async def api_defi_tvl() -> Dict[str, Any]:
+    """Total Value Locked (TVL) using DefiLlama public API."""
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get("https://api.llama.fi/tvl")
+            resp.raise_for_status()
+            tvl = resp.json()
+        return {"success": True, "tvl": tvl, "source": "defillama", "timestamp": datetime.utcnow().isoformat() + "Z"}
+    except Exception as e:
+        logger.error(f"DeFi TVL failed: {e}")
+        return {"success": False, "tvl": None, "source": "unavailable", "error": str(e), "timestamp": datetime.utcnow().isoformat() + "Z"}
+
+
+@app.get("/api/defi/protocols")
+async def api_defi_protocols(limit: int = 20) -> Dict[str, Any]:
+    """Top DeFi protocols by TVL using DefiLlama public API."""
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get("https://api.llama.fi/protocols")
+            resp.raise_for_status()
+            protocols = resp.json()
+
+        if isinstance(protocols, list):
+            protocols = sorted(protocols, key=lambda p: float(p.get("tvl") or 0), reverse=True)
+            protocols = protocols[: max(1, min(int(limit), 100))]
+
+        return {"success": True, "protocols": protocols, "source": "defillama", "timestamp": datetime.utcnow().isoformat() + "Z"}
+    except Exception as e:
+        logger.error(f"DeFi protocols failed: {e}")
+        return {"success": False, "protocols": [], "source": "unavailable", "error": str(e), "timestamp": datetime.utcnow().isoformat() + "Z"}
+
+
+@app.get("/api/defi/yields")
+async def api_defi_yields(limit: int = 20) -> Dict[str, Any]:
+    """Yield pools snapshot using DefiLlama public API."""
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get("https://yields.llama.fi/pools")
+            resp.raise_for_status()
+            payload = resp.json()
+
+        pools = payload.get("data") if isinstance(payload, dict) else []
+        if isinstance(pools, list):
+            pools = sorted(pools, key=lambda p: float(p.get("tvlUsd") or 0), reverse=True)
+            pools = pools[: max(1, min(int(limit), 100))]
+
+        return {"success": True, "pools": pools, "source": "defillama", "timestamp": datetime.utcnow().isoformat() + "Z"}
+    except Exception as e:
+        logger.error(f"DeFi yields failed: {e}")
+        return {"success": False, "pools": [], "source": "unavailable", "error": str(e), "timestamp": datetime.utcnow().isoformat() + "Z"}
 
 @app.get("/api/market")
 async def api_market(limit: Optional[int] = None):
@@ -1552,6 +1653,53 @@ async def api_sentiment_analyze(payload: Dict[str, Any]):
 # ============================================================================
 # OHLCV DATA ENDPOINTS
 # ============================================================================
+
+@app.get("/api/ohlcv")
+async def api_ohlcv_query(symbol: str, timeframe: str = "1h", limit: int = 100):
+    """Query-style OHLCV endpoint for frontend compatibility."""
+    return await api_ohlcv_symbol(symbol=symbol, timeframe=timeframe, limit=limit)
+
+
+@app.get("/api/klines")
+async def api_klines(symbol: str, interval: str = "1h", limit: int = 100):
+    """Binance-style klines alias for frontend compatibility."""
+    sym = symbol.upper().strip()
+    m = re.match(r"^([A-Z0-9]+?)(USDT|USD|USDC|BUSD)$", sym)
+    base = m.group(1) if m else sym
+    return await api_ohlcv_symbol(symbol=base, timeframe=interval, limit=limit)
+
+
+@app.get("/api/historical")
+async def api_historical(symbol: str, days: int = 30):
+    """Simple historical alias (daily candles)."""
+    try:
+        from backend.services.binance_client import BinanceClient
+
+        binance = BinanceClient()
+        fetch_days = min(max(int(days), 1), 365)
+        data = await binance.get_ohlcv(symbol.upper(), "1d", fetch_days)
+        return {
+            "success": True,
+            "symbol": symbol.upper(),
+            "days": fetch_days,
+            "data": data,
+            "count": len(data),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "binance",
+        }
+    except Exception as e:
+        logger.warning(f"Historical fetch failed for {symbol}: {e}")
+        return {
+            "success": False,
+            "symbol": symbol.upper(),
+            "days": days,
+            "data": [],
+            "count": 0,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "unavailable",
+            "error": str(e),
+        }
+
 
 @app.get("/api/ohlcv/{symbol}")
 async def api_ohlcv_symbol(symbol: str, timeframe: str = "1h", limit: int = 100):
