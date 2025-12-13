@@ -44,6 +44,7 @@ from backend.routers.intelligent_provider_api import router as intelligent_provi
 from backend.routers.hf_space_crypto_api import router as hf_space_crypto_router  # HuggingFace Space Crypto Resources API
 from backend.routers.health_monitor_api import router as health_monitor_router  # NEW: Service Health Monitor
 from backend.routers.indicators_api import router as indicators_router  # Technical Indicators API
+from backend.routers.service_status import router as service_status_router  # Service Discovery & Status Monitor
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -400,6 +401,9 @@ except Exception as e:
 try:
     from api.resources_endpoint import router as resources_router
     app.include_router(resources_router)  # Resources Statistics API
+    
+    # ==================== Service Discovery & Status ====================
+    app.include_router(service_status_router)  # Service Discovery & Health Status Monitoring
     logger.info("✓ ✅ Resources Statistics Router loaded")
 except Exception as e:
     logger.error(f"Failed to include resources_router: {e}")
