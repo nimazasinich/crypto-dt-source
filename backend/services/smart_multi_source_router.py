@@ -4,12 +4,15 @@ Smart Multi-Source Router - ENFORCES multi-source usage
 NEVER uses only CoinGecko - Always rotates through all available sources
 
 Priority Queue (Round-Robin + Health-Based):
-1. Crypto API Clean (7.8ms, 281 resources) - 30% traffic
-2. Crypto DT Source (117ms, Binance proxy) - 25% traffic  
-3. CryptoCompare (126ms, news/prices) - 25% traffic
-4. Alternative.me (Fear & Greed) - 10% traffic
-5. Etherscan (gas prices) - 5% traffic
-6. CoinGecko (CACHED, fallback only) - 5% traffic
+1. Crypto API Clean (7.8ms, 281 resources) - 20% traffic
+2. Crypto DT Source (117ms, Binance proxy) - 18% traffic  
+3. CryptoCompare (126ms, news/prices, API KEY) - 15% traffic
+4. CoinDesk API (180ms, BTC authority) - 12% traffic
+5. BSCScan (BNB chain data, API KEY) - 10% traffic
+6. Tronscan (TRX chain data, API KEY) - 8% traffic
+7. Alternative.me (Fear & Greed) - 7% traffic
+8. Etherscan (gas prices) - 5% traffic
+9. CoinGecko (CACHED, fallback only) - 5% traffic
 
 Load Balancing Rules:
 - Rotate providers per request
@@ -50,44 +53,71 @@ class SmartMultiSourceRouter:
         from backend.services.coingecko_client import coingecko_client
         from backend.services.market_data_aggregator import market_data_aggregator
         from backend.services.coindesk_client import coindesk_client
+        from backend.services.cryptocompare_client import cryptocompare_client
+        from backend.services.bscscan_client import bscscan_client
+        from backend.services.tronscan_client import tronscan_client
         
         self.providers = [
             {
-                "name": "Crypto DT Source",
-                "weight": 25,  # 25% traffic
-                "priority": 95,
-                "avg_latency": 117.0,
-                "fetch_func": self._fetch_crypto_dt_source,
-                "enabled": True
-            },
-            {
                 "name": "Crypto API Clean", 
-                "weight": 25,  # 25% traffic (fastest)
-                "priority": 90,
+                "weight": 20,  # 20% traffic (fastest)
+                "priority": 95,
                 "avg_latency": 7.8,
                 "fetch_func": self._fetch_crypto_api_clean,
                 "enabled": True
             },
             {
-                "name": "Market Data Aggregator",
-                "weight": 20,  # 20% traffic (multi-source)
-                "priority": 85,
-                "avg_latency": 126.0,
-                "fetch_func": self._fetch_aggregator,
+                "name": "Crypto DT Source",
+                "weight": 18,  # 18% traffic
+                "priority": 90,
+                "avg_latency": 117.0,
+                "fetch_func": self._fetch_crypto_dt_source,
                 "enabled": True
             },
             {
-                "name": "CoinDesk API",  # NEW: CoinDesk with API key
+                "name": "CryptoCompare API",  # ENHANCED: With API key
                 "weight": 15,  # 15% traffic
+                "priority": 85,
+                "avg_latency": 126.0,
+                "fetch_func": self._fetch_cryptocompare,
+                "enabled": True
+            },
+            {
+                "name": "CoinDesk API",
+                "weight": 12,  # 12% traffic
                 "priority": 80,
                 "avg_latency": 180.0,
                 "fetch_func": self._fetch_coindesk,
                 "enabled": True
             },
             {
-                "name": "Alternative.me",
-                "weight": 10,  # 10% traffic (sentiment)
+                "name": "BSCScan API",  # NEW: BNB chain
+                "weight": 10,  # 10% traffic
+                "priority": 75,
+                "avg_latency": 160.0,
+                "fetch_func": self._fetch_bscscan,
+                "enabled": True
+            },
+            {
+                "name": "Tronscan API",  # NEW: TRON chain
+                "weight": 8,  # 8% traffic
+                "priority": 72,
+                "avg_latency": 170.0,
+                "fetch_func": self._fetch_tronscan,
+                "enabled": True
+            },
+            {
+                "name": "Market Data Aggregator",
+                "weight": 7,  # 7% traffic (multi-source fallback)
                 "priority": 70,
+                "avg_latency": 200.0,
+                "fetch_func": self._fetch_aggregator,
+                "enabled": True
+            },
+            {
+                "name": "Alternative.me",
+                "weight": 5,  # 5% traffic (sentiment)
+                "priority": 65,
                 "avg_latency": 150.0,
                 "fetch_func": self._fetch_alternative_me,
                 "enabled": True
@@ -302,6 +332,30 @@ class SmartMultiSourceRouter:
         
         raise Exception("Unsupported data type")
     
+    async def _fetch_cryptocompare(self, symbol: str, data_type: str) -> Dict[str, Any]:
+        """Fetch from CryptoCompare API (with API key)"""
+        from backend.services.cryptocompare_client import cryptocompare_client
+        
+        if data_type == "price":
+            result = await cryptocompare_client.get_price([symbol], "USD")
+            raw_data = result.get("data", {}).get(symbol.upper(), {}).get("USD", {})
+            
+            if raw_data:
+                return {
+                    "symbol": symbol.upper(),
+                    "price": raw_data.get("PRICE", 0),
+                    "change_24h": raw_data.get("CHANGEPCT24HOUR", 0),
+                    "volume_24h": raw_data.get("VOLUME24HOURTO", 0),
+                    "market_cap": raw_data.get("MKTCAP", 0),
+                    "timestamp": result.get("timestamp", "")
+                }
+        
+        elif data_type == "ohlc":
+            result = await cryptocompare_client.get_ohlcv(symbol, limit=100)
+            return result
+        
+        raise Exception("CryptoCompare data unavailable")
+    
     async def _fetch_coindesk(self, symbol: str, data_type: str) -> Dict[str, Any]:
         """Fetch from CoinDesk API (with API key)"""
         from backend.services.coindesk_client import coindesk_client
@@ -323,6 +377,38 @@ class SmartMultiSourceRouter:
                     return results[0]
         
         raise Exception("CoinDesk data unavailable for this symbol")
+    
+    async def _fetch_bscscan(self, symbol: str, data_type: str) -> Dict[str, Any]:
+        """Fetch from BSCScan API (BNB chain data)"""
+        from backend.services.bscscan_client import bscscan_client
+        
+        if data_type == "price" and symbol.upper() == "BNB":
+            result = await bscscan_client.get_bnb_price()
+            return {
+                "symbol": "BNB",
+                "price": result.get("price", 0),
+                "currency": "USD",
+                "timestamp": result.get("timestamp", "")
+            }
+        
+        raise Exception("BSCScan only provides BNB data")
+    
+    async def _fetch_tronscan(self, symbol: str, data_type: str) -> Dict[str, Any]:
+        """Fetch from Tronscan API (TRON chain data)"""
+        from backend.services.tronscan_client import tronscan_client
+        
+        if data_type == "price" and symbol.upper() == "TRX":
+            result = await tronscan_client.get_trx_price()
+            return {
+                "symbol": "TRX",
+                "price": result.get("price", 0),
+                "change_24h": result.get("change_24h", 0),
+                "volume_24h": result.get("volume_24h", 0),
+                "market_cap": result.get("market_cap", 0),
+                "timestamp": result.get("timestamp", "")
+            }
+        
+        raise Exception("Tronscan only provides TRX data")
     
     async def _fetch_alternative_me(self, symbol: str, data_type: str) -> Dict[str, Any]:
         """Fetch from Alternative.me (Fear & Greed Index)"""

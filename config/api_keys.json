@@ -4,28 +4,33 @@
   
   "block_explorers": {
     "etherscan": {
-      "key": "${ETHERSCAN_KEY}",
-      "backup_key": "${ETHERSCAN_BACKUP_KEY}",
+      "keys": [
+        "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
+        "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45"
+      ],
       "url": "https://api.etherscan.io/api",
-      "rate_limit": "5 req/sec"
+      "rate_limit": "5 req/sec",
+      "description": "Ethereum blockchain explorer"
     },
     "bscscan": {
-      "key": "${BSCSCAN_KEY}",
+      "key": "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT",
       "url": "https://api.bscscan.com/api",
-      "rate_limit": "5 req/sec"
+      "rate_limit": "5 req/sec",
+      "description": "BNB Smart Chain blockchain explorer"
     },
     "tronscan": {
-      "key": "${TRONSCAN_KEY}",
+      "key": "7ae72726-bffe-4e74-9c33-97b761eeea21",
       "url": "https://apilist.tronscanapi.com/api",
-      "rate_limit": "varies"
+      "rate_limit": "varies",
+      "description": "TRON blockchain explorer"
     }
   },
   
   "market_data": {
     "coinmarketcap": {
       "keys": [
-        "${COINMARKETCAP_KEY_1}",
-        "${COINMARKETCAP_KEY_2}"
+        "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1",
+        "b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c"
       ],
       "url": "https://pro-api.coinmarketcap.com/v1",
       "rate_limit": "333 req/day per key",
@@ -33,19 +38,33 @@
         "listings": "/cryptocurrency/listings/latest",
         "quotes": "/cryptocurrency/quotes/latest",
         "info": "/cryptocurrency/info"
-      }
+      },
+      "description": "Top cryptocurrency market data platform"
+    },
+    "cryptocompare": {
+      "key": "e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f",
+      "url": "https://min-api.cryptocompare.com/data",
+      "rate_limit": "100,000 req/month (free tier)",
+      "endpoints": {
+        "price": "/pricemultifull",
+        "ohlc": "/v2/histohour",
+        "news": "/v2/news/",
+        "social": "/social/coin/latest"
+      },
+      "description": "Comprehensive crypto data and news"
     }
   },
   
   "news": {
     "newsapi": {
-      "key": "${NEWSAPI_KEY}",
+      "key": "pub_346789abc123def456789ghi012345jkl",
       "url": "https://newsapi.org/v2",
       "rate_limit": "100 req/day (free)",
       "endpoints": {
         "everything": "/everything",
         "top_headlines": "/top-headlines"
-      }
+      },
+      "description": "General news API (includes crypto)"
     },
     "coindesk": {
       "key": "313f415173eb92928568d91eee6fd91d0c7569a56a9c7579181b7a083a740318",
@@ -55,7 +74,8 @@
         "price": "/bpi/currentprice/{currency}.json",
         "historical": "/bpi/historical/close.json",
         "news": "/news"
-      }
+      },
+      "description": "Bitcoin Price Index and crypto news"
     }
   },
   

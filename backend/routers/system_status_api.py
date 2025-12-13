@@ -482,7 +482,27 @@ async def check_providers_detailed() -> List[ProviderDetailed]:
             error=str(e)[:100]
         ))
     
-    # CoinDesk (NEW: With API key)
+    # CryptoCompare (ENHANCED: With API key)
+    try:
+        from backend.services.cryptocompare_client import cryptocompare_client
+        start = time.time()
+        price_data = await cryptocompare_client.get_price(["BTC"], "USD")
+        response_time = (time.time() - start) * 1000
+        providers.append(ProviderDetailed(
+            name="CryptoCompare API",
+            status="online",
+            response_time_ms=round(response_time, 2),
+            success_rate=100.0,
+            last_check=datetime.now().isoformat()
+        ))
+    except Exception as e:
+        providers.append(ProviderDetailed(
+            name="CryptoCompare API",
+            status="offline",
+            error=str(e)[:100]
+        ))
+    
+    # CoinDesk (With API key)
     try:
         from backend.services.coindesk_client import coindesk_client
         start = time.time()
@@ -498,6 +518,46 @@ async def check_providers_detailed() -> List[ProviderDetailed]:
     except Exception as e:
         providers.append(ProviderDetailed(
             name="CoinDesk API",
+            status="offline",
+            error=str(e)[:100]
+        ))
+    
+    # BSCScan (NEW: BNB Chain)
+    try:
+        from backend.services.bscscan_client import bscscan_client
+        start = time.time()
+        bnb_price = await bscscan_client.get_bnb_price()
+        response_time = (time.time() - start) * 1000
+        providers.append(ProviderDetailed(
+            name="BSCScan API",
+            status="online",
+            response_time_ms=round(response_time, 2),
+            success_rate=100.0,
+            last_check=datetime.now().isoformat()
+        ))
+    except Exception as e:
+        providers.append(ProviderDetailed(
+            name="BSCScan API",
+            status="offline",
+            error=str(e)[:100]
+        ))
+    
+    # Tronscan (NEW: TRON Chain)
+    try:
+        from backend.services.tronscan_client import tronscan_client
+        start = time.time()
+        trx_price = await tronscan_client.get_trx_price()
+        response_time = (time.time() - start) * 1000
+        providers.append(ProviderDetailed(
+            name="Tronscan API",
+            status="online",
+            response_time_ms=round(response_time, 2),
+            success_rate=100.0,
+            last_check=datetime.now().isoformat()
+        ))
+    except Exception as e:
+        providers.append(ProviderDetailed(
+            name="Tronscan API",
             status="offline",
             error=str(e)[:100]
         ))
