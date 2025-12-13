@@ -541,22 +541,26 @@ class DashboardPage {
 
   async fetchStats() {
     try {
-      const [res1, res2] = await Promise.allSettled([
+      const [res1, res2, res3] = await Promise.allSettled([
         apiClient.fetch('/api/resources/summary', {}, 15000).then(r => r.ok ? r.json() : null),
-        apiClient.fetch('/api/models/status', {}, 10000).then(r => r.ok ? r.json() : null)
+        apiClient.fetch('/api/models/status', {}, 10000).then(r => r.ok ? r.json() : null),
+        apiClient.fetch('/api/providers', {}, 10000).then(r => r.ok ? r.json() : null)
       ]);
       
       const data = res1.value?.summary || res1.value || {};
       const models = res2.value || {};
+      const providers = res3.value || {};
       
-      // FIX: Calculate actual provider count correctly
-      const providerCount = data.by_category ? 
-        Object.keys(data.by_category || {}).length : 
-        (data.available_providers || data.total_providers || 0);
+      // Providers: prefer backend providers endpoint; fallback to categories length if needed
+      const providerCount = Number.isFinite(providers?.online) ? providers.online
+        : Number.isFinite(providers?.total) ? providers.total
+        : Array.isArray(data.by_category) ? data.by_category.length
+        : 0;
       
       return {
         total_resources: data.total_resources || 0,
-        api_keys: data.total_api_keys || 0,
+        // Show configured keys (real usefulness), fallback to total refs
+        api_keys: data.configured_api_keys ?? data.total_api_keys ?? 0,
         models_loaded: models.models_loaded || data.models_available || 0,
         active_providers: providerCount // FIX: Use actual provider count, not total_resources
       };
