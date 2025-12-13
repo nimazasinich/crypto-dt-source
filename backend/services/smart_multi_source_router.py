@@ -49,6 +49,7 @@ class SmartMultiSourceRouter:
         from backend.services.crypto_dt_source_client import get_crypto_dt_source_service
         from backend.services.coingecko_client import coingecko_client
         from backend.services.market_data_aggregator import market_data_aggregator
+        from backend.services.coindesk_client import coindesk_client
         
         self.providers = [
             {
@@ -61,7 +62,7 @@ class SmartMultiSourceRouter:
             },
             {
                 "name": "Crypto API Clean", 
-                "weight": 30,  # 30% traffic (fastest)
+                "weight": 25,  # 25% traffic (fastest)
                 "priority": 90,
                 "avg_latency": 7.8,
                 "fetch_func": self._fetch_crypto_api_clean,
@@ -69,10 +70,18 @@ class SmartMultiSourceRouter:
             },
             {
                 "name": "Market Data Aggregator",
-                "weight": 25,  # 25% traffic (multi-source)
+                "weight": 20,  # 20% traffic (multi-source)
                 "priority": 85,
                 "avg_latency": 126.0,
                 "fetch_func": self._fetch_aggregator,
+                "enabled": True
+            },
+            {
+                "name": "CoinDesk API",  # NEW: CoinDesk with API key
+                "weight": 15,  # 15% traffic
+                "priority": 80,
+                "avg_latency": 180.0,
+                "fetch_func": self._fetch_coindesk,
                 "enabled": True
             },
             {
@@ -292,6 +301,28 @@ class SmartMultiSourceRouter:
             return result
         
         raise Exception("Unsupported data type")
+    
+    async def _fetch_coindesk(self, symbol: str, data_type: str) -> Dict[str, Any]:
+        """Fetch from CoinDesk API (with API key)"""
+        from backend.services.coindesk_client import coindesk_client
+        
+        if data_type == "price":
+            # CoinDesk primarily provides Bitcoin data
+            if symbol.upper() == "BTC":
+                result = await coindesk_client.get_bitcoin_price("USD")
+                return {
+                    "symbol": "BTC",
+                    "price": result.get("price", 0),
+                    "currency": "USD",
+                    "timestamp": result.get("timestamp", "")
+                }
+            else:
+                # For other symbols, use their market data endpoint
+                results = await coindesk_client.get_market_data([symbol])
+                if results and len(results) > 0:
+                    return results[0]
+        
+        raise Exception("CoinDesk data unavailable for this symbol")
     
     async def _fetch_alternative_me(self, symbol: str, data_type: str) -> Dict[str, Any]:
         """Fetch from Alternative.me (Fear & Greed Index)"""

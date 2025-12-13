@@ -482,6 +482,26 @@ async def check_providers_detailed() -> List[ProviderDetailed]:
             error=str(e)[:100]
         ))
     
+    # CoinDesk (NEW: With API key)
+    try:
+        from backend.services.coindesk_client import coindesk_client
+        start = time.time()
+        btc_price = await coindesk_client.get_bitcoin_price("USD")
+        response_time = (time.time() - start) * 1000
+        providers.append(ProviderDetailed(
+            name="CoinDesk API",
+            status="online",
+            response_time_ms=round(response_time, 2),
+            success_rate=100.0,
+            last_check=datetime.now().isoformat()
+        ))
+    except Exception as e:
+        providers.append(ProviderDetailed(
+            name="CoinDesk API",
+            status="offline",
+            error=str(e)[:100]
+        ))
+    
     # CoinGecko
     try:
         from backend.services.coingecko_client import coingecko_client

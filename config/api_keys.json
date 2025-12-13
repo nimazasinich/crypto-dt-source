@@ -46,6 +46,16 @@
         "everything": "/everything",
         "top_headlines": "/top-headlines"
       }
+    },
+    "coindesk": {
+      "key": "313f415173eb92928568d91eee6fd91d0c7569a56a9c7579181b7a083a740318",
+      "url": "https://api.coindesk.com/v2",
+      "rate_limit": "Varies by plan",
+      "endpoints": {
+        "price": "/bpi/currentprice/{currency}.json",
+        "historical": "/bpi/historical/close.json",
+        "news": "/news"
+      }
     }
   },
   
