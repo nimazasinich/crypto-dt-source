@@ -37,9 +37,12 @@ watchdog==6.0.0
 dnspython==2.7.0
 
 # HuggingFace (optional - for AI models)
-# PINNED VERSIONS to avoid pip backtracking hell
-# These versions are tested and compatible
-huggingface-hub==0.19.4
+# CRITICAL VERSION CONSTRAINTS:
+# - transformers 4.35.0 requires: huggingface-hub>=0.16.4,<1.0
+# - datasets 2.14.5 requires: huggingface-hub>=0.14.0,<1.0.0
+# - tokenizers 0.14.x requires: huggingface-hub>=0.16.4,<0.18  ← THE CONSTRAINT!
+# Compatible version: 0.16.4 <= huggingface-hub < 0.18
+huggingface-hub==0.17.3  # Maximum version compatible with tokenizers
 datasets==2.14.5
 
 # Utilities
