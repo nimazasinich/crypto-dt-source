@@ -1,0 +1,423 @@
+/**
+ * Provider Health Widget Styles
+ * Modern, clean design with status colors and animations
+ */
+
+.provider-health-widget {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fdfc 100%);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.08);
+  border: 1px solid rgba(20, 184, 166, 0.12);
+  transition: all 0.3s ease;
+}
+
+.provider-health-widget:hover {
+  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Header */
+.provider-health-widget .widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(20, 184, 166, 0.1);
+}
+
+.provider-health-widget .widget-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f2926;
+  margin: 0;
+}
+
+.provider-health-widget .widget-header svg {
+  color: #14b8a6;
+}
+
+.provider-health-widget .widget-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.provider-health-widget .btn-icon {
+  background: transparent;
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.provider-health-widget .btn-icon:hover {
+  background: rgba(20, 184, 166, 0.1);
+  border-color: #14b8a6;
+  transform: scale(1.05);
+}
+
+.provider-health-widget .btn-icon svg {
+  color: #14b8a6;
+}
+
+/* Summary */
+.provider-health-widget .health-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.provider-health-widget .summary-stat {
+  text-align: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  border: 1px solid rgba(20, 184, 166, 0.08);
+}
+
+.provider-health-widget .stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.provider-health-widget .stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+}
+
+/* Providers List */
+.provider-health-widget .providers-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.provider-health-widget .provider-category {
+  margin-bottom: 16px;
+}
+
+.provider-health-widget .provider-category h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.provider-health-widget .provider-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.provider-health-widget .provider-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid rgba(20, 184, 166, 0.08);
+  transition: all 0.2s ease;
+}
+
+.provider-health-widget .provider-item:hover {
+  background: rgba(20, 184, 166, 0.04);
+  border-color: rgba(20, 184, 166, 0.2);
+}
+
+.provider-health-widget .provider-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-health-widget .provider-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.provider-health-widget .provider-priority {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.provider-health-widget .provider-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-health-widget .status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  border: 1px solid currentColor;
+}
+
+.provider-health-widget .success-rate {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* Binance DNS Section */
+.provider-health-widget .binance-dns-section {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.provider-health-widget .binance-dns-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 8px;
+}
+
+.provider-health-widget .binance-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.provider-health-widget .binance-summary .available {
+  color: #16a34a;
+}
+
+.provider-health-widget .binance-summary .backoff {
+  color: #dc2626;
+}
+
+.provider-health-widget .binance-endpoints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.provider-health-widget .binance-endpoint {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.provider-health-widget .binance-endpoint.available {
+  border-left: 3px solid #10b981;
+}
+
+.provider-health-widget .binance-endpoint.unavailable {
+  border-left: 3px solid #ef4444;
+  opacity: 0.6;
+}
+
+.provider-health-widget .endpoint-url {
+  font-family: 'Monaco', 'Menlo', monospace;
+  color: #374151;
+}
+
+.provider-health-widget .endpoint-status {
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.provider-health-widget .binance-endpoint.unavailable .endpoint-status {
+  color: #dc2626;
+}
+
+/* Circuit Breaker Section */
+.provider-health-widget .circuit-breaker-section {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.provider-health-widget .circuit-breaker-section.success {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+.provider-health-widget .circuit-breaker-section.warning {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.provider-health-widget .circuit-breaker-section h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #065f46;
+  margin-bottom: 8px;
+}
+
+.provider-health-widget .circuit-breaker-section.warning h4 {
+  color: #92400e;
+}
+
+.provider-health-widget .all-good {
+  font-size: 12px;
+  font-weight: 500;
+  color: #047857;
+  margin: 0;
+}
+
+.provider-health-widget .warning-message {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b45309;
+  margin: 0 0 8px 0;
+}
+
+.provider-health-widget .open-breakers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.provider-health-widget .breaker-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+  font-size: 11px;
+  border-left: 3px solid #f59e0b;
+}
+
+.provider-health-widget .failure-count {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+/* Footer */
+.provider-health-widget .widget-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid rgba(20, 184, 166, 0.1);
+}
+
+.provider-health-widget .widget-footer small {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.provider-health-widget .auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  user-select: none;
+}
+
+.provider-health-widget .auto-refresh-toggle input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: #14b8a6;
+}
+
+/* Loading State */
+.provider-health-widget.loading {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.provider-health-widget .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(20, 184, 166, 0.2);
+  border-top-color: #14b8a6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.provider-health-widget.error {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.provider-health-widget .error-message {
+  color: #dc2626;
+  font-size: 13px;
+  text-align: center;
+  margin: 20px 0;
+}
+
+/* Scrollbar Styling */
+.provider-health-widget .providers-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.provider-health-widget .providers-list::-webkit-scrollbar-track {
+  background: rgba(20, 184, 166, 0.05);
+  border-radius: 3px;
+}
+
+.provider-health-widget .providers-list::-webkit-scrollbar-thumb {
+  background: rgba(20, 184, 166, 0.3);
+  border-radius: 3px;
+}
+
+.provider-health-widget .providers-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 184, 166, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .provider-health-widget {
+    padding: 16px;
+  }
+
+  .provider-health-widget .health-summary {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .provider-health-widget .summary-stat {
+    padding: 10px 8px;
+  }
+
+  .provider-health-widget .stat-value {
+    font-size: 20px;
+  }
+}
