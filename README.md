@@ -1,4 +1,15 @@
+---
+title: Unified Crypto Data Platform
+emoji: 🚀
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 # Unified Crypto Data Platform 🚀
+
 
 **Version**: 2.0.0 (Production Ready)
 **Port**: 7860
