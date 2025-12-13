@@ -1480,11 +1480,11 @@ async def api_ohlcv_multi(symbols: str, timeframe: str = "1h", limit: int = 100)
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
 
-# Root endpoint - Serve Dashboard as home page
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    """Root endpoint - serves the dashboard page"""
-    return serve_page("dashboard")
+#
+# NOTE:
+# `/` is already handled earlier (redirects to dashboard). Keep a single handler
+# for a stable routing table (avoids duplicate route definitions).
+#
 
 # API Root endpoint - Keep for backwards compatibility
 @app.get("/api")

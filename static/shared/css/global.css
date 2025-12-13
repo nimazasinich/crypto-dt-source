@@ -231,3 +231,31 @@ input::placeholder {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+/* ==========================================================================
+   Disable "blinking" (looping) animations globally
+   --------------------------------------------------------------------------
+   Many pages/components use infinite pulse/shimmer/gradient animations that can
+   look like blinking. We stop ALL looping animations across the app, but keep
+   loading spinners rotating so users still get feedback during async loads.
+   ========================================================================== */
+
+/* Stop all looping animations (including on pseudo-elements) */
+html body *,
+html body *::before,
+html body *::after {
+  animation-iteration-count: 1 !important;
+}
+
+/* Keep true loading spinners rotating */
+html body .spinner,
+html body .loading-spinner,
+html body .spinner-icon,
+html body .spinner::before,
+html body .spinner::after,
+html body .loading-spinner::before,
+html body .loading-spinner::after,
+html body .spinner-icon::before,
+html body .spinner-icon::after {
+  animation-iteration-count: infinite !important;
+}
