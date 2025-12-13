@@ -2,12 +2,12 @@
 Crypto API Hub Self-Healing Backend Router
 
 This module provides backend support for the self-healing crypto API hub,
-including proxy endpoints, health monitoring, and automatic recovery mechanisms.
+including health monitoring, diagnostics, and automatic recovery mechanisms.
 """
 
 from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import httpx
 import asyncio
@@ -26,15 +26,6 @@ router = APIRouter(
 health_status: Dict[str, Dict[str, Any]] = {}
 failed_endpoints: Dict[str, Dict[str, Any]] = {}
 recovery_log: List[Dict[str, Any]] = []
-
-
-class ProxyRequest(BaseModel):
-    """Model for proxy request"""
-    url: str
-    method: str = "GET"
-    headers: Optional[Dict[str, str]] = {}
-    body: Optional[str] = None
-    timeout: Optional[int] = 10
 
 
 class HealthCheckRequest(BaseModel):
@@ -61,7 +52,7 @@ async def serve_crypto_hub():
         with open(html_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
         
-        # Inject self-healing script
+        # Inject self-healing script (NO backend proxying of arbitrary URLs)
         injection = '''
     <script src="/static/js/crypto-api-hub-self-healing.js"></script>
     <script>
@@ -73,32 +64,6 @@ async def serve_crypto_hub():
             retryAttempts: 3,
             healthCheckInterval: 60000
         });
-
-        // Override fetch to use self-healing
-        const originalFetch = window.fetch;
-        window.fetch = async function(...args) {
-            const url = args[0];
-            const options = args[1] || {};
-            
-            // Use self-healing fetch for API calls
-            if (url.startsWith('http://') || url.startsWith('https://')) {
-                const result = await selfHealing.fetchWithRecovery(url, options);
-                
-                if (result.success) {
-                    return {
-                        ok: true,
-                        json: async () => result.data,
-                        headers: new Headers(),
-                        status: 200
-                    };
-                } else {
-                    throw new Error(result.error);
-                }
-            }
-            
-            // Use original fetch for non-API calls
-            return originalFetch.apply(this, args);
-        };
 
         // Add health status indicator to UI
         function addHealthIndicator() {
@@ -154,74 +119,6 @@ async def serve_crypto_hub():
     except Exception as e:
         logger.error(f"Error serving crypto hub: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/proxy")
-async def proxy_request(request: ProxyRequest):
-    """
-    Proxy endpoint for API requests with automatic retry and fallback
-    """
-    try:
-        async with httpx.AsyncClient(timeout=request.timeout) as client:
-            # Build request
-            kwargs = {
-                "method": request.method,
-                "url": request.url,
-                "headers": request.headers or {}
-            }
-            
-            if request.body and request.method in ["POST", "PUT", "PATCH"]:
-                kwargs["content"] = request.body
-            
-            # Make request with retry logic
-            max_retries = 3
-            last_error = None
-            
-            for attempt in range(max_retries):
-                try:
-                    response = await client.request(**kwargs)
-                    
-                    if response.status_code < 400:
-                        return {
-                            "success": True,
-                            "status_code": response.status_code,
-                            "data": response.json() if response.content else {},
-                            "headers": dict(response.headers),
-                            "source": "proxy",
-                            "attempt": attempt + 1
-                        }
-                    
-                    last_error = f"HTTP {response.status_code}"
-                    
-                except httpx.TimeoutException:
-                    last_error = "Request timeout"
-                    logger.warning(f"Proxy timeout (attempt {attempt + 1}): {request.url}")
-                    
-                except httpx.RequestError as e:
-                    last_error = str(e)
-                    logger.warning(f"Proxy error (attempt {attempt + 1}): {request.url} - {e}")
-                
-                # Exponential backoff
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(2 ** attempt)
-            
-            # All attempts failed
-            record_failure(request.url, last_error)
-            
-            return {
-                "success": False,
-                "error": last_error,
-                "url": request.url,
-                "attempts": max_retries
-            }
-    
-    except Exception as e:
-        logger.error(f"Proxy error: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "url": request.url
-        }
 
 
 @router.post("/health-check")
@@ -349,8 +246,6 @@ async def clear_failures():
     """
     Clear all failure records (admin function)
     """
-    global failed_endpoints, recovery_log
-    
     cleared = len(failed_endpoints)
     failed_endpoints.clear()
     recovery_log.clear()

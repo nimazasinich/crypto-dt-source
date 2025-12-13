@@ -30,6 +30,7 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️ Error importing hf_unified_server: {e}")
     logger.info("Falling back to basic app...")
+    import_error = str(e)
     # Fallback to basic FastAPI app
     try:
         from fastapi import FastAPI
@@ -40,7 +41,7 @@ except ImportError as e:
             return {
                 "status": "fallback",
                 "message": "Server is running in fallback mode",
-                "error": str(e)
+                "error": import_error,
             }
         
         @app.get("/")
@@ -58,13 +59,14 @@ except Exception as e:
     logger.error(f"❌ Unexpected error loading server: {e}")
     import traceback
     traceback.print_exc()
+    unexpected_error = str(e)
     # Still create fallback app
     from fastapi import FastAPI
     app = FastAPI(title="Crypto API - Error Mode")
     
     @app.get("/health")
     def health():
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": unexpected_error}
 
 # Export app for uvicorn
 __all__ = ["app"]

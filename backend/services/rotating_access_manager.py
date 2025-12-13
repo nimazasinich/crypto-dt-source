@@ -5,7 +5,6 @@ Rotating DNS/Proxy Manager
 
 Features:
 - DNS Rotation (چرخش بین Cloudflare، Google، OpenDNS)
-- Proxy Rotation (چرخش بین پروکسی‌های مختلف)
 - Health Monitoring (پایش سلامت)
 - Automatic Failover (تعویض خودکار در صورت مشکل)
 - Always Secure (همیشه امن)
@@ -34,7 +33,7 @@ class RotatingAccessManager:
     """
     مدیر دسترسی چرخشی برای Binance و KuCoin
     
-    با چرخش خودکار DNS و Proxy برای امنیت و قابلیت اطمینان بیشتر
+    با چرخش خودکار DNS برای امنیت و قابلیت اطمینان بیشتر
     """
     
     def __init__(self):
@@ -51,14 +50,6 @@ class RotatingAccessManager:
         self.dns_rotation_interval = timedelta(minutes=10)
         self.last_dns_rotation = datetime.now()
         
-        # Proxy settings
-        self.proxyscrape_api = "https://api.proxyscrape.com/v2/"
-        self.proxy_pool: List[str] = []
-        self.current_proxy_index = 0
-        self.proxy_rotation_interval = timedelta(minutes=5)
-        self.last_proxy_rotation = datetime.now()
-        self.proxy_health: Dict[str, Dict] = {}
-        
         # DNS Cache with rotation
         self.dns_cache: Dict[str, List[str]] = {}  # domain -> [ip1, ip2, ...]
         self.dns_cache_time: Dict[str, datetime] = {}
@@ -67,11 +58,10 @@ class RotatingAccessManager:
         # Statistics
         self.rotation_stats = {
             "dns_rotations": 0,
-            "proxy_rotations": 0,
             "successful_requests": 0,
             "failed_requests": 0,
             "dns_failures": {},
-            "proxy_failures": {}
+            "proxy_failures": {}  # kept for backward-compat in existing dashboards
         }
         
         # Critical domains (Binance & KuCoin)
@@ -168,70 +158,11 @@ class RotatingAccessManager:
         logger.error(f"❌ All DNS providers failed for {hostname}")
         return None
     
-    async def get_rotating_proxy(self) -> Optional[str]:
-        """
-        دریافت proxy بعدی (چرخشی)
-        
-        Returns:
-            proxy string (ip:port)
-        """
-        # بررسی زمان refresh
-        if not self.proxy_pool or \
-           (datetime.now() - self.last_proxy_rotation) > self.proxy_rotation_interval:
-            await self.refresh_proxy_pool()
-        
-        if not self.proxy_pool:
-            return None
-        
-        # چرخش
-        self.current_proxy_index = (self.current_proxy_index + 1) % len(self.proxy_pool)
-        proxy = self.proxy_pool[self.current_proxy_index]
-        
-        logger.info(f"🔄 Using Proxy #{self.current_proxy_index + 1}/{len(self.proxy_pool)}: {proxy}")
-        
-        return proxy
-    
-    async def refresh_proxy_pool(self):
-        """
-        بروزرسانی لیست پروکسی‌ها
-        """
-        try:
-            logger.info("🔄 Refreshing proxy pool...")
-            
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(
-                    self.proxyscrape_api,
-                    params={
-                        "request": "displayproxies",
-                        "protocol": "http",
-                        "timeout": "10000",
-                        "country": "all",
-                        "ssl": "all",
-                        "anonymity": "elite"
-                    }
-                )
-                
-                if response.status_code == 200:
-                    proxies_text = response.text
-                    proxies = [p.strip() for p in proxies_text.split('\n') if p.strip()]
-                    
-                    # شافل برای تصادفی بودن
-                    random.shuffle(proxies)
-                    
-                    self.proxy_pool = proxies[:20]  # نگه‌داری 20 proxy
-                    self.last_proxy_rotation = datetime.now()
-                    self.rotation_stats["proxy_rotations"] += 1
-                    
-                    logger.info(f"✅ Proxy pool refreshed: {len(self.proxy_pool)} proxies")
-        
-        except Exception as e:
-            logger.error(f"❌ Failed to refresh proxy pool: {e}")
-    
     async def secure_fetch(
         self,
         url: str,
         use_rotating_dns: bool = True,
-        use_rotating_proxy: bool = True,
+        use_rotating_proxy: bool = True,  # ignored (proxy rotation disabled on Spaces)
         **kwargs
     ) -> Optional[httpx.Response]:
         """
@@ -240,13 +171,11 @@ class RotatingAccessManager:
         Strategy:
         1. Direct (اول)
         2. Rotating DNS (اگر فیلتر بود)
-        3. Rotating Proxy (اگر DNS کار نکرد)
-        4. DNS + Proxy (قوی‌ترین)
         
         Args:
             url: آدرس API
             use_rotating_dns: استفاده از DNS چرخشی
-            use_rotating_proxy: استفاده از Proxy چرخشی
+            use_rotating_proxy: (disabled) kept for backward compatibility
         """
         logger.info(f"\n{'='*60}")
         logger.info(f"🔐 SECURE FETCH (Rotating): {url}")
@@ -292,62 +221,6 @@ class RotatingAccessManager:
                 except Exception as e:
                     logger.warning(f"⚠️ Rotating DNS attempt {attempt + 1} failed: {e}")
         
-        # Method 3: Rotating Proxy
-        if use_rotating_proxy:
-            logger.info("3️⃣ Trying ROTATING PROXY...")
-            
-            # امتحان 3 proxy مختلف
-            for attempt in range(3):
-                try:
-                    proxy = await self.get_rotating_proxy()
-                    
-                    if proxy:
-                        logger.info(f"   Using proxy: {proxy}")
-                        
-                        async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
-                            response = await client.get(
-                                url,
-                                proxy=f"http://{proxy}",
-                                **kwargs
-                            )
-                            
-                            if response.status_code == 200:
-                                self.rotation_stats["successful_requests"] += 1
-                                logger.info(f"✅ ROTATING PROXY successful!")
-                                return response
-                except Exception as e:
-                    logger.warning(f"⚠️ Rotating Proxy attempt {attempt + 1} failed: {e}")
-        
-        # Method 4: DNS + Proxy (قوی‌ترین)
-        if use_rotating_dns and use_rotating_proxy:
-            logger.info("4️⃣ Trying DNS + PROXY (Combined)...")
-            
-            try:
-                hostname = url.split("://")[1].split("/")[0]
-                ip = await self.resolve_dns_rotating(hostname)
-                proxy = await self.get_rotating_proxy()
-                
-                if ip and proxy:
-                    url_with_ip = url.replace(hostname, ip)
-                    
-                    async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
-                        headers = kwargs.get("headers", {})
-                        headers["Host"] = hostname
-                        kwargs["headers"] = headers
-                        
-                        response = await client.get(
-                            url_with_ip,
-                            proxy=f"http://{proxy}",
-                            **kwargs
-                        )
-                        
-                        if response.status_code == 200:
-                            self.rotation_stats["successful_requests"] += 1
-                            logger.info(f"✅ DNS + PROXY successful!")
-                            return response
-            except Exception as e:
-                logger.warning(f"⚠️ DNS + Proxy failed: {e}")
-        
         # همه روش‌ها ناموفق
         self.rotation_stats["failed_requests"] += 1
         logger.error(f"❌ ALL METHODS FAILED for {url}")
@@ -361,12 +234,12 @@ class RotatingAccessManager:
         
         return {
             "dns_rotations": self.rotation_stats["dns_rotations"],
-            "proxy_rotations": self.rotation_stats["proxy_rotations"],
+            "proxy_rotations": self.rotation_stats.get("proxy_rotations", 0),
             "successful_requests": self.rotation_stats["successful_requests"],
             "failed_requests": self.rotation_stats["failed_requests"],
             "success_rate": f"{success_rate:.1f}%",
             "dns_providers": len(self.dns_providers),
-            "proxy_pool_size": len(self.proxy_pool),
+            "proxy_pool_size": 0,
             "dns_failures": self.rotation_stats["dns_failures"],
             "proxy_failures": self.rotation_stats["proxy_failures"],
             "cache_size": len(self.dns_cache)
@@ -382,7 +255,7 @@ class RotatingAccessManager:
         
         print(f"\n🔄 Rotations:")
         print(f"   DNS Rotations:   {stats['dns_rotations']}")
-        print(f"   Proxy Rotations: {stats['proxy_rotations']}")
+        print(f"   Proxy Rotations: {stats.get('proxy_rotations', 0)}")
         
         print(f"\n📈 Requests:")
         print(f"   Successful: {stats['successful_requests']}")
@@ -391,7 +264,7 @@ class RotatingAccessManager:
         
         print(f"\n🔍 Resources:")
         print(f"   DNS Providers: {stats['dns_providers']}")
-        print(f"   Proxy Pool:    {stats['proxy_pool_size']}")
+        print(f"   Proxy Pool:    0")
         print(f"   DNS Cache:     {stats['cache_size']} domains")
         
         print("\n" + "="*60)

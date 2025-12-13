@@ -1699,7 +1699,7 @@
         "base_url": "https://api-inference.huggingface.co/models/ElKulako/cryptobert",
         "auth": {
           "type": "apiKeyHeaderOptional",
-          "key": "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",
+          "key": "",
           "header_name": "Authorization"
         },
         "docs_url": "https://huggingface.co/ElKulako/cryptobert",
@@ -1715,7 +1715,7 @@
         "base_url": "https://api-inference.huggingface.co/models/kk08/CryptoBERT",
         "auth": {
           "type": "apiKeyHeaderOptional",
-          "key": "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",
+          "key": "",
           "header_name": "Authorization"
         },
         "docs_url": "https://huggingface.co/kk08/CryptoBERT",
@@ -2006,78 +2006,7 @@
         "notes": "Replace {API_BASE} with your local server base URL"
       }
     ],
-    "cors_proxies": [
-      {
-        "id": "allorigins",
-        "name": "AllOrigins",
-        "base_url": "https://api.allorigins.win/get?url={TARGET_URL}",
-        "auth": {
-          "type": "none"
-        },
-        "docs_url": null,
-        "notes": "No limit, JSON/JSONP, raw content"
-      },
-      {
-        "id": "cors_sh",
-        "name": "CORS.SH",
-        "base_url": "https://proxy.cors.sh/{TARGET_URL}",
-        "auth": {
-          "type": "none"
-        },
-        "docs_url": null,
-        "notes": "No rate limit, requires Origin or x-requested-with header"
-      },
-      {
-        "id": "corsfix",
-        "name": "Corsfix",
-        "base_url": "https://proxy.corsfix.com/?url={TARGET_URL}",
-        "auth": {
-          "type": "none"
-        },
-        "docs_url": null,
-        "notes": "60 req/min free, header override, cached"
-      },
-      {
-        "id": "codetabs",
-        "name": "CodeTabs",
-        "base_url": "https://api.codetabs.com/v1/proxy?quest={TARGET_URL}",
-        "auth": {
-          "type": "none"
-        },
-        "docs_url": null,
-        "notes": "Popular"
-      },
-      {
-        "id": "thingproxy",
-        "name": "ThingProxy",
-        "base_url": "https://thingproxy.freeboard.io/fetch/{TARGET_URL}",
-        "auth": {
-          "type": "none"
-        },
-        "docs_url": null,
-        "notes": "10 req/sec, 100,000 chars limit"
-      },
-      {
-        "id": "crossorigin_me",
-        "name": "Crossorigin.me",
-        "base_url": "https://crossorigin.me/{TARGET_URL}",
-        "auth": {
-          "type": "none"
-        },
-        "docs_url": null,
-        "notes": "GET only, 2MB limit"
-      },
-      {
-        "id": "cors_anywhere_selfhosted",
-        "name": "Self-Hosted CORS-Anywhere",
-        "base_url": "{YOUR_DEPLOYED_URL}",
-        "auth": {
-          "type": "none"
-        },
-        "docs_url": "https://github.com/Rob--W/cors-anywhere",
-        "notes": "Deploy on Cloudflare Workers, Vercel, Heroku"
-      }
-    ]
+    "cors_proxies": []
   },
   "source_files": [
     {

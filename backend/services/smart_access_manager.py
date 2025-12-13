@@ -6,8 +6,6 @@ Smart Access Manager
 Features:
 - Direct Connection (اتصال مستقیم)
 - DNS over HTTPS (تغییر DNS)
-- Free Proxy (استفاده از پروکسی رایگان)
-- DNS + Proxy (ترکیبی)
 - Automatic Fallback (فالبک خودکار)
 """
 
@@ -26,8 +24,6 @@ class AccessMethod(Enum):
     DIRECT = "direct"
     DNS_CLOUDFLARE = "dns_cloudflare"
     DNS_GOOGLE = "dns_google"
-    PROXY = "proxy"
-    DNS_PROXY = "dns_proxy"
 
 
 class SmartAccessManager:
@@ -38,20 +34,12 @@ class SmartAccessManager:
     1. Direct Connection (سریع‌ترین)
     2. DNS over HTTPS - Cloudflare (تغییر DNS)
     3. DNS over HTTPS - Google (DNS جایگزین)
-    4. Free Proxy (پروکسی رایگان)
-    5. DNS + Proxy (ترکیبی - قوی‌ترین)
     """
     
     def __init__(self):
         self.cloudflare_doh = "https://cloudflare-dns.com/dns-query"
         self.google_doh = "https://dns.google/resolve"
-        self.proxyscrape_api = "https://api.proxyscrape.com/v2/"
-        
-        # Cache for proxies and DNS resolutions
-        self.proxy_cache: List[str] = []
-        self.proxy_cache_time: Optional[datetime] = None
-        self.proxy_refresh_interval = timedelta(minutes=5)
-        
+        # Cache for DNS resolutions
         self.dns_cache: Dict[str, str] = {}
         self.dns_cache_time: Dict[str, datetime] = {}
         self.dns_cache_duration = timedelta(hours=1)
@@ -61,8 +49,6 @@ class SmartAccessManager:
             AccessMethod.DIRECT: {"success": 0, "fail": 0},
             AccessMethod.DNS_CLOUDFLARE: {"success": 0, "fail": 0},
             AccessMethod.DNS_GOOGLE: {"success": 0, "fail": 0},
-            AccessMethod.PROXY: {"success": 0, "fail": 0},
-            AccessMethod.DNS_PROXY: {"success": 0, "fail": 0},
         }
         
         # Blocked domains that need special handling
@@ -139,64 +125,6 @@ class SmartAccessManager:
         
         return None
     
-    async def get_free_proxies(self, limit: int = 10) -> List[str]:
-        """
-        Get fresh free proxies from ProxyScrape
-        دریافت پروکسی‌های رایگان تازه
-        """
-        # Check cache
-        if self.proxy_cache and self.proxy_cache_time:
-            if (datetime.now() - self.proxy_cache_time) < self.proxy_refresh_interval:
-                logger.info(f"📦 Proxy Cache Hit: {len(self.proxy_cache)} proxies")
-                return self.proxy_cache[:limit]
-        
-        try:
-            logger.info("🔄 Fetching fresh proxies from ProxyScrape...")
-            
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(
-                    self.proxyscrape_api,
-                    params={
-                        "request": "displayproxies",
-                        "protocol": "http",
-                        "timeout": "10000",
-                        "country": "all",
-                        "ssl": "all",
-                        "anonymity": "elite"
-                    }
-                )
-                
-                if response.status_code == 200:
-                    proxies_text = response.text
-                    proxies = [p.strip() for p in proxies_text.split('\n') if p.strip()]
-                    
-                    # Update cache
-                    self.proxy_cache = proxies
-                    self.proxy_cache_time = datetime.now()
-                    
-                    logger.info(f"✅ Fetched {len(proxies)} proxies from ProxyScrape")
-                    return proxies[:limit]
-        
-        except Exception as e:
-            logger.error(f"❌ Failed to fetch proxies: {e}")
-        
-        return []
-    
-    async def test_proxy(self, proxy: str, test_url: str = "https://httpbin.org/ip") -> bool:
-        """
-        Test if a proxy is working
-        تست عملکرد پروکسی
-        """
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(
-                    test_url,
-                    proxy=f"http://{proxy}"
-                )
-                return response.status_code == 200
-        except:
-            return False
-    
     async def fetch_with_method(
         self,
         url: str,
@@ -259,58 +187,6 @@ class SmartAccessManager:
                             self.success_stats[method]["success"] += 1
                             logger.info(f"✅ Google DNS successful!")
                             return response, method
-            
-            elif method == AccessMethod.PROXY:
-                # Method 4: Free Proxy
-                proxies = await self.get_free_proxies(limit=5)
-                
-                for proxy in proxies:
-                    try:
-                        logger.info(f"🔗 Trying PROXY: {proxy}")
-                        async with httpx.AsyncClient(timeout=10.0) as client:
-                            response = await client.get(
-                                url,
-                                proxy=f"http://{proxy}",
-                                **kwargs
-                            )
-                            if response.status_code == 200:
-                                self.success_stats[method]["success"] += 1
-                                logger.info(f"✅ PROXY {proxy} successful!")
-                                return response, method
-                    except:
-                        continue
-            
-            elif method == AccessMethod.DNS_PROXY:
-                # Method 5: DNS + Proxy (Most Powerful!)
-                hostname = url.split("//")[1].split("/")[0]
-                ip = await self.resolve_dns_cloudflare(hostname)
-                
-                if not ip:
-                    ip = await self.resolve_dns_google(hostname)
-                
-                if ip:
-                    url_with_ip = url.replace(hostname, ip)
-                    proxies = await self.get_free_proxies(limit=3)
-                    
-                    for proxy in proxies:
-                        try:
-                            logger.info(f"🔗 Trying DNS+PROXY: {hostname}->{ip} via {proxy}")
-                            async with httpx.AsyncClient(timeout=10.0) as client:
-                                headers = kwargs.get("headers", {})
-                                headers["Host"] = hostname
-                                kwargs["headers"] = headers
-                                
-                                response = await client.get(
-                                    url_with_ip,
-                                    proxy=f"http://{proxy}",
-                                    **kwargs
-                                )
-                                if response.status_code == 200:
-                                    self.success_stats[method]["success"] += 1
-                                    logger.info(f"✅ DNS+PROXY successful!")
-                                    return response, method
-                        except:
-                            continue
         
         except Exception as e:
             logger.warning(f"⚠️ Method {method.value} failed: {e}")
@@ -368,13 +244,11 @@ class SmartAccessManager:
             except Exception as e:
                 logger.warning(f"⚠️ Direct connection failed: {e}")
         
-        # استفاده از Fallback Order از config
+        # استفاده از Fallback Order از config (proxy methods intentionally disabled on Spaces)
         fallback_order = config.get("fallback_order", [
             "direct",
             "dns_cloudflare",
             "dns_google",
-            "proxy",
-            "dns_proxy"
         ])
         
         # تبدیل به AccessMethod
@@ -382,8 +256,6 @@ class SmartAccessManager:
             "direct": AccessMethod.DIRECT,
             "dns_cloudflare": AccessMethod.DNS_CLOUDFLARE,
             "dns_google": AccessMethod.DNS_GOOGLE,
-            "proxy": AccessMethod.PROXY,
-            "dns_proxy": AccessMethod.DNS_PROXY,
         }
         
         methods = [method_map.get(m, AccessMethod.DIRECT) for m in fallback_order]

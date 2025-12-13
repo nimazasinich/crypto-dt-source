@@ -1,41 +1,13 @@
-/* AI Analyst Page Styles - Enhanced */
+/* AI Analyst Page Styles */
 
-/* CSS Variables Fallbacks */
-:root {
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-full: 9999px;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-md: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --text-strong: #020617;
-  --surface-base: #ffffff;
-  --surface-elevated: #f8fafc;
-  --surface-glass: rgba(255, 255, 255, 0.8);
-  --border-subtle: #e2e8f0;
-  --color-primary: #3b82f6;
-  --color-primary-light: #60a5fa;
-  --color-success: #22c55e;
-  --color-danger: #ef4444;
+/* Page-scoped accents (do not override global theme tokens) */
+.analyst-layout {
+  --ai-accent-1: #14b8a6;
+  --ai-accent-2: #22d3ee;
+  --ai-accent-3: #3b82f6;
+  --ai-card-border: color-mix(in srgb, var(--ai-accent-1) 22%, transparent);
+  --ai-card-bg: color-mix(in srgb, var(--surface-base) 92%, transparent);
+  --ai-card-bg-2: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
 }
 
 .analyst-layout {
@@ -63,8 +35,8 @@
 }
 
 .panel-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9));
-  border: 1px solid rgba(20, 184, 166, 0.15);
+  background: linear-gradient(135deg, var(--ai-card-bg), var(--ai-card-bg-2));
+  border: 1px solid var(--ai-card-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -80,8 +52,8 @@
   display: flex;
   align-items: center;
   padding: var(--space-4) var(--space-5);
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.08), rgba(34, 211, 238, 0.05));
-  border-bottom: 2px solid rgba(20, 184, 166, 0.2);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ai-accent-1) 10%, transparent), color-mix(in srgb, var(--ai-accent-2) 8%, transparent));
+  border-bottom: 1px solid color-mix(in srgb, var(--ai-accent-1) 24%, transparent);
   position: relative;
 }
 
@@ -92,7 +64,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #2dd4bf, #22d3ee, #3b82f6);
+  background: linear-gradient(90deg, var(--ai-accent-1), var(--ai-accent-2), var(--ai-accent-3));
   opacity: 0.6;
 }
 
@@ -152,9 +124,9 @@
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #14b8a6;
+  border-color: var(--ai-accent-1);
   background: white;
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ai-accent-1) 18%, transparent);
 }
 
 .form-input:hover,
@@ -172,19 +144,19 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   padding: var(--space-4);
-  background: linear-gradient(135deg, #14b8a6, #22d3ee);
+  background: linear-gradient(135deg, var(--ai-accent-1), var(--ai-accent-2));
   border: none;
   border-radius: var(--radius-lg);
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--ai-accent-1) 35%, transparent);
 }
 
 .btn-block:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(20, 184, 166, 0.4);
-  background: linear-gradient(135deg, #0d9488, #06b6d4);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--ai-accent-1) 45%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ai-accent-1) 82%, black), color-mix(in srgb, var(--ai-accent-2) 82%, black));
 }
 
 .btn-block:active {
@@ -205,8 +177,8 @@
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-3);
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(34, 211, 238, 0.05));
-  border: 2px solid rgba(20, 184, 166, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ai-accent-1) 10%, transparent), color-mix(in srgb, var(--ai-accent-2) 8%, transparent));
+  border: 1px solid color-mix(in srgb, var(--ai-accent-1) 30%, transparent);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-weight: var(--font-weight-semibold);
@@ -215,10 +187,10 @@
 }
 
 .quick-actions .btn:hover {
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(34, 211, 238, 0.1));
-  border-color: #14b8a6;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ai-accent-1) 16%, transparent), color-mix(in srgb, var(--ai-accent-2) 14%, transparent));
+  border-color: var(--ai-accent-1);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ai-accent-1) 22%, transparent);
 }
 
 .quick-actions .btn:active {
@@ -281,10 +253,10 @@
 }
 
 .decision-card {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--surface-elevated) 50%, #0b1220), color-mix(in srgb, var(--surface-elevated) 35%, #0b1220));
   border-radius: var(--radius-lg);
   padding: var(--space-5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 55%, transparent);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
@@ -345,10 +317,6 @@
   font-weight: var(--font-weight-bold);
   color: var(--text-strong);
   margin-bottom: var(--space-2);
-  background: linear-gradient(135deg, #f8fafc, #cbd5e1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .price-info {
@@ -901,13 +869,17 @@
 /* Charts Grid */
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
   margin-top: var(--space-4);
 }
 
 .charts-grid .analysis-section {
   min-height: 350px;
+}
+
+.charts-grid .analysis-section h4 {
+  margin-bottom: var(--space-3);
 }
 
 .charts-grid canvas {

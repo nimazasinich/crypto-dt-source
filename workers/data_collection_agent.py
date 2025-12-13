@@ -14,7 +14,6 @@ import logging
 import sys
 sys.path.insert(0, '/workspace')
 from core.smart_fallback_manager import get_fallback_manager
-from core.smart_proxy_manager import get_proxy_manager
 from database.db_manager import db_manager
 
 logger = logging.getLogger(__name__)
@@ -31,7 +30,6 @@ class DataCollectionAgent:
     
     def __init__(self):
         self.fallback_manager = get_fallback_manager()
-        self.proxy_manager = get_proxy_manager()
         self.is_running = False
         self.collection_stats = {
             'total_collections': 0,
@@ -279,7 +277,7 @@ class DataCollectionAgent:
                     logger.info(f"🗑️ Cleaned up {len(removed)} failed resources")
                 
                 # Test proxies
-                await self.proxy_manager.test_all_proxies()
+                # Proxy testing is disabled on Hugging Face Spaces.
                 
             except Exception as e:
                 logger.error(f"❌ Health check error: {e}")
@@ -343,7 +341,7 @@ class DataCollectionAgent:
                 for category, last_time in self.last_collection.items()
             },
             'health_report': self.fallback_manager.get_health_report(),
-            'proxy_status': self.proxy_manager.get_status_report()
+            'proxy_status': {'disabled': True}
         }
 
 

@@ -33,7 +33,8 @@ apscheduler==3.10.4
 watchdog==6.0.0
 
 # DNS resolution
-dnspython==2.8.0
+# Keep compatible with Python 3.9 CI
+dnspython==2.7.0
 
 # HuggingFace (optional - for AI models)
 datasets==4.4.1

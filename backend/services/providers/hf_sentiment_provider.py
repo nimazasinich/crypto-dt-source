@@ -14,14 +14,15 @@ API Documentation: https://huggingface.co/docs/api-inference/
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
+import os
+
 from .base import BaseProvider, create_success_response, create_error_response
 
 
 class HFSentimentProvider(BaseProvider):
     """HuggingFace Inference API provider for AI-powered analysis"""
-    
-    # API Key (temporary hardcoded - will be secured later)
-    API_KEY = "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"
+    # Never hardcode secrets. Configure via environment (HF_TOKEN).
+    DEFAULT_API_KEY = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_TOKEN") or ""
     
     # Default models for each task (using stable, available models)
     MODELS = {
@@ -37,7 +38,7 @@ class HFSentimentProvider(BaseProvider):
         super().__init__(
             name="huggingface",
             base_url="https://router.huggingface.co/hf-inference/models",
-            api_key=api_key or self.API_KEY,
+            api_key=api_key if api_key is not None else self.DEFAULT_API_KEY,
             timeout=15.0,  # HF inference can be slower
             cache_ttl=60.0  # Cache AI results for 60 seconds
         )
