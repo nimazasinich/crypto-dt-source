@@ -219,6 +219,11 @@ export const CONFIG = {
   ENVIRONMENT: IS_HUGGINGFACE ? 'huggingface' : IS_LOCALHOST ? 'local' : 'production'
 };
 
+// Export CONFIG to window for non-module scripts
+if (typeof window !== 'undefined') {
+  window.CONFIG = CONFIG;
+}
+
 // Helper function to build API URLs
 export function buildApiUrl(endpoint, params = {}) {
   const base = CONFIG.API_BASE_URL;
