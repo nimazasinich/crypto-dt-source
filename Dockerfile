@@ -19,8 +19,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the entire project
 COPY . .
 
-# Create data directory for SQLite databases
-RUN mkdir -p data
+# Create data directory for SQLite databases (must be writable at runtime)
+RUN mkdir -p /app/data && chmod -R a+rwx /app/data
+
+# Create a non-root user for runtime (HF Spaces may run as non-root)
+RUN useradd -m -u 1000 appuser \
+    && chown -R appuser:appuser /app
 
 # Expose port 7860 (Hugging Face Spaces standard)
 EXPOSE 7860
@@ -32,7 +36,10 @@ ENV PYTHONUNBUFFERED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:7860/api/health || exit 1
+  CMD curl -f "http://localhost:${PORT:-7860}/api/health" || exit 1
+
+# Drop privileges for runtime
+USER appuser
 
 # Start the FastAPI server
 CMD ["python", "-m", "uvicorn", "hf_unified_server:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]
