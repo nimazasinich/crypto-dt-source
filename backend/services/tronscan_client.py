@@ -52,7 +52,10 @@ class TronscanClient:
         last_error = None
         for endpoint in endpoints:
             try:
-                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                async with httpx.AsyncClient(
+                    timeout=self.timeout,
+                    follow_redirects=True  # Handle 301 redirects
+                ) as client:
                     response = await client.get(endpoint, headers=self._get_headers())
                     response.raise_for_status()
                     data = response.json()

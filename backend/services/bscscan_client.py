@@ -63,9 +63,10 @@ class BSCScanClient:
                 else:
                     error_msg = data.get('message', 'Unknown error')
                     # Log as warning if it's just an API key issue, don't crash
-                    if "NOTOK" in str(data.get('status', '')):
-                        logger.warning(f"⚠️ BSCScan API key may be invalid or rate limited: {error_msg}")
-                        raise Exception(f"BSCScan API key issue: {error_msg}")
+                    # BSCScan API key issues are non-critical - other providers will be used
+                    if "NOTOK" in str(data.get('status', '')) or "Invalid API Key" in error_msg:
+                        logger.info(f"ℹ️ BSCScan API key not configured or rate limited - using alternative providers")
+                        raise Exception(f"BSCScan unavailable")
                     else:
                         raise Exception(f"BSCScan API error: {error_msg}")
         
