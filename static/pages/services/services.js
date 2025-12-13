@@ -311,16 +311,52 @@ class ServicesPage {
 
     try {
       const url = `/api/indicators/comprehensive?symbol=${encodeURIComponent(this.currentSymbol)}&timeframe=${encodeURIComponent(this.currentTimeframe)}`;
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      // Handle different response scenarios
+      let result;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        throw new Error(`Unexpected response type: ${contentType || 'unknown'}`);
       }
 
-      const result = await response.json();
+      // Check if the result indicates an error even with 200 status
+      if (result.success === false && result.error) {
+        console.warn('[Services] API returned error in response:', result.error);
+        this.showToast(`⚠️ ${result.error}`, 'warning');
+      }
+
+      // Render even with warnings/errors, as fallback data is still useful
       this.renderComprehensiveResult(result);
+      
+      // Show warning if using fallback data
+      if (result.source === 'fallback' || result.warning) {
+        this.showToast('⚠️ Using fallback data - some services may be unavailable', 'warning');
+      }
+      
     } catch (error) {
       console.error('[Services] Comprehensive analysis error:', error);
+      
+      // More detailed error message
+      let errorMessage = 'Unable to complete analysis';
+      if (error.message.includes('HTTP 500')) {
+        errorMessage = 'Server error - the analysis service is temporarily unavailable';
+      } else if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network error - please check your connection';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Request timeout - the service took too long to respond';
+      } else {
+        errorMessage = error.message;
+      }
+      
       resultsContainer.innerHTML = `
         <div class="error-state">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -329,10 +365,26 @@ class ServicesPage {
             <line x1="9" y1="9" x2="15" y2="15"></line>
           </svg>
           <h3>Analysis Failed</h3>
-          <p>${error.message}</p>
-          <button class="btn btn-primary" onclick="servicesPage.analyzeAll()">Retry</button>
+          <p style="margin: 1rem 0;">${errorMessage}</p>
+          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="servicesPage.analyzeAll()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              Retry
+            </button>
+            <button class="btn btn-secondary" onclick="window.location.href='/static/pages/service-health/index.html'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              Check Service Status
+            </button>
+          </div>
         </div>
       `;
+      
+      this.showToast(`❌ ${errorMessage}`, 'error');
     }
   }
 
