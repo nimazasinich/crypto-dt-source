@@ -1345,6 +1345,11 @@ async def api_sentiment_analyze(payload: Dict[str, Any]):
     try:
         text = payload.get("text", "")
         mode = payload.get("mode", "crypto")
+        # Optional: allow explicit HF model selection from the UI
+        # - `model_key`: key from the server/client registry (preferred)
+        # - `model`: backwards-compatible alias used by some pages
+        model_key = payload.get("model_key") or payload.get("model")
+        use_ensemble = bool(payload.get("use_ensemble", True))
         
         if not text:
             return {
@@ -1356,15 +1361,41 @@ async def api_sentiment_analyze(payload: Dict[str, Any]):
         # Use AI service for sentiment analysis
         try:
             from backend.services.ai_service_unified import ai_service
-            result = await ai_service.analyze_sentiment(text, mode=mode)
-            
+
+            # If the UI requested a specific model_key and HF client is available,
+            # call it directly so the Models page "Test Model" works.
+            if model_key and getattr(ai_service, "hf_client", None) is not None:
+                hf_result = await ai_service.hf_client.analyze_sentiment(
+                    text=text,
+                    model_key=str(model_key),
+                    use_cache=True,
+                )
+
+                # Normalize HF API client response into the UI-friendly shape.
+                if hf_result.get("status") == "success":
+                    return {
+                        "success": True,
+                        "sentiment": hf_result.get("label", "neutral"),
+                        "score": hf_result.get("score", hf_result.get("confidence", 0.5)),
+                        "confidence": hf_result.get("confidence", hf_result.get("score", 0.5)),
+                        "model": hf_result.get("model", "hf_inference_api"),
+                        "model_key": hf_result.get("model_key", model_key),
+                        "engine": hf_result.get("engine", "hf_inference_api"),
+                        "timestamp": datetime.utcnow().isoformat() + "Z",
+                    }
+
+                # If the selected model isn't available, fall back to auto mode.
+                # (Still return success=False only if everything fails.)
+
+            result = await ai_service.analyze_sentiment(text, category=mode, use_ensemble=use_ensemble)
+
             return {
                 "success": True,
-                "sentiment": result.get("sentiment", "neutral"),
-                "score": result.get("score", 0.5),
-                "confidence": result.get("confidence", 0.5),
+                "sentiment": result.get("sentiment", result.get("label", "neutral")),
+                "score": result.get("score", result.get("confidence", 0.5)),
+                "confidence": result.get("confidence", result.get("score", 0.5)),
                 "model": result.get("model", "unified"),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             }
         except Exception as e:
             logger.warning(f"AI sentiment analysis failed: {e}, using fallback")

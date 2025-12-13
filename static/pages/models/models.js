@@ -11,6 +11,8 @@ import logger from '../../shared/js/utils/logger.js';
 class ModelsPage {
   constructor() {
     this.models = [];
+    this.allModels = [];
+    this.activeFilters = { category: 'all', status: 'all' };
     this.refreshInterval = null;
   }
 
@@ -20,6 +22,7 @@ class ModelsPage {
       
       this.bindEvents();
       await this.loadModels();
+      await this.loadHealth();
       
       this.refreshInterval = setInterval(() => this.loadModels(), 60000);
       
@@ -28,6 +31,16 @@ class ModelsPage {
       console.error('[Models] Init error:', error);
       this.showToast('Failed to load models', 'error');
     }
+  }
+
+  createTimeoutSignal(ms = 10000) {
+    // Prefer AbortSignal.timeout when available, fallback to AbortController.
+    if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+      return AbortSignal.timeout(ms);
+    }
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), ms);
+    return controller.signal;
   }
 
   bindEvents() {
@@ -81,6 +94,23 @@ class ModelsPage {
         this.reinitializeAll();
       });
     }
+
+    // Filters
+    const categoryFilter = document.getElementById('category-filter');
+    if (categoryFilter) {
+      categoryFilter.addEventListener('change', (e) => {
+        this.activeFilters.category = e.target.value || 'all';
+        this.applyFilters();
+      });
+    }
+
+    const statusFilter = document.getElementById('status-filter');
+    if (statusFilter) {
+      statusFilter.addEventListener('change', (e) => {
+        this.activeFilters.status = e.target.value || 'all';
+        this.applyFilters();
+      });
+    }
   }
 
   switchTab(tabId) {
@@ -131,7 +161,7 @@ class ModelsPage {
         const response = await fetch('/api/models/list', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(10000)
+          signal: this.createTimeoutSignal(10000)
         });
         
         if (response.ok) {
@@ -154,7 +184,7 @@ class ModelsPage {
           const response = await fetch('/api/models/status', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(10000)
+            signal: this.createTimeoutSignal(10000)
           });
           
           if (response.ok) {
@@ -179,7 +209,7 @@ class ModelsPage {
           const response = await fetch('/api/models/summary', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            signal: AbortSignal.timeout(10000)
+            signal: this.createTimeoutSignal(10000)
           });
           
           if (response.ok) {
@@ -232,7 +262,9 @@ class ModelsPage {
         this.models = this.getFallbackModels();
       }
 
-      this.renderModels();
+      this.allModels = [...this.models];
+      this.applyFilters(false);
+      this.renderCatalog();
 
       // Update stats from payload or calculate from models
       const stats = {
@@ -258,7 +290,9 @@ class ModelsPage {
       
       // Fallback to demo data
       this.models = this.getFallbackModels();
-      this.renderModels();
+      this.allModels = [...this.models];
+      this.applyFilters(false);
+      this.renderCatalog();
       this.renderStats({ 
         total_models: this.models.length, 
         models_loaded: 0, 
@@ -274,16 +308,35 @@ class ModelsPage {
   populateTestModelSelect() {
     const testModelSelect = document.getElementById('test-model-select');
     if (testModelSelect && this.models.length > 0) {
-      testModelSelect.innerHTML = '<option value="">Select a model...</option>';
+      // Allow testing any model key via backend (auto-fallback if unavailable)
+      testModelSelect.innerHTML = '<option value="">Auto (best available)</option>';
       
-      this.models.forEach(model => {
-        if (model.loaded) {
-          const option = document.createElement('option');
-          option.value = model.key;
-          option.textContent = `${model.name} (${model.category})`;
-          testModelSelect.appendChild(option);
-        }
+      const sorted = [...this.models].sort((a, b) => (a.category || '').localeCompare(b.category || '') || (a.name || '').localeCompare(b.name || ''));
+      sorted.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.key;
+        option.textContent = `${model.name} (${model.category})`;
+        testModelSelect.appendChild(option);
       });
+    }
+  }
+
+  applyFilters(shouldRerender = true) {
+    const category = this.activeFilters.category;
+    const status = this.activeFilters.status;
+
+    const filtered = (this.allModels || []).filter((m) => {
+      const catOk = category === 'all' ? true : (m.category === category || (m.category || '').toLowerCase() === category.toLowerCase());
+      const statusOk = status === 'all' ? true : (m.status === status || (status === 'available' && !m.loaded && !m.failed));
+      return catOk && statusOk;
+    });
+
+    this.models = filtered;
+    if (shouldRerender) {
+      this.renderModels();
+    } else {
+      // For initial load path we still need to render once.
+      this.renderModels();
     }
   }
 
@@ -458,9 +511,12 @@ class ModelsPage {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          text: 'Bitcoin is going to the moon! 🚀' 
+          text: 'Bitcoin is going to the moon! 🚀',
+          mode: 'crypto',
+          model_key: modelId,
+          use_ensemble: false
         }),
-        signal: AbortSignal.timeout(10000)
+        signal: this.createTimeoutSignal(10000)
       });
       
       if (response.ok) {
@@ -501,7 +557,7 @@ class ModelsPage {
     }
 
     const text = input.value.trim();
-    const modelId = modelSelect?.value || 'sentiment';
+    const modelKey = modelSelect?.value || '';
 
     this.showToast('Analyzing...', 'info');
 
@@ -509,8 +565,13 @@ class ModelsPage {
       const response = await fetch('/api/sentiment/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, model: modelId }),
-        signal: AbortSignal.timeout(10000)
+        body: JSON.stringify({
+          text,
+          mode: 'crypto',
+          model_key: modelKey || undefined,
+          use_ensemble: !modelKey
+        }),
+        signal: this.createTimeoutSignal(10000)
       });
 
       if (!response.ok) {
@@ -547,6 +608,111 @@ class ModelsPage {
     }
   }
 
+  async loadHealth() {
+    const container = document.getElementById('health-grid');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading health data...</p>
+      </div>
+    `;
+
+    try {
+      const res = await fetch('/api/models/health', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: this.createTimeoutSignal(10000)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const health = Array.isArray(data.health) ? data.health : (data.health ? Object.values(data.health) : []);
+      if (!health.length) {
+        container.innerHTML = `
+          <div class="empty-state glass-card" style="grid-column: 1 / -1;">
+            <div class="empty-icon">🏥</div>
+            <h3>No health data</h3>
+            <p>Health registry is empty (models may be running in fallback mode).</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = health.map((h) => {
+        const status = h.status || 'unknown';
+        const statusClass = status === 'healthy' ? 'loaded' : status === 'unavailable' ? 'failed' : 'available';
+        const name = h.name || h.key || 'model';
+        return `
+          <div class="model-card ${statusClass}">
+            <div class="model-header">
+              <div class="model-info">
+                <h3 class="model-name">${name}</h3>
+                <p class="model-type">Health: ${status}</p>
+              </div>
+              <div class="model-status ${statusClass}">${status}</div>
+            </div>
+            <div class="model-body">
+              <div class="model-meta">
+                <span class="meta-badge">✅ ${Number(h.success_count || 0)} success</span>
+                <span class="meta-badge">⚠️ ${Number(h.error_count || 0)} errors</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      container.innerHTML = `
+        <div class="empty-state glass-card" style="grid-column: 1 / -1;">
+          <div class="empty-icon">⚠️</div>
+          <h3>Health data unavailable</h3>
+          <p>${e?.message || 'Unable to fetch /api/models/health'}</p>
+        </div>
+      `;
+    }
+  }
+
+  renderCatalog() {
+    // Best-effort catalog fill; only runs if the catalog containers exist on this page.
+    const buckets = {
+      crypto: document.getElementById('catalog-crypto'),
+      financial: document.getElementById('catalog-financial'),
+      social: document.getElementById('catalog-social'),
+      trading: document.getElementById('catalog-trading'),
+      generation: document.getElementById('catalog-generation'),
+      summarization: document.getElementById('catalog-summarization')
+    };
+
+    const hasAny = Object.values(buckets).some(Boolean);
+    if (!hasAny) return;
+
+    const byBucket = { crypto: [], financial: [], social: [], trading: [], generation: [], summarization: [] };
+    (this.allModels || []).forEach((m) => {
+      const cat = (m.category || '').toLowerCase();
+      if (cat.includes('crypto')) byBucket.crypto.push(m);
+      else if (cat.includes('financial')) byBucket.financial.push(m);
+      else if (cat.includes('social')) byBucket.social.push(m);
+      else if (cat.includes('trading')) byBucket.trading.push(m);
+      else if (cat.includes('generation') || cat.includes('gen')) byBucket.generation.push(m);
+      else if (cat.includes('summar')) byBucket.summarization.push(m);
+    });
+
+    const renderList = (list) => list.map((m) => `
+      <div class="catalog-model-item">
+        <div class="catalog-model-name">${m.name}</div>
+        <div class="catalog-model-id">${m.model_id}</div>
+      </div>
+    `).join('') || '<div class="empty-state"><p>No models in this category.</p></div>';
+
+    if (buckets.crypto) buckets.crypto.innerHTML = renderList(byBucket.crypto);
+    if (buckets.financial) buckets.financial.innerHTML = renderList(byBucket.financial);
+    if (buckets.social) buckets.social.innerHTML = renderList(byBucket.social);
+    if (buckets.trading) buckets.trading.innerHTML = renderList(byBucket.trading);
+    if (buckets.generation) buckets.generation.innerHTML = renderList(byBucket.generation);
+    if (buckets.summarization) buckets.summarization.innerHTML = renderList(byBucket.summarization);
+  }
+
   getSentimentEmoji(sentiment) {
     const emojiMap = {
       'positive': '😊',
@@ -581,7 +747,7 @@ class ModelsPage {
       const response = await fetch('/api/models/reinitialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(30000)
+        signal: this.createTimeoutSignal(30000)
       });
 
       if (response.ok) {

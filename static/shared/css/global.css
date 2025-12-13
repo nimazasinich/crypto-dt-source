@@ -259,3 +259,14 @@ html body .spinner-icon::before,
 html body .spinner-icon::after {
   animation-iteration-count: infinite !important;
 }
+
+/* Explicitly disable LIVE badge blinking (header/sidebar). Some pages load
+   global.css async; this hard-stop prevents any repeated pulsing. */
+html body .live-badge,
+html body .live-dot,
+html body .live-pulse,
+html body .live-badge-enhanced,
+html body .live-badge-enhanced .live-pulse,
+html body .live-badge-enhanced .live-text {
+  animation: none !important;
+}
