@@ -208,6 +208,12 @@ export const CONFIG = {
   MAX_RETRIES: 3,
   RETRY_DELAY: 1000,
   RETRIES: 3,
+  // UI defaults (used by shared components like toast)
+  TOAST: {
+    MAX_VISIBLE: 3,
+    DEFAULT_DURATION: 3500,
+    ERROR_DURATION: 6000
+  },
   IS_HUGGINGFACE: IS_HUGGINGFACE,
   IS_LOCALHOST: IS_LOCALHOST,
   ENVIRONMENT: IS_HUGGINGFACE ? 'huggingface' : IS_LOCALHOST ? 'local' : 'production'
