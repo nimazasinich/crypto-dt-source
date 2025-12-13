@@ -42,8 +42,8 @@ if ENV_DETECTOR_AVAILABLE:
             from transformers import pipeline
             TRANSFORMERS_AVAILABLE = True
             logger.info("✅ Transformers imported successfully")
-        except ImportError:
-            logger.warning("⚠️  Transformers not installed - using fallback mode")
+        except Exception as e:
+            logger.warning(f"⚠️  Transformers import failed ({type(e).__name__}) - using fallback mode: {e}")
             TRANSFORMERS_AVAILABLE = False
         
         try:
@@ -60,7 +60,7 @@ else:
     try:
         from transformers import pipeline
         TRANSFORMERS_AVAILABLE = True
-    except ImportError:
+    except Exception:
         TRANSFORMERS_AVAILABLE = False
     
     try:

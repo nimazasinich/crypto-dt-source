@@ -199,13 +199,17 @@ class ConfigManager:
         # Create observer for each config file's directory
         watched_dirs = set(path.parent for path in self.config_files.keys())
 
-        for watch_dir in watched_dirs:
-            observer = Observer()
-            observer.schedule(event_handler, str(watch_dir), recursive=False)
-            observer.start()
+        try:
+            for watch_dir in watched_dirs:
+                observer = Observer()
+                observer.schedule(event_handler, str(watch_dir), recursive=False)
+                observer.start()
 
-            self.observers[str(watch_dir)] = observer
-            logger.info(f"Started watching directory: {watch_dir}")
+                self.observers[str(watch_dir)] = observer
+                logger.info(f"Started watching directory: {watch_dir}")
+        except Exception as e:
+            logger.warning(f"Failed to start file watcher (hot reload disabled): {e}")
+            # Continue without watching - hot reload won't work but server will run
 
     def stop_watching(self):
         """Stop watching config files."""
