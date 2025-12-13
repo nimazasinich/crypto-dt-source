@@ -60,3 +60,6 @@ data/exports/
 *.docx
 *.pyc
 __pycache__/
+*.tar.gz
+*.zip
+*.tar
