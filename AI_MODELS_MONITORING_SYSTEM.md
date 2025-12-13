@@ -279,7 +279,7 @@ import os
 os.environ['HF_TOKEN'] = 'your_token_here'
 
 # یا در .env
-HF_TOKEN=hf_xxxxxxxxxxxxx
+HF_TOKEN=
 ```
 
 ---

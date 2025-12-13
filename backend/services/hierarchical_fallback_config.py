@@ -945,16 +945,6 @@ class HierarchicalFallbackConfig:
                 notes="✨ جدید! جایگزین قابل اعتماد برای DNS resolution"
             ),
             
-            # MEDIUM Priority - Proxy Providers
-            ResourceConfig(
-                name="ProxyScrape",
-                base_url="https://api.proxyscrape.com/v2/",
-                priority=Priority.MEDIUM,
-                requires_auth=False,
-                rate_limit="Unlimited",
-                features=["free-proxies", "http", "https", "socks"],
-                notes="✨ جدید! دریافت proxy رایگان برای دور زدن فیلتر Binance/CoinGecko"
-            ),
         ]
     
     def get_all_resources_by_priority(self) -> Dict[str, List[ResourceConfig]]:

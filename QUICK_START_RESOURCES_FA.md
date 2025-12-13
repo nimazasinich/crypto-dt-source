@@ -17,7 +17,7 @@
 | ⛓️ Block Explorers | 18 | ✅ فعال |
 | 🌐 RPC Nodes | 23 | ✅ فعال |
 | 📚 HuggingFace Datasets | 2 | ✅ فعال |
-| 🛡️ Infrastructure (DNS/Proxy) | 3 | ✅ فعال |
+| 🛡️ Infrastructure (DNS) | 2 | ✅ فعال |
 | **جمع کل** | **80+** | **✅ همه فعال** |
 
 ---
@@ -257,10 +257,7 @@ GET /api/resources/hf/timeframes/BTC
     "Cloudflare DoH",
     "Google DoH"
   ],
-  "Proxy Services": [
-    "ProxyScrape Free API"
-  ],
-  "Purpose": "برای دور زدن فیلترینگ Binance و CoinGecko"
+  "Purpose": "حل DNS امن برای افزایش پایداری دسترسی"
 }
 ```
 

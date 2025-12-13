@@ -19,8 +19,8 @@
 | **CoinMarketCap #2** | `04cf4b5b-9868-465c-8ba0-9f2e78c92eb1` | ✅ فعال |
 | **NewsAPI** | `968a5e25552b4cb5ba3280361d8444ab` | ✅ فعال |
 | **Sentiment API** | `vltdvdho63uqnjgf_fq75qbks72e3wfmx` | ✅ فعال |
-| **HuggingFace** | `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` | ✅ فعال |
-| **Telegram Bot** | `7437859619:AAGeGG3ZkLM0OVaw-Exx1uMRE55JtBCZZCY` | ✅ فعال |
+| **HuggingFace** | `HF_TOKEN (set in environment)` | ✅ فعال |
+| **Telegram Bot** | `TELEGRAM_BOT_TOKEN (set in environment)` | ✅ فعال |
 
 ---
 

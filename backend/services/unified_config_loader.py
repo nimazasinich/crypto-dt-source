@@ -352,14 +352,8 @@ class UnifiedConfigLoader:
 
     def setup_cors_proxies(self):
         """Setup CORS proxy list"""
-        self.cors_proxies = [
-            'https://api.allorigins.win/get?url=',
-            'https://proxy.cors.sh/',
-            'https://proxy.corsfix.com/?url=',
-            'https://api.codetabs.com/v1/proxy?quest=',
-            'https://thingproxy.freeboard.io/fetch/',
-            'https://corsproxy.io/?'
-        ]
+        # Disabled on Hugging Face Spaces (avoid third-party proxy services).
+        self.cors_proxies = []
 
     def setup_default_schedules(self):
         """Setup default schedules based on update_type"""

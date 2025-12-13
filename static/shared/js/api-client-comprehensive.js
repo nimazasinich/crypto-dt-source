@@ -5,28 +5,26 @@
  */
 
 // ═══════════════════════════════════════════════════════════════
-// API KEYS (from all_apis_merged_2025.json)
+// API KEYS
 // ═══════════════════════════════════════════════════════════════
+// Never ship secrets in client-side code. Configure keys on the server side.
 const API_KEYS = {
-  ETHERSCAN: 'SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2',
-  ETHERSCAN_BACKUP: 'T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45',
-  BSCSCAN: 'K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT',
-  TRONSCAN: '7ae72726-bffe-4e74-9c33-97b761eeea21',
-  CMC_PRIMARY: 'b54bcf4d-1bca-4e8e-9a24-22ff2c3d462c',
-  CMC_BACKUP: '04cf4b5b-9868-465c-8ba0-9f2e78c92eb1',
-  NEWSAPI: 'pub_346789abc123def456789ghi012345jkl',
-  CRYPTOCOMPARE: 'e79c8e6d4c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f',
-  HUGGINGFACE: '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'
+  ETHERSCAN: '',
+  ETHERSCAN_BACKUP: '',
+  BSCSCAN: '',
+  TRONSCAN: '',
+  CMC_PRIMARY: '',
+  CMC_BACKUP: '',
+  NEWSAPI: '',
+  CRYPTOCOMPARE: '',
+  HUGGINGFACE: ''
 };
 
 // ═══════════════════════════════════════════════════════════════
-// CORS PROXIES (fallback only when needed)
+// CORS PROXIES
 // ═══════════════════════════════════════════════════════════════
-const CORS_PROXIES = [
-  'https://api.allorigins.win/get?url=',
-  'https://proxy.cors.sh/',
-  'https://api.codetabs.com/v1/proxy?quest='
-];
+// Disabled on Hugging Face Spaces.
+const CORS_PROXIES = [];
 
 // ═══════════════════════════════════════════════════════════════
 // MARKET DATA SOURCES (15+ endpoints)
