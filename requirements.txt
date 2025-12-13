@@ -37,8 +37,12 @@ watchdog==6.0.0
 dnspython==2.7.0
 
 # HuggingFace (optional - for AI models)
-datasets==4.4.1
-huggingface-hub==1.2.2
+# Version constraints:
+# - transformers 4.35.0 requires huggingface-hub>=0.16.4,<1.0
+# - datasets 4.4.1 requires huggingface-hub>=0.25.0,<2.0
+# - Compatible range: 0.25.0 <= huggingface-hub < 1.0
+huggingface-hub>=0.19.4,<1.0  # Compatible with both transformers and datasets
+datasets>=2.14.0  # More flexible version
 
 # Utilities
 python-dateutil==2.9.0
