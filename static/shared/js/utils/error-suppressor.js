@@ -18,6 +18,12 @@
     /BodyStreamBuffer was aborted/i,
     /SpaceHeader.*\.js/i,
     /AbortError.*BodyStreamBuffer/i,
+    /ERR_HTTP2_PING_FAILED/i,
+    
+    // Network errors that are HuggingFace infrastructure issues
+    /Failed to fetch Space status/i,
+    /Failed to fetch usage status/i,
+    /network error.*SSE/i,
     
     // Permissions-Policy warnings (harmless browser warnings)
     /Unrecognized feature.*permissions-policy/i,
@@ -32,7 +38,8 @@
     
     // Other harmless external service errors
     /index\.js.*SSE/i,
-    /onStateChange.*SSE/i
+    /onStateChange.*SSE/i,
+    /SpaceHeader.*\.js:\d+/i
   ];
 
   /**
