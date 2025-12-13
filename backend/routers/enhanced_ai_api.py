@@ -18,6 +18,12 @@ import time
 import httpx
 import random
 
+# Import enhanced provider manager for intelligent load balancing
+from backend.services.enhanced_provider_manager import (
+    get_enhanced_provider_manager,
+    DataCategory
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Enhanced AI API"])
@@ -40,35 +46,37 @@ class AnalysisRequest(BaseModel):
 # ============================================================================
 
 async def fetch_current_price(symbol: str) -> float:
-    """Fetch current price from Binance"""
+    """Fetch current price with intelligent provider failover"""
     try:
-        url = f"https://api.binance.com/api/v3/ticker/price"
-        params = {"symbol": f"{symbol.upper()}USDT"}
+        manager = get_enhanced_provider_manager()
+        result = await manager.fetch_data(
+            DataCategory.MARKET_PRICE,
+            symbol=f"{symbol.upper()}USDT"
+        )
         
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
+        if result and result.get("success"):
+            data = result.get("data", {})
             return float(data.get("price", 0))
+        return 0
     except:
         return 0
 
 
 async def fetch_historical_prices(symbol: str, days: int = 30) -> List[float]:
-    """Fetch historical prices for analysis"""
+    """Fetch historical prices with intelligent provider failover"""
     try:
-        url = "https://api.binance.com/api/v3/klines"
-        params = {
-            "symbol": f"{symbol.upper()}USDT",
-            "interval": "1d",
-            "limit": days
-        }
+        manager = get_enhanced_provider_manager()
+        result = await manager.fetch_data(
+            DataCategory.MARKET_OHLCV,
+            symbol=f"{symbol.upper()}USDT",
+            interval="1d",
+            limit=days
+        )
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            klines = response.json()
+        if result and result.get("success"):
+            klines = result.get("data", [])
             return [float(k[4]) for k in klines]  # Close prices
+        return []
     except:
         return []
 

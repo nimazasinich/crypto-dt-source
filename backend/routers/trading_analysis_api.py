@@ -20,6 +20,12 @@ import httpx
 import asyncio
 import numpy as np
 
+# Import enhanced provider manager for intelligent load balancing
+from backend.services.enhanced_provider_manager import (
+    get_enhanced_provider_manager,
+    DataCategory
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Trading Analysis API"])
@@ -44,50 +50,62 @@ class BacktestRequest(BaseModel):
 # ============================================================================
 
 async def fetch_binance_ticker_24h(symbol: str = None) -> List[Dict]:
-    """Fetch 24h ticker data from Binance"""
+    """Fetch 24h ticker data with intelligent provider failover"""
     try:
-        url = "https://api.binance.com/api/v3/ticker/24hr"
-        params = {"symbol": f"{symbol}USDT"} if symbol else {}
+        manager = get_enhanced_provider_manager()
+        result = await manager.fetch_data(
+            DataCategory.MARKET_VOLUME,
+            symbol=symbol
+        )
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
+        if result and result.get("success"):
+            data = result.get("data")
             return [data] if isinstance(data, dict) else data
+        else:
+            logger.error(f"Volume data fetch failed: {result.get('error')}")
+            return []
     except Exception as e:
-        logger.error(f"Binance ticker error: {e}")
+        logger.error(f"Ticker error: {e}")
         return []
 
 
 async def fetch_binance_orderbook(symbol: str, limit: int = 20) -> Dict:
-    """Fetch order book from Binance"""
+    """Fetch order book with intelligent provider failover"""
     try:
-        url = "https://api.binance.com/api/v3/depth"
-        params = {"symbol": f"{symbol}USDT", "limit": limit}
+        manager = get_enhanced_provider_manager()
+        result = await manager.fetch_data(
+            DataCategory.MARKET_ORDERBOOK,
+            symbol=f"{symbol}USDT",
+            limit=limit
+        )
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            return response.json()
+        if result and result.get("success"):
+            return result.get("data")
+        else:
+            raise HTTPException(status_code=502, detail=f"Order book unavailable: {result.get('error')}")
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Binance orderbook error: {e}")
+        logger.error(f"Orderbook error: {e}")
         raise HTTPException(status_code=502, detail=f"Order book unavailable: {str(e)}")
 
 
 async def fetch_ohlcv_for_analysis(symbol: str, interval: str, limit: int) -> List[List]:
-    """Fetch OHLCV data for technical analysis"""
+    """Fetch OHLCV data with intelligent provider failover"""
     try:
-        url = "https://api.binance.com/api/v3/klines"
-        params = {
-            "symbol": f"{symbol}USDT",
-            "interval": interval,
-            "limit": limit
-        }
+        manager = get_enhanced_provider_manager()
+        result = await manager.fetch_data(
+            DataCategory.MARKET_OHLCV,
+            symbol=f"{symbol}USDT",
+            interval=interval,
+            limit=limit
+        )
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            return response.json()
+        if result and result.get("success"):
+            return result.get("data", [])
+        else:
+            logger.error(f"OHLCV fetch failed: {result.get('error')}")
+            return []
     except Exception as e:
         logger.error(f"OHLCV fetch error: {e}")
         return []
