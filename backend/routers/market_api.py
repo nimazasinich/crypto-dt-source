@@ -16,12 +16,15 @@ import time
 import httpx
 
 # Import services
-from backend.services.coingecko_client import coingecko_client
+from backend.services.smart_multi_source_router import smart_router, get_price, get_ohlc  # NEW: Smart multi-source routing
 from backend.services.binance_client import BinanceClient
 from backend.services.ai_service_unified import UnifiedAIService
 from backend.services.market_data_aggregator import market_data_aggregator
 from backend.services.sentiment_aggregator import sentiment_aggregator
 from backend.services.hf_dataset_aggregator import hf_dataset_aggregator
+
+# DEPRECATED: Direct CoinGecko access (now using smart_router)
+# from backend.services.coingecko_client import coingecko_client
 
 logger = logging.getLogger(__name__)
 
@@ -361,24 +364,24 @@ async def analyze_sentiment(request: SentimentAnalyzeRequest):
 # ============================================================================
 
 async def stream_price_updates(client_id: str, symbol: str):
-    """Stream price updates for a subscribed symbol"""
+    """Stream price updates for a subscribed symbol - USES SMART MULTI-SOURCE ROUTING"""
     symbol_upper = symbol.upper()
     
     while client_id in ws_manager.active_connections:
         try:
-            # Get current price
+            # Get current price using smart router (rotates through all sources)
             try:
-                market_data = await coingecko_client.get_market_prices(symbols=[symbol_upper], limit=1)
-                if market_data and len(market_data) > 0:
-                    coin = market_data[0]
-                    price = coin.get("price", 0)
-                else:
-                    # Fallback to Binance
+                # Use smart router instead of direct CoinGecko
+                price_data = await smart_router.get_market_data(symbol_upper, "price")
+                price = price_data.get("price", 0)
+            except Exception as e:
+                logger.warning(f"Error fetching price for {symbol_upper} via smart router: {e}")
+                # Emergency fallback to Binance direct
+                try:
                     ticker = await binance_client.get_ticker(f"{symbol_upper}USDT")
                     price = float(ticker.get("lastPrice", 0)) if ticker else 0
-            except Exception as e:
-                logger.warning(f"Error fetching price for {symbol_upper}: {e}")
-                price = 0
+                except:
+                    price = 0
             
             # Send update to client
             await ws_manager.send_message(client_id, {

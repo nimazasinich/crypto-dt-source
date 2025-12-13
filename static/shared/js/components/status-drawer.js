@@ -44,75 +44,136 @@ class StatusDrawer {
   }
   
   /**
-   * Create drawer panel
+   * Create drawer panel - ENHANCED with detailed provider metrics
    */
   createDrawer() {
     const drawer = document.createElement('div');
     drawer.id = 'status-drawer';
-    drawer.className = 'status-drawer';
+    drawer.className = 'status-drawer status-drawer-enhanced';
     drawer.innerHTML = `
       <div class="status-drawer-header">
         <h3>System Status</h3>
-        <button class="drawer-close" aria-label="Close">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-        </button>
+        <div class="header-actions">
+          <button class="refresh-btn" id="refresh-status" aria-label="Refresh">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
+          <button class="drawer-close" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        </div>
       </div>
       
       <div class="status-drawer-body">
-        <!-- Resources Status -->
-        <div class="status-section">
-          <div class="section-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-            </svg>
-            <span>Resources</span>
-          </div>
-          <div class="resources-summary" id="resources-summary">
-            <div class="summary-loading">Loading...</div>
-          </div>
-        </div>
-        
-        <!-- Endpoints Status -->
-        <div class="status-section">
-          <div class="section-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
-            </svg>
-            <span>API Endpoints</span>
-          </div>
-          <div class="endpoints-status" id="endpoints-status">
-            <div class="summary-loading">Loading...</div>
-          </div>
-        </div>
-        
-        <!-- Providers Status -->
-        <div class="status-section">
-          <div class="section-title">
+        <!-- ALL PROVIDER STATUS -->
+        <div class="status-section providers-detailed">
+          <div class="section-title collapsible" data-target="providers-list">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="2" y="3" width="20" height="14" rx="2"/>
               <line x1="8" y1="21" x2="16" y2="21"/>
               <line x1="12" y1="17" x2="12" y2="21"/>
             </svg>
-            <span>Service Providers</span>
+            <span>All Providers</span>
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </div>
-          <div class="providers-status" id="providers-status">
+          <div class="collapsible-content" id="providers-list">
             <div class="summary-loading">Loading...</div>
           </div>
         </div>
         
-        <!-- Coins Status -->
-        <div class="status-section">
-          <div class="section-title">
+        <!-- AI MODELS -->
+        <div class="status-section ai-models">
+          <div class="section-title collapsible" data-target="ai-models-list">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="1" x2="12" y2="23"/>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
             </svg>
-            <span>Market Feeds</span>
+            <span>AI Models</span>
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </div>
-          <div class="coins-status" id="coins-status">
+          <div class="collapsible-content" id="ai-models-list">
+            <div class="summary-loading">Loading...</div>
+          </div>
+        </div>
+        
+        <!-- INFRASTRUCTURE -->
+        <div class="status-section infrastructure">
+          <div class="section-title collapsible" data-target="infrastructure-list">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+              <line x1="6" y1="6" x2="6" y2="6"></line>
+              <line x1="6" y1="18" x2="6" y2="18"></line>
+            </svg>
+            <span>Infrastructure</span>
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content" id="infrastructure-list">
+            <div class="summary-loading">Loading...</div>
+          </div>
+        </div>
+        
+        <!-- RESOURCE BREAKDOWN -->
+        <div class="status-section resource-breakdown">
+          <div class="section-title collapsible" data-target="resources-breakdown">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3" y2="6"></line>
+              <line x1="3" y1="12" x2="3" y2="12"></line>
+              <line x1="3" y1="18" x2="3" y2="18"></line>
+            </svg>
+            <span>Resource Breakdown</span>
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content" id="resources-breakdown">
+            <div class="summary-loading">Loading...</div>
+          </div>
+        </div>
+        
+        <!-- ERROR DETAILS -->
+        <div class="status-section error-details">
+          <div class="section-title collapsible" data-target="error-list">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12" y2="16"></line>
+            </svg>
+            <span>Recent Errors</span>
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content collapsed" id="error-list">
+            <div class="summary-loading">Loading...</div>
+          </div>
+        </div>
+        
+        <!-- PERFORMANCE -->
+        <div class="status-section performance">
+          <div class="section-title collapsible" data-target="performance-metrics">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span>Performance</span>
+            <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="collapsible-content" id="performance-metrics">
             <div class="summary-loading">Loading...</div>
           </div>
         </div>
@@ -130,6 +191,21 @@ class StatusDrawer {
     
     // Close button
     drawer.querySelector('.drawer-close').addEventListener('click', () => this.close());
+    
+    // Refresh button
+    drawer.querySelector('#refresh-status').addEventListener('click', () => this.fetchStatus());
+    
+    // Collapsible sections
+    drawer.querySelectorAll('.section-title.collapsible').forEach(title => {
+      title.addEventListener('click', (e) => {
+        const target = title.dataset.target;
+        const content = document.getElementById(target);
+        if (content) {
+          content.classList.toggle('collapsed');
+          title.classList.toggle('collapsed');
+        }
+      });
+    });
   }
   
   /**
@@ -211,60 +287,227 @@ class StatusDrawer {
   }
   
   /**
-   * Update UI with data
+   * Update UI with data - ENHANCED
    */
   updateUI(data) {
     this.lastData = data;
     
-    // Update resources summary
-    this.updateResourcesSummary(data);
+    // Update all providers with detailed metrics
+    this.updateProvidersDetailed(data.providers_detailed || data.services || []);
     
-    // Update endpoints
-    this.updateEndpoints(data.endpoints || []);
+    // Update AI models
+    this.updateAIModels(data.ai_models || {});
     
-    // Update providers
-    this.updateProviders(data.services || []);
+    // Update infrastructure
+    this.updateInfrastructure(data.infrastructure || {});
     
-    // Update coins
-    this.updateCoins(data.coins || []);
+    // Update resource breakdown
+    this.updateResourceBreakdown(data.resource_breakdown || {});
+    
+    // Update error details
+    this.updateErrorDetails(data.error_details || []);
+    
+    // Update performance
+    this.updatePerformance(data.performance || {});
     
     // Update timestamp
     this.updateTimestamp(data.timestamp);
   }
   
   /**
-   * Update resources summary
+   * Update providers with detailed metrics
    */
-  updateResourcesSummary(data) {
-    const container = document.getElementById('resources-summary');
+  updateProvidersDetailed(providers) {
+    const container = document.getElementById('providers-list');
     if (!container) return;
     
-    // Count total resources from services
-    const totalServices = (data.services || []).length;
-    const onlineServices = (data.services || []).filter(s => s.status === 'online').length;
+    if (!providers.length) {
+      container.innerHTML = '<div class="empty-state">No providers configured</div>';
+      return;
+    }
     
-    const totalEndpoints = (data.endpoints || []).length;
-    const onlineEndpoints = (data.endpoints || []).filter(e => e.status === 'online').length;
+    container.innerHTML = providers.map(provider => {
+      const isOnline = provider.status === 'online' || provider.status === 'active';
+      const statusEmoji = isOnline ? '🟢' : 
+                         provider.status === 'rate_limited' ? '🔴' : 
+                         provider.status === 'degraded' ? '🟡' : '⚫';
+      
+      let statusText = '';
+      if (isOnline) {
+        statusText = `${provider.response_time_ms || 0}ms | Success: ${provider.success_rate || 100}%`;
+        if (provider.last_check) {
+          const elapsed = Math.floor((Date.now() / 1000) - new Date(provider.last_check).getTime() / 1000);
+          statusText += ` | Last: ${elapsed}s ago`;
+        }
+      } else if (provider.status === 'rate_limited') {
+        statusText = `Rate Limited (${provider.status_code || 429})`;
+        if (provider.cached_until) {
+          statusText += ` | Cached ${provider.cached_until}`;
+        }
+      } else if (provider.status === 'degraded') {
+        statusText = provider.error || 'Degraded performance';
+      } else {
+        statusText = provider.error || 'Offline';
+      }
+      
+      const resourceInfo = provider.resource_count ? ` | ${provider.resource_count} resources` : '';
+      
+      return `
+        <div class="provider-item ${isOnline ? 'online' : 'offline'}">
+          <div class="provider-status">
+            <span class="status-emoji">${statusEmoji}</span>
+            <span class="provider-name">${provider.name}</span>
+          </div>
+          <div class="provider-metrics">${statusText}${resourceInfo}</div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  /**
+   * Update AI models section
+   */
+  updateAIModels(aiModels) {
+    const container = document.getElementById('ai-models-list');
+    if (!container) return;
     
-    const totalCoins = (data.coins || []).length;
-    const onlineCoins = (data.coins || []).filter(c => c.status === 'online').length;
-    
-    const totalResources = totalServices + totalEndpoints + totalCoins;
-    const availableResources = onlineServices + onlineEndpoints + onlineCoins;
-    const unavailableResources = totalResources - availableResources;
+    const transformersStatus = aiModels.transformers_loaded ? '🟢 Loaded (CPU mode)' : '🔴 Not loaded';
+    const sentimentModels = aiModels.sentiment_models || 0;
+    const hfApiStatus = aiModels.hf_api_active ? '🟢 Active' : '🔴 Inactive';
     
     container.innerHTML = `
-      <div class="resource-stat">
-        <div class="stat-value">${totalResources}</div>
-        <div class="stat-label">Total Resources</div>
+      <div class="metric-item">
+        <span class="metric-label">Transformers:</span>
+        <span class="metric-value">${transformersStatus}</span>
       </div>
-      <div class="resource-stat success">
-        <div class="stat-value">${availableResources}</div>
-        <div class="stat-label">Available</div>
+      <div class="metric-item">
+        <span class="metric-label">Sentiment Models:</span>
+        <span class="metric-value">${sentimentModels} available</span>
       </div>
-      <div class="resource-stat ${unavailableResources > 0 ? 'danger' : ''}">
-        <div class="stat-value">${unavailableResources}</div>
-        <div class="stat-label">Unavailable</div>
+      <div class="metric-item">
+        <span class="metric-label">HuggingFace API:</span>
+        <span class="metric-value">${hfApiStatus}</span>
+      </div>
+    `;
+  }
+  
+  /**
+   * Update infrastructure section
+   */
+  updateInfrastructure(infrastructure) {
+    const container = document.getElementById('infrastructure-list');
+    if (!container) return;
+    
+    const dbStatus = infrastructure.database_status || 'unknown';
+    const dbEntries = infrastructure.database_entries || 0;
+    const workerStatus = infrastructure.background_worker || 'unknown';
+    const workerNextRun = infrastructure.worker_next_run || 'N/A';
+    const wsStatus = infrastructure.websocket_active ? '🟢 Active' : '⚫ Inactive';
+    
+    container.innerHTML = `
+      <div class="metric-item">
+        <span class="metric-label">Database:</span>
+        <span class="metric-value">${dbStatus === 'online' ? '🟢' : '🔴'} SQLite (${dbEntries} cached)</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-label">Background Worker:</span>
+        <span class="metric-value">${workerStatus === 'active' ? '🟢' : '⚫'} ${workerNextRun}</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-label">WebSocket:</span>
+        <span class="metric-value">${wsStatus}</span>
+      </div>
+    `;
+  }
+  
+  /**
+   * Update resource breakdown section
+   */
+  updateResourceBreakdown(breakdown) {
+    const container = document.getElementById('resources-breakdown');
+    if (!container) return;
+    
+    const total = breakdown.total || 0;
+    const bySource = breakdown.by_source || {};
+    const byCategory = breakdown.by_category || {};
+    
+    let sourceHTML = '';
+    for (const [source, count] of Object.entries(bySource)) {
+      sourceHTML += `
+        <div class="breakdown-item">
+          <span class="breakdown-label">${source}:</span>
+          <span class="breakdown-value">${count}</span>
+        </div>
+      `;
+    }
+    
+    let categoryHTML = '';
+    for (const [category, count] of Object.entries(byCategory)) {
+      categoryHTML += `
+        <div class="breakdown-item">
+          <span class="breakdown-label">${category}:</span>
+          <span class="breakdown-value">${count} online</span>
+        </div>
+      `;
+    }
+    
+    container.innerHTML = `
+      <div class="breakdown-section">
+        <div class="breakdown-title">Total: ${total}+ resources</div>
+        ${sourceHTML}
+      </div>
+      <div class="breakdown-section">
+        <div class="breakdown-title">By Category:</div>
+        ${categoryHTML}
+      </div>
+    `;
+  }
+  
+  /**
+   * Update error details section
+   */
+  updateErrorDetails(errors) {
+    const container = document.getElementById('error-list');
+    if (!container) return;
+    
+    if (!errors || errors.length === 0) {
+      container.innerHTML = '<div class="empty-state">No recent errors</div>';
+      return;
+    }
+    
+    container.innerHTML = errors.map(error => `
+      <div class="error-item">
+        <div class="error-provider">${error.provider || 'Unknown'}: ${error.count || 1}x ${error.type || 'error'}</div>
+        <div class="error-message">${error.message || 'Unknown error'}</div>
+        ${error.action ? `<div class="error-action">Action: ${error.action}</div>` : ''}
+      </div>
+    `).join('');
+  }
+  
+  /**
+   * Update performance section
+   */
+  updatePerformance(performance) {
+    const container = document.getElementById('performance-metrics');
+    if (!container) return;
+    
+    const avgResponse = performance.avg_response_ms || 0;
+    const fastest = performance.fastest_provider || 'N/A';
+    const fastestTime = performance.fastest_time_ms || 0;
+    const cacheHit = performance.cache_hit_rate || 0;
+    
+    container.innerHTML = `
+      <div class="metric-item">
+        <span class="metric-label">Avg Response:</span>
+        <span class="metric-value">${avgResponse}ms</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-label">Fastest:</span>
+        <span class="metric-value">${fastest} (${fastestTime}ms)</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-label">Cache Hit:</span>
+        <span class="metric-value">${cacheHit}%</span>
       </div>
     `;
   }
