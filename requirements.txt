@@ -59,4 +59,7 @@ passlib[bcrypt]==1.7.4
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.1.0+cpu
 transformers==4.35.0
-# numpy is auto-installed with pandas
+# CRITICAL: Pin numpy<2 for compatibility with compiled modules
+numpy<2.0.0  # Prevent NumPy 2.x which breaks torch/transformers
+# CRITICAL: Pin pyarrow for datasets 2.14.5 compatibility
+pyarrow>=12.0.0,<15.0.0  # datasets 2.14.5 needs PyExtensionType from pyarrow 12-14
