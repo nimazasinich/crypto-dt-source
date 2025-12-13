@@ -1115,7 +1115,7 @@ if (!isAvailable) {
 // Use base64 encoding for extra security
 
 // ❌ Bad
-const token = 'hf_xxxxxxxxxxxx';
+const token = 'your_token_here';
 
 // ✅ Good
 const token = process.env.HF_TOKEN_B64 

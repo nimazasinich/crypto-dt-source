@@ -3,8 +3,6 @@
 Smart Exchange Clients - Binance & KuCoin
 Ultra-intelligent clients with:
 - DNS over HTTPS (DoH)
-- Multi-layer proxies (HTTP, SOCKS4, SOCKS5)
-- Geo-block bypass
 - Smart routing
 - Auto-recovery
 - NO API KEY required for public endpoints
@@ -99,142 +97,26 @@ class SmartDNSResolver:
 
 
 class AdvancedProxyManager:
-    """Advanced proxy manager with multiple sources and protocols"""
-    
+    """
+    Proxy manager placeholder.
+
+    Hugging Face Spaces may flag repositories that include proxy aggregation/scraping logic.
+    This implementation is intentionally **disabled** (no proxy fetching, no proxy usage).
+    """
+
     def __init__(self):
-        self.working_proxies = {
-            'http': [],
-            'socks4': [],
-            'socks5': []
-        }
         self.failed_proxies = set()
         self.last_fetch_time = 0
-        self.fetch_interval = 300  # 5 minutes
-        
-        # Free proxy sources
-        self.proxy_sources = [
-            {
-                "url": "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=5000&country=all&ssl=all&anonymity=elite",
-                "type": "http"
-            },
-            {
-                "url": "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=socks4&timeout=5000&country=all",
-                "type": "socks4"
-            },
-            {
-                "url": "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=socks5&timeout=5000&country=all",
-                "type": "socks5"
-            },
-            {
-                "url": "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt",
-                "type": "http"
-            },
-            {
-                "url": "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks4.txt",
-                "type": "socks4"
-            },
-            {
-                "url": "https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks5.txt",
-                "type": "socks5"
-            },
-        ]
-    
+        self.fetch_interval = 300  # kept for compatibility
+
     async def fetch_proxies(self, force: bool = False) -> None:
-        """Fetch proxies from multiple sources"""
-        current_time = time.time()
-        if not force and (current_time - self.last_fetch_time) < self.fetch_interval:
-            return
-        
-        logger.info("🔄 Fetching fresh proxies...")
-        
-        async def fetch_from_source(source):
-            try:
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    response = await client.get(source["url"])
-                    if response.status_code == 200:
-                        proxies = response.text.strip().split('\n')
-                        return [(proxy.strip(), source["type"]) for proxy in proxies if proxy.strip()]
-            except Exception as e:
-                logger.debug(f"Failed to fetch from {source['url']}: {e}")
-            return []
-        
-        # Parallel fetch from all sources
-        tasks = [fetch_from_source(source) for source in self.proxy_sources]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        all_proxies = []
-        for result in results:
-            if isinstance(result, list):
-                all_proxies.extend(result)
-        
-        # Remove duplicates
-        unique_proxies = list(set(all_proxies))
-        logger.info(f"📦 Fetched {len(unique_proxies)} unique proxies")
-        
-        # Test proxies (async)
-        await self._test_proxies_async(unique_proxies[:30])  # Test first 30
-        self.last_fetch_time = current_time
-    
-    async def _test_proxies_async(self, proxies: List[Tuple[str, str]]) -> None:
-        """Test proxies asynchronously"""
-        logger.info("🧪 Testing proxies...")
-        
-        async def test_proxy(proxy_info):
-            proxy, proxy_type = proxy_info
-            if proxy in self.failed_proxies:
-                return None
-            
-            try:
-                proxy_dict = self._format_proxy(proxy, proxy_type)
-                
-                # Use httpx with proxy
-                timeout = httpx.Timeout(5.0)
-                async with httpx.AsyncClient(proxies=proxy_dict, timeout=timeout) as client:
-                    response = await client.get("https://api.binance.com/api/v3/ping")
-                    
-                    if response.status_code == 200:
-                        return (proxy, proxy_type)
-            except:
-                self.failed_proxies.add(proxy)
-            return None
-        
-        tasks = [test_proxy(p) for p in proxies]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for result in results:
-            if result and not isinstance(result, Exception):
-                proxy, proxy_type = result
-                if proxy not in [p[0] for p in self.working_proxies[proxy_type]]:
-                    self.working_proxies[proxy_type].append((proxy, proxy_type))
-                    logger.info(f"✅ Working proxy: {proxy} ({proxy_type})")
-        
-        total_working = sum(len(v) for v in self.working_proxies.values())
-        logger.info(f"✅ Total working proxies: {total_working}")
-    
-    def _format_proxy(self, proxy: str, proxy_type: str) -> Dict:
-        """Format proxy for use"""
-        if proxy_type == 'http':
-            return {
-                "http://": f"http://{proxy}",
-                "https://": f"http://{proxy}"
-            }
-        elif proxy_type in ['socks4', 'socks5']:
-            return {
-                "http://": f"{proxy_type}://{proxy}",
-                "https://": f"{proxy_type}://{proxy}"
-            }
-        return {}
-    
+        """No-op: proxy fetching is disabled."""
+        self.last_fetch_time = time.time()
+        return None
+
     def get_random_proxy(self) -> Optional[Dict]:
-        """Get random working proxy"""
-        # Select from all proxy types
-        available_types = [k for k, v in self.working_proxies.items() if v]
-        if not available_types:
-            return None
-        
-        proxy_type = random.choice(available_types)
-        proxy, _ = random.choice(self.working_proxies[proxy_type])
-        return self._format_proxy(proxy, proxy_type)
+        """Always returns None: proxy usage is disabled."""
+        return None
 
 
 class UltraSmartBinanceClient:

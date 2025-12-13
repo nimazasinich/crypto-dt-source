@@ -29,7 +29,7 @@
 - ⛓️ **Block Explorers** برای 4 blockchain
 - 🌐 **RPC Nodes** (23 گره)
 - 📚 **HuggingFace Datasets** (186 فایل)
-- 🛡️ **زیرساخت** (DNS/Proxy)
+- 🛡️ **زیرساخت** (DNS)
 
 ---
 
@@ -188,7 +188,7 @@ WinkingFace: BTC, ETH, SOL, XRP (4 datasets)
 ### 7️⃣ Infrastructure
 ```
 DNS over HTTPS: Cloudflare, Google
-Proxy: ProxyScrape Free API
+Proxy: (disabled on Hugging Face Spaces)
 ```
 
 ---

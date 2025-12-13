@@ -5,17 +5,16 @@
 ### ✅ نقاط قوت پروژه
 1. **معماری قوی**: استفاده از FastAPI + Flask با Docker
 2. **منابع متنوع**: 50+ provider مختلف برای داده‌های کریپتو
-3. **پشتیبانی از Proxy**: سیستم Smart Proxy Manager برای دور زدن محدودیت‌ها
+3. **پشتیبانی از DNS امن**: استفاده از DNS over HTTPS برای افزایش پایداری دسترسی
 4. **WebSocket**: پشتیبانی از real-time data
 5. **Database**: استفاده از SQLAlchemy برای persistence
 6. **AI/ML**: ادغام با Hugging Face models
 
 ### ⚠️ نقاط ضعف و مشکلات
 
-#### 1. **مدیریت Proxy و DNS**
+#### 1. **مدیریت DNS**
 ```python
 # مشکل فعلی:
-- Proxy های نمونه (example.com) که کار نمی‌کنند
 - عدم پیاده‌سازی واقعی smart DNS
 - نداشتن fallback strategy مناسب برای Binance و CoinGecko
 ```
@@ -54,28 +53,21 @@
 
 ## 🎯 پرامپت جامع برای ارتقای پروژه
 
-### مرحله 1: ارتقای Smart Proxy Manager
+### مرحله 1: ارتقای Smart DNS Manager
 
 ```
-من یک سیستم جمع‌آوری داده کریپتو دارم که باید از proxy و DNS هوشمند برای دسترسی به Binance و CoinGecko استفاده کنه (این APIها در برخی کشورها فیلتر هستند).
+من یک سیستم جمع‌آوری داده کریپتو دارم که باید از DNS هوشمند (DNS over HTTPS) برای پایداری دسترسی به Binance و CoinGecko استفاده کنه (این APIها در برخی کشورها محدود هستند).
 
 **نیازمندی‌ها:**
 
-1. **Smart Proxy System** با قابلیت‌های زیر:
-   - ادغام با free proxy providers مثل ProxyScrape، Free-Proxy-List
-   - Auto-refresh و validation پروکسی‌ها هر 5 دقیقه
-   - Health check برای همه proxies
-   - Load balancing هوشمند بین proxies
-   - Fallback به direct connection در صورت عدم دسترسی proxy
-
-2. **Dynamic DNS Resolution**:
+1. **Dynamic DNS Resolution**:
    - استفاده از DoH (DNS over HTTPS) با Cloudflare/Google
    - DNS caching برای بهینه‌سازی
    - Fallback DNS servers
    - Automatic retry با DNS مختلف
 
-3. **Provider-Specific Routing**:
-   - تشخیص اتوماتیک نیاز به proxy (برای Binance و CoinGecko)
+2. **Provider-Specific Routing**:
+   - تشخیص اتوماتیک نیاز به DNS fallback (برای Binance و CoinGecko)
    - مسیریابی مستقیم برای provider های دیگر
    - Configurable routing rules
 
@@ -86,10 +78,9 @@
 - افزودن retry logic و circuit breaker pattern
 
 **خروجی مورد نیاز:**
-کد کامل و عملیاتی برای `smart_proxy_manager.py` که:
-- از API های رایگان proxy استفاده کند
+کد کامل و عملیاتی برای ماژول DNS (DoH) که:
 - Health check اتوماتیک داشته باشد
-- Load balancing هوشمند انجام دهد
+- Retry logic و fallback مناسب داشته باشد
 - Logging و metrics کامل داشته باشد
 ```
 
@@ -365,37 +356,10 @@ class ProxyProvider:
         """Fetch proxy list from provider"""
         raise NotImplementedError
 
-
-class ProxyScrapeProvider(ProxyProvider):
-    """Free proxy provider: ProxyScrape.com"""
-    
-    BASE_URL = "https://api.proxyscrape.com/v2/"
-    
-    async def fetch_proxies(self) -> List[str]:
-        params = {
-            "request": "displayproxies",
-            "protocol": "http",
-            "timeout": "10000",
-            "country": "all",
-            "ssl": "all",
-            "anonymity": "elite"
-        }
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self.BASE_URL, params=params) as resp:
-                text = await resp.text()
-                proxies = [p.strip() for p in text.split('\n') if p.strip()]
-                logger.info(f"✅ Fetched {len(proxies)} proxies from ProxyScrape")
-                return proxies
-
-
-class FreeProxyListProvider(ProxyProvider):
-    """Scraper for free-proxy-list.net"""
-    
-    async def fetch_proxies(self) -> List[str]:
-        # Implementation for scraping free-proxy-list.net
-        # Use BeautifulSoup or similar
-        pass
+# NOTE:
+# Proxy aggregation/scraping providers are intentionally omitted here to avoid
+# repository-scanner blocks on Hugging Face Spaces. Prefer DNS-over-HTTPS and
+# endpoint failover instead.
 
 
 class DNSOverHTTPS:
@@ -440,10 +404,7 @@ class SmartProxyManagerV2:
     """Enhanced Smart Proxy Manager"""
     
     def __init__(self):
-        self.proxy_providers = [
-            ProxyScrapeProvider(),
-            # FreeProxyListProvider(),
-        ]
+        self.proxy_providers = []  # disabled
         
         self.doh = DNSOverHTTPS()
         self.proxies: List[dict] = []

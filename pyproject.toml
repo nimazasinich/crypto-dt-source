@@ -14,9 +14,11 @@ extend-exclude = '''
   | build
   | dist
   | node_modules
+  | NewResourceApi
   | data
   | logs
 )/
+| .*_pb2\.py$
 '''
 
 [tool.isort]

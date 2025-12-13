@@ -74,11 +74,8 @@
    - Fallback برای Cloudflare
    - Free unlimited
    - Priority: HIGH
-
-3. **ProxyScrape Free API** 🆕
-   - دریافت proxy های رایگان
-   - Auto-refresh
-   - Priority: MEDIUM
+ 
+> نکته: قابلیت‌های مربوط به proxy در نسخه Space غیرفعال است.
 
 ### RPC Nodes (5 گره جدید):
 1. **BlastAPI Ethereum** 🆕

@@ -51,7 +51,7 @@
   "model_id": "my-sentiment-model",
   "model_name": "Custom Sentiment Analyzer",
   "base_url": "https://api-inference.huggingface.co/models/distilbert-base-uncased",
-  "api_key": "hf_xxxxxxxxxxxxx",
+  "api_key": "YOUR_HF_TOKEN",
   "api_type": "huggingface"
 }
 
@@ -114,7 +114,7 @@ curl -X POST https://api.example.com/predict \
         
         <div class="form-group">
           <label for="manual-api-key">API Key (optional)</label>
-          <input type="password" id="manual-api-key" class="form-input" placeholder="sk-xxxxxxxxxxxxx or hf_xxxxxxxxxxxxx">
+          <input type="password" id="manual-api-key" class="form-input" placeholder="Enter your API key (server-side preferred)">
           <small>Leave empty if no authentication required</small>
         </div>
         

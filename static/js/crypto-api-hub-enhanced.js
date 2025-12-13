@@ -240,7 +240,7 @@ class CryptoAPIHub {
             {
               name: "Hugging Face",
               url: "https://api-inference.huggingface.co/models",
-              key: "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",
+              key: "",
               endpoints: ["/ElKulako/cryptobert"]
             }
           ]

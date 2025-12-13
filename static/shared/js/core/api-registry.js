@@ -484,26 +484,7 @@ export const API_REGISTRY = {
   // ========================================================================
   // CORS PROXIES (For browser requests)
   // ========================================================================
-  corsProxies: [
-    {
-      name: 'cors-anywhere',
-      url: 'https://cors-anywhere.herokuapp.com/',
-      limit: 'Unlimited',
-      priority: 1
-    },
-    {
-      name: 'allorigins',
-      url: 'https://api.allorigins.win/get?url=',
-      limit: 'No limit',
-      priority: 1
-    },
-    {
-      name: 'corsfix',
-      url: 'https://corsfix.xyz/?url=',
-      limit: '60 req/min',
-      priority: 2
-    }
-  ]
+  corsProxies: []
 };
 
 /**

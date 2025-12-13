@@ -13,6 +13,7 @@ import logging
 import json
 import asyncio
 import time
+import httpx
 
 # Import services
 from backend.services.coingecko_client import coingecko_client
@@ -171,6 +172,7 @@ async def get_market_ohlc(
                         "high": item.get("high", 0),
                         "low": item.get("low", 0),
                         "close": item.get("close", 0),
+                        "volume": item.get("volume", 0),
                         "timestamp": item.get("timestamp", int(time.time()))
                     })
                 
@@ -209,6 +211,47 @@ async def get_market_ohlc(
                 }
         except Exception as e:
             logger.warning(f"⚠️ HuggingFace Datasets failed for {symbol_upper}/{timeframe}: {e}")
+
+        # Fallback to CryptoCompare (public OHLCV)
+        try:
+            endpoint = "histohour"
+            aggregate = 1
+            limit = 100
+            if timeframe == "4h":
+                endpoint = "histohour"
+                aggregate = 4
+            elif timeframe == "1d":
+                endpoint = "histoday"
+                aggregate = 1
+            elif timeframe == "1w":
+                endpoint = "histoday"
+                aggregate = 7
+
+            url = f"https://min-api.cryptocompare.com/data/v2/{endpoint}"
+            params = {"fsym": symbol_upper, "tsym": "USD", "limit": limit, "aggregate": aggregate}
+
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(url, params=params)
+                resp.raise_for_status()
+                payload = resp.json()
+
+            data = payload.get("Data", {}).get("Data", [])
+            if isinstance(data, list) and data:
+                ohlc_list = [
+                    {
+                        "open": item.get("open", 0),
+                        "high": item.get("high", 0),
+                        "low": item.get("low", 0),
+                        "close": item.get("close", 0),
+                        "volume": item.get("volumeto", item.get("volumefrom", 0)),
+                        "timestamp": int(item.get("time", 0)) * 1000,
+                    }
+                    for item in data
+                ]
+                logger.info(f"✅ CryptoCompare: Fetched OHLC for {symbol_upper}/{timeframe}")
+                return {"symbol": symbol_upper, "timeframe": timeframe, "ohlc": ohlc_list, "source": "cryptocompare"}
+        except Exception as e:
+            logger.warning(f"⚠️ CryptoCompare failed for {symbol_upper}/{timeframe}: {e}")
         
         # No data found from any source
         raise HTTPException(
