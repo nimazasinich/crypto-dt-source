@@ -1,3 +1,9 @@
+---
+title: Unified Crypto Data Platform
+sdk: docker
+app_port: 7860
+---
+
 # Unified Crypto Data Platform 🚀
 
 **Version**: 2.0.0 (Production Ready)
