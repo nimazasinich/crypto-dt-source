@@ -7,7 +7,7 @@ Multi-page architecture with HTTP polling and WebSocket support.
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -18,6 +18,7 @@ import json
 import asyncio
 import sys
 import os
+import re
 from typing import List, Dict, Any, Optional, Tuple
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -61,6 +62,9 @@ logger = logging.getLogger(__name__)
 WORKSPACE_ROOT = Path(__file__).resolve().parent
 RESOURCES_FILE = WORKSPACE_ROOT / "crypto_resources_unified_2025-11-11.json"
 OHLCV_VERIFICATION_FILE = WORKSPACE_ROOT / "ohlcv_verification_results_20251127_003016.json"
+FAULT_LOG_FILE = WORKSPACE_ROOT / "fualt.txt"
+REAL_ENDPOINTS_FILE = WORKSPACE_ROOT / "realendpoint.txt"
+API_KEYS_CONFIG_FILE = WORKSPACE_ROOT / "config" / "api_keys.json"
 
 
 def _load_json_file(path: Path) -> Optional[Dict[str, Any]]:
@@ -72,6 +76,89 @@ def _load_json_file(path: Path) -> Optional[Dict[str, Any]]:
   except Exception as exc:  # pragma: no cover - defensive
     logger.error("Failed to load JSON from %s: %s", path, exc)
   return None
+
+
+def _read_text_file_tail(path: Path, tail: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Read a text file safely with optional tail (last N lines).
+    Returns structured data for client consumption.
+    """
+    if not path.exists():
+        return {"exists": False, "path": str(path), "tail": tail, "lines": [], "content": ""}
+
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except Exception as exc:  # pragma: no cover
+        logger.error("Failed to read %s: %s", path, exc)
+        return {"exists": True, "path": str(path), "tail": tail, "lines": [], "content": "", "error": str(exc)}
+
+    lines = text.splitlines()
+    if isinstance(tail, int) and tail > 0:
+        lines = lines[-tail:]
+        text = "\n".join(lines)
+
+    return {
+        "exists": True,
+        "path": str(path),
+        "tail": tail,
+        "line_count": len(lines),
+        "content": text,
+        "lines": lines,
+    }
+
+
+def _count_configured_api_keys() -> Dict[str, Any]:
+    """
+    Count API keys configured via environment variables referenced in config/api_keys.json.
+    Values in the config are typically placeholders like "${ETHERSCAN_KEY}".
+    """
+    try:
+        if not API_KEYS_CONFIG_FILE.exists():
+            return {
+                "config_exists": False,
+                "total_key_refs": 0,
+                "configured_keys": 0,
+                "missing_keys": [],
+            }
+
+        raw = API_KEYS_CONFIG_FILE.read_text(encoding="utf-8", errors="replace")
+        cfg = json.loads(raw) if raw.strip() else {}
+
+        pattern = re.compile(r"\$\{([A-Z0-9_]+)\}")
+        referenced: List[str] = []
+
+        def walk(obj: Any) -> None:
+            if isinstance(obj, dict):
+                for v in obj.values():
+                    walk(v)
+            elif isinstance(obj, list):
+                for v in obj:
+                    walk(v)
+            elif isinstance(obj, str):
+                for m in pattern.finditer(obj):
+                    referenced.append(m.group(1))
+
+        walk(cfg)
+        # Unique + stable order
+        refs = sorted(set(referenced))
+        configured = [k for k in refs if (os.getenv(k) or "").strip() not in ("", "null", "None")]
+        missing = [k for k in refs if k not in configured]
+
+        return {
+            "config_exists": True,
+            "total_key_refs": len(refs),
+            "configured_keys": len(configured),
+            "missing_keys": missing,
+        }
+    except Exception as e:
+        logger.error(f"Failed to count configured API keys: {e}")
+        return {
+            "config_exists": bool(API_KEYS_CONFIG_FILE.exists()),
+            "total_key_refs": 0,
+            "configured_keys": 0,
+            "missing_keys": [],
+            "error": str(e),
+        }
 
 
 _RESOURCES_CACHE: Optional[Dict[str, Any]] = _load_json_file(RESOURCES_FILE)
@@ -464,6 +551,84 @@ async def get_all_endpoints():
     }
 
 # ============================================================================
+# SUPPORT FILES (fualt.txt, realendpoint.txt) FOR CLIENTS
+# ============================================================================
+
+@app.get("/api/support/fualt")
+async def api_support_fualt(tail: Optional[int] = 500) -> Dict[str, Any]:
+    """
+    Expose `fualt.txt` to clients (debug/support).
+    Default returns last 500 lines to keep payload small.
+    """
+    data = _read_text_file_tail(FAULT_LOG_FILE, tail=tail)
+    data["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    return data
+
+
+@app.get("/fualt.txt")
+async def download_fualt_txt():
+    """Download the raw `fualt.txt` file if present."""
+    if not FAULT_LOG_FILE.exists():
+        return PlainTextResponse("fualt.txt not found", status_code=404)
+    return FileResponse(FAULT_LOG_FILE)
+
+
+def _build_real_endpoints_snapshot() -> List[Dict[str, Any]]:
+    """Build a minimal endpoint snapshot from the current FastAPI routing table."""
+    snapshot: List[Dict[str, Any]] = []
+    for route in app.routes:
+        if not hasattr(route, "path") or not hasattr(route, "methods"):
+            continue
+        if route.path.startswith("/openapi") or route.path == "/docs":
+            continue
+        methods = sorted([m for m in (route.methods or []) if m not in {"HEAD", "OPTIONS"}])
+        snapshot.append({"path": route.path, "methods": methods, "name": getattr(route, "name", "")})
+
+    # Sort stable for clients/diffs
+    snapshot.sort(key=lambda r: (r["path"], ",".join(r["methods"])))
+    return snapshot
+
+
+@app.get("/api/support/realendpoints")
+async def api_support_realendpoints(format: str = "json") -> Any:
+    """
+    Provide a "real endpoints" list for clients.
+    - format=json (default): structured list
+    - format=txt: plain text similar to a `realendpoint.txt` file
+    """
+    endpoints_snapshot = _build_real_endpoints_snapshot()
+    if format.lower() == "txt":
+        lines = []
+        for e in endpoints_snapshot:
+            methods = ",".join(e["methods"]) if e["methods"] else ""
+            lines.append(f"{methods:10} {e['path']}")
+        return PlainTextResponse("\n".join(lines) + "\n")
+
+    return {
+        "success": True,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "count": len(endpoints_snapshot),
+        "endpoints": endpoints_snapshot,
+    }
+
+
+@app.get("/realendpoint.txt")
+async def download_realendpoint_txt():
+    """
+    Download `realendpoint.txt` if present, otherwise generate it on the fly from
+    the live routing table (so it is always "supported").
+    """
+    if REAL_ENDPOINTS_FILE.exists():
+        return FileResponse(REAL_ENDPOINTS_FILE)
+    # Generate on the fly
+    endpoints_snapshot = _build_real_endpoints_snapshot()
+    lines = []
+    for e in endpoints_snapshot:
+        methods = ",".join(e["methods"]) if e["methods"] else ""
+        lines.append(f"{methods:10} {e['path']}")
+    return PlainTextResponse("\n".join(lines) + "\n")
+
+# ============================================================================
 # STATIC FILES
 # ============================================================================
 # Mount static files directory
@@ -663,6 +828,7 @@ async def api_resources_summary() -> Dict[str, Any]:
     """Resources summary endpoint for dashboard (compatible with frontend)."""
     try:
         summary, categories = _summarize_resources()
+        keys_info = _count_configured_api_keys()
         
         # Format for frontend compatibility
         return {
@@ -672,6 +838,10 @@ async def api_resources_summary() -> Dict[str, Any]:
                 "free_resources": summary.get("free", 0),
                 "premium_resources": summary.get("premium", 0),
                 "models_available": summary.get("models_available", 0),
+                # API key status (for dashboard)
+                "total_api_keys": keys_info.get("total_key_refs", 0),
+                "configured_api_keys": keys_info.get("configured_keys", 0),
+                "api_keys_config_loaded": keys_info.get("config_exists", False),
                 "local_routes_count": summary.get("local_routes_count", 0),
                 "categories": {
                     cat["name"].lower().replace(" ", "_"): {
@@ -695,6 +865,9 @@ async def api_resources_summary() -> Dict[str, Any]:
                 "free_resources": 180,
                 "premium_resources": 68,
                 "models_available": 8,
+                "total_api_keys": 0,
+                "configured_api_keys": 0,
+                "api_keys_config_loaded": False,
                 "local_routes_count": 24,
                 "categories": {
                     "market_data": {"count": 15, "type": "external"},
@@ -911,6 +1084,46 @@ async def api_sentiment_global(timeframe: str = "1D"):
         "source": "unavailable",
         "error": "Real data unavailable"
     }
+
+
+@app.get("/api/fear-greed")
+async def api_fear_greed(limit: int = 1) -> Dict[str, Any]:
+    """
+    Convenience endpoint for Fear & Greed Index (Alternative.me).
+    This keeps client integrations simple and is safe to call from the dashboard.
+    """
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get("https://api.alternative.me/fng/", params={"limit": str(limit)})
+            response.raise_for_status()
+            payload = response.json()
+
+        data = payload.get("data") or []
+        latest = data[0] if isinstance(data, list) and data else {}
+
+        value = int(latest.get("value", 50))
+        classification = latest.get("value_classification", "Neutral")
+
+        return {
+            "success": True,
+            "value": value,
+            "classification": classification,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "alternative.me",
+            "data": data[: min(len(data), 30)],
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch Fear & Greed Index: {e}")
+        return {
+            "success": False,
+            "value": 50,
+            "classification": "Neutral",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "unavailable",
+            "error": str(e),
+        }
 
 
 @app.get("/api/sentiment/asset/{symbol}")
@@ -1161,6 +1374,66 @@ async def api_news_latest(limit: int = 50) -> Dict[str, Any]:
             "error": str(e)
         }
 
+
+# ============================================================================
+# DeFi (public, no keys) - DefiLlama
+# ============================================================================
+
+@app.get("/api/defi/tvl")
+async def api_defi_tvl() -> Dict[str, Any]:
+    """Total Value Locked (TVL) using DefiLlama public API."""
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get("https://api.llama.fi/tvl")
+            resp.raise_for_status()
+            tvl = resp.json()
+        return {"success": True, "tvl": tvl, "source": "defillama", "timestamp": datetime.utcnow().isoformat() + "Z"}
+    except Exception as e:
+        logger.error(f"DeFi TVL failed: {e}")
+        return {"success": False, "tvl": None, "source": "unavailable", "error": str(e), "timestamp": datetime.utcnow().isoformat() + "Z"}
+
+
+@app.get("/api/defi/protocols")
+async def api_defi_protocols(limit: int = 20) -> Dict[str, Any]:
+    """Top DeFi protocols by TVL using DefiLlama public API."""
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get("https://api.llama.fi/protocols")
+            resp.raise_for_status()
+            protocols = resp.json()
+
+        if isinstance(protocols, list):
+            protocols = sorted(protocols, key=lambda p: float(p.get("tvl") or 0), reverse=True)
+            protocols = protocols[: max(1, min(int(limit), 100))]
+
+        return {"success": True, "protocols": protocols, "source": "defillama", "timestamp": datetime.utcnow().isoformat() + "Z"}
+    except Exception as e:
+        logger.error(f"DeFi protocols failed: {e}")
+        return {"success": False, "protocols": [], "source": "unavailable", "error": str(e), "timestamp": datetime.utcnow().isoformat() + "Z"}
+
+
+@app.get("/api/defi/yields")
+async def api_defi_yields(limit: int = 20) -> Dict[str, Any]:
+    """Yield pools snapshot using DefiLlama public API."""
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get("https://yields.llama.fi/pools")
+            resp.raise_for_status()
+            payload = resp.json()
+
+        pools = payload.get("data") if isinstance(payload, dict) else []
+        if isinstance(pools, list):
+            pools = sorted(pools, key=lambda p: float(p.get("tvlUsd") or 0), reverse=True)
+            pools = pools[: max(1, min(int(limit), 100))]
+
+        return {"success": True, "pools": pools, "source": "defillama", "timestamp": datetime.utcnow().isoformat() + "Z"}
+    except Exception as e:
+        logger.error(f"DeFi yields failed: {e}")
+        return {"success": False, "pools": [], "source": "unavailable", "error": str(e), "timestamp": datetime.utcnow().isoformat() + "Z"}
+
 @app.get("/api/market")
 async def api_market(limit: Optional[int] = None):
     """Market overview data - REAL DATA from CoinGecko"""
@@ -1345,6 +1618,11 @@ async def api_sentiment_analyze(payload: Dict[str, Any]):
     try:
         text = payload.get("text", "")
         mode = payload.get("mode", "crypto")
+        # Optional: allow explicit HF model selection from the UI
+        # - `model_key`: key from the server/client registry (preferred)
+        # - `model`: backwards-compatible alias used by some pages
+        model_key = payload.get("model_key") or payload.get("model")
+        use_ensemble = bool(payload.get("use_ensemble", True))
         
         if not text:
             return {
@@ -1356,15 +1634,41 @@ async def api_sentiment_analyze(payload: Dict[str, Any]):
         # Use AI service for sentiment analysis
         try:
             from backend.services.ai_service_unified import ai_service
-            result = await ai_service.analyze_sentiment(text, mode=mode)
-            
+
+            # If the UI requested a specific model_key and HF client is available,
+            # call it directly so the Models page "Test Model" works.
+            if model_key and getattr(ai_service, "hf_client", None) is not None:
+                hf_result = await ai_service.hf_client.analyze_sentiment(
+                    text=text,
+                    model_key=str(model_key),
+                    use_cache=True,
+                )
+
+                # Normalize HF API client response into the UI-friendly shape.
+                if hf_result.get("status") == "success":
+                    return {
+                        "success": True,
+                        "sentiment": hf_result.get("label", "neutral"),
+                        "score": hf_result.get("score", hf_result.get("confidence", 0.5)),
+                        "confidence": hf_result.get("confidence", hf_result.get("score", 0.5)),
+                        "model": hf_result.get("model", "hf_inference_api"),
+                        "model_key": hf_result.get("model_key", model_key),
+                        "engine": hf_result.get("engine", "hf_inference_api"),
+                        "timestamp": datetime.utcnow().isoformat() + "Z",
+                    }
+
+                # If the selected model isn't available, fall back to auto mode.
+                # (Still return success=False only if everything fails.)
+
+            result = await ai_service.analyze_sentiment(text, category=mode, use_ensemble=use_ensemble)
+
             return {
                 "success": True,
-                "sentiment": result.get("sentiment", "neutral"),
-                "score": result.get("score", 0.5),
-                "confidence": result.get("confidence", 0.5),
+                "sentiment": result.get("sentiment", result.get("label", "neutral")),
+                "score": result.get("score", result.get("confidence", 0.5)),
+                "confidence": result.get("confidence", result.get("score", 0.5)),
                 "model": result.get("model", "unified"),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             }
         except Exception as e:
             logger.warning(f"AI sentiment analysis failed: {e}, using fallback")
@@ -1412,6 +1716,53 @@ async def api_sentiment_analyze(payload: Dict[str, Any]):
 # ============================================================================
 # OHLCV DATA ENDPOINTS
 # ============================================================================
+
+@app.get("/api/ohlcv")
+async def api_ohlcv_query(symbol: str, timeframe: str = "1h", limit: int = 100):
+    """Query-style OHLCV endpoint for frontend compatibility."""
+    return await api_ohlcv_symbol(symbol=symbol, timeframe=timeframe, limit=limit)
+
+
+@app.get("/api/klines")
+async def api_klines(symbol: str, interval: str = "1h", limit: int = 100):
+    """Binance-style klines alias for frontend compatibility."""
+    sym = symbol.upper().strip()
+    m = re.match(r"^([A-Z0-9]+?)(USDT|USD|USDC|BUSD)$", sym)
+    base = m.group(1) if m else sym
+    return await api_ohlcv_symbol(symbol=base, timeframe=interval, limit=limit)
+
+
+@app.get("/api/historical")
+async def api_historical(symbol: str, days: int = 30):
+    """Simple historical alias (daily candles)."""
+    try:
+        from backend.services.binance_client import BinanceClient
+
+        binance = BinanceClient()
+        fetch_days = min(max(int(days), 1), 365)
+        data = await binance.get_ohlcv(symbol.upper(), "1d", fetch_days)
+        return {
+            "success": True,
+            "symbol": symbol.upper(),
+            "days": fetch_days,
+            "data": data,
+            "count": len(data),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "binance",
+        }
+    except Exception as e:
+        logger.warning(f"Historical fetch failed for {symbol}: {e}")
+        return {
+            "success": False,
+            "symbol": symbol.upper(),
+            "days": days,
+            "data": [],
+            "count": 0,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source": "unavailable",
+            "error": str(e),
+        }
+
 
 @app.get("/api/ohlcv/{symbol}")
 async def api_ohlcv_symbol(symbol: str, timeframe: str = "1h", limit: int = 100):
@@ -1480,11 +1831,11 @@ async def api_ohlcv_multi(symbols: str, timeframe: str = "1h", limit: int = 100)
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
 
-# Root endpoint - Serve Dashboard as home page
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    """Root endpoint - serves the dashboard page"""
-    return serve_page("dashboard")
+#
+# NOTE:
+# `/` is already handled earlier (redirects to dashboard). Keep a single handler
+# for a stable routing table (avoids duplicate route definitions).
+#
 
 # API Root endpoint - Keep for backwards compatibility
 @app.get("/api")
