@@ -19,8 +19,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the entire project
 COPY . .
 
-# Create data directory for SQLite databases
-RUN mkdir -p data
+# Create data directory for SQLite databases and set permissions for HF Spaces (user 1000)
+RUN mkdir -p data config && \
+    chmod -R 777 data config && \
+    chmod -R 777 /app
 
 # Expose port 7860 (Hugging Face Spaces standard)
 EXPOSE 7860
@@ -31,7 +33,7 @@ ENV PORT=7860
 ENV PYTHONUNBUFFERED=1
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:7860/api/health || exit 1
 
 # Start the FastAPI server
