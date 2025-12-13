@@ -1,0 +1,43 @@
+{
+  "scoring": {
+    "rsi": {
+      "enabled": true,
+      "weight": 0.3,
+      "period": 14,
+      "overbought_threshold": 70,
+      "oversold_threshold": 30
+    },
+    "macd": {
+      "enabled": true,
+      "weight": 0.25,
+      "fast_period": 12,
+      "slow_period": 26,
+      "signal_period": 9
+    },
+    "moving_average": {
+      "enabled": true,
+      "weight": 0.2,
+      "short_period": 10,
+      "long_period": 50
+    },
+    "volume": {
+      "enabled": true,
+      "weight": 0.15,
+      "volume_threshold": 1.5
+    },
+    "sentiment": {
+      "enabled": true,
+      "weight": 0.1,
+      "source": "huggingface",
+      "confidence_threshold": 0.7
+    }
+  },
+  "aggregation": {
+    "method": "weighted_sum",
+    "normalize": true,
+    "confidence_threshold": 0.6
+  },
+  "version": "1.0.0",
+  "last_updated": "2025-01-01T00:00:00Z"
+}
+

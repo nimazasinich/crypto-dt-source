@@ -1,0 +1,72 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-12-12T00:00:00Z",
+  "services": [
+    {
+      "id": "hf_crypto_resources_api",
+      "name": "Crypto Resources API (HuggingFace Space)",
+      "type": "aggregated",
+      "description": "Comprehensive cryptocurrency data API hosted on HuggingFace Spaces. Provides market data, sentiment, trending coins, and a database of 281 crypto resources.",
+      "base_url": "https://really-amin-crypto-api-clean.hf.space",
+      "docs_url": "https://really-amin-crypto-api-clean.hf.space/docs",
+      "openapi_url": "https://really-amin-crypto-api-clean.hf.space/openapi.json",
+      "auth_required": false,
+      "rate_limit": "unlimited",
+      "priority": 1,
+      "timeout": 15,
+      "is_active": true,
+      "is_verified": true,
+      "endpoints": {
+        "health": "/health",
+        "resources_stats": "/api/resources/stats",
+        "resources_list": "/api/resources/list",
+        "categories": "/api/categories",
+        "resources_by_category": "/api/resources/category/{category}",
+        "top_coins": "/api/coins/top",
+        "trending": "/api/trending",
+        "market_overview": "/api/market",
+        "sentiment_global": "/api/sentiment/global",
+        "sentiment_asset": "/api/sentiment/asset/{symbol}",
+        "news": "/api/news",
+        "system_status": "/api/status",
+        "monitoring_status": "/api/monitoring/status",
+        "providers": "/api/providers",
+        "models_list": "/api/models/list",
+        "models_status": "/api/models/status",
+        "ohlcv": "/api/ohlcv",
+        "agents_status": "/api/agents/status"
+      },
+      "categories_available": [
+        "rpc_nodes",
+        "block_explorers",
+        "market_data_apis",
+        "news_apis",
+        "sentiment_apis",
+        "onchain_analytics_apis",
+        "whale_tracking_apis",
+        "community_sentiment_apis",
+        "hf_resources",
+        "free_http_endpoints",
+        "local_backend_routes",
+        "cors_proxies"
+      ],
+      "data_sources": {
+        "market_data": "CoinGecko (real-time)",
+        "sentiment": "Alternative.me Fear & Greed Index (real-time)",
+        "trending": "CoinGecko (real-time)"
+      },
+      "features": [
+        "market_prices",
+        "market_overview",
+        "trending_coins",
+        "fear_greed_index",
+        "resource_database",
+        "websocket_updates"
+      ],
+      "websocket": {
+        "url": "wss://really-amin-crypto-api-clean.hf.space/ws",
+        "supported": true
+      }
+    }
+  ]
+}

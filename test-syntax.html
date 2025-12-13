@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Syntax Test</title>
+</head>
+<body>
+  <h1>Testing JavaScript Files</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    const results = document.getElementById('results');
+    
+    async function testFile(path, name) {
+      try {
+        await import(path);
+        results.innerHTML += `<p style="color: green;">✓ ${name} - OK</p>`;
+        return true;
+      } catch (error) {
+        results.innerHTML += `<p style="color: red;">✗ ${name} - ERROR: ${error.message}</p>`;
+        console.error(`Error in ${name}:`, error);
+        return false;
+      }
+    }
+
+    async function runTests() {
+      results.innerHTML = '<h2>Testing Files...</h2>';
+      
+      await testFile('/static/shared/components/config-helper-modal.js', 'Config Helper Modal');
+      await testFile('/static/pages/market/market-improved.js', 'Market Improved');
+      await testFile('/static/pages/dashboard/dashboard-fear-greed-fix.js', 'Fear & Greed Fix');
+      
+      results.innerHTML += '<h2>Tests Complete!</h2>';
+    }
+
+    runTests();
+  </script>
+</body>
+</html>

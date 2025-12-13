@@ -1,0 +1,330 @@
+/**
+ * استایل‌های نمایش وضعیت اتصال و کاربران آنلاین
+ */
+
+/* === Connection Status Bar === */
+.connection-status-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 9999;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.connection-status-bar.disconnected {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+/* === Status Dot === */
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    display: inline-block;
+    position: relative;
+}
+
+.status-dot-online {
+    background: #4ade80;
+    box-shadow: 0 0 10px #4ade80;
+    animation: pulse-green 2s infinite;
+}
+
+.status-dot-offline {
+    background: #f87171;
+    box-shadow: 0 0 10px #f87171;
+}
+
+@keyframes pulse-green {
+    0%, 100% {
+        box-shadow: 0 0 10px #4ade80;
+    }
+    50% {
+        box-shadow: 0 0 20px #4ade80, 0 0 30px #4ade80;
+    }
+}
+
+/* === Online Users Widget === */
+.online-users-widget {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 5px 15px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.online-users-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.users-icon {
+    font-size: 18px;
+}
+
+.count-number {
+    font-size: 18px;
+    font-weight: bold;
+    min-width: 30px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.count-number.count-updated {
+    transform: scale(1.2);
+    color: #fbbf24;
+}
+
+.count-label {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* === Badge Pulse Animation === */
+.badge.pulse {
+    animation: badge-pulse 1s ease;
+}
+
+@keyframes badge-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* === Connection Info === */
+.ws-connection-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ws-status-text {
+    font-weight: 500;
+}
+
+/* === Floating Stats Card === */
+.floating-stats-card {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    padding: 20px;
+    min-width: 280px;
+    z-index: 9998;
+    transition: all 0.3s ease;
+    direction: rtl;
+}
+
+.floating-stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+}
+
+.floating-stats-card.minimized {
+    padding: 10px;
+    min-width: 60px;
+    cursor: pointer;
+}
+
+.stats-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.stats-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.minimize-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #6b7280;
+    transition: transform 0.3s;
+}
+
+.minimize-btn:hover {
+    transform: rotate(90deg);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    color: white;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* === Client Types List === */
+.client-types-list {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #f3f4f6;
+}
+
+.client-type-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.client-type-item:last-child {
+    border-bottom: none;
+}
+
+.client-type-name {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.client-type-count {
+    font-weight: 600;
+    color: #1f2937;
+    background: #f3f4f6;
+    padding: 2px 10px;
+    border-radius: 12px;
+}
+
+/* === Alerts Container === */
+.alerts-container {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    z-index: 9997;
+    max-width: 400px;
+}
+
+.alert {
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* === Reconnect Button === */
+.reconnect-btn {
+    margin-right: 10px;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* === Loading Spinner === */
+.connection-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+    .connection-status-bar {
+        font-size: 12px;
+        padding: 0 10px;
+    }
+    
+    .online-users-widget {
+        padding: 3px 10px;
+        gap: 8px;
+    }
+    
+    .floating-stats-card {
+        bottom: 10px;
+        right: 10px;
+        min-width: 240px;
+    }
+    
+    .count-number {
+        font-size: 16px;
+    }
+}
+
+/* === Dark Mode Support === */
+@media (prefers-color-scheme: dark) {
+    .floating-stats-card {
+        background: #1f2937;
+        color: white;
+    }
+    
+    .stats-card-title {
+        color: white;
+    }
+    
+    .client-type-name {
+        color: #d1d5db;
+    }
+    
+    .client-type-count {
+        background: #374151;
+        color: white;
+    }
+}
+

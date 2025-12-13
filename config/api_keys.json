@@ -1,0 +1,128 @@
+{
+  "description": "API Keys Configuration for Crypto Intelligence Hub",
+  "last_updated": "2025-12-12",
+  
+  "block_explorers": {
+    "etherscan": {
+      "key": "${ETHERSCAN_KEY}",
+      "backup_key": "${ETHERSCAN_BACKUP_KEY}",
+      "url": "https://api.etherscan.io/api",
+      "rate_limit": "5 req/sec"
+    },
+    "bscscan": {
+      "key": "${BSCSCAN_KEY}",
+      "url": "https://api.bscscan.com/api",
+      "rate_limit": "5 req/sec"
+    },
+    "tronscan": {
+      "key": "${TRONSCAN_KEY}",
+      "url": "https://apilist.tronscanapi.com/api",
+      "rate_limit": "varies"
+    }
+  },
+  
+  "market_data": {
+    "coinmarketcap": {
+      "keys": [
+        "${COINMARKETCAP_KEY_1}",
+        "${COINMARKETCAP_KEY_2}"
+      ],
+      "url": "https://pro-api.coinmarketcap.com/v1",
+      "rate_limit": "333 req/day per key",
+      "endpoints": {
+        "listings": "/cryptocurrency/listings/latest",
+        "quotes": "/cryptocurrency/quotes/latest",
+        "info": "/cryptocurrency/info"
+      }
+    }
+  },
+  
+  "news": {
+    "newsapi": {
+      "key": "${NEWSAPI_KEY}",
+      "url": "https://newsapi.org/v2",
+      "rate_limit": "100 req/day (free)",
+      "endpoints": {
+        "everything": "/everything",
+        "top_headlines": "/top-headlines"
+      }
+    }
+  },
+  
+  "sentiment": {
+    "custom_sentiment_api": {
+      "key": "${SENTIMENT_API_KEY}",
+      "description": "Custom sentiment analysis API"
+    }
+  },
+  
+  "ai_models": {
+    "huggingface": {
+      "key": "${HF_TOKEN}",
+      "url": "https://api-inference.huggingface.co/models",
+      "rate_limit": "varies"
+    }
+  },
+  
+  "aggregated_sources": {
+    "hf_crypto_resources_api": {
+      "name": "Crypto Resources API (HuggingFace Space)",
+      "url": "https://really-amin-crypto-api-clean.hf.space",
+      "docs_url": "https://really-amin-crypto-api-clean.hf.space/docs",
+      "auth_required": false,
+      "rate_limit": "unlimited",
+      "endpoints": {
+        "health": "/health",
+        "top_coins": "/api/coins/top",
+        "trending": "/api/trending",
+        "market_overview": "/api/market",
+        "sentiment_global": "/api/sentiment/global",
+        "sentiment_asset": "/api/sentiment/asset/{symbol}",
+        "resources_stats": "/api/resources/stats",
+        "categories": "/api/categories",
+        "resources_by_category": "/api/resources/category/{category}",
+        "providers": "/api/providers",
+        "system_status": "/api/status"
+      },
+      "categories_available": [
+        "rpc_nodes",
+        "block_explorers", 
+        "market_data_apis",
+        "news_apis",
+        "sentiment_apis",
+        "onchain_analytics_apis",
+        "whale_tracking_apis",
+        "hf_resources",
+        "free_http_endpoints",
+        "cors_proxies"
+      ],
+      "verified": true,
+      "last_verified": "2025-12-12"
+    }
+  },
+  
+  "notifications": {
+    "telegram": {
+      "enabled": true,
+      "bot_token": "${TELEGRAM_BOT_TOKEN}",
+      "chat_id": "${TELEGRAM_CHAT_ID}"
+    }
+  },
+  
+  "environment_variables": {
+    "description": "Set these in your environment or .env file",
+    "variables": [
+      "ETHERSCAN_KEY=",
+      "ETHERSCAN_BACKUP_KEY=",
+      "BSCSCAN_KEY=",
+      "TRONSCAN_KEY=",
+      "COINMARKETCAP_KEY_1=",
+      "COINMARKETCAP_KEY_2=",
+      "NEWSAPI_KEY=",
+      "SENTIMENT_API_KEY=",
+      "HF_TOKEN=",
+      "TELEGRAM_BOT_TOKEN=",
+      "TELEGRAM_CHAT_ID="
+    ]
+  }
+}

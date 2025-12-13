@@ -1,0 +1,24 @@
+{
+  "flags": {
+    "enableWhaleTracking": true,
+    "enableMarketOverview": true,
+    "enableFearGreedIndex": true,
+    "enableNewsFeed": true,
+    "enableSentimentAnalysis": true,
+    "enableMlPredictions": false,
+    "enableProxyAutoMode": true,
+    "enableDefiProtocols": true,
+    "enableTrendingCoins": true,
+    "enableGlobalStats": true,
+    "enableProviderRotation": true,
+    "enableWebSocketStreaming": true,
+    "enableDatabaseLogging": true,
+    "enableRealTimeAlerts": false,
+    "enableAdvancedCharts": true,
+    "enableExportFeatures": true,
+    "enableCustomProviders": true,
+    "enablePoolManagement": true,
+    "enableHFIntegration": true
+  },
+  "last_updated": "2025-11-14T09:54:35.418754"
+}
