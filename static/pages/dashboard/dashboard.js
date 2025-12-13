@@ -38,7 +38,7 @@ class DashboardPage {
       
       // Defer Chart.js loading until after initial render
       this.injectEnhancedLayout();
-      this.initSystemStatusModal();
+      this.initStatusDrawer();
       this.bindEvents();
       
       // Add smooth fade-in delay for better UX
@@ -414,34 +414,24 @@ class DashboardPage {
     `;
   }
 
-  initSystemStatusModal() {
-    // Initialize the system status modal component
+  initStatusDrawer() {
+    // Initialize the status drawer component
     try {
-      if (typeof SystemStatusModal !== 'undefined') {
-        window.systemStatusModal = new SystemStatusModal({
+      if (typeof StatusDrawer !== 'undefined') {
+        window.statusDrawer = new StatusDrawer({
           apiEndpoint: '/api/system/status',
-          updateInterval: 3000, // 3 seconds
-          onError: (error) => {
-            logger.error('Dashboard', 'System status modal error:', error);
-          }
+          updateInterval: 3000 // 3 seconds real-time updates
         });
-        logger.info('Dashboard', 'System status modal initialized');
+        logger.info('Dashboard', 'Status drawer initialized');
       } else {
-        logger.warn('Dashboard', 'SystemStatusModal class not available');
+        logger.warn('Dashboard', 'StatusDrawer class not available');
       }
     } catch (error) {
-      logger.error('Dashboard', 'Failed to initialize system status modal:', error);
+      logger.error('Dashboard', 'Failed to initialize status drawer:', error);
     }
   }
 
   bindEvents() {
-    // System Status button
-    document.getElementById('system-status-btn')?.addEventListener('click', () => {
-      if (window.systemStatusModal) {
-        window.systemStatusModal.open();
-      }
-    });
-    
     // Refresh button
     document.getElementById('refresh-btn')?.addEventListener('click', () => {
       this.showToast('Refreshing...', 'info');

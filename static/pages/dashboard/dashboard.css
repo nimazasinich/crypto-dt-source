@@ -1748,23 +1748,4 @@
   }
 }
 
-/* ============================================================================
-   SYSTEM STATUS BUTTON
-   ============================================================================ */
-
-.btn-system-status {
-  position: relative;
-}
-
-.btn-system-status:hover {
-  background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(34, 211, 238, 0.08));
-  border-color: rgba(45, 212, 191, 0.3);
-}
-
-.btn-system-status:active {
-  transform: scale(0.95);
-}
-
-.btn-system-status svg {
-  color: var(--teal, #14b8a6);
-}
+/* Status Drawer styles in status-drawer.css */
