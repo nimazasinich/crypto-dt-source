@@ -46,6 +46,7 @@ from backend.routers.health_monitor_api import router as health_monitor_router  
 from backend.routers.indicators_api import router as indicators_router  # Technical Indicators API
 from backend.routers.new_sources_api import router as new_sources_router  # NEW: Integrated data sources (Crypto API Clean + Crypto DT Source)
 from backend.routers.system_metrics_api import router as system_metrics_router  # System metrics and monitoring
+from backend.routers.system_status_api import router as system_status_router  # Comprehensive system status for modal
 
 # Import metrics middleware
 from backend.middleware import MetricsMiddleware
@@ -494,6 +495,13 @@ try:
     logger.info("✓ ✅ System Metrics Router loaded (Real-time CPU, Memory, Request Rate, Response Time, Error Rate)")
 except Exception as e:
     logger.error(f"Failed to include system_metrics_router: {e}")
+
+# System Status API (Comprehensive status for modal)
+try:
+    app.include_router(system_status_router)  # Comprehensive system status (services, endpoints, coins, resources)
+    logger.info("✓ ✅ System Status Router loaded (Comprehensive status for System Status Modal)")
+except Exception as e:
+    logger.error(f"Failed to include system_status_router: {e}")
 
 # Add routers status endpoint
 @app.get("/api/routers")

@@ -19,7 +19,6 @@ class DashboardPage {
     this.consecutiveFailures = 0;
     this.isOffline = false;
     this.expandedNews = new Set();
-    this.systemMonitor = null;
     
     this.config = {
       refreshInterval: 30000,
@@ -39,7 +38,7 @@ class DashboardPage {
       
       // Defer Chart.js loading until after initial render
       this.injectEnhancedLayout();
-      this.initSystemMonitor();
+      this.initStatusDrawer();
       this.bindEvents();
       
       // Add smooth fade-in delay for better UX
@@ -93,10 +92,6 @@ class DashboardPage {
     if (this.updateInterval) clearInterval(this.updateInterval);
     Object.values(this.charts).forEach(chart => chart?.destroy());
     this.charts = {};
-    if (this.systemMonitor) {
-      this.systemMonitor.destroy();
-      this.systemMonitor = null;
-    }
     this.savePersistedData();
   }
 
@@ -308,11 +303,6 @@ class DashboardPage {
         </div>
       </section>
 
-      <!-- System Monitor Section -->
-      <section class="system-monitor-section" id="system-monitor-section">
-        <div id="system-monitor-container"></div>
-      </section>
-
       <!-- Main Dashboard Grid -->
       <div class="dashboard-grid">
         <!-- Left Column -->
@@ -424,23 +414,20 @@ class DashboardPage {
     `;
   }
 
-  initSystemMonitor() {
-    // Initialize the system monitor component
+  initStatusDrawer() {
+    // Initialize the status drawer component
     try {
-      if (typeof SystemMonitor !== 'undefined') {
-        this.systemMonitor = new SystemMonitor('system-monitor-container', {
-          updateInterval: 2000, // 2 seconds
-          autoStart: true,
-          onError: (error) => {
-            logger.error('Dashboard', 'System monitor error:', error);
-          }
+      if (typeof StatusDrawer !== 'undefined') {
+        window.statusDrawer = new StatusDrawer({
+          apiEndpoint: '/api/system/status',
+          updateInterval: 3000 // 3 seconds real-time updates
         });
-        logger.info('Dashboard', 'System monitor initialized');
+        logger.info('Dashboard', 'Status drawer initialized');
       } else {
-        logger.warn('Dashboard', 'SystemMonitor class not available');
+        logger.warn('Dashboard', 'StatusDrawer class not available');
       }
     } catch (error) {
-      logger.error('Dashboard', 'Failed to initialize system monitor:', error);
+      logger.error('Dashboard', 'Failed to initialize status drawer:', error);
     }
   }
 
