@@ -7,7 +7,7 @@ Multi-page architecture with HTTP polling and WebSocket support.
 
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -61,6 +61,8 @@ logger = logging.getLogger(__name__)
 WORKSPACE_ROOT = Path(__file__).resolve().parent
 RESOURCES_FILE = WORKSPACE_ROOT / "crypto_resources_unified_2025-11-11.json"
 OHLCV_VERIFICATION_FILE = WORKSPACE_ROOT / "ohlcv_verification_results_20251127_003016.json"
+FAULT_LOG_FILE = WORKSPACE_ROOT / "fualt.txt"
+REAL_ENDPOINTS_FILE = WORKSPACE_ROOT / "realendpoint.txt"
 
 
 def _load_json_file(path: Path) -> Optional[Dict[str, Any]]:
@@ -72,6 +74,35 @@ def _load_json_file(path: Path) -> Optional[Dict[str, Any]]:
   except Exception as exc:  # pragma: no cover - defensive
     logger.error("Failed to load JSON from %s: %s", path, exc)
   return None
+
+
+def _read_text_file_tail(path: Path, tail: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Read a text file safely with optional tail (last N lines).
+    Returns structured data for client consumption.
+    """
+    if not path.exists():
+        return {"exists": False, "path": str(path), "tail": tail, "lines": [], "content": ""}
+
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except Exception as exc:  # pragma: no cover
+        logger.error("Failed to read %s: %s", path, exc)
+        return {"exists": True, "path": str(path), "tail": tail, "lines": [], "content": "", "error": str(exc)}
+
+    lines = text.splitlines()
+    if isinstance(tail, int) and tail > 0:
+        lines = lines[-tail:]
+        text = "\n".join(lines)
+
+    return {
+        "exists": True,
+        "path": str(path),
+        "tail": tail,
+        "line_count": len(lines),
+        "content": text,
+        "lines": lines,
+    }
 
 
 _RESOURCES_CACHE: Optional[Dict[str, Any]] = _load_json_file(RESOURCES_FILE)
@@ -462,6 +493,84 @@ async def get_all_endpoints():
         "endpoints": categorized,
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }
+
+# ============================================================================
+# SUPPORT FILES (fualt.txt, realendpoint.txt) FOR CLIENTS
+# ============================================================================
+
+@app.get("/api/support/fualt")
+async def api_support_fualt(tail: Optional[int] = 500) -> Dict[str, Any]:
+    """
+    Expose `fualt.txt` to clients (debug/support).
+    Default returns last 500 lines to keep payload small.
+    """
+    data = _read_text_file_tail(FAULT_LOG_FILE, tail=tail)
+    data["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    return data
+
+
+@app.get("/fualt.txt")
+async def download_fualt_txt():
+    """Download the raw `fualt.txt` file if present."""
+    if not FAULT_LOG_FILE.exists():
+        return PlainTextResponse("fualt.txt not found", status_code=404)
+    return FileResponse(FAULT_LOG_FILE)
+
+
+def _build_real_endpoints_snapshot() -> List[Dict[str, Any]]:
+    """Build a minimal endpoint snapshot from the current FastAPI routing table."""
+    snapshot: List[Dict[str, Any]] = []
+    for route in app.routes:
+        if not hasattr(route, "path") or not hasattr(route, "methods"):
+            continue
+        if route.path.startswith("/openapi") or route.path == "/docs":
+            continue
+        methods = sorted([m for m in (route.methods or []) if m not in {"HEAD", "OPTIONS"}])
+        snapshot.append({"path": route.path, "methods": methods, "name": getattr(route, "name", "")})
+
+    # Sort stable for clients/diffs
+    snapshot.sort(key=lambda r: (r["path"], ",".join(r["methods"])))
+    return snapshot
+
+
+@app.get("/api/support/realendpoints")
+async def api_support_realendpoints(format: str = "json") -> Any:
+    """
+    Provide a "real endpoints" list for clients.
+    - format=json (default): structured list
+    - format=txt: plain text similar to a `realendpoint.txt` file
+    """
+    endpoints_snapshot = _build_real_endpoints_snapshot()
+    if format.lower() == "txt":
+        lines = []
+        for e in endpoints_snapshot:
+            methods = ",".join(e["methods"]) if e["methods"] else ""
+            lines.append(f"{methods:10} {e['path']}")
+        return PlainTextResponse("\n".join(lines) + "\n")
+
+    return {
+        "success": True,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "count": len(endpoints_snapshot),
+        "endpoints": endpoints_snapshot,
+    }
+
+
+@app.get("/realendpoint.txt")
+async def download_realendpoint_txt():
+    """
+    Download `realendpoint.txt` if present, otherwise generate it on the fly from
+    the live routing table (so it is always "supported").
+    """
+    if REAL_ENDPOINTS_FILE.exists():
+        return FileResponse(REAL_ENDPOINTS_FILE)
+    # Generate on the fly
+    endpoints_snapshot = _build_real_endpoints_snapshot()
+    lines = []
+    for e in endpoints_snapshot:
+        methods = ",".join(e["methods"]) if e["methods"] else ""
+        lines.append(f"{methods:10} {e['path']}")
+    return PlainTextResponse("\n".join(lines) + "\n")
 
 # ============================================================================
 # STATIC FILES

@@ -77,6 +77,10 @@ export const API_ENDPOINTS = {
   resourcesCategory: '/api/resources/category',
   resourcesApis: '/api/resources/apis',
   providers: '/api/providers',
+
+  // Support / Debug (client-consumable)
+  supportFualt: '/api/support/fualt',
+  supportRealEndpoints: '/api/support/realendpoints',
   
   // Advanced
   multiSourceData: '/api/multi-source/data',
