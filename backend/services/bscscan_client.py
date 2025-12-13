@@ -61,7 +61,13 @@ class BSCScanClient:
                     logger.info(f"✅ BSCScan: Fetched BNB price: ${price_usd}")
                     return result
                 else:
-                    raise Exception(f"BSCScan API error: {data.get('message', 'Unknown error')}")
+                    error_msg = data.get('message', 'Unknown error')
+                    # Log as warning if it's just an API key issue, don't crash
+                    if "NOTOK" in str(data.get('status', '')):
+                        logger.warning(f"⚠️ BSCScan API key may be invalid or rate limited: {error_msg}")
+                        raise Exception(f"BSCScan API key issue: {error_msg}")
+                    else:
+                        raise Exception(f"BSCScan API error: {error_msg}")
         
         except httpx.HTTPStatusError as e:
             logger.error(f"❌ BSCScan API HTTP error: {e.response.status_code}")

@@ -23,12 +23,15 @@ class CoinDeskClient:
     def __init__(self, api_key: str = COINDESK_API_KEY):
         self.base_url = "https://api.coindesk.com/v2"
         self.bpi_url = "https://api.coindesk.com/v1/bpi"  # Bitcoin Price Index
+        # Fallback to alternate domain if main is unreachable
+        self.fallback_bpi_url = "https://www.coindesk.com/api/v1/bpi"
         self.api_key = api_key
         self.timeout = 15.0
     
     async def get_bitcoin_price(self, currency: str = "USD") -> Dict[str, Any]:
         """
         Get current Bitcoin price from CoinDesk BPI (Bitcoin Price Index)
+        With fallback to alternate endpoints
         
         Args:
             currency: Currency code (USD, EUR, GBP)
@@ -36,42 +39,62 @@ class CoinDeskClient:
         Returns:
             Bitcoin price data from CoinDesk
         """
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                headers = {}
-                if self.api_key:
-                    headers["Authorization"] = f"Bearer {self.api_key}"
-                
-                response = await client.get(
-                    f"{self.bpi_url}/currentprice/{currency}.json",
-                    headers=headers
-                )
-                response.raise_for_status()
-                data = response.json()
-                
-                # Extract BPI data
-                bpi = data.get("bpi", {})
-                usd_data = bpi.get(currency, {})
-                
-                result = {
-                    "symbol": "BTC",
-                    "price": float(usd_data.get("rate_float", 0)),
-                    "currency": currency,
-                    "rate": usd_data.get("rate", "0"),
-                    "description": usd_data.get("description", ""),
-                    "timestamp": data.get("time", {}).get("updatedISO", datetime.utcnow().isoformat()),
-                    "source": "CoinDesk BPI"
-                }
-                
-                logger.info(f"✅ CoinDesk: Fetched BTC price: ${result['price']}")
-                return result
+        # Try multiple endpoints
+        urls = [
+            f"{self.bpi_url}/currentprice/{currency}.json",
+            f"{self.fallback_bpi_url}/currentprice/{currency}.json"
+        ]
         
-        except httpx.HTTPStatusError as e:
-            logger.error(f"❌ CoinDesk API HTTP error: {e.response.status_code}")
-            raise
-        except Exception as e:
-            logger.error(f"❌ CoinDesk API failed: {e}")
-            raise
+        last_error = None
+        for url in urls:
+            try:
+                async with httpx.AsyncClient(
+                    timeout=self.timeout,
+                    follow_redirects=True
+                ) as client:
+                    headers = {}
+                    if self.api_key:
+                        headers["Authorization"] = f"Bearer {self.api_key}"
+                    
+                    response = await client.get(url, headers=headers)
+                    response.raise_for_status()
+                    data = response.json()
+                
+                    # Extract BPI data
+                    bpi = data.get("bpi", {})
+                    usd_data = bpi.get(currency, {})
+                    
+                    price = float(usd_data.get("rate_float", 0))
+                    if price > 0:
+                        result = {
+                            "symbol": "BTC",
+                            "price": price,
+                            "currency": currency,
+                            "rate": usd_data.get("rate", "0"),
+                            "description": usd_data.get("description", ""),
+                            "timestamp": data.get("time", {}).get("updatedISO", datetime.utcnow().isoformat()),
+                            "source": "CoinDesk BPI"
+                        }
+                        
+                        logger.info(f"✅ CoinDesk: Fetched BTC price: ${result['price']}")
+                        return result
+            
+            except httpx.HTTPStatusError as e:
+                last_error = f"HTTP {e.response.status_code}"
+                logger.warning(f"⚠️ CoinDesk endpoint failed ({url}): {last_error}")
+                continue
+            except httpx.ConnectError as e:
+                last_error = f"Connection error: {e}"
+                logger.warning(f"⚠️ CoinDesk unreachable ({url}): {last_error}")
+                continue
+            except Exception as e:
+                last_error = str(e)
+                logger.warning(f"⚠️ CoinDesk endpoint failed ({url}): {last_error}")
+                continue
+        
+        # All endpoints failed
+        logger.error(f"❌ CoinDesk API failed (all endpoints): {last_error}")
+        raise Exception(f"CoinDesk API unavailable: {last_error}")
     
     async def get_historical_prices(
         self,
