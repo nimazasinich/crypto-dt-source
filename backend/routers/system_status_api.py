@@ -1,15 +1,22 @@
 """
-System Status API - Comprehensive system status for modal display
-Provides aggregated status of all services, endpoints, coins, and system resources
+System Status API - Comprehensive system status for drawer display
+Provides aggregated status of all services, endpoints, coins
 All data is REAL and measured, no fake data.
 """
 import logging
 import time
-import psutil
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+# Try to import psutil, but don't fail if not available
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    logging.warning("psutil not available - system resource metrics will be limited")
 
 logger = logging.getLogger(__name__)
 
@@ -63,51 +70,76 @@ class SystemStatusResponse(BaseModel):
 @router.get("/api/system/status", response_model=SystemStatusResponse)
 async def get_system_status():
     """
-    Get comprehensive system status for the modal display
+    Get comprehensive system status for the drawer display
     
     Returns:
         - overall_health: Overall system health status
         - services: Status of backend services and providers
         - endpoints: Health of API endpoints
         - coins: Status of cryptocurrency data feeds
-        - resources: System resource metrics
+        - resources: System resource metrics (if available)
     
     All data is REAL and measured, no fake data.
     """
     try:
-        from backend.routers.system_metrics_api import get_metrics_tracker
-        
-        tracker = get_metrics_tracker()
-        
-        # 1. Get system resources
-        cpu_percent = psutil.cpu_percent(interval=0.1)
-        memory = psutil.virtual_memory()
-        uptime = tracker.get_uptime()
-        
+        # Get uptime from metrics tracker if available
+        uptime_seconds = 0
         try:
-            load_avg = list(psutil.getloadavg())
-        except AttributeError:
-            load_avg = None
+            from backend.routers.system_metrics_api import get_metrics_tracker
+            tracker = get_metrics_tracker()
+            uptime_seconds = tracker.get_uptime()
+        except:
+            uptime_seconds = 0
         
-        resources = SystemResources(
-            cpu_percent=round(cpu_percent, 2),
-            memory_percent=round(memory.percent, 2),
-            memory_used_mb=round(memory.used / (1024 * 1024), 2),
-            memory_total_mb=round(memory.total / (1024 * 1024), 2),
-            uptime_seconds=uptime,
-            load_avg=load_avg
-        )
+        # Get system resources if psutil is available
+        if PSUTIL_AVAILABLE:
+            try:
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                memory = psutil.virtual_memory()
+                try:
+                    load_avg = list(psutil.getloadavg())
+                except AttributeError:
+                    load_avg = None
+                
+                resources = SystemResources(
+                    cpu_percent=round(cpu_percent, 2),
+                    memory_percent=round(memory.percent, 2),
+                    memory_used_mb=round(memory.used / (1024 * 1024), 2),
+                    memory_total_mb=round(memory.total / (1024 * 1024), 2),
+                    uptime_seconds=uptime_seconds,
+                    load_avg=load_avg
+                )
+            except Exception as e:
+                logger.warning(f"Failed to get system resources: {e}")
+                resources = SystemResources(
+                    cpu_percent=0.0,
+                    memory_percent=0.0,
+                    memory_used_mb=0.0,
+                    memory_total_mb=0.0,
+                    uptime_seconds=uptime_seconds,
+                    load_avg=None
+                )
+        else:
+            # Fallback when psutil not available
+            resources = SystemResources(
+                cpu_percent=0.0,
+                memory_percent=0.0,
+                memory_used_mb=0.0,
+                memory_total_mb=0.0,
+                uptime_seconds=uptime_seconds,
+                load_avg=None
+            )
         
-        # 2. Check services status
+        # Check services status
         services = await check_services_status()
         
-        # 3. Check endpoints health
+        # Check endpoints health
         endpoints = await check_endpoints_health()
         
-        # 4. Check coin feeds
+        # Check coin feeds
         coins = await check_coin_feeds()
         
-        # 5. Determine overall health
+        # Determine overall health
         overall_health = determine_overall_health(services, endpoints, resources)
         
         return SystemStatusResponse(
