@@ -3,24 +3,39 @@
  * Displays temporary notification messages
  */
 
-import { CONFIG } from '../core/config.js';
-
 const TOAST_DEFAULTS = {
   MAX_VISIBLE: 3,
   DEFAULT_DURATION: 3500,
   ERROR_DURATION: 6000,
 };
 
-// CONFIG.TOAST is optional in some builds/pages; keep Toast resilient.
-const TOAST_CONFIG = {
-  ...TOAST_DEFAULTS,
-  ...(CONFIG?.TOAST || {}),
-};
+// Configuration cache
+let TOAST_CONFIG = null;
+
+function getToastConfig() {
+  if (TOAST_CONFIG !== null) {
+    return TOAST_CONFIG;
+  }
+
+  // Try to get CONFIG from window (set by config.js or other scripts)
+  try {
+    const configSource = window.CONFIG || {};
+    TOAST_CONFIG = {
+      ...TOAST_DEFAULTS,
+      ...(configSource?.TOAST || {}),
+    };
+  } catch (e) {
+    // Fallback to defaults if CONFIG not available
+    TOAST_CONFIG = { ...TOAST_DEFAULTS };
+  }
+  
+  return TOAST_CONFIG;
+}
 
 export class Toast {
   static container = null;
   static toasts = [];
-  static maxToasts = TOAST_CONFIG.MAX_VISIBLE;
+  static maxToasts = TOAST_DEFAULTS.MAX_VISIBLE;
 
   /**
    * Initialize toast container
@@ -43,13 +58,14 @@ export class Toast {
   static show(message, type = 'info', options = {}) {
     this.init();
 
+    const config = getToastConfig();
     const toast = {
       id: Date.now() + Math.random(),
       message,
       type,
       duration:
         options.duration ??
-        (type === 'error' ? TOAST_CONFIG.ERROR_DURATION : TOAST_CONFIG.DEFAULT_DURATION),
+        (type === 'error' ? config.ERROR_DURATION : config.DEFAULT_DURATION),
       dismissible: options.dismissible !== false,
       action: options.action || null,
     };
@@ -181,6 +197,11 @@ export class Toast {
     div.textContent = text;
     return div.innerHTML;
   }
+}
+
+// Export to window for non-module scripts
+if (typeof window !== 'undefined') {
+  window.Toast = Toast;
 }
 
 export default Toast;
