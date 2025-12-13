@@ -1,0 +1,206 @@
+/**
+ * Market Page Improvements
+ * - Enhanced metric cards
+ * - Better coin icons
+ * - Chart button styling
+ */
+
+/* Enhanced Market Stats Cards */
+.market-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-item {
+  background: linear-gradient(135deg, var(--teal-light) 0%, var(--teal) 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+}
+
+.stat-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(20, 184, 166, 0.3);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Coin Icon Improvements */
+.coin-icon {
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.coin-cell:hover .coin-icon {
+  transform: scale(1.1);
+}
+
+.coin-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coin-symbol {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Chart Button Styling */
+.btn-chart {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 6px;
+}
+
+.btn-chart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.btn-chart svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Action Cell */
+.action-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Enhanced Table Cells */
+.rank-cell {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.price-cell {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.mcap-cell, .volume-cell {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Change Badge */
+.change-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.positive .change-badge {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.negative .change-badge {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+/* Market Row Hover */
+.market-row {
+  transition: all 0.2s ease;
+}
+
+.market-row:hover {
+  background: var(--bg-secondary);
+  transform: scale(1.01);
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+  .market-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .stat-item {
+    padding: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 1.25rem;
+  }
+  
+  .btn-chart {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+  
+  .btn-chart svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .market-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-cell {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .btn-chart, .btn-view {
+    width: 100%;
+    justify-content: center;
+  }
+}

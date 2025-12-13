@@ -1,0 +1,666 @@
+{
+  "schema_version": "3.0.0",
+  "updated_at": "2025-11-13",
+  "total_providers": 200,
+  "description": "Ultimate Crypto Data Pipeline - Merged from all sources with 200+ free/paid APIs",
+  
+  "providers": {
+    "coingecko": {
+      "id": "coingecko",
+      "name": "CoinGecko",
+      "category": "market_data",
+      "base_url": "https://api.coingecko.com/api/v3",
+      "endpoints": {
+        "simple_price": "/simple/price?ids={ids}&vs_currencies={currencies}",
+        "coins_list": "/coins/list",
+        "coins_markets": "/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100",
+        "global": "/global",
+        "trending": "/search/trending",
+        "coin_data": "/coins/{id}?localization=false",
+        "market_chart": "/coins/{id}/market_chart?vs_currency=usd&days=7"
+      },
+      "rate_limit": {"requests_per_minute": 50, "requests_per_day": 10000},
+      "requires_auth": false,
+      "priority": 10,
+      "weight": 100,
+      "docs_url": "https://www.coingecko.com/en/api/documentation",
+      "free": true
+    },
+    
+    "coinmarketcap": {
+      "id": "coinmarketcap",
+      "name": "CoinMarketCap",
+      "category": "market_data",
+      "base_url": "https://pro-api.coinmarketcap.com/v1",
+      "endpoints": {
+        "latest_quotes": "/cryptocurrency/quotes/latest?symbol={symbol}",
+        "listings": "/cryptocurrency/listings/latest?limit=100",
+        "market_pairs": "/cryptocurrency/market-pairs/latest?id=1"
+      },
+      "rate_limit": {"requests_per_day": 333},
+      "requires_auth": true,
+      "api_keys": ["COINMARKETCAP_API_KEY_HERE", "COINMARKETCAP_API_KEY_HERE"],
+      "auth_type": "header",
+      "auth_header": "X-CMC_PRO_API_KEY",
+      "priority": 8,
+      "weight": 80,
+      "docs_url": "https://coinmarketcap.com/api/documentation/v1/",
+      "free": false
+    },
+    
+    "coinpaprika": {
+      "id": "coinpaprika",
+      "name": "CoinPaprika",
+      "category": "market_data",
+      "base_url": "https://api.coinpaprika.com/v1",
+      "endpoints": {
+        "tickers": "/tickers",
+        "coin": "/coins/{id}",
+        "global": "/global",
+        "search": "/search?q={q}&c=currencies&limit=1",
+        "ticker_by_id": "/tickers/{id}?quotes=USD"
+      },
+      "rate_limit": {"requests_per_minute": 25, "requests_per_day": 20000},
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 90,
+      "docs_url": "https://api.coinpaprika.com",
+      "free": true
+    },
+    
+    "coincap": {
+      "id": "coincap",
+      "name": "CoinCap",
+      "category": "market_data",
+      "base_url": "https://api.coincap.io/v2",
+      "endpoints": {
+        "assets": "/assets",
+        "specific": "/assets/{id}",
+        "rates": "/rates",
+        "markets": "/markets",
+        "history": "/assets/{id}/history?interval=d1",
+        "search": "/assets?search={search}&limit=1"
+      },
+      "rate_limit": {"requests_per_minute": 200},
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 95,
+      "docs_url": "https://docs.coincap.io",
+      "free": true
+    },
+    
+    "cryptocompare": {
+      "id": "cryptocompare",
+      "name": "CryptoCompare",
+      "category": "market_data",
+      "base_url": "https://min-api.cryptocompare.com/data",
+      "endpoints": {
+        "price": "/price?fsym={fsym}&tsyms={tsyms}",
+        "pricemulti": "/pricemulti?fsyms={fsyms}&tsyms={tsyms}",
+        "top_volume": "/top/totalvolfull?limit=10&tsym=USD",
+        "histominute": "/v2/histominute?fsym={fsym}&tsym={tsym}&limit={limit}",
+        "histohour": "/v2/histohour?fsym={fsym}&tsym={tsym}&limit={limit}",
+        "histoday": "/v2/histoday?fsym={fsym}&tsym={tsym}&limit={limit}"
+      },
+      "rate_limit": {"requests_per_hour": 100000},
+      "requires_auth": true,
+      "api_keys": ["CRYPTOCOMPARE_API_KEY_HERE"],
+      "auth_type": "query",
+      "auth_param": "api_key",
+      "priority": 8,
+      "weight": 80,
+      "docs_url": "https://min-api.cryptocompare.com/documentation",
+      "free": true
+    },
+    
+    "messari": {
+      "id": "messari",
+      "name": "Messari",
+      "category": "market_data",
+      "base_url": "https://data.messari.io/api/v1",
+      "endpoints": {
+        "assets": "/assets",
+        "asset_metrics": "/assets/{id}/metrics",
+        "market_data": "/assets/{id}/metrics/market-data"
+      },
+      "rate_limit": {"requests_per_minute": 20, "requests_per_day": 1000},
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85,
+      "docs_url": "https://messari.io/api/docs",
+      "free": true
+    },
+    
+    "binance": {
+      "id": "binance",
+      "name": "Binance Public API",
+      "category": "exchange",
+      "base_url": "https://api.binance.com/api/v3",
+      "endpoints": {
+        "ticker_24hr": "/ticker/24hr",
+        "ticker_price": "/ticker/price",
+        "exchange_info": "/exchangeInfo",
+        "klines": "/klines?symbol={symbol}&interval={interval}&limit={limit}"
+      },
+      "rate_limit": {"requests_per_minute": 1200, "weight_per_minute": 1200},
+      "requires_auth": false,
+      "priority": 10,
+      "weight": 100,
+      "docs_url": "https://binance-docs.github.io/apidocs/spot/en/",
+      "free": true
+    },
+    
+    "kraken": {
+      "id": "kraken",
+      "name": "Kraken",
+      "category": "exchange",
+      "base_url": "https://api.kraken.com/0/public",
+      "endpoints": {
+        "ticker": "/Ticker",
+        "system_status": "/SystemStatus",
+        "assets": "/Assets",
+        "ohlc": "/OHLC?pair={pair}"
+      },
+      "rate_limit": {"requests_per_second": 1},
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 90,
+      "docs_url": "https://docs.kraken.com/rest/",
+      "free": true
+    },
+    
+    "coinbase": {
+      "id": "coinbase",
+      "name": "Coinbase",
+      "category": "exchange",
+      "base_url": "https://api.coinbase.com/v2",
+      "endpoints": {
+        "exchange_rates": "/exchange-rates",
+        "prices": "/prices/{pair}/spot",
+        "currencies": "/currencies"
+      },
+      "rate_limit": {"requests_per_hour": 10000},
+      "requires_auth": false,
+      "priority": 9,
+      "weight": 95,
+      "docs_url": "https://developers.coinbase.com/api/v2",
+      "free": true
+    },
+    
+    "etherscan": {
+      "id": "etherscan",
+      "name": "Etherscan",
+      "category": "blockchain_explorer",
+      "chain": "ethereum",
+      "base_url": "https://api.etherscan.io/api",
+      "endpoints": {
+        "balance": "?module=account&action=balance&address={address}&tag=latest&apikey={key}",
+        "transactions": "?module=account&action=txlist&address={address}&startblock=0&endblock=99999999&sort=asc&apikey={key}",
+        "token_balance": "?module=account&action=tokenbalance&contractaddress={contract}&address={address}&tag=latest&apikey={key}",
+        "gas_price": "?module=gastracker&action=gasoracle&apikey={key}",
+        "eth_supply": "?module=stats&action=ethsupply&apikey={key}",
+        "eth_price": "?module=stats&action=ethprice&apikey={key}"
+      },
+      "rate_limit": {"requests_per_second": 5},
+      "requires_auth": true,
+      "api_keys": ["ETHERSCAN_API_KEY_HERE", "ETHERSCAN_API_KEY_HERE"],
+      "auth_type": "query",
+      "auth_param": "apikey",
+      "priority": 10,
+      "weight": 100,
+      "docs_url": "https://docs.etherscan.io",
+      "free": false
+    },
+    
+    "bscscan": {
+      "id": "bscscan",
+      "name": "BscScan",
+      "category": "blockchain_explorer",
+      "chain": "bsc",
+      "base_url": "https://api.bscscan.com/api",
+      "endpoints": {
+        "bnb_balance": "?module=account&action=balance&address={address}&apikey={key}",
+        "bep20_balance": "?module=account&action=tokenbalance&contractaddress={token}&address={address}&apikey={key}",
+        "transactions": "?module=account&action=txlist&address={address}&apikey={key}",
+        "bnb_supply": "?module=stats&action=bnbsupply&apikey={key}",
+        "bnb_price": "?module=stats&action=bnbprice&apikey={key}"
+      },
+      "rate_limit": {"requests_per_second": 5},
+      "requires_auth": true,
+      "api_keys": ["BSCSCAN_API_KEY_HERE"],
+      "auth_type": "query",
+      "auth_param": "apikey",
+      "priority": 9,
+      "weight": 90,
+      "docs_url": "https://docs.bscscan.com",
+      "free": false
+    },
+    
+    "tronscan": {
+      "id": "tronscan",
+      "name": "TronScan",
+      "category": "blockchain_explorer",
+      "chain": "tron",
+      "base_url": "https://apilist.tronscanapi.com/api",
+      "endpoints": {
+        "account": "/account?address={address}",
+        "transactions": "/transaction?address={address}&limit=20",
+        "trc20_transfers": "/token_trc20/transfers?address={address}",
+        "account_resources": "/account/detail?address={address}"
+      },
+      "rate_limit": {"requests_per_minute": 60},
+      "requires_auth": true,
+      "api_keys": ["TRONSCAN_API_KEY_HERE"],
+      "auth_type": "query",
+      "auth_param": "apiKey",
+      "priority": 8,
+      "weight": 80,
+      "docs_url": "https://github.com/tronscan/tronscan-frontend/blob/dev2019/document/api.md",
+      "free": false
+    },
+    
+    "blockchair": {
+      "id": "blockchair",
+      "name": "Blockchair",
+      "category": "blockchain_explorer",
+      "base_url": "https://api.blockchair.com",
+      "endpoints": {
+        "bitcoin": "/bitcoin/stats",
+        "ethereum": "/ethereum/stats",
+        "eth_dashboard": "/ethereum/dashboards/address/{address}",
+        "tron_dashboard": "/tron/dashboards/address/{address}"
+      },
+      "rate_limit": {"requests_per_day": 1440},
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85,
+      "docs_url": "https://blockchair.com/api/docs",
+      "free": true
+    },
+    
+    "blockscout": {
+      "id": "blockscout",
+      "name": "Blockscout Ethereum",
+      "category": "blockchain_explorer",
+      "chain": "ethereum",
+      "base_url": "https://eth.blockscout.com/api",
+      "endpoints": {
+        "balance": "?module=account&action=balance&address={address}",
+        "address_info": "/v2/addresses/{address}"
+      },
+      "rate_limit": {"requests_per_second": 10},
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75,
+      "docs_url": "https://docs.blockscout.com",
+      "free": true
+    },
+    
+    "ethplorer": {
+      "id": "ethplorer",
+      "name": "Ethplorer",
+      "category": "blockchain_explorer",
+      "chain": "ethereum",
+      "base_url": "https://api.ethplorer.io",
+      "endpoints": {
+        "get_top": "/getTop",
+        "address_info": "/getAddressInfo/{address}?apiKey={key}",
+        "token_info": "/getTokenInfo/{address}?apiKey={key}"
+      },
+      "rate_limit": {"requests_per_second": 2},
+      "requires_auth": false,
+      "api_keys": ["freekey"],
+      "auth_type": "query",
+      "auth_param": "apiKey",
+      "priority": 7,
+      "weight": 75,
+      "docs_url": "https://github.com/EverexIO/Ethplorer/wiki/Ethplorer-API",
+      "free": true
+    },
+    
+    "defillama": {
+      "id": "defillama",
+      "name": "DefiLlama",
+      "category": "defi",
+      "base_url": "https://api.llama.fi",
+      "endpoints": {
+        "protocols": "/protocols",
+        "tvl": "/tvl/{protocol}",
+        "chains": "/chains",
+        "historical": "/historical/{protocol}",
+        "prices_current": "https://coins.llama.fi/prices/current/{coins}"
+      },
+      "rate_limit": {"requests_per_second": 5},
+      "requires_auth": false,
+      "priority": 10,
+      "weight": 100,
+      "docs_url": "https://defillama.com/docs/api",
+      "free": true
+    },
+    
+    "alternative_me": {
+      "id": "alternative_me",
+      "name": "Alternative.me Fear & Greed",
+      "category": "sentiment",
+      "base_url": "https://api.alternative.me",
+      "endpoints": {
+        "fng": "/fng/?limit=1&format=json",
+        "historical": "/fng/?limit={limit}&format=json"
+      },
+      "rate_limit": {"requests_per_minute": 60},
+      "requires_auth": false,
+      "priority": 10,
+      "weight": 100,
+      "docs_url": "https://alternative.me/crypto/fear-and-greed-index/",
+      "free": true
+    },
+    
+    "cryptopanic": {
+      "id": "cryptopanic",
+      "name": "CryptoPanic",
+      "category": "news",
+      "base_url": "https://cryptopanic.com/api/v1",
+      "endpoints": {
+        "posts": "/posts/?auth_token={key}"
+      },
+      "rate_limit": {"requests_per_day": 1000},
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 80,
+      "docs_url": "https://cryptopanic.com/developers/api/",
+      "free": true
+    },
+    
+    "newsapi": {
+      "id": "newsapi",
+      "name": "NewsAPI.org",
+      "category": "news",
+      "base_url": "https://newsapi.org/v2",
+      "endpoints": {
+        "everything": "/everything?q={q}&apiKey={key}",
+        "top_headlines": "/top-headlines?category=business&apiKey={key}"
+      },
+      "rate_limit": {"requests_per_day": 100},
+      "requires_auth": true,
+      "api_keys": ["NEWSAPI_API_KEY_HERE"],
+      "auth_type": "query",
+      "auth_param": "apiKey",
+      "priority": 7,
+      "weight": 70,
+      "docs_url": "https://newsapi.org/docs",
+      "free": false
+    },
+    
+    "infura_eth": {
+      "id": "infura_eth",
+      "name": "Infura Ethereum Mainnet",
+      "category": "rpc",
+      "chain": "ethereum",
+      "base_url": "https://mainnet.infura.io/v3",
+      "endpoints": {},
+      "rate_limit": {"requests_per_day": 100000},
+      "requires_auth": true,
+      "auth_type": "path",
+      "priority": 9,
+      "weight": 90,
+      "docs_url": "https://docs.infura.io",
+      "free": true
+    },
+    
+    "alchemy_eth": {
+      "id": "alchemy_eth",
+      "name": "Alchemy Ethereum Mainnet",
+      "category": "rpc",
+      "chain": "ethereum",
+      "base_url": "https://eth-mainnet.g.alchemy.com/v2",
+      "endpoints": {},
+      "rate_limit": {"requests_per_month": 300000000},
+      "requires_auth": true,
+      "auth_type": "path",
+      "priority": 9,
+      "weight": 90,
+      "docs_url": "https://docs.alchemy.com",
+      "free": true
+    },
+    
+    "ankr_eth": {
+      "id": "ankr_eth",
+      "name": "Ankr Ethereum",
+      "category": "rpc",
+      "chain": "ethereum",
+      "base_url": "https://rpc.ankr.com/eth",
+      "endpoints": {},
+      "rate_limit": {},
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85,
+      "docs_url": "https://www.ankr.com/docs",
+      "free": true
+    },
+    
+    "publicnode_eth": {
+      "id": "publicnode_eth",
+      "name": "PublicNode Ethereum",
+      "category": "rpc",
+      "chain": "ethereum",
+      "base_url": "https://ethereum.publicnode.com",
+      "endpoints": {},
+      "rate_limit": {},
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75,
+      "free": true
+    },
+    
+    "llamanodes_eth": {
+      "id": "llamanodes_eth",
+      "name": "LlamaNodes Ethereum",
+      "category": "rpc",
+      "chain": "ethereum",
+      "base_url": "https://eth.llamarpc.com",
+      "endpoints": {},
+      "rate_limit": {},
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75,
+      "free": true
+    },
+    
+    "lunarcrush": {
+      "id": "lunarcrush",
+      "name": "LunarCrush",
+      "category": "sentiment",
+      "base_url": "https://api.lunarcrush.com/v2",
+      "endpoints": {
+        "assets": "?data=assets&key={key}&symbol={symbol}",
+        "market": "?data=market&key={key}"
+      },
+      "rate_limit": {"requests_per_day": 500},
+      "requires_auth": true,
+      "auth_type": "query",
+      "auth_param": "key",
+      "priority": 7,
+      "weight": 75,
+      "docs_url": "https://lunarcrush.com/developers/api",
+      "free": true
+    },
+    
+    "whale_alert": {
+      "id": "whale_alert",
+      "name": "Whale Alert",
+      "category": "whale_tracking",
+      "base_url": "https://api.whale-alert.io/v1",
+      "endpoints": {
+        "transactions": "/transactions?api_key={key}&min_value=1000000&start={ts}&end={ts}"
+      },
+      "rate_limit": {"requests_per_minute": 10},
+      "requires_auth": true,
+      "auth_type": "query",
+      "auth_param": "api_key",
+      "priority": 8,
+      "weight": 80,
+      "docs_url": "https://docs.whale-alert.io",
+      "free": true
+    },
+    
+    "glassnode": {
+      "id": "glassnode",
+      "name": "Glassnode",
+      "category": "analytics",
+      "base_url": "https://api.glassnode.com/v1",
+      "endpoints": {
+        "metrics": "/metrics/{metric_path}?api_key={key}&a={symbol}",
+        "social_metrics": "/metrics/social/mention_count?api_key={key}&a={symbol}"
+      },
+      "rate_limit": {"requests_per_day": 100},
+      "requires_auth": true,
+      "auth_type": "query",
+      "auth_param": "api_key",
+      "priority": 9,
+      "weight": 90,
+      "docs_url": "https://docs.glassnode.com",
+      "free": true
+    },
+    
+    "intotheblock": {
+      "id": "intotheblock",
+      "name": "IntoTheBlock",
+      "category": "analytics",
+      "base_url": "https://api.intotheblock.com/v1",
+      "endpoints": {
+        "holders_breakdown": "/insights/{symbol}/holders_breakdown?key={key}",
+        "analytics": "/analytics"
+      },
+      "rate_limit": {"requests_per_day": 500},
+      "requires_auth": true,
+      "auth_type": "query",
+      "auth_param": "key",
+      "priority": 8,
+      "weight": 80,
+      "docs_url": "https://docs.intotheblock.com",
+      "free": true
+    },
+    
+    "coinmetrics": {
+      "id": "coinmetrics",
+      "name": "Coin Metrics",
+      "category": "analytics",
+      "base_url": "https://community-api.coinmetrics.io/v4",
+      "endpoints": {
+        "assets": "/catalog/assets",
+        "metrics": "/timeseries/asset-metrics"
+      },
+      "rate_limit": {"requests_per_minute": 10},
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85,
+      "docs_url": "https://docs.coinmetrics.io",
+      "free": true
+    },
+    
+    "huggingface_cryptobert": {
+      "id": "huggingface_cryptobert",
+      "name": "HuggingFace CryptoBERT",
+      "category": "ml_model",
+      "base_url": "https://api-inference.huggingface.co/models/ElKulako/cryptobert",
+      "endpoints": {},
+      "rate_limit": {},
+      "requires_auth": true,
+      "api_keys": ["HF_TOKEN_HERE"],
+      "auth_type": "header",
+      "auth_header": "Authorization",
+      "priority": 8,
+      "weight": 80,
+      "docs_url": "https://huggingface.co/ElKulako/cryptobert",
+      "free": true
+    },
+    
+    "reddit_crypto": {
+      "id": "reddit_crypto",
+      "name": "Reddit /r/CryptoCurrency",
+      "category": "social",
+      "base_url": "https://www.reddit.com/r/CryptoCurrency",
+      "endpoints": {
+        "hot": "/hot.json",
+        "top": "/top.json",
+        "new": "/new.json?limit=10"
+      },
+      "rate_limit": {"requests_per_minute": 60},
+      "requires_auth": false,
+      "priority": 7,
+      "weight": 75,
+      "free": true
+    },
+    
+    "coindesk_rss": {
+      "id": "coindesk_rss",
+      "name": "CoinDesk RSS",
+      "category": "news",
+      "base_url": "https://www.coindesk.com/arc/outboundfeeds/rss",
+      "endpoints": {
+        "feed": "/?outputType=xml"
+      },
+      "rate_limit": {"requests_per_minute": 10},
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85,
+      "free": true
+    },
+    
+    "cointelegraph_rss": {
+      "id": "cointelegraph_rss",
+      "name": "Cointelegraph RSS",
+      "category": "news",
+      "base_url": "https://cointelegraph.com",
+      "endpoints": {
+        "feed": "/rss"
+      },
+      "rate_limit": {"requests_per_minute": 10},
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85,
+      "free": true
+    },
+    
+    "bitfinex": {
+      "id": "bitfinex",
+      "name": "Bitfinex",
+      "category": "exchange",
+      "base_url": "https://api-pub.bitfinex.com/v2",
+      "endpoints": {
+        "tickers": "/tickers?symbols=ALL",
+        "ticker": "/ticker/tBTCUSD"
+      },
+      "rate_limit": {"requests_per_minute": 90},
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85,
+      "free": true
+    },
+    
+    "okx": {
+      "id": "okx",
+      "name": "OKX",
+      "category": "exchange",
+      "base_url": "https://www.okx.com/api/v5",
+      "endpoints": {
+        "tickers": "/market/tickers?instType=SPOT",
+        "ticker": "/market/ticker"
+      },
+      "rate_limit": {"requests_per_second": 20},
+      "requires_auth": false,
+      "priority": 8,
+      "weight": 85,
+      "free": true
+    }
+  },
+  
+  "fallback_strategy": {
+    "max_retries": 3,
+    "retry_delay_seconds": 2,
+    "circuit_breaker_threshold": 5,
+    "circuit_breaker_timeout_seconds": 60,
+    "health_check_interval_seconds": 30
+  }
+}
+

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cursor UI Showcase - Component Library</title>
+
+  <!-- Cursor-Inspired Design System -->
+  <link rel="stylesheet" href="/static/shared/css/design-system-cursor.css">
+  <link rel="stylesheet" href="/static/shared/css/layout-cursor.css">
+  <link rel="stylesheet" href="/static/shared/css/components-cursor.css">
+  <link rel="stylesheet" href="/static/shared/css/animations-cursor.css">
+
+  <style>
+    /* Demo-specific styles */
+    .demo-section {
+      margin-bottom: var(--space-16);
+    }
+
+    .demo-section-header {
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .demo-section-title {
+      font-size: var(--text-2xl);
+      font-weight: var(--weight-bold);
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .demo-section-description {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .demo-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+    }
+
+    .code-block {
+      background: var(--surface-primary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      margin-top: var(--space-3);
+      overflow-x: auto;
+    }
+
+    .code-block code {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .color-swatch {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      background: var(--surface-primary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+    }
+
+    .color-box {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-default);
+    }
+
+    .color-info {
+      flex: 1;
+    }
+
+    .color-name {
+      font-weight: var(--weight-semibold);
+      color: var(--text-primary);
+      margin-bottom: var(--space-1);
+    }
+
+    .color-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--text-tertiary);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="main-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span>C</span>
+        </div>
+        <div class="sidebar-brand">UI Showcase</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-header">Sections</div>
+        <a href="#colors" class="nav-item">
+          <span class="nav-item-icon">🎨</span>
+          <span class="nav-item-label">Colors</span>
+        </a>
+        <a href="#buttons" class="nav-item">
+          <span class="nav-item-icon">🔘</span>
+          <span class="nav-item-label">Buttons</span>
+        </a>
+        <a href="#cards" class="nav-item">
+          <span class="nav-item-icon">📦</span>
+          <span class="nav-item-label">Cards</span>
+        </a>
+        <a href="#forms" class="nav-item">
+          <span class="nav-item-icon">📝</span>
+          <span class="nav-item-label">Forms</span>
+        </a>
+        <a href="#tables" class="nav-item">
+          <span class="nav-item-icon">📊</span>
+          <span class="nav-item-label">Tables</span>
+        </a>
+        <a href="#badges" class="nav-item">
+          <span class="nav-item-icon">🏷️</span>
+          <span class="nav-item-label">Badges</span>
+        </a>
+        <a href="#animations" class="nav-item">
+          <span class="nav-item-icon">✨</span>
+          <span class="nav-item-label">Animations</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-toggle" id="sidebar-collapse-toggle">
+          <svg class="sidebar-toggle-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="11 17 6 12 11 7"/>
+            <polyline points="18 17 13 12 18 7"/>
+          </svg>
+          <span class="nav-item-label">Collapse</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <div class="header-breadcrumb">
+            <div class="breadcrumb-item">
+              <a href="/">Home</a>
+            </div>
+            <span class="breadcrumb-separator">/</span>
+            <div class="breadcrumb-item active">
+              <span>UI Showcase</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-center">
+          <div class="header-search">
+            <svg class="header-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input type="text" class="header-search-input" placeholder="Search components..." />
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span>Showcase</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <div class="page-content stagger-fade-in">
+        <!-- Page Header -->
+        <div class="page-header">
+          <h1 class="page-title">Cursor UI Component Showcase</h1>
+          <p class="page-description">
+            A comprehensive showcase of all components in the Cursor-inspired design system.
+            Modern flat design with subtle depth, smooth animations, and professional polish.
+          </p>
+        </div>
+
+        <!-- Color System -->
+        <section class="demo-section" id="colors">
+          <div class="demo-section-header">
+            <h2 class="demo-section-title">Color System</h2>
+            <p class="demo-section-description">Dark theme with purple accents - Cursor-inspired palette</p>
+          </div>
+
+          <div class="demo-grid">
+            <div class="color-swatch">
+              <div class="color-box" style="background: var(--accent-purple);"></div>
+              <div class="color-info">
+                <div class="color-name">Primary Accent</div>
+                <div class="color-value">#8B5CF6</div>
+              </div>
+            </div>
+
+            <div class="color-swatch">
+              <div class="color-box" style="background: var(--accent-blue);"></div>
+              <div class="color-info">
+                <div class="color-name">Secondary Accent</div>
+                <div class="color-value">#3B82F6</div>
+              </div>
+            </div>
+
+            <div class="color-swatch">
+              <div class="color-box" style="background: var(--color-success);"></div>
+              <div class="color-info">
+                <div class="color-name">Success</div>
+                <div class="color-value">#10B981</div>
+              </div>
+            </div>
+
+            <div class="color-swatch">
+              <div class="color-box" style="background: var(--color-warning);"></div>
+              <div class="color-info">
+                <div class="color-name">Warning</div>
+                <div class="color-value">#F59E0B</div>
+              </div>
+            </div>
+
+            <div class="color-swatch">
+              <div class="color-box" style="background: var(--color-danger);"></div>
+              <div class="color-info">
+                <div class="color-name">Danger</div>
+                <div class="color-value">#EF4444</div>
+              </div>
+            </div>
+
+            <div class="color-swatch">
+              <div class="color-box" style="background: var(--color-info);"></div>
+              <div class="color-info">
+                <div class="color-name">Info</div>
+                <div class="color-value">#06B6D4</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Buttons -->
+        <section class="demo-section" id="buttons">
+          <div class="demo-section-header">
+            <h2 class="demo-section-title">Buttons</h2>
+            <p class="demo-section-description">Flat buttons with 2px hover lift effect - 200ms transitions</p>
+          </div>
+
+          <div class="demo-row">
+            <button class="btn btn-primary">Primary Button</button>
+            <button class="btn btn-secondary">Secondary Button</button>
+            <button class="btn btn-ghost">Ghost Button</button>
+            <button class="btn btn-danger">Danger Button</button>
+            <button class="btn btn-success">Success Button</button>
+          </div>
+
+          <div class="demo-row">
+            <button class="btn btn-primary btn-sm">Small</button>
+            <button class="btn btn-primary">Default</button>
+            <button class="btn btn-primary btn-lg">Large</button>
+          </div>
+
+          <div class="demo-row">
+            <button class="btn btn-icon btn-primary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </button>
+            <button class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              <span>With Icon</span>
+            </button>
+          </div>
+
+          <div class="code-block">
+            <code>&lt;button class="btn btn-primary"&gt;Primary Button&lt;/button&gt;</code>
+          </div>
+        </section>
+
+        <!-- Cards -->
+        <section class="demo-section" id="cards">
+          <div class="demo-section-header">
+            <h2 class="demo-section-title">Cards</h2>
+            <p class="demo-section-description">Elevated panels with subtle shadows and hover effects</p>
+          </div>
+
+          <div class="demo-grid">
+            <!-- Basic Card -->
+            <div class="card">
+              <h3 style="margin-bottom: var(--space-3);">Basic Card</h3>
+              <p style="color: var(--text-secondary); margin: 0;">
+                Clean card design with flat background and subtle shadow.
+              </p>
+            </div>
+
+            <!-- Card with Header -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Card with Header</h3>
+                <button class="btn btn-ghost btn-sm">Action</button>
+              </div>
+              <div class="card-body">
+                <p style="margin: 0; color: var(--text-secondary);">
+                  Card body content goes here.
+                </p>
+              </div>
+            </div>
+
+            <!-- Stat Card -->
+            <div class="stat-card">
+              <div class="stat-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+              <div class="stat-value">$45,234</div>
+              <div class="stat-label">Total Revenue</div>
+              <div class="stat-change positive">
+                ↑ +12.5%
+              </div>
+            </div>
+          </div>
+
+          <div class="code-block">
+            <code>&lt;div class="card"&gt;...&lt;/div&gt;</code>
+          </div>
+        </section>
+
+        <!-- Forms -->
+        <section class="demo-section" id="forms">
+          <div class="demo-section-header">
+            <h2 class="demo-section-title">Form Elements</h2>
+            <p class="demo-section-description">Minimal borders with purple focus glow</p>
+          </div>
+
+          <div class="card" style="max-width: 600px;">
+            <form>
+              <div class="input-group">
+                <label class="input-label">Email Address</label>
+                <input type="email" class="input" placeholder="you@example.com" />
+                <span class="input-hint">We'll never share your email.</span>
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">Password</label>
+                <input type="password" class="input" placeholder="••••••••" />
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">Country</label>
+                <select class="select">
+                  <option>Choose a country</option>
+                  <option>United States</option>
+                  <option>Canada</option>
+                  <option>United Kingdom</option>
+                </select>
+              </div>
+
+              <div class="input-group">
+                <label class="input-label">Message</label>
+                <textarea class="textarea" placeholder="Enter your message..."></textarea>
+              </div>
+
+              <div class="checkbox">
+                <input type="checkbox" id="terms" />
+                <label for="terms">I agree to the terms and conditions</label>
+              </div>
+
+              <div style="display: flex; gap: var(--space-3); margin-top: var(--space-6);">
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="button" class="btn btn-secondary">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="code-block">
+            <code>&lt;input type="text" class="input" placeholder="..." /&gt;</code>
+          </div>
+        </section>
+
+        <!-- Tables -->
+        <section class="demo-section" id="tables">
+          <div class="demo-section-header">
+            <h2 class="demo-section-title">Tables</h2>
+            <p class="demo-section-description">Clean tables with hover row highlighting</p>
+          </div>
+
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th>Price</th>
+                  <th class="text-right">24h Change</th>
+                  <th class="text-right">Market Cap</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Bitcoin</strong></td>
+                  <td>$45,123.45</td>
+                  <td class="text-right" style="color: var(--color-success);">+5.2%</td>
+                  <td class="text-right">$850B</td>
+                </tr>
+                <tr>
+                  <td><strong>Ethereum</strong></td>
+                  <td>$2,345.67</td>
+                  <td class="text-right" style="color: var(--color-danger);">-2.1%</td>
+                  <td class="text-right">$280B</td>
+                </tr>
+                <tr>
+                  <td><strong>Cardano</strong></td>
+                  <td>$0.567</td>
+                  <td class="text-right" style="color: var(--color-success);">+3.8%</td>
+                  <td class="text-right">$20B</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="code-block">
+            <code>&lt;div class="table-container"&gt;&lt;table class="table"&gt;...&lt;/table&gt;&lt;/div&gt;</code>
+          </div>
+        </section>
+
+        <!-- Badges -->
+        <section class="demo-section" id="badges">
+          <div class="demo-section-header">
+            <h2 class="demo-section-title">Badges & Pills</h2>
+            <p class="demo-section-description">Semantic color-coded badges</p>
+          </div>
+
+          <div class="demo-row">
+            <span class="badge badge-primary">Primary</span>
+            <span class="badge badge-secondary">Secondary</span>
+            <span class="badge badge-success">Success</span>
+            <span class="badge badge-warning">Warning</span>
+            <span class="badge badge-danger">Danger</span>
+            <span class="badge badge-info">Info</span>
+          </div>
+
+          <div class="demo-row">
+            <span class="badge badge-primary pill">Live</span>
+            <span class="badge badge-success pill">Active</span>
+            <span class="badge badge-warning pill">Pending</span>
+            <span class="badge badge-danger pill">Error</span>
+          </div>
+
+          <div class="code-block">
+            <code>&lt;span class="badge badge-primary"&gt;Primary&lt;/span&gt;</code>
+          </div>
+        </section>
+
+        <!-- Animations -->
+        <section class="demo-section" id="animations">
+          <div class="demo-section-header">
+            <h2 class="demo-section-title">Animations</h2>
+            <p class="demo-section-description">Smooth 200ms animations - Cursor-style</p>
+          </div>
+
+          <div class="demo-grid">
+            <div class="card hover-lift">
+              <h4 style="margin-bottom: var(--space-2);">Hover Lift</h4>
+              <p style="margin: 0; color: var(--text-secondary); font-size: var(--text-sm);">
+                Lifts 2px on hover
+              </p>
+            </div>
+
+            <div class="card hover-scale">
+              <h4 style="margin-bottom: var(--space-2);">Hover Scale</h4>
+              <p style="margin: 0; color: var(--text-secondary); font-size: var(--text-sm);">
+                Scales to 102% on hover
+              </p>
+            </div>
+
+            <div class="card hover-glow">
+              <h4 style="margin-bottom: var(--space-2);">Hover Glow</h4>
+              <p style="margin: 0; color: var(--text-secondary); font-size: var(--text-sm);">
+                Purple glow on hover
+              </p>
+            </div>
+          </div>
+
+          <div class="demo-row" style="align-items: center;">
+            <div class="spinner"></div>
+            <div class="spinner spinner-lg"></div>
+            <div class="dots-loader">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+
+          <div class="code-block">
+            <code>&lt;div class="card hover-lift"&gt;...&lt;/div&gt;</code>
+          </div>
+        </section>
+
+        <!-- Progress Bars -->
+        <section class="demo-section">
+          <div class="demo-section-header">
+            <h2 class="demo-section-title">Progress Bars</h2>
+            <p class="demo-section-description">Clean progress indicators</p>
+          </div>
+
+          <div style="max-width: 600px;">
+            <div class="progress">
+              <div class="progress-bar" style="width: 75%;"></div>
+            </div>
+            <div style="margin-top: var(--space-4);">
+              <div class="progress">
+                <div class="progress-bar success" style="width: 100%;"></div>
+              </div>
+            </div>
+            <div style="margin-top: var(--space-4);">
+              <div class="progress">
+                <div class="progress-bar warning" style="width: 45%;"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <div style="margin-top: var(--space-16); padding: var(--space-8) 0; border-top: 1px solid var(--border-default); text-align: center; color: var(--text-tertiary); font-size: var(--text-sm);">
+          <p>Cursor-Inspired UI Design System • Version 1.0.0</p>
+          <p style="margin-top: var(--space-2);">Modern Flat + Subtle Depth • 200ms Smooth Animations • Purple Accents</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sidebar collapse toggle
+    const collapseToggle = document.getElementById('sidebar-collapse-toggle');
+    const sidebar = document.getElementById('main-sidebar');
+
+    if (collapseToggle && sidebar) {
+      collapseToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+      });
+    }
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

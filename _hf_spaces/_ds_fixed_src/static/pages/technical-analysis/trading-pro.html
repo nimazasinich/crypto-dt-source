@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Trading Terminal | Crypto Intelligence Hub</title>
+    <link rel="icon" type="image/svg+xml" href="../../assets/icons/favicon.svg">
+    
+    <!-- TradingView Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #0f1429;
+            --bg-tertiary: #141B38;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.75);
+            --accent-cyan: #2dd4bf;
+            --accent-purple: #818cf8;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-yellow: #fbbf24;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Main Layout */
+        .trading-terminal {
+            display: grid;
+            grid-template-columns: 300px 1fr 320px;
+            grid-template-rows: 60px 1fr 200px;
+            height: 100vh;
+            gap: 1px;
+            background: var(--border-color);
+        }
+
+        /* Top Bar */
+        .top-bar {
+            grid-column: 1 / 4;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .symbol-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .symbol-input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            width: 150px;
+        }
+
+        .symbol-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .timeframe-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .timeframe-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.4rem 0.8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .timeframe-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        .timeframe-btn.active {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            border-color: var(--accent-cyan);
+        }
+
+        .status-indicators {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: var(--bg-tertiary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Left Sidebar - Tools */
+        .left-sidebar {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .tool-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-section h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tool-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: rgba(45, 212, 191, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        .tool-btn.active {
+            background: rgba(45, 212, 191, 0.2);
+            border-color: var(--accent-cyan);
+        }
+
+        .tool-icon {
+            font-size: 1.25rem;
+        }
+
+        .indicator-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.on {
+            background: var(--accent-cyan);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.on .toggle-slider {
+            transform: translateX(24px);
+        }
+
+        /* Chart Area */
+        .chart-container {
+            background: var(--bg-secondary);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chart-tools {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-tool-btn {
+            padding: 0.5rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chart-tool-btn:hover {
+            background: rgba(45, 212, 191, 0.1);
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        .chart-tool-btn.active {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            border-color: var(--accent-cyan);
+        }
+
+        #tradingChart {
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Right Sidebar - Analysis */
+        .right-sidebar {
+            background: var(--bg-secondary);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .analysis-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .analysis-card h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .signal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .signal-badge.buy {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--accent-green);
+        }
+
+        .signal-badge.sell {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+
+        .signal-badge.hold {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--accent-yellow);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .metric-value.bullish {
+            color: var(--accent-green);
+        }
+
+        .metric-value.bearish {
+            color: var(--accent-red);
+        }
+
+        .metric-value.neutral {
+            color: var(--accent-yellow);
+        }
+
+        /* Bottom Panel - Strategy */
+        .bottom-panel {
+            grid-column: 1 / 4;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .strategy-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+
+        .strategy-tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .strategy-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .strategy-tab.active {
+            color: var(--accent-cyan);
+            border-bottom-color: var(--accent-cyan);
+        }
+
+        .strategy-content {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .strategy-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .strategy-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .strategy-item:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .strategy-item.active {
+            background: rgba(45, 212, 191, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        .strategy-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .strategy-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .stat {
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 14, 39, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Price Display */
+        .price-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .price-change {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .price-change.positive {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--accent-green);
+        }
+
+        .price-change.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-red);
+        }
+    </style>
+    <!-- API Configuration - Smart Fallback System -->
+    <script src="/static/js/api-config.js"></script>
+    <script>
+        // Initialize API client
+        window.apiReady = new Promise((resolve) => {
+            if (window.apiClient) {
+                console.log('✅ API Client ready');
+                resolve(window.apiClient);
+            } else {
+                console.error('❌ API Client not loaded');
+            }
+        });
+    </script>
+
+</head>
+<body>
+    <div class="trading-terminal">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="symbol-selector">
+                <input type="text" class="symbol-input" id="symbolInput" value="BTCUSDT" placeholder="Symbol">
+                <div class="price-display" id="priceDisplay">
+                    <span id="currentPrice">$0.00</span>
+                    <span class="price-change positive" id="priceChange">+0.00%</span>
+                </div>
+            </div>
+
+            <div class="timeframe-buttons">
+                <button class="timeframe-btn" data-timeframe="1m">1m</button>
+                <button class="timeframe-btn" data-timeframe="5m">5m</button>
+                <button class="timeframe-btn" data-timeframe="15m">15m</button>
+                <button class="timeframe-btn" data-timeframe="1h">1h</button>
+                <button class="timeframe-btn active" data-timeframe="4h">4h</button>
+                <button class="timeframe-btn" data-timeframe="1d">1D</button>
+                <button class="timeframe-btn" data-timeframe="1w">1W</button>
+            </div>
+
+            <div class="status-indicators">
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span>Live Data</span>
+                </div>
+                <div class="status-badge">
+                    <span id="lastUpdate">Just now</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left Sidebar - Drawing Tools -->
+        <div class="left-sidebar">
+            <div class="tool-section">
+                <h3>📐 Drawing Tools</h3>
+                <button class="tool-btn" data-tool="trendline">
+                    <span class="tool-icon">📈</span>
+                    <span>Trend Line</span>
+                </button>
+                <button class="tool-btn" data-tool="horizontal">
+                    <span class="tool-icon">➖</span>
+                    <span>Horizontal Line</span>
+                </button>
+                <button class="tool-btn" data-tool="fibonacci">
+                    <span class="tool-icon">🎯</span>
+                    <span>Fibonacci</span>
+                </button>
+                <button class="tool-btn" data-tool="rectangle">
+                    <span class="tool-icon">⬜</span>
+                    <span>Rectangle</span>
+                </button>
+                <button class="tool-btn" data-tool="triangle">
+                    <span class="tool-icon">🔺</span>
+                    <span>Triangle</span>
+                </button>
+            </div>
+
+            <div class="tool-section">
+                <h3>📊 Indicators</h3>
+                <div class="indicator-toggle">
+                    <span>RSI (14)</span>
+                    <div class="toggle-switch on" data-indicator="rsi">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="indicator-toggle">
+                    <span>MACD</span>
+                    <div class="toggle-switch on" data-indicator="macd">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="indicator-toggle">
+                    <span>BB (20, 2)</span>
+                    <div class="toggle-switch" data-indicator="bb">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="indicator-toggle">
+                    <span>EMA (20, 50, 200)</span>
+                    <div class="toggle-switch on" data-indicator="ema">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="indicator-toggle">
+                    <span>Volume</span>
+                    <div class="toggle-switch on" data-indicator="volume">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="indicator-toggle">
+                    <span>Ichimoku Cloud</span>
+                    <div class="toggle-switch" data-indicator="ichimoku">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>🎨 Patterns</h3>
+                <div class="indicator-toggle">
+                    <span>Head & Shoulders</span>
+                    <div class="toggle-switch on" data-pattern="hs">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="indicator-toggle">
+                    <span>Double Top/Bottom</span>
+                    <div class="toggle-switch on" data-pattern="double">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="indicator-toggle">
+                    <span>Triangles</span>
+                    <div class="toggle-switch on" data-pattern="triangle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="indicator-toggle">
+                    <span>Wedges</span>
+                    <div class="toggle-switch" data-pattern="wedge">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Area -->
+        <div class="chart-container">
+            <div class="chart-toolbar">
+                <div class="chart-tools">
+                    <button class="chart-tool-btn" title="Cursor" data-mode="cursor">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>
+                        </svg>
+                    </button>
+                    <button class="chart-tool-btn" title="Crosshair" data-mode="crosshair">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="22" y1="12" x2="18" y2="12"/>
+                            <line x1="6" y1="12" x2="2" y2="12"/>
+                            <line x1="12" y1="6" x2="12" y2="2"/>
+                            <line x1="12" y1="22" x2="12" y2="18"/>
+                        </svg>
+                    </button>
+                    <button class="chart-tool-btn" title="Zoom In" onclick="window.tradingPro?.zoomIn()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                            <line x1="11" y1="8" x2="11" y2="14"/>
+                            <line x1="8" y1="11" x2="14" y2="11"/>
+                        </svg>
+                    </button>
+                    <button class="chart-tool-btn" title="Zoom Out" onclick="window.tradingPro?.zoomOut()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                            <line x1="8" y1="11" x2="14" y2="11"/>
+                        </svg>
+                    </button>
+                    <button class="chart-tool-btn" title="Screenshot" onclick="window.tradingPro?.takeScreenshot()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="tradingChart"></div>
+            <div class="loading-overlay hidden" id="loadingOverlay">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar - Analysis -->
+        <div class="right-sidebar">
+            <div class="analysis-card">
+                <h3>📈 Current Signal</h3>
+                <div style="margin: 1rem 0;">
+                    <span class="signal-badge buy" id="currentSignal">STRONG BUY</span>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <div class="metric-row">
+                        <span class="metric-label">Confidence</span>
+                        <span class="metric-value bullish" id="confidence">85%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Strength</span>
+                        <span class="metric-value bullish" id="strength">Strong</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-card">
+                <h3>🎯 Key Levels</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Resistance 1</span>
+                    <span class="metric-value bearish" id="r1">$0.00</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Current Price</span>
+                    <span class="metric-value" id="cp">$0.00</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Support 1</span>
+                    <span class="metric-value bullish" id="s1">$0.00</span>
+                </div>
+            </div>
+
+            <div class="analysis-card">
+                <h3>📊 Indicators</h3>
+                <div class="metric-row">
+                    <span class="metric-label">RSI (14)</span>
+                    <span class="metric-value neutral" id="rsiValue">0</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">MACD</span>
+                    <span class="metric-value bullish" id="macdValue">Bullish</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">EMA Trend</span>
+                    <span class="metric-value bullish" id="emaValue">Uptrend</span>
+                </div>
+            </div>
+
+            <div class="analysis-card">
+                <h3>⚡ Quick Stats</h3>
+                <div class="metric-row">
+                    <span class="metric-label">24h Volume</span>
+                    <span class="metric-value" id="volume24h">$0</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Market Cap</span>
+                    <span class="metric-value" id="marketCap">$0</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Volatility</span>
+                    <span class="metric-value" id="volatility">Low</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel - Strategies -->
+        <div class="bottom-panel">
+            <div class="strategy-tabs">
+                <div class="strategy-tab active" data-tab="strategies">My Strategies</div>
+                <div class="strategy-tab" data-tab="signals">Active Signals</div>
+                <div class="strategy-tab" data-tab="history">Trade History</div>
+                <div class="strategy-tab" data-tab="backtests">Backtest Results</div>
+            </div>
+            <div class="strategy-content">
+                <div class="strategy-list" id="strategyList">
+                    <!-- Strategies will be loaded here -->
+                    <div class="strategy-item active">
+                        <div class="strategy-name">🎯 Trend Following + RSI</div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">
+                            EMA crossover with RSI confirmation. Buy when EMA(20) crosses EMA(50) upward and RSI > 50
+                        </p>
+                        <div class="strategy-stats">
+                            <div class="stat">
+                                <div class="stat-label">Win Rate</div>
+                                <div class="stat-value" style="color: var(--accent-green)">67%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Profit Factor</div>
+                                <div class="stat-value" style="color: var(--accent-green)">2.3</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Trades</div>
+                                <div class="stat-value">156</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">💎 Support/Resistance Breakout</div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">
+                            Buy on resistance break with volume confirmation. Sell on support break.
+                        </p>
+                        <div class="strategy-stats">
+                            <div class="stat">
+                                <div class="stat-label">Win Rate</div>
+                                <div class="stat-value" style="color: var(--accent-green)">72%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Profit Factor</div>
+                                <div class="stat-value" style="color: var(--accent-green)">3.1</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Trades</div>
+                                <div class="stat-value">89</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">🌊 MACD + Bollinger Bands</div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">
+                            MACD histogram reversal at BB extremes. Mean reversion strategy.
+                        </p>
+                        <div class="strategy-stats">
+                            <div class="stat">
+                                <div class="stat-label">Win Rate</div>
+                                <div class="stat-value" style="color: var(--accent-green)">65%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Profit Factor</div>
+                                <div class="stat-value" style="color: var(--accent-green)">1.9</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Trades</div>
+                                <div class="stat-value">203</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="strategy-item">
+                        <div class="strategy-name">⚡ Scalping - Quick Profits</div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">
+                            1-5 minute timeframe. Small profits, high frequency, strict stop-loss.
+                        </p>
+                        <div class="strategy-stats">
+                            <div class="stat">
+                                <div class="stat-label">Win Rate</div>
+                                <div class="stat-value" style="color: var(--accent-yellow)">58%</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Profit Factor</div>
+                                <div class="stat-value" style="color: var(--accent-green)">1.6</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Trades</div>
+                                <div class="stat-value">1,247</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./trading-pro.js"></script>
+</body>
+</html>
+

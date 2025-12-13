@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Crypto Monitor - Price Chart">
+  <title>Chart | Crypto Monitor</title>
+  
+  <link rel="icon" type="image/svg+xml" href="/static/assets/icons/favicon.svg">
+  
+  <link rel="stylesheet" href="/static/shared/css/design-system.css">
+  <link rel="stylesheet" href="/static/shared/css/global.css">
+  <link rel="stylesheet" href="/static/shared/css/components.css">
+  <link rel="stylesheet" href="/static/shared/css/layout.css">
+  
+  <style>
+    .chart-container {
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .chart-header {
+      margin-bottom: 2rem;
+    }
+    .chart-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .chart-controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .chart-wrapper {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      min-height: 500px;
+    }
+    #priceChart {
+      width: 100%;
+      height: 500px;
+    }
+  </style>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="/static/shared/js/utils/error-suppressor.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <aside id="sidebar-container"></aside>
+    
+    <main class="main-content">
+      <header id="header-container"></header>
+      
+      <div class="chart-container">
+        <div class="chart-header">
+          <h1 class="chart-title" id="chartTitle">Loading Chart...</h1>
+          <div class="chart-controls">
+            <select id="timeframeSelect" class="form-select" style="width: auto;">
+              <option value="1h">1 Hour</option>
+              <option value="4h">4 Hours</option>
+              <option value="1d" selected>1 Day</option>
+              <option value="1w">1 Week</option>
+            </select>
+            <button id="refreshBtn" class="btn btn-primary">Refresh</button>
+          </div>
+        </div>
+        
+        <div class="chart-wrapper">
+          <canvas id="priceChart"></canvas>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/shared/js/core/layout-manager.js"></script>
+  <script>
+    // Get symbol from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const symbol = urlParams.get('symbol') || 'BTC';
+    const symbolParts = symbol.split(':');
+    const baseSymbol = symbolParts[0].toUpperCase();
+    
+    let chart = null;
+    
+    // Initialize layout
+    if (window.LayoutManager) {
+      window.LayoutManager.init();
+    }
+    
+    // Update title
+    document.getElementById('chartTitle').textContent = `${baseSymbol} Price Chart`;
+    
+    // Load chart data
+    async function loadChartData() {
+      const timeframe = document.getElementById('timeframeSelect').value;
+      const limit = 100;
+      
+      try {
+        // Try /api/market/ohlc first
+        let response = await fetch(`/api/market/ohlc?symbol=${baseSymbol}&interval=${timeframe}&limit=${limit}`);
+        
+        if (!response.ok) {
+          // Fallback to /api/ohlcv
+          response = await fetch(`/api/ohlcv?symbol=${baseSymbol}&timeframe=${timeframe}&limit=${limit}`);
+        }
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const ohlcData = data.ohlc || data.data || [];
+        
+        if (ohlcData.length === 0) {
+          throw new Error('No data available');
+        }
+        
+        // Prepare chart data
+        const labels = ohlcData.map(item => {
+          const date = new Date(item.timestamp * 1000);
+          return date.toLocaleString();
+        });
+        
+        const prices = ohlcData.map(item => item.close || item.price || 0);
+        
+        // Create or update chart
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        
+        if (chart) {
+          chart.destroy();
+        }
+        
+        chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: `${baseSymbol} Price`,
+              data: prices,
+              borderColor: '#14b8a6',
+              backgroundColor: 'rgba(20, 184, 166, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top'
+              },
+              tooltip: {
+                mode: 'index',
+                intersect: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: false,
+                ticks: {
+                  callback: function(value) {
+                    return '$' + value.toLocaleString();
+                  }
+                }
+              }
+            }
+          }
+        });
+        
+      } catch (error) {
+        console.error('Error loading chart data:', error);
+        document.getElementById('chartTitle').textContent = `Error loading ${baseSymbol} chart`;
+      }
+    }
+    
+    // Event listeners
+    document.getElementById('timeframeSelect').addEventListener('change', loadChartData);
+    document.getElementById('refreshBtn').addEventListener('click', loadChartData);
+    
+    // Load initial data
+    loadChartData();
+  </script>
+</body>
+</html>
+

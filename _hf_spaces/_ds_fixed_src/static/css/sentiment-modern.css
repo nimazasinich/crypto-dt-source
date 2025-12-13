@@ -1,0 +1,248 @@
+/**
+ * Modern Sentiment UI Styles
+ * Beautiful, animated sentiment indicators
+ */
+
+.sentiment-modern {
+    padding: 24px;
+}
+
+.sentiment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.sentiment-header h4 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.sentiment-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(143, 136, 255, 0.15);
+    border: 1px solid rgba(143, 136, 255, 0.3);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #b8b3ff;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sentiment-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.sentiment-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sentiment-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateX(4px);
+}
+
+.sentiment-item-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.sentiment-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.sentiment-item.bullish .sentiment-icon {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.sentiment-item.neutral .sentiment-icon {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.sentiment-item.bearish .sentiment-icon {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.sentiment-item:hover .sentiment-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.sentiment-label {
+    flex: 1;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sentiment-percent {
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-family: 'Manrope', 'DM Sans', sans-serif;
+}
+
+.sentiment-item.bullish .sentiment-percent {
+    color: #22c55e;
+}
+
+.sentiment-item.neutral .sentiment-percent {
+    color: #38bdf8;
+}
+
+.sentiment-item.bearish .sentiment-percent {
+    color: #ef4444;
+}
+
+.sentiment-progress {
+    position: relative;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.sentiment-progress-bar {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.sentiment-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.sentiment-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+}
+
+.sentiment-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.summary-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.summary-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    font-family: 'Manrope', 'DM Sans', sans-serif;
+}
+
+.summary-value.bullish {
+    color: #22c55e;
+}
+
+.summary-value.neutral {
+    color: #38bdf8;
+}
+
+.summary-value.bearish {
+    color: #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sentiment-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .sentiment-item-header {
+        flex-wrap: wrap;
+    }
+    
+    .sentiment-percent {
+        font-size: 1rem;
+    }
+}
+
+/* Animation on load */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sentiment-item {
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.sentiment-item:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.sentiment-item:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.sentiment-item:nth-child(3) {
+    animation-delay: 0.3s;
+}

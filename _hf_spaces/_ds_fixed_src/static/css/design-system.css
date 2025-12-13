@@ -1,0 +1,363 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * DESIGN SYSTEM — ULTRA ENTERPRISE EDITION
+ * Crypto Monitor HF — Glass + Neon + Dark Aero UI
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * This file contains the complete design token system:
+ * - Color Palette (Brand, Surface, Status, Semantic)
+ * - Typography Scale (Font families, sizes, weights, tracking)
+ * - Spacing System (Consistent rhythm)
+ * - Border Radius (Corner rounding)
+ * - Shadows & Depth (Elevation system)
+ * - Neon Glows (Accent lighting effects)
+ * - Transitions & Animations (Motion design)
+ * - Z-Index Scale (Layering)
+ *
+ * ALL components must reference these tokens.
+ * NO hardcoded values allowed.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   🎨 COLOR SYSTEM — ULTRA DETAILED PALETTE
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ━━━ BRAND CORE ━━━ */
+  --brand-blue: #3B82F6;
+  --brand-blue-light: #60A5FA;
+  --brand-blue-dark: #1E40AF;
+  --brand-blue-darker: #1E3A8A;
+
+  --brand-purple: #8B5CF6;
+  --brand-purple-light: #A78BFA;
+  --brand-purple-dark: #5B21B6;
+  --brand-purple-darker: #4C1D95;
+
+  --brand-cyan: #06B6D4;
+  --brand-cyan-light: #22D3EE;
+  --brand-cyan-dark: #0891B2;
+  --brand-cyan-darker: #0E7490;
+
+  --brand-green: #10B981;
+  --brand-green-light: #34D399;
+  --brand-green-dark: #047857;
+  --brand-green-darker: #065F46;
+
+  --brand-pink: #EC4899;
+  --brand-pink-light: #F472B6;
+  --brand-pink-dark: #BE185D;
+
+  --brand-orange: #F97316;
+  --brand-orange-light: #FB923C;
+  --brand-orange-dark: #C2410C;
+
+  --brand-yellow: #F59E0B;
+  --brand-yellow-light: #FCD34D;
+  --brand-yellow-dark: #D97706;
+
+  /* ━━━ SURFACES (Glassmorphism) ━━━ */
+  --surface-glass: rgba(255, 255, 255, 0.08);
+  --surface-glass-strong: rgba(255, 255, 255, 0.16);
+  --surface-glass-stronger: rgba(255, 255, 255, 0.24);
+  --surface-panel: rgba(255, 255, 255, 0.12);
+  --surface-elevated: rgba(255, 255, 255, 0.14);
+  --surface-overlay: rgba(0, 0, 0, 0.80);
+
+  /* ━━━ BACKGROUND ━━━ */
+  --background-main: #0F172A;
+  --background-secondary: #1E293B;
+  --background-tertiary: #334155;
+  --background-gradient: radial-gradient(circle at 20% 30%, #1E293B 0%, #0F172A 80%);
+  --background-gradient-alt: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+
+  /* ━━━ TEXT HIERARCHY ━━━ */
+  --text-strong: #F8FAFC;
+  --text-normal: #E2E8F0;
+  --text-soft: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-faint: #64748B;
+  --text-disabled: #475569;
+
+  /* ━━━ STATUS COLORS ━━━ */
+  --success: #22C55E;
+  --success-light: #4ADE80;
+  --success-dark: #16A34A;
+
+  --warning: #F59E0B;
+  --warning-light: #FBBF24;
+  --warning-dark: #D97706;
+
+  --danger: #EF4444;
+  --danger-light: #F87171;
+  --danger-dark: #DC2626;
+
+  --info: #0EA5E9;
+  --info-light: #38BDF8;
+  --info-dark: #0284C7;
+
+  /* ━━━ BORDERS ━━━ */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.20);
+  --border-medium: rgba(255, 255, 255, 0.30);
+  --border-heavy: rgba(255, 255, 255, 0.40);
+  --border-strong: rgba(255, 255, 255, 0.50);
+
+  /* ━━━ SHADOWS (Depth System) ━━━ */
+  --shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.20);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.26);
+  --shadow-md: 0 6px 22px rgba(0, 0, 0, 0.30);
+  --shadow-lg: 0 12px 42px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.60);
+  --shadow-2xl: 0 32px 80px rgba(0, 0, 0, 0.75);
+
+  /* ━━━ NEON GLOWS (Accent Lighting) ━━━ */
+  --glow-blue: 0 0 12px rgba(59, 130, 246, 0.55), 0 0 24px rgba(59, 130, 246, 0.25);
+  --glow-blue-strong: 0 0 16px rgba(59, 130, 246, 0.70), 0 0 32px rgba(59, 130, 246, 0.40);
+
+  --glow-cyan: 0 0 14px rgba(34, 211, 238, 0.35), 0 0 28px rgba(34, 211, 238, 0.18);
+  --glow-cyan-strong: 0 0 18px rgba(34, 211, 238, 0.50), 0 0 36px rgba(34, 211, 238, 0.30);
+
+  --glow-purple: 0 0 16px rgba(139, 92, 246, 0.50), 0 0 32px rgba(139, 92, 246, 0.25);
+  --glow-purple-strong: 0 0 20px rgba(139, 92, 246, 0.65), 0 0 40px rgba(139, 92, 246, 0.35);
+
+  --glow-green: 0 0 16px rgba(52, 211, 153, 0.50), 0 0 32px rgba(52, 211, 153, 0.25);
+  --glow-green-strong: 0 0 20px rgba(52, 211, 153, 0.65), 0 0 40px rgba(52, 211, 153, 0.35);
+
+  --glow-pink: 0 0 14px rgba(236, 72, 153, 0.45), 0 0 28px rgba(236, 72, 153, 0.22);
+
+  --glow-orange: 0 0 14px rgba(249, 115, 22, 0.45), 0 0 28px rgba(249, 115, 22, 0.22);
+
+  /* ━━━ GRADIENTS ━━━ */
+  --gradient-primary: linear-gradient(135deg, var(--brand-blue), var(--brand-cyan));
+  --gradient-secondary: linear-gradient(135deg, var(--brand-purple), var(--brand-pink));
+  --gradient-success: linear-gradient(135deg, var(--brand-green), var(--brand-cyan));
+  --gradient-danger: linear-gradient(135deg, var(--danger), var(--brand-pink));
+  --gradient-rainbow: linear-gradient(135deg, var(--brand-blue), var(--brand-purple), var(--brand-pink));
+
+  /* ━━━ BACKDROP BLUR ━━━ */
+  --blur-sm: blur(8px);
+  --blur-md: blur(16px);
+  --blur-lg: blur(22px);
+  --blur-xl: blur(32px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🔠 TYPOGRAPHY SYSTEM
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ━━━ FONT FAMILIES ━━━ */
+  --font-main: "Inter", "Rubik", "Vazirmatn", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Monaco, Consolas, monospace;
+
+  /* ━━━ FONT SIZES ━━━ */
+  --fs-xs: 11px;
+  --fs-sm: 13px;
+  --fs-base: 15px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 26px;
+  --fs-3xl: 32px;
+  --fs-4xl: 40px;
+  --fs-5xl: 52px;
+
+  /* ━━━ FONT WEIGHTS ━━━ */
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+  --fw-black: 900;
+
+  /* ━━━ LINE HEIGHTS ━━━ */
+  --lh-tight: 1.2;
+  --lh-snug: 1.375;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.625;
+  --lh-loose: 2;
+
+  /* ━━━ LETTER SPACING ━━━ */
+  --tracking-tighter: -0.5px;
+  --tracking-tight: -0.3px;
+  --tracking-normal: 0;
+  --tracking-wide: 0.2px;
+  --tracking-wider: 0.4px;
+  --tracking-widest: 0.8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   📐 SPACING SYSTEM
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🔲 BORDER RADIUS
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+  --radius-full: 9999px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ⏱️ TRANSITIONS & ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ━━━ DURATION ━━━ */
+  --duration-instant: 0.1s;
+  --duration-fast: 0.15s;
+  --duration-normal: 0.25s;
+  --duration-medium: 0.35s;
+  --duration-slow: 0.45s;
+  --duration-slower: 0.6s;
+
+  /* ━━━ EASING ━━━ */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ━━━ COMBINED ━━━ */
+  --transition-fast: var(--duration-fast) var(--ease-out);
+  --transition-normal: var(--duration-normal) var(--ease-out);
+  --transition-medium: var(--duration-medium) var(--ease-in-out);
+  --transition-slow: var(--duration-slow) var(--ease-in-out);
+  --transition-spring: var(--duration-medium) var(--ease-spring);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🗂️ Z-INDEX SCALE
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --z-base: 1;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-overlay: 8000;
+  --z-modal: 9000;
+  --z-toast: 9500;
+  --z-tooltip: 9999;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   📏 LAYOUT CONSTANTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --header-height: 64px;
+  --sidebar-width: 280px;
+  --mobile-nav-height: 70px;
+  --status-bar-height: 40px;
+  --max-content-width: 1680px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   📱 BREAKPOINTS (for reference in media queries)
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 640px;
+  --breakpoint-lg: 768px;
+  --breakpoint-xl: 1024px;
+  --breakpoint-2xl: 1280px;
+  --breakpoint-3xl: 1440px;
+  --breakpoint-4xl: 1680px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🎭 THEME OVERRIDES (Light Mode - optional)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.theme-light {
+  /* Light theme not implemented in this ultra-dark design */
+  /* If needed, override tokens here */
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🌈 SEMANTIC TOKENS (Component-specific)
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Button variants */
+  --btn-primary-bg: var(--gradient-primary);
+  --btn-primary-shadow: var(--glow-blue);
+
+  --btn-secondary-bg: var(--surface-glass);
+  --btn-secondary-border: var(--border-light);
+
+  /* Card styles */
+  --card-bg: var(--surface-glass);
+  --card-border: var(--border-light);
+  --card-shadow: var(--shadow-md);
+
+  /* Input styles */
+  --input-bg: rgba(15, 23, 42, 0.60);
+  --input-border: var(--border-light);
+  --input-focus-border: var(--brand-blue);
+  --input-focus-glow: var(--glow-blue);
+
+  /* Tab styles */
+  --tab-active-indicator: var(--brand-cyan);
+  --tab-active-glow: var(--glow-cyan);
+
+  /* Toast styles */
+  --toast-bg: var(--surface-glass-strong);
+  --toast-border: var(--border-medium);
+
+  /* Modal styles */
+  --modal-bg: var(--surface-elevated);
+  --modal-backdrop: var(--surface-overlay);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ✨ UTILITY: Quick Glassmorphism Builder
+   ═══════════════════════════════════════════════════════════════════ */
+
+.glass-panel {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-light);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+}
+
+.glass-panel-strong {
+  background: var(--surface-glass-strong);
+  border: 1px solid var(--border-medium);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🎯 END OF DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════════════ */

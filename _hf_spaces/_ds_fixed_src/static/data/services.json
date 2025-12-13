@@ -1,0 +1,361 @@
+{
+  "explorer": [
+    {
+      "name": "Etherscan",
+      "url": "https://api.etherscan.io/api",
+      "key": "ETHERSCAN_API_KEY_HERE",
+      "endpoints": ["?module=account&action=balance&address={address}&apikey={KEY}", "?module=gastracker&action=gasoracle&apikey={KEY}"]
+    },
+    {
+      "name": "Etherscan Backup",
+      "url": "https://api.etherscan.io/api",
+      "key": "ETHERSCAN_API_KEY_HERE",
+      "endpoints": []
+    },
+    {
+      "name": "BscScan",
+      "url": "https://api.bscscan.com/api",
+      "key": "BSCSCAN_API_KEY_HERE",
+      "endpoints": ["?module=account&action=balance&address={address}&apikey={KEY}"]
+    },
+    {
+      "name": "TronScan",
+      "url": "https://apilist.tronscanapi.com/api",
+      "key": "TRONSCAN_API_KEY_HERE",
+      "endpoints": ["/account?address={address}"]
+    },
+    {
+      "name": "Blockchair ETH",
+      "url": "https://api.blockchair.com/ethereum/dashboards/address/{address}",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Ethplorer",
+      "url": "https://api.ethplorer.io",
+      "key": "freekey",
+      "endpoints": ["/getAddressInfo/{address}?apiKey=freekey"]
+    },
+    {
+      "name": "TronGrid",
+      "url": "https://api.trongrid.io",
+      "key": "",
+      "endpoints": ["/wallet/getaccount"]
+    },
+    {
+      "name": "Ankr",
+      "url": "https://rpc.ankr.com/multichain",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "1inch BSC",
+      "url": "https://api.1inch.io/v5.0/56",
+      "key": "",
+      "endpoints": []
+    }
+  ],
+  "market": [
+    {
+      "name": "CoinGecko",
+      "url": "https://api.coingecko.com/api/v3",
+      "key": "",
+      "endpoints": ["/simple/price?ids=bitcoin,ethereum&vs_currencies=usd", "/coins/markets?vs_currency=usd&per_page=100"]
+    },
+    {
+      "name": "CoinMarketCap",
+      "url": "https://pro-api.coinmarketcap.com/v1",
+      "key": "COINMARKETCAP_API_KEY_HERE",
+      "endpoints": ["/cryptocurrency/quotes/latest?symbol=BTC&convert=USD"]
+    },
+    {
+      "name": "CoinMarketCap Alt",
+      "url": "https://pro-api.coinmarketcap.com/v1",
+      "key": "COINMARKETCAP_API_KEY_HERE",
+      "endpoints": []
+    },
+    {
+      "name": "CryptoCompare",
+      "url": "https://min-api.cryptocompare.com/data",
+      "key": "CRYPTOCOMPARE_API_KEY_HERE",
+      "endpoints": ["/pricemulti?fsyms=BTC,ETH&tsyms=USD"]
+    },
+    {
+      "name": "CoinPaprika",
+      "url": "https://api.coinpaprika.com/v1",
+      "key": "",
+      "endpoints": ["/tickers", "/coins"]
+    },
+    {
+      "name": "CoinCap",
+      "url": "https://api.coincap.io/v2",
+      "key": "",
+      "endpoints": ["/assets", "/assets/bitcoin"]
+    },
+    {
+      "name": "Binance",
+      "url": "https://api.binance.com/api/v3",
+      "key": "",
+      "endpoints": ["/ticker/price?symbol=BTCUSDT"]
+    },
+    {
+      "name": "CoinDesk",
+      "url": "https://api.coindesk.com/v1",
+      "key": "",
+      "endpoints": ["/bpi/currentprice.json"]
+    },
+    {
+      "name": "Nomics",
+      "url": "https://api.nomics.com/v1",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Messari",
+      "url": "https://data.messari.io/api/v1",
+      "key": "",
+      "endpoints": ["/assets/bitcoin/metrics"]
+    },
+    {
+      "name": "CoinLore",
+      "url": "https://api.coinlore.net/api",
+      "key": "",
+      "endpoints": ["/tickers/"]
+    },
+    {
+      "name": "CoinStats",
+      "url": "https://api.coinstats.app/public/v1",
+      "key": "",
+      "endpoints": ["/coins"]
+    },
+    {
+      "name": "Mobula",
+      "url": "https://api.mobula.io/api/1",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "TokenMetrics",
+      "url": "https://api.tokenmetrics.com/v2",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "DIA Data",
+      "url": "https://api.diadata.org/v1",
+      "key": "",
+      "endpoints": []
+    }
+  ],
+  "news": [
+    {
+      "name": "CryptoPanic",
+      "url": "https://cryptopanic.com/api/v1",
+      "key": "",
+      "endpoints": ["/posts/?auth_token={KEY}"]
+    },
+    {
+      "name": "NewsAPI",
+      "url": "https://newsapi.org/v2",
+      "key": "NEWSAPI_API_KEY_HERE",
+      "endpoints": ["/everything?q=crypto&apiKey={KEY}"]
+    },
+    {
+      "name": "CryptoControl",
+      "url": "https://cryptocontrol.io/api/v1/public",
+      "key": "",
+      "endpoints": ["/news/local?language=EN"]
+    },
+    {
+      "name": "CoinDesk RSS",
+      "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "CoinTelegraph",
+      "url": "https://cointelegraph.com/api/v1",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "CryptoSlate",
+      "url": "https://cryptoslate.com/api",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "The Block",
+      "url": "https://api.theblock.co/v1",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Bitcoin Magazine",
+      "url": "https://bitcoinmagazine.com/.rss/full/",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Decrypt",
+      "url": "https://decrypt.co/feed",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Reddit Crypto",
+      "url": "https://www.reddit.com/r/CryptoCurrency/new.json",
+      "key": "",
+      "endpoints": []
+    }
+  ],
+  "sentiment": [
+    {
+      "name": "Fear & Greed",
+      "url": "https://api.alternative.me/fng/",
+      "key": "",
+      "endpoints": ["?limit=1", "?limit=30"]
+    },
+    {
+      "name": "LunarCrush",
+      "url": "https://api.lunarcrush.com/v2",
+      "key": "",
+      "endpoints": ["?data=assets&key={KEY}"]
+    },
+    {
+      "name": "Santiment",
+      "url": "https://api.santiment.net/graphql",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "The TIE",
+      "url": "https://api.thetie.io",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "CryptoQuant",
+      "url": "https://api.cryptoquant.com/v1",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Glassnode Social",
+      "url": "https://api.glassnode.com/v1/metrics/social",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Augmento",
+      "url": "https://api.augmento.ai/v1",
+      "key": "",
+      "endpoints": []
+    }
+  ],
+  "analytics": [
+    {
+      "name": "Whale Alert",
+      "url": "https://api.whale-alert.io/v1",
+      "key": "",
+      "endpoints": ["/transactions?api_key={KEY}&min_value=1000000"]
+    },
+    {
+      "name": "Nansen",
+      "url": "https://api.nansen.ai/v1",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "DeBank",
+      "url": "https://api.debank.com",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Zerion",
+      "url": "https://api.zerion.io",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "WhaleMap",
+      "url": "https://whalemap.io",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "The Graph",
+      "url": "https://api.thegraph.com/subgraphs",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Glassnode",
+      "url": "https://api.glassnode.com/v1",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "IntoTheBlock",
+      "url": "https://api.intotheblock.com/v1",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Dune",
+      "url": "https://api.dune.com/api/v1",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Covalent",
+      "url": "https://api.covalenthq.com/v1",
+      "key": "",
+      "endpoints": ["/1/address/{address}/balances_v2/"]
+    },
+    {
+      "name": "Moralis",
+      "url": "https://deep-index.moralis.io/api/v2",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Transpose",
+      "url": "https://api.transpose.io",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Footprint",
+      "url": "https://api.footprint.network",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Bitquery",
+      "url": "https://graphql.bitquery.io",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Arkham",
+      "url": "https://api.arkham.com",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Clank",
+      "url": "https://clankapp.com/api",
+      "key": "",
+      "endpoints": []
+    },
+    {
+      "name": "Hugging Face",
+      "url": "https://api-inference.huggingface.co/models",
+      "key": "",
+      "note": "API key should be read from HF_API_TOKEN or HF_TOKEN environment variable on backend",
+      "endpoints": ["/ElKulako/cryptobert"]
+    }
+  ]
+}

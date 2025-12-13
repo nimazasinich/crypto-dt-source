@@ -1,0 +1,129 @@
+<header class="app-header-enhanced" role="banner">
+  <div class="header-left">
+    <!-- Mobile Menu Toggle -->
+    <button class="header-menu-btn-enhanced" id="sidebar-toggle" aria-label="Toggle menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="6" x2="20" y2="6"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="18" x2="20" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- Enhanced Logo -->
+    <a href="/" class="header-logo">
+      <div class="logo-icon">
+        <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="headerLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#2dd4bf"/>
+              <stop offset="50%" stop-color="#22d3ee"/>
+              <stop offset="100%" stop-color="#3b82f6"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <circle cx="50" cy="50" r="45" fill="url(#headerLogoGradient)" filter="url(#glow)"/>
+          <path d="M50 20 L70 45 L50 38 L30 45 Z" fill="white" opacity="0.95"/>
+          <path d="M50 80 L30 55 L50 62 L70 55 Z" fill="white" opacity="0.95"/>
+          <circle cx="50" cy="50" r="8" fill="white" opacity="0.9"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-name">Crypto Monitor</span>
+        <span class="logo-badge">ULTIMATE</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="header-center">
+    <!-- Enhanced API Status -->
+    <div class="header-status-enhanced" id="api-status-badge" data-status="checking">
+      <div class="status-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+      </div>
+      <div class="status-content">
+        <span class="status-label">API Status</span>
+        <span class="status-text">Checking...</span>
+      </div>
+    </div>
+
+    <!-- Enhanced Live Badge -->
+    <div class="live-badge-enhanced">
+      <span class="live-pulse"></span>
+      <span class="live-text">LIVE</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <!-- Last Update -->
+    <div class="header-update-enhanced" id="header-last-update">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span class="update-text">Just now</span>
+    </div>
+
+    <!-- Enhanced API Config Helper -->
+    <button class="header-btn-enhanced config-btn" id="config-helper-btn" aria-label="API Configuration" title="API Configuration Guide">
+      <div class="btn-icon-wrapper">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </div>
+      <span class="btn-label">API</span>
+    </button>
+
+    <!-- Enhanced Theme Toggle -->
+    <button class="header-btn-enhanced theme-btn" id="theme-toggle-btn" aria-label="Toggle theme" title="Toggle theme">
+      <div class="btn-icon-wrapper">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icon-sun">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2"/>
+          <path d="M12 20v2"/>
+          <path d="m4.93 4.93 1.41 1.41"/>
+          <path d="m17.66 17.66 1.41 1.41"/>
+          <path d="M2 12h2"/>
+          <path d="M20 12h2"/>
+          <path d="m6.34 17.66-1.41 1.41"/>
+          <path d="m19.07 4.93-1.41 1.41"/>
+        </svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icon-moon">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </div>
+      <span class="btn-label">Theme</span>
+    </button>
+
+    <!-- Enhanced Notifications -->
+    <button class="header-btn-enhanced notification-btn" aria-label="Notifications" title="Notifications">
+      <div class="btn-icon-wrapper">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+        </svg>
+        <span class="notification-badge">3</span>
+      </div>
+      <span class="btn-label">Alerts</span>
+    </button>
+
+    <!-- Enhanced Settings -->
+    <a href="/static/pages/settings/index.html" class="header-btn-enhanced settings-btn" aria-label="Settings" title="Settings">
+      <div class="btn-icon-wrapper">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+        </svg>
+      </div>
+      <span class="btn-label">Settings</span>
+    </a>
+  </div>
+</header>

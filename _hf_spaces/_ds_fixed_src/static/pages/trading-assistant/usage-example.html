@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Trading System - مثال استفاده</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .signals {
+            margin-bottom: 30px;
+        }
+
+        .signal-card {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .signal-card.buy {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .signal-card.sell {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+            color: white;
+        }
+
+        .signal-card.hold {
+            background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
+            color: white;
+        }
+
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .signal-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .signal-confidence {
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .signal-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .signal-detail {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .signal-detail-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .signal-detail-value {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-timestamp {
+            color: #888;
+        }
+
+        .log-error {
+            color: #ff6b6b;
+        }
+
+        .log-success {
+            color: #51cf66;
+        }
+
+        .log-info {
+            color: #74c0fc;
+        }
+    </style>
+    <!-- API Configuration - Smart Fallback System -->
+    <script src="/static/js/api-config.js"></script>
+    <script>
+        // Initialize API client
+        window.apiReady = new Promise((resolve) => {
+            if (window.apiClient) {
+                console.log('✅ API Client ready');
+                resolve(window.apiClient);
+            } else {
+                console.error('❌ API Client not loaded');
+            }
+        });
+    </script>
+
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Enhanced Crypto Trading System V2</h1>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <label>نماد (Symbol)</label>
+                <input type="text" id="symbol" value="BTC" placeholder="BTC, ETH, SOL...">
+            </div>
+            
+            <div class="control-group">
+                <label>استراتژی (Strategy)</label>
+                <select id="strategy">
+                    <option value="ict-market-structure">ICT Market Structure</option>
+                    <option value="momentum-divergence-hunter">Momentum Divergence Hunter</option>
+                    <option value="wyckoff-accumulation">Wyckoff Accumulation</option>
+                    <option value="anchored-vwap-breakout">Anchored VWAP Breakout</option>
+                    <option value="liquidity-sweep-reversal">Liquidity Sweep Reversal</option>
+                    <option value="supply-demand-zones">Supply/Demand Zones</option>
+                    <option value="volatility-breakout-pro">Volatility Breakout Pro</option>
+                    <option value="multi-timeframe-confluence">Multi-Timeframe Confluence</option>
+                    <option value="fair-value-gap-strategy">Fair Value Gap Strategy</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>فاصله زمانی (Interval)</label>
+                <select id="interval">
+                    <option value="30000">30 ثانیه</option>
+                    <option value="60000" selected>1 دقیقه</option>
+                    <option value="300000">5 دقیقه</option>
+                    <option value="900000">15 دقیقه</option>
+                    <option value="3600000">1 ساعت</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>سطح ریسک (Risk Level)</label>
+                <select id="riskLevel">
+                    <option value="very-low">بسیار پایین</option>
+                    <option value="low">پایین</option>
+                    <option value="medium" selected>متوسط</option>
+                    <option value="high">بالا</option>
+                    <option value="very-high">بسیار بالا</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>استراتژی تطبیقی</label>
+                <select id="adaptiveStrategy">
+                    <option value="true" selected>فعال</option>
+                    <option value="false">غیرفعال</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>عملیات</label>
+                <button id="startBtn" onclick="startSystem()">▶️ شروع</button>
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button id="stopBtn" onclick="stopSystem()" disabled>⏹️ توقف</button>
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="runTests()">🧪 تست سیستم</button>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="status">
+            <div class="status-card">
+                <div class="status-label">وضعیت</div>
+                <div class="status-value" id="statusText">متوقف</div>
+            </div>
+            <div class="status-card">
+                <div class="status-label">رژیم بازار</div>
+                <div class="status-value" id="regimeText">-</div>
+            </div>
+            <div class="status-card">
+                <div class="status-label">تعداد سیگنال</div>
+                <div class="status-value" id="signalCount">0</div>
+            </div>
+            <div class="status-card">
+                <div class="status-label">آخرین قیمت</div>
+                <div class="status-value" id="lastPrice">-</div>
+            </div>
+        </div>
+
+        <!-- Signals -->
+        <div class="signals">
+            <h2>سیگنال‌های معاملاتی</h2>
+            <div id="signalsContainer">
+                <p style="text-align: center; color: #999; padding: 40px;">
+                    در انتظار سیگنال...
+                </p>
+            </div>
+        </div>
+
+        <!-- Log -->
+        <div>
+            <h2>لاگ سیستم</h2>
+            <div class="log" id="logContainer">
+                <div class="log-entry log-info">
+                    <span class="log-timestamp">[Ready]</span> سیستم آماده است.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import IntegratedTradingSystem from './integrated-trading-system.js';
+        import { runTests as runSystemTests } from './system-tests.js';
+
+        let tradingSystem = null;
+        let signalCount = 0;
+
+        // Global functions
+        window.startSystem = async function() {
+            const symbol = document.getElementById('symbol').value.toUpperCase();
+            const strategy = document.getElementById('strategy').value;
+            const interval = parseInt(document.getElementById('interval').value);
+            const riskLevel = document.getElementById('riskLevel').value;
+            const useAdaptiveStrategy = document.getElementById('adaptiveStrategy').value === 'true';
+
+            log('شروع سیستم...', 'info');
+
+            try {
+                tradingSystem = new IntegratedTradingSystem({
+                    symbol,
+                    strategy,
+                    interval,
+                    riskLevel,
+                    useAdaptiveStrategy,
+                    enableNotifications: true,
+                    notificationChannels: ['browser']
+                });
+
+                // Setup event listeners
+                window.addEventListener('tradingSystem:signal', handleSignal);
+                window.addEventListener('tradingSystem:priceUpdate', handlePriceUpdate);
+                window.addEventListener('tradingSystem:error', handleError);
+                window.addEventListener('tradingSystem:connectionChange', handleConnectionChange);
+
+                const result = await tradingSystem.start();
+
+                if (result.success) {
+                    log(`سیستم با موفقیت راه‌اندازی شد برای ${symbol}`, 'success');
+                    updateUI(true);
+                } else {
+                    log(`خطا در راه‌اندازی: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                log(`خطا: ${error.message}`, 'error');
+            }
+        };
+
+        window.stopSystem = function() {
+            if (tradingSystem) {
+                tradingSystem.stop();
+                log('سیستم متوقف شد', 'info');
+                updateUI(false);
+            }
+        };
+
+        window.runTests = async function() {
+            log('اجرای تست‌ها...', 'info');
+            
+            try {
+                const results = await runSystemTests();
+                log(`تست‌ها کامل شد: ${results.passed}/${results.total} موفق`, 'success');
+            } catch (error) {
+                log(`خطا در تست: ${error.message}`, 'error');
+            }
+        };
+
+        function handleSignal(event) {
+            const signal = event.detail;
+            signalCount++;
+            
+            log(`سیگنال جدید: ${signal.signal.toUpperCase()} - اطمینان: ${signal.confidence}%`, 'success');
+            
+            // Update signal count
+            document.getElementById('signalCount').textContent = signalCount;
+            
+            // Update regime
+            if (signal.regime) {
+                document.getElementById('regimeText').textContent = translateRegime(signal.regime);
+            }
+            
+            // Add signal card
+            addSignalCard(signal);
+        }
+
+        function handlePriceUpdate(event) {
+            const priceData = event.detail;
+            document.getElementById('lastPrice').textContent = 
+                '$' + priceData.price.toFixed(2);
+        }
+
+        function handleError(event) {
+            const error = event.detail;
+            log(`خطا: ${error.message}`, 'error');
+        }
+
+        function handleConnectionChange(event) {
+            const status = event.detail;
+            log(`تغییر اتصال: ${status.status}`, 'info');
+        }
+
+        function addSignalCard(signal) {
+            const container = document.getElementById('signalsContainer');
+            
+            // Clear "waiting" message
+            if (container.querySelector('p')) {
+                container.innerHTML = '';
+            }
+            
+            const card = document.createElement('div');
+            card.className = `signal-card ${signal.signal}`;
+            
+            let targetsHTML = '';
+            if (signal.targets && signal.targets.length > 0) {
+                targetsHTML = signal.targets.map(t => `
+                    <div class="signal-detail">
+                        <div class="signal-detail-label">${t.type}</div>
+                        <div class="signal-detail-value">$${t.level.toFixed(2)}</div>
+                    </div>
+                `).join('');
+            }
+            
+            card.innerHTML = `
+                <div class="signal-header">
+                    <div class="signal-title">
+                        ${signal.strategy} - ${translateSignal(signal.signal)}
+                    </div>
+                    <div class="signal-confidence">
+                        اطمینان: ${signal.confidence?.toFixed(0) || 0}%
+                    </div>
+                </div>
+                <div class="signal-details">
+                    ${signal.entry ? `
+                        <div class="signal-detail">
+                            <div class="signal-detail-label">نقطه ورود</div>
+                            <div class="signal-detail-value">$${signal.entry.toFixed(2)}</div>
+                        </div>
+                    ` : ''}
+                    ${signal.stopLoss ? `
+                        <div class="signal-detail">
+                            <div class="signal-detail-label">حد ضرر</div>
+                            <div class="signal-detail-value">$${signal.stopLoss.toFixed(2)}</div>
+                        </div>
+                    ` : ''}
+                    ${targetsHTML}
+                    ${signal.riskRewardRatio ? `
+                        <div class="signal-detail">
+                            <div class="signal-detail-label">ریسک/پاداش</div>
+                            <div class="signal-detail-value">${signal.riskRewardRatio}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            container.insertBefore(card, container.firstChild);
+            
+            // Keep only last 5 signals
+            while (container.children.length > 5) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function updateUI(isRunning) {
+            document.getElementById('startBtn').disabled = isRunning;
+            document.getElementById('stopBtn').disabled = !isRunning;
+            document.getElementById('statusText').textContent = isRunning ? 'در حال اجرا' : 'متوقف';
+            
+            // Disable inputs when running
+            ['symbol', 'strategy', 'interval', 'riskLevel', 'adaptiveStrategy'].forEach(id => {
+                document.getElementById(id).disabled = isRunning;
+            });
+        }
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString('fa-IR');
+            entry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> ${message}`;
+            
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function translateSignal(signal) {
+            const translations = {
+                'buy': 'خرید',
+                'sell': 'فروش',
+                'hold': 'نگه‌داری'
+            };
+            return translations[signal] || signal;
+        }
+
+        function translateRegime(regime) {
+            const translations = {
+                'trending-bullish': 'روند صعودی',
+                'trending-bearish': 'روند نزولی',
+                'ranging': 'رنج',
+                'volatile-bullish': 'نوسانی صعودی',
+                'volatile-bearish': 'نوسانی نزولی',
+                'calm': 'آرام',
+                'breakout': 'بریک‌اوت',
+                'breakdown': 'بریک‌داون',
+                'accumulation': 'تجمع',
+                'distribution': 'توزیع'
+            };
+            return translations[regime] || regime;
+        }
+
+        // Initial log
+        log('سیستم آماده است. لطفاً تنظیمات را انجام دهید و روی "شروع" کلیک کنید.', 'info');
+    </script>
+</body>
+</html>
+

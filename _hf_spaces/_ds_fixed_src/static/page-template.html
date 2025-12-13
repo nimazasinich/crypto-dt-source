@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Crypto Monitor - Your Page Description">
+  <meta name="theme-color" content="#8B5CF6">
+  <title>Page Title | Crypto Monitor</title>
+
+  <!-- Favicon (Purple Gradient) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%238B5CF6'/%3E%3Cstop offset='100%25' stop-color='%236D28D9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='45' fill='url(%23g)'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3EC%3C/text%3E%3C/svg%3E">
+
+  <!-- Cursor-Inspired Design System (Required - Load in Order) -->
+  <link rel="stylesheet" href="/static/shared/css/design-system-cursor.css">
+  <link rel="stylesheet" href="/static/shared/css/layout-cursor.css">
+  <link rel="stylesheet" href="/static/shared/css/components-cursor.css">
+  <link rel="stylesheet" href="/static/shared/css/animations-cursor.css">
+
+  <!-- Page-specific CSS (Optional) -->
+  <!-- <link rel="stylesheet" href="./your-page.css"> -->
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar (Auto-injected) -->
+    <aside id="sidebar-container"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header (Auto-injected) -->
+      <header id="header-container"></header>
+
+      <!-- Page Content -->
+      <div class="page-content stagger-fade-in">
+        <!-- Page Header -->
+        <div class="page-header">
+          <h1 class="page-title">Your Page Title</h1>
+          <p class="page-description">Optional description text goes here</p>
+        </div>
+
+        <!-- Stats Cards Example (Optional) -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-8);">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+            <div class="stat-value">$1,234</div>
+            <div class="stat-label">Metric Name</div>
+            <div class="stat-change positive">↑ +12.5%</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </div>
+            <div class="stat-value">567</div>
+            <div class="stat-label">Another Metric</div>
+            <div class="stat-change negative">↓ -3.2%</div>
+          </div>
+        </div>
+
+        <!-- Main Content Card Example -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Card Title</h3>
+              <p class="card-subtitle">Optional subtitle</p>
+            </div>
+            <button class="btn btn-primary btn-sm">Action</button>
+          </div>
+          <div class="card-body">
+            <p style="color: var(--text-secondary);">
+              Your content goes here. Use the Cursor design system components:
+            </p>
+
+            <!-- Buttons Example -->
+            <div style="display: flex; gap: var(--space-3); margin-top: var(--space-4);">
+              <button class="btn btn-primary">Primary Button</button>
+              <button class="btn btn-secondary">Secondary</button>
+              <button class="btn btn-ghost">Ghost</button>
+            </div>
+
+            <!-- Badges Example -->
+            <div style="display: flex; gap: var(--space-2); margin-top: var(--space-4);">
+              <span class="badge badge-primary">Primary</span>
+              <span class="badge badge-success pill">Success</span>
+              <span class="badge badge-warning pill">Warning</span>
+            </div>
+
+            <!-- Table Example -->
+            <div class="table-container" style="margin-top: var(--space-6);">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+                    <th class="text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Item 1</td>
+                    <td>$100</td>
+                    <td class="text-right"><span class="badge badge-success">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td>Item 2</td>
+                    <td>$200</td>
+                    <td class="text-right"><span class="badge badge-warning">Pending</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-secondary">Cancel</button>
+            <button class="btn btn-primary">Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Alert Example -->
+        <div class="alert alert-info" style="margin-top: var(--space-6);">
+          <svg class="alert-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <div class="alert-content">
+            <div class="alert-title">Information</div>
+            <div class="alert-message">This is an informational message using the Cursor design system.</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module">
+    // Load layout manager
+    (async function() {
+      try {
+        const { LayoutManager } = await import('/static/shared/js/core/layout-manager.js');
+        await LayoutManager.init('your-page-name');
+
+        console.log('✅ Page initialized with Cursor UI');
+      } catch (error) {
+        console.error('❌ Failed to initialize page:', error);
+      }
+    })();
+  </script>
+</body>
+</html>
