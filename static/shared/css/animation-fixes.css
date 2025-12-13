@@ -1,0 +1,315 @@
+/**
+ * Animation Fixes - Eliminate Flickering and Improve Performance
+ * Addresses: smooth animations, hardware acceleration, layout stability
+ */
+
+/* =============================================================================
+   GLOBAL ANIMATION SETTINGS - Prevent Flickering
+   ============================================================================= */
+
+* {
+  /* Force hardware acceleration for smooth animations */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+  
+  /* Prevent text flickering during animations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Optimize rendering */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Disable perspective for specific elements that don't need it */
+input, textarea, select, button {
+  -webkit-perspective: none;
+  perspective: none;
+}
+
+/* =============================================================================
+   SMOOTH TRANSITIONS - Consistent Timing
+   ============================================================================= */
+
+/* Standard transition for interactive elements */
+.btn, button, a, .card, .service-card, .metric-card,
+.nav-item, .sidebar-item, [class*="btn-"] {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity, background-color, border-color;
+}
+
+/* Faster transitions for hover effects */
+.btn:hover, button:hover, a:hover,
+.card:hover, .service-card:hover {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =============================================================================
+   LOADING ANIMATIONS - Smooth and No Flicker
+   ============================================================================= */
+
+.loading-spinner, .spinner, [class*="loading"] {
+  animation: spin 1s linear infinite;
+  will-change: transform;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Pulse animation for status indicators */
+.status-dot, .pulse, [class*="pulse"] {
+  animation: pulse-smooth 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: opacity;
+}
+
+@keyframes pulse-smooth {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Fade in animation */
+.fade-in, [class*="fade-in"] {
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: opacity;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Slide up animation */
+.slide-up, [class*="slide-up"] {
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =============================================================================
+   LAYOUT STABILITY - Prevent Layout Shifts
+   ============================================================================= */
+
+/* Reserve space for images to prevent layout shift */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Prevent content jump during loading */
+.loading-state, .error-state, .empty-state {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+/* =============================================================================
+   SCROLLING PERFORMANCE
+   ============================================================================= */
+
+/* Smooth scrolling with performance optimization */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduce paint overhead on scroll */
+.page-content, .main-content, [class*="container"] {
+  contain: layout style paint;
+}
+
+/* =============================================================================
+   MODAL & OVERLAY ANIMATIONS - No Flash
+   ============================================================================= */
+
+.modal, .overlay, [class*="modal"], [class*="overlay"] {
+  animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: opacity;
+}
+
+.modal-content, [class*="modal-content"] {
+  animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* =============================================================================
+   TOAST NOTIFICATIONS - Smooth Entry/Exit
+   ============================================================================= */
+
+.toast, [class*="toast"] {
+  animation: toastSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toast.removing, [class*="toast"].removing {
+  animation: toastSlideOut 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes toastSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* =============================================================================
+   CHART ANIMATIONS - Prevent Flicker During Updates
+   ============================================================================= */
+
+#tradingview-chart, [id*="chart"], .chart-container {
+  /* Optimize chart rendering */
+  will-change: auto;
+  contain: layout size paint;
+}
+
+/* =============================================================================
+   HOVER EFFECTS - Smooth and Responsive
+   ============================================================================= */
+
+/* Card hover effects */
+.card:hover, .service-card:hover, .metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Button hover effects */
+.btn:hover, button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Remove transform for disabled buttons */
+.btn:disabled, button:disabled,
+.btn[disabled], button[disabled] {
+  transform: none !important;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =============================================================================
+   REDUCED MOTION - Accessibility
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =============================================================================
+   FIX SPECIFIC COMPONENTS
+   ============================================================================= */
+
+/* Service Health Monitor - No flicker */
+.health-stat-card, .service-card {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Dashboard cards - Stable layout */
+.stat-card, .market-card, .news-card {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Sidebar - Smooth transitions */
+.sidebar, #sidebar-container {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+/* Header - Stable positioning */
+.header, #header-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Tables - Prevent flicker on update */
+table, .table, [class*="table"] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Status badges - Smooth color transitions */
+.badge, .status-badge, [class*="badge"] {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* =============================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================================================= */
+
+/* Contain repaints to specific elements */
+.card, .modal, .sidebar, .header,
+.chart-container, .table-container {
+  contain: layout style paint;
+}
+
+/* Optimize transform and opacity changes */
+[class*="animate-"], [class*="transition-"] {
+  will-change: transform, opacity;
+}
+
+/* Clean up will-change after animation completes */
+.card:not(:hover), .btn:not(:hover),
+.service-card:not(:hover) {
+  will-change: auto;
+}
