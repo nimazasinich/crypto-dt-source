@@ -86,3 +86,45 @@
 .status-dot {
     box-shadow: 0 0 8px currentColor;
 }
+
+/* New Source Card Styles */
+.new-source-card {
+    border: 2px solid #667eea !important;
+    background: linear-gradient(to bottom, #ffffff, #f8f9ff) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15) !important;
+}
+
+.new-badge-inline {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.service-description-text {
+    color: #6b7280;
+    font-size: 12px;
+    margin: 4px 0;
+    font-weight: 500;
+}
+
+.service-features-text {
+    color: #9ca3af;
+    font-size: 11px;
+    margin: 2px 0;
+}
+
+.excellent-response {
+    color: #10b981 !important;
+    font-weight: 700 !important;
+}
+
+.priority-2 {
+    color: #667eea !important;
+    font-weight: 700 !important;
+}

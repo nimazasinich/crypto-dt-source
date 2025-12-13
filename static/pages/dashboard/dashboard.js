@@ -40,6 +40,9 @@ class DashboardPage {
       this.injectEnhancedLayout();
       this.bindEvents();
       
+      // Add "What's New" banner for new data sources
+      this.showWhatsNewBanner();
+      
       // Add smooth fade-in delay for better UX
       await new Promise(resolve => setTimeout(resolve, 300));
       
@@ -60,11 +63,225 @@ class DashboardPage {
       // Show rating prompt after a brief delay
       setTimeout(() => this.showRatingWidget(), 5000);
       
-      this.showToast('Dashboard ready', 'success');
+      this.showToast('Dashboard ready - 281 New Resources Available!', 'success');
     } catch (error) {
       logger.error('Dashboard', 'Init error:', error);
       this.showToast('Failed to load dashboard', 'error');
     }
+  }
+  
+  showWhatsNewBanner() {
+    // Check if user has dismissed the banner this session
+    const dismissed = sessionStorage.getItem('whats_new_dismissed');
+    if (dismissed) return;
+    
+    const banner = document.createElement('div');
+    banner.id = 'whats-new-banner';
+    banner.className = 'whats-new-banner';
+    banner.innerHTML = `
+      <div class="whats-new-content">
+        <button class="whats-new-close" onclick="this.closest('.whats-new-banner').remove(); sessionStorage.setItem('whats_new_dismissed', 'true');">&times;</button>
+        <div class="whats-new-badge">🆕 NEW</div>
+        <div class="whats-new-text">
+          <h3>281+ New Resources Available!</h3>
+          <p>
+            <strong>2 major data sources added:</strong>
+            Crypto API Clean (281 resources, 12 categories) + 
+            Crypto DT Source (4 AI models, 5 datasets, real-time data)
+          </p>
+          <div class="whats-new-stats">
+            <span class="stat-pill">
+              <span class="stat-icon">📊</span> 283+ Total Resources
+            </span>
+            <span class="stat-pill">
+              <span class="stat-icon">🤖</span> 4 AI Models
+            </span>
+            <span class="stat-pill">
+              <span class="stat-icon">📈</span> 5 Datasets
+            </span>
+            <span class="stat-pill">
+              <span class="stat-icon">⚡</span> 7.8ms Response
+            </span>
+          </div>
+          <div class="whats-new-actions">
+            <a href="/api/new-sources/status" class="btn-new-primary" target="_blank">View Status</a>
+            <a href="/docs#/New%20Data%20Sources" class="btn-new-secondary" target="_blank">API Docs</a>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const pageContent = document.querySelector('.page-content') || document.body;
+    pageContent.insertBefore(banner, pageContent.firstChild);
+    
+    // Add styles for the banner
+    if (!document.getElementById('whats-new-styles')) {
+      const style = document.createElement('style');
+      style.id = 'whats-new-styles';
+      style.textContent = `
+        .whats-new-banner {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 20px;
+          border-radius: 12px;
+          margin-bottom: 20px;
+          box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+          position: relative;
+          animation: slideDown 0.5s ease-out;
+        }
+        
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .whats-new-content {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          position: relative;
+        }
+        
+        .whats-new-badge {
+          background: rgba(255, 255, 255, 0.25);
+          backdrop-filter: blur(10px);
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-weight: bold;
+          font-size: 14px;
+          flex-shrink: 0;
+        }
+        
+        .whats-new-text {
+          flex: 1;
+        }
+        
+        .whats-new-text h3 {
+          margin: 0 0 8px 0;
+          font-size: 20px;
+          font-weight: 700;
+        }
+        
+        .whats-new-text p {
+          margin: 0 0 12px 0;
+          opacity: 0.95;
+          line-height: 1.5;
+        }
+        
+        .whats-new-stats {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-bottom: 12px;
+        }
+        
+        .stat-pill {
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          padding: 6px 12px;
+          border-radius: 15px;
+          font-size: 13px;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+        
+        .stat-icon {
+          font-size: 16px;
+        }
+        
+        .whats-new-actions {
+          display: flex;
+          gap: 10px;
+        }
+        
+        .btn-new-primary, .btn-new-secondary {
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-weight: 600;
+          text-decoration: none;
+          font-size: 14px;
+          transition: all 0.3s;
+        }
+        
+        .btn-new-primary {
+          background: white;
+          color: #667eea;
+        }
+        
+        .btn-new-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-new-secondary {
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-new-secondary:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .whats-new-close {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background: rgba(255, 255, 255, 0.3);
+          border: none;
+          color: white;
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 20px;
+          line-height: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s;
+        }
+        
+        .whats-new-close:hover {
+          background: rgba(255, 255, 255, 0.5);
+          transform: rotate(90deg);
+        }
+        
+        @media (max-width: 768px) {
+          .whats-new-content {
+            flex-direction: column;
+            text-align: center;
+          }
+          
+          .whats-new-actions {
+            justify-content: center;
+          }
+          
+          .whats-new-stats {
+            justify-content: center;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    // Auto-dismiss after 30 seconds
+    setTimeout(() => {
+      if (banner.parentNode) {
+        banner.style.opacity = '0';
+        banner.style.transform = 'translateY(-20px)';
+        banner.style.transition = 'all 0.5s';
+        setTimeout(() => banner.remove(), 500);
+      }
+    }, 30000);
   }
 
   loadPersistedData() {
