@@ -48,6 +48,14 @@ from backend.routers.new_sources_api import router as new_sources_router  # NEW:
 from backend.routers.system_metrics_api import router as system_metrics_router  # System metrics and monitoring
 from backend.routers.system_status_api import router as system_status_router  # Comprehensive system status for modal
 
+# NEW EXPANDED API ENDPOINTS (26+ endpoints for CryptoOne integration)
+from backend.routers.expanded_market_api import router as expanded_market_router  # Market expansion: search, details, history, chart, categories, gainers, losers
+from backend.routers.trading_analysis_api import router as trading_analysis_router  # Trading & Analysis: volume, orderbook, indicators, backtest, correlations
+from backend.routers.enhanced_ai_api import router as enhanced_ai_router  # Enhanced AI: predictions, sentiment, analyze, models
+from backend.routers.news_social_api import router as news_social_router  # News & Social: coin news, trending, sentiment, events
+from backend.routers.portfolio_alerts_api import router as portfolio_alerts_router  # Portfolio & Alerts: simulate, alerts, watchlist
+from backend.routers.system_metadata_api import router as system_metadata_router  # System & Metadata: exchanges, coins metadata, cache stats
+
 # Import metrics middleware
 from backend.middleware import MetricsMiddleware
 
@@ -502,6 +510,56 @@ try:
     logger.info("✓ ✅ System Status Router loaded (Comprehensive status for System Status Modal)")
 except Exception as e:
     logger.error(f"Failed to include system_status_router: {e}")
+
+# ============================================================================
+# EXPANDED API ENDPOINTS (26+ new endpoints for complete data coverage)
+# ============================================================================
+
+# Expanded Market API (7 endpoints)
+try:
+    app.include_router(expanded_market_router)
+    logger.info("✓ ✅ Expanded Market Router loaded (7 endpoints: search, details, history, chart, categories, gainers, losers)")
+except Exception as e:
+    logger.error(f"Failed to include expanded_market_router: {e}")
+
+# Trading Analysis API (5 endpoints)
+try:
+    app.include_router(trading_analysis_router)
+    logger.info("✓ ✅ Trading Analysis Router loaded (5 endpoints: volume, orderbook, indicators, backtest, correlations)")
+except Exception as e:
+    logger.error(f"Failed to include trading_analysis_router: {e}")
+
+# Enhanced AI API (4 endpoints)
+try:
+    app.include_router(enhanced_ai_router)
+    logger.info("✓ ✅ Enhanced AI Router loaded (4 endpoints: predictions, sentiment, analyze, models)")
+except Exception as e:
+    logger.error(f"Failed to include enhanced_ai_router: {e}")
+
+# News & Social API (4 endpoints)
+try:
+    app.include_router(news_social_router)
+    logger.info("✓ ✅ News & Social Router loaded (4 endpoints: coin news, trending, sentiment, events)")
+except Exception as e:
+    logger.error(f"Failed to include news_social_router: {e}")
+
+# Portfolio & Alerts API (3 endpoints)
+try:
+    app.include_router(portfolio_alerts_router)
+    logger.info("✓ ✅ Portfolio & Alerts Router loaded (3 endpoints: simulate, alerts, watchlist)")
+except Exception as e:
+    logger.error(f"Failed to include portfolio_alerts_router: {e}")
+
+# System & Metadata API (3 endpoints)
+try:
+    app.include_router(system_metadata_router)
+    logger.info("✓ ✅ System & Metadata Router loaded (3 endpoints: exchanges, coins metadata, cache stats)")
+except Exception as e:
+    logger.error(f"Failed to include system_metadata_router: {e}")
+
+logger.info("=" * 70)
+logger.info("🎉 API EXPANSION COMPLETE: 26+ new endpoints added!")
+logger.info("=" * 70)
 
 # Add routers status endpoint
 @app.get("/api/routers")
