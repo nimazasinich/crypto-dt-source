@@ -46,6 +46,8 @@ from backend.routers.health_monitor_api import router as health_monitor_router  
 from backend.routers.indicators_api import router as indicators_router  # Technical Indicators API
 from backend.routers.new_sources_api import router as new_sources_router  # NEW: Integrated data sources (Crypto API Clean + Crypto DT Source)
 from backend.routers.system_metrics_api import router as system_metrics_router  # System metrics and monitoring
+from backend.routers.source_health_api import router as source_health_router  # NEW: Source health monitoring
+from backend.routers.env_config_api import router as env_config_router  # NEW: Environment configuration API
 
 # Import metrics middleware
 from backend.middleware import MetricsMiddleware
@@ -336,10 +338,8 @@ async def rate_limit_middleware(request: Request, call_next):
             pass
     
     # Add Permissions-Policy header with ONLY widely-supported features (no browser warnings)
-    # Standard features that all modern browsers recognize without warnings
-    response.headers['Permissions-Policy'] = (
-        'camera=(), microphone=(), geolocation=()'
-    )
+    # Use minimal policy to avoid browser warnings about unsupported features
+    response.headers['Permissions-Policy'] = 'interest-cohort=()'
     
     return response
 
@@ -494,6 +494,20 @@ try:
     logger.info("✓ ✅ System Metrics Router loaded (Real-time CPU, Memory, Request Rate, Response Time, Error Rate)")
 except Exception as e:
     logger.error(f"Failed to include system_metrics_router: {e}")
+
+# SOURCE HEALTH MONITORING (Real-time source health tracking)
+try:
+    app.include_router(source_health_router)  # Source health monitoring API
+    logger.info("✓ ✅ Source Health Router loaded (Real-time source health tracking with smart routing)")
+except Exception as e:
+    logger.error(f"Failed to include source_health_router: {e}")
+
+# ENVIRONMENT CONFIGURATION API (Configuration management)
+try:
+    app.include_router(env_config_router)  # Environment configuration API
+    logger.info("✓ ✅ Environment Configuration Router loaded (Feature status and configuration management)")
+except Exception as e:
+    logger.error(f"Failed to include env_config_router: {e}")
 
 # Add routers status endpoint
 @app.get("/api/routers")

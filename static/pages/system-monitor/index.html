@@ -145,9 +145,13 @@
             <span class="mini-label">کل منابع</span>
           </div>
           <div class="stat-mini success">
-            <span class="mini-number" id="sources-active">0</span>
-            <span class="mini-label">آنلاین</span>
+            <span class="mini-number" id="sources-healthy">0</span>
+            <span class="mini-label">سالم</span>
           </div>
+        </div>
+        <div class="stat-footer">
+          <span style="color: #f59e0b;">تخریب شده: <strong id="sources-degraded">0</strong></span>
+          <span style="color: #ef4444; margin-left: 12px;">آفلاین: <strong id="sources-offline">0</strong></span>
         </div>
       </div>
     </div>
@@ -213,6 +217,7 @@
     </div>
   </div>
 
-  <script src="/static/pages/system-monitor/system-monitor.js"></script>
+  <!-- Use Real Backend Version -->
+  <script src="/static/pages/system-monitor/system-monitor-real.js"></script>
 </body>
 </html>
