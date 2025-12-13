@@ -1,23 +1,128 @@
 #!/usr/bin/env python3
 """
-CoinGecko API Client - REAL DATA ONLY
+CoinGecko API Client - REAL DATA ONLY with CACHING and RATE LIMIT PROTECTION
 Fetches real cryptocurrency market data from CoinGecko
 NO MOCK DATA - All data from live CoinGecko API
+ENHANCED: 5-minute mandatory cache, exponential backoff, auto-blacklist on 429
 """
 
 import httpx
 import logging
+import time
+import asyncio
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
 
+# Cache and rate limit management
+_cache: Dict[str, Dict[str, Any]] = {}
+_last_request_time = 0.0
+_min_request_interval = 10.0  # Minimum 10 seconds between requests
+_blacklist_until = 0.0  # Blacklist timestamp
+_consecutive_429s = 0  # Track consecutive 429 errors
+
+
+def _get_cache_key(method: str, **kwargs) -> str:
+    """Generate cache key from method and parameters"""
+    params_str = "_".join(f"{k}={v}" for k, v in sorted(kwargs.items()))
+    return f"{method}:{params_str}"
+
+
+def _get_from_cache(cache_key: str, ttl: int = 300) -> Optional[Any]:
+    """Get data from cache if not expired (default 5 min TTL)"""
+    global _cache
+    if cache_key in _cache:
+        cached_data = _cache[cache_key]
+        if time.time() - cached_data["timestamp"] < ttl:
+            logger.info(f"✅ CoinGecko: Cache hit for {cache_key}")
+            return cached_data["data"]
+        else:
+            # Expired, remove from cache
+            del _cache[cache_key]
+    return None
+
+
+def _set_cache(cache_key: str, data: Any):
+    """Set data in cache with current timestamp"""
+    global _cache
+    _cache[cache_key] = {
+        "data": data,
+        "timestamp": time.time()
+    }
+
+
+def _check_rate_limit() -> bool:
+    """Check if we should rate limit (return True if we should wait)"""
+    global _last_request_time, _min_request_interval, _blacklist_until
+    
+    current_time = time.time()
+    
+    # Check blacklist
+    if current_time < _blacklist_until:
+        logger.warning(f"🔴 CoinGecko: Blacklisted until {datetime.fromtimestamp(_blacklist_until).strftime('%H:%M:%S')}")
+        return True
+    
+    # Check minimum interval
+    time_since_last = current_time - _last_request_time
+    if time_since_last < _min_request_interval:
+        wait_time = _min_request_interval - time_since_last
+        logger.warning(f"⏳ CoinGecko: Rate limiting - wait {wait_time:.1f}s")
+        return True
+    
+    return False
+
+
+async def _wait_for_rate_limit():
+    """Wait until rate limit allows next request"""
+    global _last_request_time, _min_request_interval
+    
+    current_time = time.time()
+    time_since_last = current_time - _last_request_time
+    
+    if time_since_last < _min_request_interval:
+        wait_time = _min_request_interval - time_since_last
+        logger.info(f"⏳ CoinGecko: Waiting {wait_time:.1f}s before next request")
+        await asyncio.sleep(wait_time)
+
+
+def _update_last_request_time():
+    """Update the last request timestamp"""
+    global _last_request_time
+    _last_request_time = time.time()
+
+
+def _handle_429_error():
+    """Handle 429 rate limit error with exponential backoff"""
+    global _consecutive_429s, _blacklist_until, _min_request_interval
+    
+    _consecutive_429s += 1
+    
+    if _consecutive_429s >= 3:
+        # Blacklist for 10 minutes after 3 consecutive 429s
+        _blacklist_until = time.time() + 600  # 10 minutes
+        logger.error(f"🔴 CoinGecko: {_consecutive_429s} consecutive 429s - BLACKLISTED for 10 minutes")
+    else:
+        # Exponential backoff
+        backoff_time = min(60 * (2 ** _consecutive_429s), 300)  # Max 5 minutes
+        _blacklist_until = time.time() + backoff_time
+        logger.warning(f"⚠️ CoinGecko: 429 rate limit - backing off for {backoff_time}s")
+
+
+def _reset_429_counter():
+    """Reset 429 counter on successful request"""
+    global _consecutive_429s
+    if _consecutive_429s > 0:
+        logger.info(f"✅ CoinGecko: Successful request - resetting 429 counter (was {_consecutive_429s})")
+        _consecutive_429s = 0
+
 
 class CoinGeckoClient:
     """
-    Real CoinGecko API Client
+    Real CoinGecko API Client with CACHING and RATE LIMIT PROTECTION
     Primary source for real-time cryptocurrency market prices
+    ENHANCED: 5-minute mandatory cache, exponential backoff, auto-blacklist on 429
     """
     
     def __init__(self):
@@ -66,7 +171,7 @@ class CoinGeckoClient:
         limit: int = 100
     ) -> List[Dict[str, Any]]:
         """
-        Fetch REAL market prices from CoinGecko
+        Fetch REAL market prices from CoinGecko with CACHING and RATE LIMITING
         
         Args:
             symbols: List of crypto symbols (e.g., ["BTC", "ETH"])
@@ -74,8 +179,33 @@ class CoinGeckoClient:
         
         Returns:
             List of real market data
+        
+        ENHANCED: 5-minute mandatory cache, rate limiting, exponential backoff
         """
+        # Generate cache key
+        cache_key = _get_cache_key("market_prices", symbols=str(symbols), limit=limit)
+        
+        # Check cache first (5-minute TTL)
+        cached_data = _get_from_cache(cache_key, ttl=300)
+        if cached_data is not None:
+            return cached_data
+        
+        # Check if blacklisted
+        if _check_rate_limit():
+            # Return cached data even if expired, or raise error
+            if cache_key in _cache:
+                logger.warning("🔴 CoinGecko: Rate limited - returning stale cache")
+                return _cache[cache_key]["data"]
+            else:
+                raise HTTPException(
+                    status_code=429,
+                    detail="CoinGecko rate limited - no cached data available"
+                )
+        
         try:
+            # Wait for rate limit if needed
+            await _wait_for_rate_limit()
+            
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 if symbols:
                     # Get specific symbols using /simple/price endpoint
@@ -111,6 +241,14 @@ class CoinGeckoClient:
                         })
                     
                     logger.info(f"✅ CoinGecko: Fetched {len(prices)} real prices for specific symbols")
+                    
+                    # Update rate limit tracking
+                    _update_last_request_time()
+                    _reset_429_counter()
+                    
+                    # Cache the result
+                    _set_cache(cache_key, prices)
+                    
                     return prices
                 
                 else:
@@ -153,7 +291,36 @@ class CoinGeckoClient:
                         })
                     
                     logger.info(f"✅ CoinGecko: Fetched {len(prices)} real market prices")
+                    
+                    # Update rate limit tracking
+                    _update_last_request_time()
+                    _reset_429_counter()
+                    
+                    # Cache the result
+                    _set_cache(cache_key, prices)
+                    
                     return prices
+        
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:
+                # Handle 429 specifically
+                _handle_429_error()
+                
+                # Try to return cached data even if expired
+                if cache_key in _cache:
+                    logger.warning("🔴 CoinGecko: 429 rate limit - returning stale cache")
+                    return _cache[cache_key]["data"]
+                
+                raise HTTPException(
+                    status_code=429,
+                    detail="CoinGecko rate limited - please try again later"
+                )
+            
+            logger.error(f"❌ CoinGecko API HTTP error: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail=f"CoinGecko API error: HTTP {e.response.status_code}"
+            )
         
         except httpx.HTTPError as e:
             logger.error(f"❌ CoinGecko API HTTP error: {e}")
@@ -170,7 +337,7 @@ class CoinGeckoClient:
     
     async def get_ohlcv(self, symbol: str, days: int = 7) -> Dict[str, Any]:
         """
-        Fetch REAL OHLCV (price history) data from CoinGecko
+        Fetch REAL OHLCV (price history) data from CoinGecko with CACHING
         
         Args:
             symbol: Cryptocurrency symbol (e.g., "BTC", "ETH")
@@ -178,8 +345,31 @@ class CoinGeckoClient:
         
         Returns:
             Dict with OHLCV data
+        
+        ENHANCED: 5-minute cache, rate limiting
         """
+        # Generate cache key
+        cache_key = _get_cache_key("ohlcv", symbol=symbol, days=days)
+        
+        # Check cache first
+        cached_data = _get_from_cache(cache_key, ttl=300)
+        if cached_data is not None:
+            return cached_data
+        
+        # Check if blacklisted
+        if _check_rate_limit():
+            if cache_key in _cache:
+                logger.warning("🔴 CoinGecko OHLCV: Rate limited - returning stale cache")
+                return _cache[cache_key]["data"]
+            else:
+                raise HTTPException(
+                    status_code=429,
+                    detail="CoinGecko rate limited - no cached data available"
+                )
+        
         try:
+            await _wait_for_rate_limit()
+            
             coin_id = self._symbol_to_coingecko_id(symbol)
             
             async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -196,7 +386,26 @@ class CoinGeckoClient:
                 data = response.json()
                 
                 logger.info(f"✅ CoinGecko: Fetched {days} days of OHLCV data for {symbol}")
+                
+                # Update rate limit tracking
+                _update_last_request_time()
+                _reset_429_counter()
+                
+                # Cache the result
+                _set_cache(cache_key, data)
+                
                 return data
+        
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:
+                _handle_429_error()
+                if cache_key in _cache:
+                    logger.warning("🔴 CoinGecko OHLCV: 429 - returning stale cache")
+                    return _cache[cache_key]["data"]
+                raise HTTPException(status_code=429, detail="CoinGecko rate limited")
+            
+            logger.error(f"❌ CoinGecko OHLCV API HTTP error: {e}")
+            raise HTTPException(status_code=503, detail=f"CoinGecko OHLCV API error: HTTP {e.response.status_code}")
         
         except httpx.HTTPError as e:
             logger.error(f"❌ CoinGecko OHLCV API HTTP error: {e}")
@@ -213,12 +422,32 @@ class CoinGeckoClient:
     
     async def get_trending_coins(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        Fetch REAL trending coins from CoinGecko
+        Fetch REAL trending coins from CoinGecko with CACHING
         
         Returns:
             List of real trending coins
+        
+        ENHANCED: 5-minute cache, rate limiting
         """
+        # Generate cache key
+        cache_key = _get_cache_key("trending", limit=limit)
+        
+        # Check cache first
+        cached_data = _get_from_cache(cache_key, ttl=300)
+        if cached_data is not None:
+            return cached_data
+        
+        # Check if blacklisted
+        if _check_rate_limit():
+            if cache_key in _cache:
+                logger.warning("🔴 CoinGecko trending: Rate limited - returning stale cache")
+                return _cache[cache_key]["data"]
+            else:
+                raise HTTPException(status_code=429, detail="CoinGecko rate limited")
+        
         try:
+            await _wait_for_rate_limit()
+            
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 # Get trending coins
                 response = await client.get(f"{self.base_url}/search/trending")
@@ -261,7 +490,26 @@ class CoinGeckoClient:
                         })
                 
                 logger.info(f"✅ CoinGecko: Fetched {len(trending)} real trending coins")
+                
+                # Update rate limit tracking
+                _update_last_request_time()
+                _reset_429_counter()
+                
+                # Cache the result
+                _set_cache(cache_key, trending)
+                
                 return trending
+        
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:
+                _handle_429_error()
+                if cache_key in _cache:
+                    logger.warning("🔴 CoinGecko trending: 429 - returning stale cache")
+                    return _cache[cache_key]["data"]
+                raise HTTPException(status_code=429, detail="CoinGecko rate limited")
+            
+            logger.error(f"❌ CoinGecko trending API HTTP error: {e}")
+            raise HTTPException(status_code=503, detail=f"CoinGecko trending API error: HTTP {e.response.status_code}")
         
         except httpx.HTTPError as e:
             logger.error(f"❌ CoinGecko trending API HTTP error: {e}")

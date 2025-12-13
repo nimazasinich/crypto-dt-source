@@ -49,8 +49,9 @@ psutil==6.1.0
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
-# AI/ML DEPENDENCIES (OPTIONAL - only install if on HuggingFace Space or GPU available)
-# torch==2.5.1  # Only for HuggingFace Space with GPU
-# transformers==4.47.1  # Only for HuggingFace Space
-# numpy==1.26.0  # Auto-installed with pandas
-# To install AI dependencies: pip install torch transformers (only if needed)
+# AI/ML DEPENDENCIES (CPU-ONLY - optimized for HuggingFace Spaces)
+# CPU-only torch and transformers to avoid GPU dependencies and reduce build time
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.1.0+cpu
+transformers==4.35.0
+# numpy is auto-installed with pandas
