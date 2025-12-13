@@ -6,8 +6,8 @@ https://really-amin-datasourceforcryptocurrency-2.hf.space
 ```
 
 **Last Updated:** December 13, 2025  
-**API Version:** 2.0.0  
-**Total Endpoints:** 60+
+**API Version:** 2.1.0  
+**Total Endpoints:** 66+ (includes 6 new Resources Database endpoints)
 
 ---
 
@@ -19,10 +19,11 @@ https://really-amin-datasourceforcryptocurrency-2.hf.space
 4. [News & Social Endpoints](#news--social-endpoints) (4 endpoints)
 5. [Portfolio & Alerts Endpoints](#portfolio--alerts-endpoints) (3 endpoints)
 6. [System & Metadata Endpoints](#system--metadata-endpoints) (3 endpoints)
-7. [Legacy Endpoints](#legacy-endpoints) (Still Active)
-8. [Response Format](#response-format)
-9. [Error Handling](#error-handling)
-10. [Rate Limiting](#rate-limiting)
+7. [Resources Database Endpoints](#resources-database-endpoints) (6 endpoints - NEW!)
+8. [Legacy Endpoints](#legacy-endpoints) (Still Active)
+9. [Response Format](#response-format)
+10. [Error Handling](#error-handling)
+11. [Rate Limiting](#rate-limiting)
 
 ---
 
@@ -1354,7 +1355,310 @@ For issues, questions, or feature requests:
 
 ---
 
+## 📚 Resources Database Endpoints
+
+**NEW in v2.1.0** - Access to 400+ cryptocurrency data sources from the comprehensive resources database.
+
+### 1. Get All Resources
+**`GET /api/resources/database`**
+
+Get the complete resources database with 274 unified + 162 pipeline resources.
+
+**Query Parameters:**
+- `category` (optional): Filter by category name
+- `source` (optional): `unified`, `pipeline`, or `all` (default: `all`)
+- `limit` (optional): Limit results (1-1000)
+
+**Example:**
+```bash
+GET /api/resources/database?source=all&limit=100
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "source_files": {
+    "unified": "crypto_resources_unified_2025-11-11.json",
+    "pipeline": "ultimate_crypto_pipeline_2025_NZasinich.json"
+  },
+  "unified_resources": {
+    "categories": ["rpc_nodes", "block_explorers", "market_data_apis", ...],
+    "total_categories": 13,
+    "resources": { ... },
+    "metadata": { ... }
+  },
+  "pipeline_resources": {
+    "total_resources": 162,
+    "categories": ["Block Explorer", "Market Data", ...],
+    "resources_by_category": { ... }
+  },
+  "timestamp": "2025-12-13T10:30:00Z"
+}
+```
+
+---
+
+### 2. Get Categories
+**`GET /api/resources/database/categories`**
+
+Get all available resource categories with counts.
+
+**Example:**
+```bash
+GET /api/resources/database/categories
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "unified_resources": {
+    "categories": ["rpc_nodes", "block_explorers", "market_data_apis", ...],
+    "total_categories": 13,
+    "counts": {
+      "rpc_nodes": 24,
+      "block_explorers": 33,
+      "market_data_apis": 33,
+      "news_apis": 17,
+      "sentiment_apis": 14,
+      "onchain_analytics_apis": 14,
+      "whale_tracking_apis": 10,
+      "hf_resources": 9,
+      "free_http_endpoints": 13,
+      "local_backend_routes": 106
+    },
+    "total_resources": 274
+  },
+  "pipeline_resources": {
+    "categories": ["Block Explorer", "Market Data", "News", "DeFi", ...],
+    "total_categories": 11,
+    "counts": {
+      "Block Explorer": 35,
+      "Market Data": 28,
+      "News": 22,
+      "DeFi": 18,
+      "On-chain": 15
+    },
+    "total_resources": 162
+  },
+  "combined": {
+    "unique_categories": 24,
+    "total_resources": 436
+  }
+}
+```
+
+---
+
+### 3. Get Resources by Category
+**`GET /api/resources/database/category/{category}`**
+
+Get all resources from a specific category.
+
+**Query Parameters:**
+- `source` (optional): `unified`, `pipeline`, or `all` (default: `all`)
+- `limit` (optional): Limit results (1-1000)
+
+**Available Categories:**
+- `rpc_nodes` - Blockchain RPC endpoints
+- `block_explorers` - On-chain explorers
+- `market_data_apis` - Market data providers
+- `news_apis` - News aggregators
+- `sentiment_apis` - Sentiment analysis
+- `onchain_analytics_apis` - Blockchain analytics
+- `whale_tracking_apis` - Whale monitoring
+- `hf_resources` - HuggingFace models/datasets
+- `free_http_endpoints` - Free REST APIs
+- `local_backend_routes` - Internal routes
+- `Block Explorer` - Multi-chain explorers
+- `Market Data` - Price providers
+- `News` - News services
+- `DeFi` - DeFi protocols
+- `NFT` - NFT data
+
+**Example:**
+```bash
+GET /api/resources/database/category/market_data_apis?limit=10
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "category": "market_data_apis",
+  "unified_resources": {
+    "count": 33,
+    "resources": [
+      {
+        "id": "coingecko_primary",
+        "name": "CoinGecko",
+        "base_url": "https://api.coingecko.com/api/v3",
+        "auth": { "type": "none" },
+        "endpoints": { ... },
+        "notes": "Free tier: 10-50 calls/min"
+      },
+      ...
+    ]
+  },
+  "pipeline_resources": {
+    "count": 28,
+    "resources": [ ... ]
+  }
+}
+```
+
+---
+
+### 4. Search Resources
+**`GET /api/resources/database/search`**
+
+Search resources by keyword across multiple fields.
+
+**Query Parameters:**
+- `q` (required): Search query (min 2 chars)
+- `fields` (optional): Fields to search - `name,url,desc,category` (default: `name,url,desc`)
+- `source` (optional): `unified`, `pipeline`, or `all` (default: `all`)
+- `limit` (optional): Max results (1-500, default: 50)
+
+**Example:**
+```bash
+GET /api/resources/database/search?q=coingecko&fields=name,desc&limit=20
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "query": "coingecko",
+  "search_fields": ["name", "desc"],
+  "total_results": 3,
+  "results": [
+    {
+      "source": "unified",
+      "category": "market_data_apis",
+      "resource": {
+        "id": "coingecko_primary",
+        "name": "CoinGecko",
+        "base_url": "https://api.coingecko.com/api/v3",
+        "auth": { "type": "none" },
+        "notes": "Free API with 10,000+ coins"
+      }
+    }
+  ]
+}
+```
+
+---
+
+### 5. Get Database Statistics
+**`GET /api/resources/database/stats`**
+
+Get comprehensive statistics about the resources database.
+
+**Example:**
+```bash
+GET /api/resources/database/stats
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "overview": {
+    "total_resources": 436,
+    "unified_resources": 274,
+    "pipeline_resources": 162,
+    "total_categories": 24,
+    "unique_data_sources": 2
+  },
+  "unified_resources": {
+    "total": 274,
+    "top_categories": [
+      ["local_backend_routes", 106],
+      ["block_explorers", 33],
+      ["market_data_apis", 33]
+    ]
+  },
+  "pipeline_resources": {
+    "total": 162,
+    "free_resources": 145,
+    "paid_resources": 17,
+    "top_categories": [
+      ["Block Explorer", 35],
+      ["Market Data", 28],
+      ["News", 22]
+    ]
+  },
+  "coverage": {
+    "rpc_nodes": 24,
+    "block_explorers": 68,
+    "market_data": 61,
+    "news_apis": 39,
+    "sentiment_apis": 14,
+    "analytics": 29,
+    "whale_tracking": 10,
+    "defi": 18,
+    "nft": 12
+  }
+}
+```
+
+---
+
+### 6. Get Random Resources
+**`GET /api/resources/database/random`**
+
+Get random resources from the database for discovery.
+
+**Query Parameters:**
+- `count` (optional): Number of random resources (1-100, default: 10)
+- `category` (optional): Filter by category
+- `source` (optional): `unified`, `pipeline`, or `all` (default: `all`)
+
+**Example:**
+```bash
+GET /api/resources/database/random?count=5&category=market_data_apis
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "requested_count": 5,
+  "returned_count": 5,
+  "total_available": 61,
+  "resources": [
+    {
+      "source": "unified",
+      "category": "market_data_apis",
+      "resource": { ... }
+    },
+    ...
+  ]
+}
+```
+
+**Use Cases:**
+- Build resource discovery dashboards
+- Test different data providers
+- Find alternative data sources
+- Research available APIs
+
+---
+
 ## 🔄 Changelog
+
+### Version 2.1.0 (December 13, 2025)
+
+**Added:**
+- 6 new Resources Database endpoints
+- Access to 436 total resources (274 unified + 162 pipeline)
+- Search across 400+ cryptocurrency data sources
+- Category-based resource filtering
+- Random resource discovery
+- Comprehensive database statistics
+- 24+ resource categories (RPC nodes, explorers, market data, news, sentiment, analytics, etc.)
 
 ### Version 2.0.0 (December 13, 2025)
 
@@ -1392,14 +1696,17 @@ For issues, questions, or feature requests:
 | News & Social | 4 | `/api/news/*`, `/api/social/*`, `/api/events` |
 | Portfolio & Alerts | 3 | `/api/portfolio/*`, `/api/alerts/*`, `/api/watchlist` |
 | System & Metadata | 3 | `/api/exchanges`, `/api/metadata/*`, `/api/cache/*` |
+| **Resources Database** | **6** | **`/api/resources/database*`** ⭐ NEW |
 | Legacy Endpoints | 30+ | Various paths |
 
 ---
 
-**Total API Coverage:** 60+ endpoints providing complete cryptocurrency data infrastructure
+**Total API Coverage:** 66+ endpoints providing complete cryptocurrency data infrastructure
+
+**Resources Database:** 436 total resources (274 unified + 162 pipeline) across 24+ categories
 
 ---
 
 *Last Updated: December 13, 2025*  
-*API Version: 2.0.0*  
-*Documentation Version: 1.0*
+*API Version: 2.1.0*  
+*Documentation Version: 1.1*

@@ -56,6 +56,9 @@ from backend.routers.news_social_api import router as news_social_router  # News
 from backend.routers.portfolio_alerts_api import router as portfolio_alerts_router  # Portfolio & Alerts: simulate, alerts, watchlist
 from backend.routers.system_metadata_api import router as system_metadata_router  # System & Metadata: exchanges, coins metadata, cache stats
 
+# COMPREHENSIVE RESOURCES DATABASE API (400+ resources from api-resources folder)
+from backend.routers.comprehensive_resources_database_api import router as resources_db_router  # Complete database: 274+ unified + 162+ pipeline resources
+
 # Import metrics middleware
 from backend.middleware import MetricsMiddleware
 
@@ -556,6 +559,14 @@ try:
     logger.info("✓ ✅ System & Metadata Router loaded (3 endpoints: exchanges, coins metadata, cache stats)")
 except Exception as e:
     logger.error(f"Failed to include system_metadata_router: {e}")
+
+# Comprehensive Resources Database API (6 endpoints)
+try:
+    app.include_router(resources_db_router)
+    logger.info("✓ ✅ Comprehensive Resources Database Router loaded (6 endpoints: 400+ resources from api-resources)")
+    logger.info("   📊 Database: 274 unified + 162 pipeline | Categories: RPC, Explorers, Market, News, Sentiment, Analytics, Whale, DeFi, NFT")
+except Exception as e:
+    logger.error(f"Failed to include resources_db_router: {e}")
 
 logger.info("=" * 70)
 logger.info("🎉 API EXPANSION COMPLETE: 26+ new endpoints added!")
