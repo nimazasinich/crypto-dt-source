@@ -590,13 +590,26 @@ class ModelsPage {
       const emojiEl = document.getElementById('sentiment-emoji');
       const labelEl = document.getElementById('sentiment-label');
       const confidenceEl = document.getElementById('sentiment-confidence');
+      const displayEl = document.getElementById('sentiment-display');
       const timeEl = document.getElementById('result-time');
       const jsonPre = document.querySelector('.result-json');
 
       if (emojiEl) emojiEl.textContent = emoji;
-      if (labelEl) labelEl.textContent = result.sentiment || 'Unknown';
+      const sentimentKey = (result.sentiment || 'unknown').toString().toLowerCase();
+      if (displayEl) {
+        displayEl.setAttribute('data-sentiment', sentimentKey);
+        const pct = (typeof result.score === 'number' ? result.score : 0) * 100;
+        displayEl.style.setProperty('--confidence', `${Math.max(0, Math.min(100, pct)).toFixed(1)}%`);
+      }
+      if (labelEl) {
+        labelEl.textContent = result.sentiment || 'Unknown';
+        // Ensure CSS sentiment variants can apply reliably
+        labelEl.classList.remove('bullish', 'bearish', 'neutral', 'positive', 'negative', 'buy', 'sell', 'hold', 'unknown');
+        labelEl.classList.add(sentimentKey);
+      }
       if (confidenceEl) {
-        confidenceEl.textContent = result.score ? `Confidence: ${(result.score * 100).toFixed(1)}%` : '';
+        const pct = (typeof result.score === 'number' ? result.score : 0) * 100;
+        confidenceEl.textContent = `Confidence: ${Math.max(0, Math.min(100, pct)).toFixed(1)}%`;
       }
       if (timeEl) timeEl.textContent = new Date().toLocaleTimeString();
       if (jsonPre) jsonPre.textContent = JSON.stringify(result, null, 2);
