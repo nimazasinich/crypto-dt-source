@@ -577,3 +577,73 @@ class BacktestJob(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
+
+
+# ============================================================================
+# Service Discovery Tables
+# ============================================================================
+
+class ServiceCategoryEnum(enum.Enum):
+    """Service category enumeration"""
+    MARKET_DATA = "market_data"
+    BLOCKCHAIN = "blockchain"
+    NEWS_SENTIMENT = "news_sentiment"
+    AI_SERVICES = "ai_services"
+    INFRASTRUCTURE = "infrastructure"
+    DEFI = "defi"
+    SOCIAL = "social"
+    EXCHANGES = "exchanges"
+    TECHNICAL_ANALYSIS = "technical_analysis"
+    INTERNAL_API = "internal_api"
+
+
+class ServiceHealthStatus(enum.Enum):
+    """Service health status enumeration"""
+    ONLINE = "online"
+    DEGRADED = "degraded"
+    OFFLINE = "offline"
+    UNKNOWN = "unknown"
+    RATE_LIMITED = "rate_limited"
+    UNAUTHORIZED = "unauthorized"
+
+
+class DiscoveredServiceModel(Base):
+    """Database model for discovered services"""
+    __tablename__ = "discovered_services"
+    
+    id = Column(String(100), primary_key=True)
+    name = Column(String(255), nullable=False)
+    category = Column(Enum(ServiceCategoryEnum), nullable=False)
+    base_url = Column(String(500), nullable=False)
+    requires_auth = Column(Boolean, default=False)
+    api_key_env = Column(String(100), nullable=True)
+    priority = Column(Integer, default=2)
+    timeout = Column(Float, default=10.0)
+    rate_limit = Column(String(100), nullable=True)
+    documentation_url = Column(String(500), nullable=True)
+    endpoints = Column(Text, nullable=True)  # JSON list of endpoint paths
+    features = Column(Text, nullable=True)  # JSON list of features
+    discovered_in = Column(Text, nullable=True)  # JSON list of files where found
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship to health checks
+    health_checks = relationship("ServiceHealthCheckModel", back_populates="service", cascade="all, delete-orphan")
+
+
+class ServiceHealthCheckModel(Base):
+    """Database model for service health check results"""
+    __tablename__ = "service_health_checks"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    service_id = Column(String(100), ForeignKey("discovered_services.id"), nullable=False, index=True)
+    status = Column(Enum(ServiceHealthStatus), nullable=False, index=True)
+    response_time_ms = Column(Float, nullable=True)
+    status_code = Column(Integer, nullable=True)
+    error_message = Column(Text, nullable=True)
+    endpoint_checked = Column(String(500), nullable=False)
+    additional_info = Column(Text, nullable=True)  # JSON additional info
+    checked_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    # Relationship to service
+    service = relationship("DiscoveredServiceModel", back_populates="health_checks")
