@@ -44,6 +44,7 @@ from backend.routers.intelligent_provider_api import router as intelligent_provi
 from backend.routers.hf_space_crypto_api import router as hf_space_crypto_router  # HuggingFace Space Crypto Resources API
 from backend.routers.health_monitor_api import router as health_monitor_router  # NEW: Service Health Monitor
 from backend.routers.indicators_api import router as indicators_router  # Technical Indicators API
+from backend.routers.new_sources_api import router as new_sources_router  # NEW: Integrated data sources (Crypto API Clean + Crypto DT Source)
 
 # Real AI models registry (shared with admin/extended API)
 from ai_models import (
@@ -478,6 +479,13 @@ try:
     logger.info("✓ ✅ HF Space Crypto Router loaded (281 resources, 12 categories, market data, sentiment)")
 except Exception as e:
     logger.error(f"Failed to include hf_space_crypto_router: {e}")
+
+# NEW INTEGRATED DATA SOURCES (Crypto API Clean + Crypto DT Source)
+try:
+    app.include_router(new_sources_router)  # Newly integrated comprehensive data sources
+    logger.info("✓ ✅ New Sources Router loaded (Crypto API Clean: 281+ resources | Crypto DT Source: Unified API v2.0)")
+except Exception as e:
+    logger.error(f"Failed to include new_sources_router: {e}")
 
 # Add routers status endpoint
 @app.get("/api/routers")

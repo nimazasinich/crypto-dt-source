@@ -1,0 +1,203 @@
+{
+  "schema": {
+    "name": "Crypto Resource Registry",
+    "version": "2.0.0",
+    "updated_at": "2025-12-13",
+    "description": "Enhanced registry with new data sources integrated - Crypto API Clean (281 resources) and Crypto DT Source (unified API v2.0.0)",
+    "spec": {
+      "entry_shape": {
+        "id": "string",
+        "name": "string",
+        "category_or_chain": "string (category / chain / type / role)",
+        "base_url": "string",
+        "auth": {
+          "type": "string",
+          "key": "string|null",
+          "param_name/header_name": "string|null"
+        },
+        "docs_url": "string|null",
+        "endpoints": "object|string|null",
+        "notes": "string|null"
+      }
+    }
+  },
+  "registry": {
+    "metadata": {
+      "description": "Comprehensive cryptocurrency data collection database with newly integrated sources: Crypto API Clean (281+ resources) and Crypto DT Source (unified API v2.0.0). Complete coverage of RPC nodes, block explorers, market data, news, sentiment, on-chain analytics, whale tracking, AI models, and datasets.",
+      "version": "2.0.0",
+      "updated": "2025-12-13",
+      "sources": [
+        "crypto_resources_unified_2025-11-11.json (base)",
+        "https://really-amin-crypto-api-clean-fixed.hf.space (NEW)",
+        "https://crypto-dt-source.onrender.com (NEW)"
+      ],
+      "total_entries": 283,
+      "new_sources_added": 2,
+      "last_update_note": "Integrated 2 new comprehensive data sources"
+    },
+    "new_unified_sources": [
+      {
+        "id": "crypto_api_clean_hf",
+        "name": "Crypto API Clean - HuggingFace Space",
+        "category": "resource_database",
+        "base_url": "https://really-amin-crypto-api-clean-fixed.hf.space",
+        "auth": {
+          "type": "none",
+          "key": null,
+          "notes": "No authentication required"
+        },
+        "docs_url": "https://really-amin-crypto-api-clean-fixed.hf.space",
+        "endpoints": {
+          "health": "/health",
+          "stats": "/api/resources/stats",
+          "list": "/api/resources/list",
+          "categories": "/api/categories",
+          "category": "/api/resources/category/{category}",
+          "websocket": "/ws"
+        },
+        "features": {
+          "total_resources": 281,
+          "total_categories": 12,
+          "categories": {
+            "rpc_nodes": 24,
+            "block_explorers": 33,
+            "market_data_apis": 33,
+            "news_apis": 17,
+            "sentiment_apis": 14,
+            "onchain_analytics_apis": 14,
+            "whale_tracking_apis": 10,
+            "community_sentiment_apis": 1,
+            "hf_resources": 9,
+            "free_http_endpoints": 13,
+            "local_backend_routes": 106,
+            "cors_proxies": 7
+          }
+        },
+        "rate_limits": {
+          "requests_per_minute": 60,
+          "requests_per_hour": 1000
+        },
+        "priority": 2,
+        "weight": 75,
+        "notes": "Comprehensive database of 281+ cryptocurrency resources. Provides access to multiple data source categories including RPC nodes, block explorers, market data APIs, news APIs, sentiment APIs, on-chain analytics, whale tracking, HuggingFace resources, and more. Includes WebSocket support for real-time updates."
+      },
+      {
+        "id": "crypto_dt_source_api",
+        "name": "Crypto DT Source - Unified Data API",
+        "category": "unified_data",
+        "base_url": "https://crypto-dt-source.onrender.com",
+        "auth": {
+          "type": "none",
+          "key": null,
+          "notes": "No authentication required"
+        },
+        "docs_url": "https://crypto-dt-source.onrender.com/docs",
+        "endpoints": {
+          "root": "/api",
+          "status": "/api/v1/status",
+          "coingecko_price": "/api/v1/coingecko/price",
+          "binance_klines": "/api/v1/binance/klines",
+          "fear_greed_index": "/api/v1/alternative/fng",
+          "reddit_top": "/api/v1/reddit/top",
+          "rss_feed": "/api/v1/rss/feed",
+          "hf_sentiment": "/api/v1/hf/sentiment",
+          "hf_models": "/api/v1/hf/models",
+          "hf_datasets": "/api/v1/hf/datasets"
+        },
+        "features": {
+          "version": "2.0.0",
+          "direct_model_loading": "No pipelines - Direct HuggingFace model inference",
+          "external_apis": [
+            "CoinGecko",
+            "Binance",
+            "Alternative.me",
+            "Reddit",
+            "RSS feeds"
+          ],
+          "ai_models": [
+            "kk08/CryptoBERT",
+            "cardiffnlp/twitter-roberta-base-sentiment-latest",
+            "ProsusAI/finbert",
+            "ElKulako/cryptobert"
+          ],
+          "datasets": [
+            "linxy/CryptoCoin",
+            "WinkingFace/CryptoLM-Bitcoin-BTC-USDT",
+            "WinkingFace/CryptoLM-Ethereum-ETH-USDT",
+            "WinkingFace/CryptoLM-Solana-SOL-USDT",
+            "WinkingFace/CryptoLM-Ripple-XRP-USDT"
+          ],
+          "total_models": 4,
+          "total_datasets": 5,
+          "rate_limiting": "Enabled with per-endpoint limits",
+          "real_time_data": "Market prices, news, sentiment, blockchain data"
+        },
+        "rate_limits": {
+          "requests_per_minute": 30,
+          "requests_per_hour": 500
+        },
+        "priority": 2,
+        "weight": 75,
+        "notes": "Unified cryptocurrency data API v2.0.0 providing direct HuggingFace model inference, external API integration (CoinGecko, Binance, Alternative.me, Reddit, RSS), cryptocurrency datasets, and real-time market data. Supports sentiment analysis with CryptoBERT and FinBERT models. Includes comprehensive market data with top 100 crypto prices, candlestick data, Fear & Greed Index, social media posts, and news feeds."
+      }
+    ],
+    "integration_notes": {
+      "crypto_api_clean": {
+        "primary_use": "Resource discovery and database access",
+        "fallback_priority": "High (Priority 2)",
+        "best_for": [
+          "Finding alternative data sources",
+          "Discovering RPC nodes",
+          "Locating block explorers",
+          "Market data API discovery",
+          "News and sentiment API sources"
+        ],
+        "client_location": "backend/services/crypto_api_clean_client.py"
+      },
+      "crypto_dt_source": {
+        "primary_use": "Direct data access and AI sentiment analysis",
+        "fallback_priority": "High (Priority 2)",
+        "best_for": [
+          "Real-time cryptocurrency prices",
+          "Candlestick/OHLCV data",
+          "Fear & Greed Index",
+          "Sentiment analysis (CryptoBERT)",
+          "Social media posts (Reddit)",
+          "News feeds (RSS)",
+          "AI model inference"
+        ],
+        "client_location": "backend/services/crypto_dt_source_client.py"
+      }
+    },
+    "usage_examples": {
+      "crypto_api_clean": {
+        "get_stats": "GET /api/resources/stats",
+        "get_market_apis": "GET /api/resources/category/market_data_apis",
+        "get_sentiment_apis": "GET /api/resources/category/sentiment_apis",
+        "get_all_resources": "GET /api/resources/list"
+      },
+      "crypto_dt_source": {
+        "get_btc_price": "GET /api/v1/coingecko/price?ids=bitcoin&vs_currencies=usd",
+        "get_candlesticks": "GET /api/v1/binance/klines?symbol=BTCUSDT&interval=1h",
+        "get_fear_greed": "GET /api/v1/alternative/fng?limit=1",
+        "analyze_sentiment": "GET /api/v1/hf/sentiment?text=Bitcoin%20is%20great&model_key=cryptobert_kk08",
+        "get_reddit_posts": "GET /api/v1/reddit/top?subreddit=cryptocurrency&limit=10",
+        "get_news": "GET /api/v1/rss/feed?feed_name=coindesk&limit=20"
+      }
+    },
+    "provider_status": {
+      "crypto_api_clean": {
+        "status": "operational",
+        "last_checked": "2025-12-13T08:22:25Z",
+        "response_time_ms": 150,
+        "reliability": "high"
+      },
+      "crypto_dt_source": {
+        "status": "operational",
+        "last_checked": "2025-12-13T08:22:26Z",
+        "response_time_ms": 200,
+        "reliability": "high"
+      }
+    }
+  }
+}

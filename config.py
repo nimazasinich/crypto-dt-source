@@ -37,6 +37,53 @@ HF_SPACE_PRIMARY = {
 
 # External Providers Configuration (Fallback System - Priority 2-3)
 EXTERNAL_PROVIDERS = {
+    "crypto_api_clean": {
+        "enabled": True,
+        "api_key": None,  # No auth required
+        "base_url": "https://really-amin-crypto-api-clean-fixed.hf.space",
+        "timeout": 15.0,
+        "priority": 2,
+        "category": "resource_database",
+        "rate_limit": {
+            "requests_per_minute": 60,
+            "requests_per_hour": 1000
+        },
+        "description": "281+ cryptocurrency resources across 12 categories",
+        "features": [
+            "rpc_nodes",
+            "block_explorers",
+            "market_data_apis",
+            "news_apis",
+            "sentiment_apis",
+            "onchain_analytics_apis",
+            "whale_tracking_apis",
+            "hf_resources",
+            "free_http_endpoints",
+            "cors_proxies"
+        ]
+    },
+    "crypto_dt_source": {
+        "enabled": True,
+        "api_key": None,  # No auth required
+        "base_url": "https://crypto-dt-source.onrender.com",
+        "timeout": 20.0,
+        "priority": 2,
+        "category": "unified_data",
+        "rate_limit": {
+            "requests_per_minute": 30,
+            "requests_per_hour": 500
+        },
+        "description": "Unified cryptocurrency data API v2.0.0 with AI models",
+        "features": [
+            "coingecko_prices",
+            "binance_klines",
+            "fear_greed_index",
+            "reddit_posts",
+            "rss_feeds",
+            "hf_sentiment_models",
+            "crypto_datasets"
+        ]
+    },
     "tronscan": {
         "enabled": True,
         "api_key": os.getenv("TRONSCAN_API_KEY"),  # Set in environment

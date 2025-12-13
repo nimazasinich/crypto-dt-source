@@ -375,6 +375,29 @@ class ProviderManager:
                         "everything": "/everything",
                         "top_headlines": "/top-headlines"
                     }
+                elif provider_config["category"] == "resource_database":
+                    # Crypto API Clean - Resource Database
+                    endpoints = {
+                        "health": "/health",
+                        "stats": "/api/resources/stats",
+                        "list": "/api/resources/list",
+                        "categories": "/api/categories",
+                        "category": "/api/resources/category/{category}"
+                    }
+                elif provider_config["category"] == "unified_data":
+                    # Crypto DT Source - Unified Data API
+                    endpoints = {
+                        "health": "/api",
+                        "status": "/api/v1/status",
+                        "coingecko_price": "/api/v1/coingecko/price",
+                        "binance_klines": "/api/v1/binance/klines",
+                        "fear_greed": "/api/v1/alternative/fng",
+                        "reddit_top": "/api/v1/reddit/top",
+                        "rss_feed": "/api/v1/rss/feed",
+                        "hf_sentiment": "/api/v1/hf/sentiment",
+                        "hf_models": "/api/v1/hf/models",
+                        "hf_datasets": "/api/v1/hf/datasets"
+                    }
                 
                 provider = Provider(
                     provider_id=provider_id,
@@ -383,9 +406,9 @@ class ProviderManager:
                     base_url=provider_config["base_url"],
                     endpoints=endpoints,
                     rate_limit=rate_limit,
-                    requires_auth=True,
+                    requires_auth=provider_config.get("api_key") is not None,
                     priority=provider_config["priority"],
-                    weight=50
+                    weight=75 if provider_id in ["crypto_api_clean", "crypto_dt_source"] else 50
                 )
                 
                 self.providers[provider_id] = provider
