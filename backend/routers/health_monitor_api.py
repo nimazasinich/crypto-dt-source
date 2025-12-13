@@ -44,6 +44,24 @@ class HealthMonitorResponse(BaseModel):
 
 # Service configuration for health checks
 SERVICES_CONFIG = {
+    "crypto_api_clean": {
+        "name": "Crypto API Clean",
+        "category": "Resource Database",
+        "endpoint": "https://really-amin-crypto-api-clean-fixed.hf.space/api/resources/stats",
+        "timeout": 10,
+        "sub_services": ["rpc_nodes (24)", "block_explorers (33)", "market_data_apis (33)", "news_apis (17)", "sentiment_apis (14)"],
+        "description": "281+ cryptocurrency resources across 12 categories",
+        "priority": 2
+    },
+    "crypto_dt_source": {
+        "name": "Crypto DT Source",
+        "category": "Unified Data API",
+        "endpoint": "https://crypto-dt-source.onrender.com/api/v1/status",
+        "timeout": 15,
+        "sub_services": ["prices", "klines", "sentiment", "models", "datasets"],
+        "description": "Unified API v2.0.0 with 4 AI models and 5 datasets",
+        "priority": 2
+    },
     "coingecko": {
         "name": "CoinGecko",
         "category": "Data Provider",
