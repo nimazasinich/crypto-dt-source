@@ -17,6 +17,12 @@ import time
 import random
 import numpy as np
 
+# Import enhanced provider manager for intelligent load balancing
+from backend.services.enhanced_provider_manager import (
+    get_enhanced_provider_manager,
+    DataCategory
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Portfolio & Alerts API"])
@@ -46,20 +52,22 @@ class WatchlistRequest(BaseModel):
 # ============================================================================
 
 async def get_current_prices(symbols: List[str]) -> Dict[str, float]:
-    """Get current prices for multiple symbols"""
-    import httpx
-    
+    """Get current prices with intelligent provider failover"""
+    manager = get_enhanced_provider_manager()
     prices = {}
+    
     for symbol in symbols:
         try:
-            url = "https://api.binance.com/api/v3/ticker/price"
-            params = {"symbol": f"{symbol.upper()}USDT"}
+            result = await manager.fetch_data(
+                DataCategory.MARKET_PRICE,
+                symbol=f"{symbol.upper()}USDT"
+            )
             
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
-                data = response.json()
+            if result and result.get("success"):
+                data = result.get("data", {})
                 prices[symbol.upper()] = float(data.get("price", 0))
+            else:
+                prices[symbol.upper()] = 0
         except:
             prices[symbol.upper()] = 0
     

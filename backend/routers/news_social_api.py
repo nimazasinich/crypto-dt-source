@@ -17,6 +17,12 @@ import time
 import httpx
 import random
 
+# Import enhanced provider manager for intelligent load balancing
+from backend.services.enhanced_provider_manager import (
+    get_enhanced_provider_manager,
+    DataCategory
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["News & Social API"])
@@ -27,21 +33,23 @@ router = APIRouter(tags=["News & Social API"])
 # ============================================================================
 
 async def fetch_cryptocompare_news(coin: Optional[str] = None, limit: int = 50) -> List[Dict]:
-    """Fetch news from CryptoCompare"""
+    """Fetch news with intelligent provider failover"""
     try:
-        url = "https://min-api.cryptocompare.com/data/v2/news/"
-        params = {"lang": "EN"}
+        manager = get_enhanced_provider_manager()
+        result = await manager.fetch_data(DataCategory.NEWS, limit=limit)
         
-        if coin:
-            params["categories"] = coin.upper()
-        
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
-            return data.get("Data", [])[:limit]
+        if result and result.get("success"):
+            news_data = result.get("data", {})
+            articles = news_data.get("Data", []) if isinstance(news_data, dict) else []
+            
+            # Filter by coin if specified
+            if coin:
+                articles = [a for a in articles if coin.upper() in str(a.get("categories", "")).upper()]
+            
+            return articles[:limit]
+        return []
     except Exception as e:
-        logger.error(f"CryptoCompare news error: {e}")
+        logger.error(f"News fetch error: {e}")
         return []
 
 

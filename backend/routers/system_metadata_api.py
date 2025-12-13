@@ -16,6 +16,12 @@ import time
 import httpx
 import random
 
+# Import enhanced provider manager for intelligent load balancing
+from backend.services.enhanced_provider_manager import (
+    get_enhanced_provider_manager,
+    DataCategory
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["System & Metadata API"])
@@ -40,23 +46,35 @@ _cache_stats = {
 # ============================================================================
 
 async def fetch_exchanges_list() -> List[Dict]:
-    """Fetch list of exchanges from CoinGecko"""
+    """Fetch list of exchanges with intelligent provider failover"""
     try:
-        url = "https://api.coingecko.com/api/v3/exchanges"
-        params = {"per_page": 100}
+        manager = get_enhanced_provider_manager()
+        result = await manager.fetch_data(
+            DataCategory.MARKET_METADATA,
+            data_type="exchanges"
+        )
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            return response.json()
+        if result and result.get("success"):
+            return result.get("data", [])
+        return []
     except Exception as e:
         logger.error(f"Error fetching exchanges: {e}")
         return []
 
 
 async def fetch_coins_list() -> List[Dict]:
-    """Fetch comprehensive list of coins"""
+    """Fetch comprehensive list of coins with intelligent provider failover"""
     try:
+        manager = get_enhanced_provider_manager()
+        result = await manager.fetch_data(
+            DataCategory.MARKET_METADATA,
+            data_type="coins/list"
+        )
+        
+        if result and result.get("success"):
+            return result.get("data", [])
+        
+        # Fallback: try direct call if provider manager fails
         url = "https://api.coingecko.com/api/v3/coins/list"
         params = {"include_platform": "true"}
         

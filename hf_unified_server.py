@@ -572,6 +572,208 @@ logger.info("=" * 70)
 logger.info("🎉 API EXPANSION COMPLETE: 26+ new endpoints added!")
 logger.info("=" * 70)
 
+# ============================================================================
+# PROVIDER HEALTH & MONITORING ENDPOINTS (Phase 2)
+# ============================================================================
+
+# Import provider managers for health monitoring
+from backend.services.enhanced_provider_manager import get_enhanced_provider_manager
+from backend.services.binance_dns_connector import get_binance_connector
+
+@app.get("/api/system/providers/health")
+async def get_all_providers_health():
+    """
+    Get health status of all data providers
+    
+    Returns comprehensive health information for:
+    - Binance DNS endpoints (5 mirrors)
+    - CoinGecko, CoinCap, CoinPaprika
+    - CryptoCompare, Alternative.me
+    - Render.com backup service
+    """
+    try:
+        manager = get_enhanced_provider_manager()
+        health_data = manager.get_provider_health()
+        
+        return JSONResponse(content={
+            "success": True,
+            "timestamp": datetime.now().isoformat(),
+            "providers": health_data,
+            "summary": {
+                "total_categories": len([k for k in health_data.keys() if k != "binance_dns"]),
+                "healthy_providers": sum(
+                    1 for cat_providers in health_data.values() 
+                    if isinstance(cat_providers, list)
+                    for p in cat_providers 
+                    if p.get("status") == "healthy"
+                ),
+                "degraded_providers": sum(
+                    1 for cat_providers in health_data.values()
+                    if isinstance(cat_providers, list)
+                    for p in cat_providers
+                    if p.get("status") == "degraded"
+                ),
+                "down_providers": sum(
+                    1 for cat_providers in health_data.values()
+                    if isinstance(cat_providers, list)
+                    for p in cat_providers
+                    if p.get("status") == "down"
+                )
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error getting provider health: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+@app.get("/api/system/binance/health")
+async def get_binance_dns_health():
+    """
+    Get health status of Binance DNS failover endpoints
+    
+    Returns status of all 5 Binance mirror endpoints:
+    - api.binance.com (primary)
+    - api1.binance.com (mirror 1)
+    - api2.binance.com (mirror 2)
+    - api3.binance.com (mirror 3)
+    - api4.binance.com (mirror 4)
+    """
+    try:
+        connector = get_binance_connector(use_us=False)
+        health_data = connector.get_health_status()
+        
+        return JSONResponse(content={
+            "success": True,
+            "timestamp": datetime.now().isoformat(),
+            "binance_health": health_data,
+            "summary": {
+                "total_endpoints": health_data["total_endpoints"],
+                "available_endpoints": sum(
+                    1 for ep in health_data["endpoints"]
+                    if ep["available"]
+                ),
+                "in_backoff": sum(
+                    1 for ep in health_data["endpoints"]
+                    if not ep["available"]
+                )
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error getting Binance health: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+@app.get("/api/system/circuit-breakers")
+async def get_circuit_breaker_status():
+    """
+    Get circuit breaker status for all providers
+    
+    Circuit breakers prevent cascading failures by temporarily
+    disabling providers after consecutive failures (threshold: 3)
+    """
+    try:
+        manager = get_enhanced_provider_manager()
+        health = manager.get_provider_health()
+        
+        # Extract circuit breaker info
+        circuit_breakers = {}
+        for category, providers in health.items():
+            if category == "binance_dns" or not isinstance(providers, list):
+                continue
+            
+            circuit_breakers[category] = [
+                {
+                    "provider": p["name"],
+                    "circuit_open": p["consecutive_failures"] >= 3,
+                    "consecutive_failures": p["consecutive_failures"],
+                    "status": p["status"],
+                    "available": p["available"],
+                    "priority": p["priority"]
+                }
+                for p in providers
+            ]
+        
+        # Add summary
+        total_open = sum(
+            1 for cat_providers in circuit_breakers.values()
+            for p in cat_providers
+            if p["circuit_open"]
+        )
+        
+        return JSONResponse(content={
+            "success": True,
+            "timestamp": datetime.now().isoformat(),
+            "circuit_breakers": circuit_breakers,
+            "summary": {
+                "total_providers": sum(len(p) for p in circuit_breakers.values()),
+                "circuit_breakers_open": total_open,
+                "circuit_breakers_closed": sum(len(p) for p in circuit_breakers.values()) - total_open
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error getting circuit breaker status: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+@app.get("/api/system/providers/stats")
+async def get_provider_statistics():
+    """
+    Get detailed statistics for all providers
+    
+    Includes:
+    - Success/failure rates
+    - Response times
+    - Request counts
+    - Load distribution
+    """
+    try:
+        manager = get_enhanced_provider_manager()
+        health = manager.get_provider_health()
+        
+        stats_by_category = {}
+        for category, providers in health.items():
+            if category == "binance_dns" or not isinstance(providers, list):
+                continue
+            
+            stats_by_category[category] = {
+                "providers": providers,
+                "total_providers": len(providers),
+                "avg_success_rate": sum(
+                    float(p.get("success_rate", "0").rstrip("%"))
+                    for p in providers
+                ) / len(providers) if providers else 0
+            }
+        
+        return JSONResponse(content={
+            "success": True,
+            "timestamp": datetime.now().isoformat(),
+            "statistics": stats_by_category
+        })
+    except Exception as e:
+        logger.error(f"Error getting provider statistics: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+logger.info("=" * 70)
+logger.info("🔧 PHASE 2 COMPLETE: Intelligent Load Balancing & Monitoring")
+logger.info("   ✅ Binance DNS Failover (5 endpoints)")
+logger.info("   ✅ Enhanced Provider Manager (7 providers)")
+logger.info("   ✅ Circuit Breakers & Health Tracking")
+logger.info("   ✅ Provider Health Monitoring APIs")
+logger.info("=" * 70)
+
 # Add routers status endpoint
 @app.get("/api/routers")
 async def get_routers_status():
