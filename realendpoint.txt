@@ -1,0 +1,79 @@
+ل API برای کلاینت
+آدرس پایه:
+https://really-amin-datasourceforcryptocurrency-2.hf.space
+🔷 ۱. سرویس‌های سلامت و وضعیت
+Endpoint	Method	توضیح
+/api/health	GET	بررسی سلامت سرویس
+/api/status	GET	وضعیت کلی سیستم
+/api/routers	GET	وضعیت تمام روترهای بارگذاری شده
+import httpxBASE_URL = "https://really-amin-datasourceforcryptocurrency-2.hf.space"async def check_health():    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/health")        return response.json()        # خروجی: {"status": "healthy", "timestamp": "...", "service": "unified_query_service", "version": "1.0.0"}
+🔷 ۲. سرویس‌های قیمت و نرخ ارز
+Endpoint	Method	پارامترها	توضیح
+/api/service/rate	GET	pair (مثل BTC/USDT)	نرخ یک جفت ارز
+/api/service/rate/batch	GET	pairs (لیست جفت‌ها)	نرخ چند جفت ارز
+/api/coins/top	GET	limit (پیش‌فرض: 50)	لیست برترین ارزها
+/api/trending	GET	-	ارزهای ترند
+# دریافت نرخ یک ارزasync def get_rate(pair: str = "BTC/USDT"):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/service/rate", params={"pair": pair})        return response.json()# دریافت نرخ چند ارزasync def get_batch_rates(pairs: list = ["BTC/USDT", "ETH/USDT", "SOL/USDT"]):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/service/rate/batch", params={"pairs": ",".join(pairs)})        return response.json()# دریافت برترین ارزهاasync def get_top_coins(limit: int = 50):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/coins/top", params={"limit": limit})        return response.json()# دریافت ارزهای ترندasync def get_trending():    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/trending")        return response.json()
+🔷 ۳. سرویس‌های داده بازار
+Endpoint	Method	توضیح
+/api/market	GET	خلاصه کلی بازار
+/api/service/market-status	GET	وضعیت بازار
+/api/service/history	GET	داده‌های تاریخی
+# خلاصه بازارasync def get_market_overview():    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/market")        return response.json()        # خروجی: {"total_market_cap": ..., "btc_dominance": ..., "eth_dominance": ...}# داده تاریخیasync def get_history(symbol: str = "BTC", interval: str = "1h", limit: int = 100):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(            f"{BASE_URL}/api/service/history",            params={"symbol": symbol, "interval": interval, "limit": limit}        )        return response.json()
+🔷 ۴. سرویس‌های تحلیل احساسات
+Endpoint	Method	پارامترها	توضیح
+/api/sentiment/global	GET	timeframe (1D, 7D, 30D)	احساسات کلی بازار
+/api/sentiment/asset/{symbol}	GET	-	احساسات یک ارز
+/api/service/sentiment	POST	text, mode	تحلیل متن
+# احساسات کلی بازار (Fear & Greed Index)async def get_global_sentiment(timeframe: str = "1D"):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/sentiment/global", params={"timeframe": timeframe})        return response.json()        # خروجی: {"fear_greed_index": 65, "sentiment": "greed", "market_mood": "bullish", ...}# احساسات یک ارز خاصasync def get_asset_sentiment(symbol: str = "BTC"):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/sentiment/asset/{symbol}")        return response.json()# تحلیل احساسات متن (با مدل AI)async def analyze_sentiment(text: str, mode: str = "crypto"):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.post(            f"{BASE_URL}/api/service/sentiment",            json={"text": text, "mode": mode}        )        return response.json()
+🔷 ۵. سرویس‌های اخبار
+Endpoint	Method	پارامترها	توضیح
+/api/news	GET	limit (پیش‌فرض: 50)	آخرین اخبار
+/api/news/latest	GET	limit	آخرین اخبار کریپتو
+# دریافت اخبارasync def get_news(limit: int = 50):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/news", params={"limit": limit})        return response.json()        # خروجی: {"articles": [...], "total": 50, "timestamp": "..."}
+🔷 ۶. سرویس‌های مدل‌های AI
+Endpoint	Method	توضیح
+/api/models/list	GET	لیست مدل‌های موجود
+/api/models/status	GET	وضعیت مدل‌ها
+/api/models/health	GET	سلامت مدل‌ها
+/api/models/summary	GET	خلاصه کامل مدل‌ها
+/api/models/test	POST	تست یک مدل
+/api/models/reinitialize	POST	راه‌اندازی مجدد مدل‌ها
+# لیست مدل‌هاasync def get_models():    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/models/list")        return response.json()# وضعیت مدل‌هاasync def get_models_status():    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/models/status")        return response.json()# تست مدلasync def test_model():    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.post(f"{BASE_URL}/api/models/test")        return response.json()
+🔷 ۷. سرویس‌های تحلیل AI
+Endpoint	Method	پارامترها	توضیح
+/api/ai/signals	GET	symbol	سیگنال‌های معاملاتی
+/api/ai/decision	POST	symbol, horizon, risk_tolerance	تصمیم‌گیری AI
+# دریافت سیگنال‌های AIasync def get_ai_signals(symbol: str = "BTC"):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/ai/signals", params={"symbol": symbol})        return response.json()# تصمیم‌گیری AIasync def get_ai_decision(symbol: str, horizon: str = "swing", risk_tolerance: str = "moderate"):    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.post(            f"{BASE_URL}/api/ai/decision",            json={                "symbol": symbol,                "horizon": horizon,  # "scalp", "swing", "position"                "risk_tolerance": risk_tolerance  # "conservative", "moderate", "aggressive"            }        )        return response.json()        # خروجی: {"decision": "BUY", "confidence": 0.85, "summary": "...", "signals": [...]}
+🔷 ۸. سرویس‌های منابع و Provider ها
+Endpoint	Method	توضیح
+/api/resources	GET	آمار منابع
+/api/resources/summary	GET	خلاصه منابع
+/api/resources/categories	GET	دسته‌بندی منابع
+/api/resources/category/{name}	GET	منابع یک دسته
+/api/providers	GET	لیست Provider ها
+# لیست منابعasync def get_resources():    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/resources/summary")        return response.json()# لیست Provider هاasync def get_providers():    async with httpx.AsyncClient(timeout=30.0) as client:        response = await client.get(f"{BASE_URL}/api/providers")        return response.json()
+📦 کلاس کامل کلاینت Python
+"""کلاینت کامل برای استفاده از سرویس HuggingFace Spaceبدون نیاز به WebSocket - فقط REST API"""import httpxfrom typing import Optional, List, Dict, Anyfrom datetime import datetimeclass CryptoDataClient:    """کلاینت برای دسترسی به سرویس‌های کریپتو"""        def __init__(self, base_url: str = "https://really-amin-datasourceforcryptocurrency-2.hf.space"):        self.base_url = base_url        self.timeout = 30.0        async def _get(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:        """درخواست GET"""        async with httpx.AsyncClient(timeout=self.timeout) as client:            response = await client.get(f"{self.base_url}{endpoint}", params=params)            response.raise_for_status()            return response.json()        async def _post(self, endpoint: str, data: Optional[Dict] = None) -> Dict[str, Any]:        """درخواست POST"""        async with httpx.AsyncClient(timeout=self.timeout) as client:            response = await client.post(f"{self.base_url}{endpoint}", json=data)            response.raise_for_status()            return response.json()        # ============ سلامت و وضعیت ============    async def health(self) -> Dict:        """بررسی سلامت سرویس"""        return await self._get("/api/health")        async def status(self) -> Dict:        """وضعیت سیستم"""        return await self._get("/api/status")        # ============ قیمت و نرخ ============    async def get_rate(self, pair: str = "BTC/USDT") -> Dict:        """دریافت نرخ یک جفت ارز"""        return await self._get("/api/service/rate", {"pair": pair})        async def get_batch_rates(self, pairs: List[str]) -> Dict:        """دریافت نرخ چند ارز"""        return await self._get("/api/service/rate/batch", {"pairs": ",".join(pairs)})        async def get_top_coins(self, limit: int = 50) -> Dict:        """برترین ارزها"""        return await self._get("/api/coins/top", {"limit": limit})        async def get_trending(self) -> Dict:        """ارزهای ترند"""        return await self._get("/api/trending")        # ============ داده بازار ============    async def get_market(self) -> Dict:        """خلاصه بازار"""        return await self._get("/api/market")        async def get_history(self, symbol: str, interval: str = "1h", limit: int = 100) -> Dict:        """داده تاریخی"""        return await self._get("/api/service/history", {            "symbol": symbol,            "interval": interval,            "limit": limit        })        # ============ احساسات ============    async def get_global_sentiment(self, timeframe: str = "1D") -> Dict:        """احساسات کلی بازار"""        return await self._get("/api/sentiment/global", {"timeframe": timeframe})        async def get_asset_sentiment(self, symbol: str) -> Dict:        """احساسات یک ارز"""        return await self._get(f"/api/sentiment/asset/{symbol}")        async def analyze_text(self, text: str, mode: str = "crypto") -> Dict:        """تحلیل احساسات متن"""        return await self._post("/api/service/sentiment", {"text": text, "mode": mode})        # ============ اخبار ============    async def get_news(self, limit: int = 50) -> Dict:        """آخرین اخبار"""        return await self._get("/api/news", {"limit": limit})        # ============ مدل‌های AI ============    async def get_models(self) -> Dict:        """لیست مدل‌ها"""        return await self._get("/api/models/list")        async def get_models_summary(self) -> Dict:        """خلاصه مدل‌ها"""        return await self._get("/api/models/summary")        # ============ سیگنال‌های AI ============    async def get_signals(self, symbol: str = "BTC") -> Dict:        """سیگنال‌های معاملاتی"""        return await self._get("/api/ai/signals", {"symbol": symbol})        async def get_decision(self, symbol: str, horizon: str = "swing",                           risk_tolerance: str = "moderate") -> Dict:        """تصمیم‌گیری AI"""        return await self._post("/api/ai/decision", {            "symbol": symbol,            "horizon": horizon,            "risk_tolerance": risk_tolerance        })        # ============ منابع ============    async def get_resources(self) -> Dict:        """آمار منابع"""        return await self._get("/api/resources/summary")        async def get_providers(self) -> Dict:        """لیست Provider ها"""        return await self._get("/api/providers")# ============ نمونه استفاده ============async def main():    client = CryptoDataClient()        # بررسی سلامت    health = await client.health()    print(f"سلامت سرویس: {health['status']}")        # دریافت قیمت بیت‌کوین    btc_rate = await client.get_rate("BTC/USDT")    print(f"قیمت BTC: {btc_rate}")        # دریافت احساسات بازار    sentiment = await client.get_global_sentiment()    print(f"شاخص ترس و طمع: {sentiment['fear_greed_index']}")        # دریافت سیگنال AI    signals = await client.get_signals("BTC")    print(f"سیگنال‌ها: {signals['signals']}")        # تحلیل متن    analysis = await client.analyze_text("Bitcoin price is surging to new highs!")    print(f"احساسات: {analysis}")if __name__ == "__main__":    import asyncio    asyncio.run(main())
+📋 جدول خلاصه همه Endpoint ها
+شماره	Endpoint	Method	کاربرد
+1	/api/health	GET	سلامت
+2	/api/status	GET	وضعیت
+3	/api/routers	GET	روترها
+4	/api/service/rate	GET	نرخ ارز
+5	/api/service/rate/batch	GET	نرخ دسته‌ای
+6	/api/coins/top	GET	برترین ارزها
+7	/api/trending	GET	ترند
+8	/api/market	GET	بازار
+9	/api/service/history	GET	تاریخی
+10	/api/sentiment/global	GET	احساسات کلی
+11	/api/sentiment/asset/{symbol}	GET	احساسات ارز
+12	/api/service/sentiment	POST	تحلیل متن
+13	/api/news	GET	اخبار
+14	/api/models/list	GET	مدل‌ها
+15	/api/models/summary	GET	خلاصه مدل‌ها
+16	/api/ai/signals	GET	سیگنال
+17	/api/ai/decision	POST	تصمیم AI
+18	/api/resources/summary	GET	منابع
+19	/api/providers	GET	Provider ها
+این کلاینت به شما امکان می‌دهد از تمام سرویس‌ها بدون WebSocket استفاده کنید! 🚀
