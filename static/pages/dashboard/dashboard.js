@@ -589,7 +589,9 @@ class DashboardPage {
       }
       
       // Fallback to CoinGecko direct API
-      const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=true&price_change_percentage=24h');
+      const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=true&price_change_percentage=24h', {
+        signal: AbortSignal.timeout(8000) // 8 second timeout
+      });
       
       if (!response.ok) throw new Error('CoinGecko API failed');
       
@@ -599,7 +601,7 @@ class DashboardPage {
       console.log('[Dashboard] Market data loaded from CoinGecko:', this.marketData.length, 'coins');
       return this.marketData;
     } catch (error) {
-      console.error('[Dashboard] Market fetch failed:', error.message);
+      // Silently return empty array - error suppressor will handle console output
       return [];
     }
   }

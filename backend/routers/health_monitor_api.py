@@ -75,23 +75,26 @@ SERVICES_CONFIG = {
     "huggingface": {
         "name": "HuggingFace Space",
         "category": "Internal",
-        "endpoint": f"{get_base_url()}/api/health/self",
+        "endpoint": "/api/health/self",
         "timeout": 3,
-        "sub_services": ["api", "websocket", "database"]
+        "sub_services": ["api", "websocket", "database"],
+        "internal": True
     },
     "backend_indicators": {
         "name": "Technical Indicators",
         "category": "Internal",
-        "endpoint": f"{get_base_url()}/api/indicators/services",
+        "endpoint": "/api/indicators/services",
         "timeout": 3,
-        "sub_services": ["rsi", "macd", "bollinger_bands", "comprehensive"]
+        "sub_services": ["rsi", "macd", "bollinger_bands", "comprehensive"],
+        "internal": True
     },
     "backend_market": {
         "name": "Market Data API",
         "category": "Internal",
-        "endpoint": f"{get_base_url()}/api/market/crypto/list",
+        "endpoint": "/api/market/crypto/list",
         "timeout": 3,
-        "sub_services": ["prices", "ohlcv", "tickers"]
+        "sub_services": ["prices", "ohlcv", "tickers"],
+        "internal": True
     }
 }
 
@@ -113,9 +116,15 @@ async def check_service_health(service_id: str, config: Dict[str, Any]) -> Servi
     start_time = time.time()
     
     try:
+        # Build URL for internal services
+        endpoint = config["endpoint"]
+        if config.get("internal", False):
+            base_url = get_base_url()
+            endpoint = f"{base_url}{endpoint}" if not endpoint.startswith("http") else endpoint
+        
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                config["endpoint"],
+                endpoint,
                 timeout=config.get("timeout", 5),
                 follow_redirects=True
             )
