@@ -689,7 +689,7 @@ def schedule_data_collection():
     Schedule periodic data collection using threading.Timer
     Runs collection tasks in background at configured intervals
     """
-    global _is_collecting, _collection_timers
+    global _is_collecting
 
     if _is_collecting:
         logger.warning("Data collection already running")
@@ -767,7 +767,7 @@ def schedule_data_collection():
 
 def stop_scheduled_collection():
     """Stop all scheduled collection tasks"""
-    global _is_collecting, _collection_timers
+    global _is_collecting
 
     logger.info("Stopping scheduled data collection...")
     _is_collecting = False

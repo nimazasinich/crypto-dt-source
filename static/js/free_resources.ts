@@ -66,44 +66,44 @@ export interface APIResource {
 export const API_KEYS = {
   // Block Explorers
   etherscan: {
-    key: "SZHYFZK2RR8H9TIMJBVW54V4H81K2Z2KR2",
-    backupKey: "T6IR8VJHX2NE6ZJW2S3FDVN1TYG4PYYI45"
+    key: "",
+    backupKey: ""
   },
   bscscan: {
-    key: "K62RKHGXTDCG53RU4MCG6XABIMJKTN19IT"
+    key: ""
   },
   tronscan: {
-    key: "7ae72726-bffe-4e74-9c33-97b761eeea21"
+    key: ""
   },
   
   // Market Data
   coinmarketcap: {
     keys: [
-      "a35ffaec-c66c-4f16-81e3-41a717e4822f",
-      "04cf4b5b-9868-465c-8ba0-9f2e78c92eb1"
+      "",
+      ""
     ]
   },
   
   // News
   newsapi: {
-    key: "968a5e25552b4cb5ba3280361d8444ab"
+    key: ""
   },
   
   // Sentiment
   sentimentApi: {
-    key: "vltdvdho63uqnjgf_fq75qbks72e3wfmx"
+    key: ""
   },
   
   // AI Models
   huggingface: {
-    key: "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"
+    key: ""
   },
   
   // Notifications
   telegram: {
-    enabled: true,
-    botToken: "7437859619:AAGeGG3ZkLM0OVaw-Exx1uMRE55JtBCZZCY",
-    chatId: "-1002228627548"
+    enabled: false,
+    botToken: "",
+    chatId: ""
   }
 };
 

@@ -5,6 +5,7 @@
 class AIAnalystPage {
   constructor() {
     this.currentSymbol = 'BTC';
+    // Keep timeframe for OHLC charting, map from horizon
     this.currentTimeframe = '1h';
   }
 
@@ -171,6 +172,35 @@ class AIAnalystPage {
   }
 
   /**
+   * Read current UI settings (horizon/risk/context/model)
+   */
+  readUiParams() {
+    const horizon = (document.getElementById('horizon-select')?.value || 'medium').toLowerCase();
+    const risk = (document.getElementById('risk-select')?.value || 'medium').toLowerCase();
+    const context = (document.getElementById('context-input')?.value || '').trim();
+    const model = (document.getElementById('model-select')?.value || 'default').trim();
+
+    // Map horizon to server schema + a reasonable chart timeframe
+    const horizonMap = {
+      short: { horizon: 'daytrade', timeframe: '1h' },
+      medium: { horizon: 'swing', timeframe: '4h' },
+      long: { horizon: 'position', timeframe: '1d' },
+    };
+    const mapped = horizonMap[horizon] || horizonMap.medium;
+
+    // Map risk to server schema
+    const riskMap = { low: 'conservative', medium: 'moderate', high: 'aggressive' };
+
+    return {
+      horizon: mapped.horizon,
+      risk_tolerance: riskMap[risk] || 'moderate',
+      context: context || undefined,
+      model: model && model !== 'default' ? model : undefined,
+      timeframe: mapped.timeframe,
+    };
+  }
+
+  /**
    * Quick analyze for a specific symbol
    * @param {string} symbol - Cryptocurrency symbol
    */
@@ -202,6 +232,8 @@ class AIAnalystPage {
 
     try {
       let data = null;
+      const ui = this.readUiParams();
+      this.currentTimeframe = ui.timeframe || this.currentTimeframe || '1h';
 
       try {
         const response = await fetch('/api/ai/decision', {
@@ -209,7 +241,10 @@ class AIAnalystPage {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             symbol: this.currentSymbol || 'BTC',
-            timeframe: this.currentTimeframe || '1h'
+            horizon: ui.horizon,
+            risk_tolerance: ui.risk_tolerance,
+            context: ui.context,
+            model: ui.model
           }),
           signal: AbortSignal.timeout(30000)
         });
@@ -218,7 +253,24 @@ class AIAnalystPage {
           const contentType = response.headers.get('content-type');
           if (contentType && contentType.includes('application/json')) {
             data = await response.json();
+            // Normalize to UI expectations
+            if (!data.reasoning && data.summary) data.reasoning = data.summary;
+            if (Array.isArray(data.signals)) {
+              // Convert list of signals to a compact object if possible
+              const asObj = {};
+              data.signals.forEach((s) => {
+                if (s && typeof s === 'object') {
+                  const t = (s.type || s.kind || '').toString().toLowerCase();
+                  const txt = (s.text || s.message || '').toString();
+                  if (t && txt) asObj[t] = txt;
+                }
+              });
+              data.signals = { ...asObj, trend: asObj.trend || 'neutral' };
+            }
           }
+        } else {
+          const msg = await response.text().catch(() => '');
+          console.warn('[AIAnalyst] /api/ai/decision returned non-OK:', response.status, msg.slice(0, 200));
         }
       } catch (e) {
         console.warn('[AIAnalyst] /api/ai/decision unavailable, using fallback', e);
@@ -287,17 +339,10 @@ class AIAnalystPage {
       // Fetch OHLCV data for chart (REAL DATA) - Use unified API
       let ohlcv = [];
       try {
-        // Try unified OHLC API first
-        let res = await fetch(`/api/market/ohlc?symbol=${encodeURIComponent(this.currentSymbol)}&interval=${encodeURIComponent(this.currentTimeframe)}&limit=100`, {
+        // Primary OHLC endpoint in this app returns { ohlc: [...] }
+        let res = await fetch(`/api/market/ohlc?symbol=${encodeURIComponent(this.currentSymbol)}&timeframe=${encodeURIComponent(this.currentTimeframe)}`, {
           signal: AbortSignal.timeout(10000)
         });
-        
-        // Fallback to legacy endpoint if unified API fails
-        if (!res.ok) {
-          res = await fetch(`/api/ohlcv?symbol=${encodeURIComponent(this.currentSymbol)}&timeframe=${encodeURIComponent(this.currentTimeframe)}&limit=100`, {
-            signal: AbortSignal.timeout(10000)
-          });
-        }
         
         if (res.ok) {
           const json = await res.json();
@@ -305,22 +350,12 @@ class AIAnalystPage {
           // Handle error responses
           if (json.success === false || json.error === true) {
             console.warn('[AIAnalyst] OHLCV error:', json.message || 'Unknown error');
-          } else if (json.success && Array.isArray(json.data)) {
-            // Validate data structure
-            if (json.data.length > 0) {
-              const firstCandle = json.data[0];
-              if (firstCandle && (firstCandle.o !== undefined || firstCandle.open !== undefined)) {
-                ohlcv = json.data;
-              } else {
-                console.warn('[AIAnalyst] Invalid OHLCV data structure');
-              }
-            }
+          } else if (Array.isArray(json.ohlc)) {
+            // market_api.py response format
+            ohlcv = json.ohlc;
           } else if (Array.isArray(json.data)) {
-            // Fallback: data might be directly in response
+            // other routers might use {data:[...]}
             ohlcv = json.data;
-          } else if (Array.isArray(json)) {
-            // Direct array response
-            ohlcv = json;
           }
         } else {
           console.warn(`[AIAnalyst] OHLCV request failed: HTTP ${res.status}`);

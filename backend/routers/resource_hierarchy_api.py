@@ -89,8 +89,8 @@ async def get_hierarchy_overview():
                 },
                 "infrastructure": {
                     "count": resource_counts["infrastructure"],
-                    "providers": ["Cloudflare DoH (NEW!)", "Google DoH (NEW!)", "ProxyScrape (NEW!)"],
-                    "purpose": "DNS resolution & Proxy services for bypassing filters"
+                    "providers": ["Cloudflare DoH (NEW!)", "Google DoH (NEW!)"],
+                    "purpose": "DNS resolution services"
                 }
             },
             "by_priority": {

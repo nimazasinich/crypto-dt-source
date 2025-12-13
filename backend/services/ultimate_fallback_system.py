@@ -932,7 +932,7 @@ class UltimateFallbackSystem:
                 base_url="https://api-inference.huggingface.co/models/ElKulako/cryptobert",
                 category="hf_models", priority=Priority.CRITICAL,
                 auth_type="apiKeyHeaderOptional",
-                api_key="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",
+                api_key="",
                 api_key_env="HF_TOKEN",
                 header_name="Authorization",
                 features=["crypto-sentiment", "bullish-bearish-neutral"]
@@ -942,7 +942,7 @@ class UltimateFallbackSystem:
                 base_url="https://api-inference.huggingface.co/models/kk08/CryptoBERT",
                 category="hf_models", priority=Priority.CRITICAL,
                 auth_type="apiKeyHeaderOptional",
-                api_key="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",
+                api_key="",
                 api_key_env="HF_TOKEN",
                 header_name="Authorization",
                 features=["crypto-sentiment"]
@@ -1143,45 +1143,10 @@ class UltimateFallbackSystem:
         ]
         
         # ═══════════════════════════════════════════════════════════════
-        # CORS PROXIES - 7 منبع
+        # CORS PROXIES
         # ═══════════════════════════════════════════════════════════════
-        self.resources['cors_proxies'] = [
-            Resource(
-                id="allorigins", name="AllOrigins",
-                base_url="https://api.allorigins.win/get",
-                category="cors_proxies", priority=Priority.CRITICAL,
-                notes="No limit, JSON/JSONP"
-            ),
-            Resource(
-                id="cors_sh", name="CORS.SH",
-                base_url="https://proxy.cors.sh",
-                category="cors_proxies", priority=Priority.HIGH,
-                notes="No rate limit"
-            ),
-            Resource(
-                id="corsfix", name="Corsfix",
-                base_url="https://proxy.corsfix.com",
-                category="cors_proxies", priority=Priority.HIGH,
-                rate_limit="60 req/min"
-            ),
-            Resource(
-                id="codetabs", name="CodeTabs",
-                base_url="https://api.codetabs.com/v1/proxy",
-                category="cors_proxies", priority=Priority.MEDIUM
-            ),
-            Resource(
-                id="thingproxy", name="ThingProxy",
-                base_url="https://thingproxy.freeboard.io/fetch",
-                category="cors_proxies", priority=Priority.MEDIUM,
-                rate_limit="10 req/sec, 100K chars"
-            ),
-            Resource(
-                id="crossorigin", name="Crossorigin.me",
-                base_url="https://crossorigin.me",
-                category="cors_proxies", priority=Priority.LOW,
-                notes="GET only, 2MB limit"
-            ),
-        ]
+        # Disabled: avoid exposing/depending on third-party proxy services in Spaces.
+        self.resources['cors_proxies'] = []
     
     def get_resources_by_category(
         self, 
@@ -1410,7 +1375,7 @@ class UltimateFallbackSystem:
                 for var in vars_list:
                     # کلیدهای موجود را تنظیم می‌کنیم
                     if var == "HF_TOKEN":
-                        lines.append(f"{var}=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")
+                        lines.append(f"{var}=<set in environment>")
                     elif var == "COINMARKETCAP_KEY_1":
                         lines.append(f"{var}=04cf4b5b-9868-465c-8ba0-9f2e78c92eb1")
                     elif var == "COINMARKETCAP_KEY_2":

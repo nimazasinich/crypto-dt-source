@@ -102,29 +102,90 @@ class HFDatasetAggregator:
                 return cached_data[:limit]
         
         # Download CSV from HuggingFace
-        csv_filename = f"{symbol}_{timeframe}.csv"
-        csv_url = f"{self.linxy_base_url}/{csv_filename}"
-        
+        # NOTE: linxy/CryptoCoin uses filenames like BTCUSDT_1h.csv (not BTC_1h.csv)
+        candidate_files = [
+            f"{symbol}USDT_{timeframe}.csv",
+            f"{symbol}_{timeframe}.csv",  # legacy fallback
+        ]
+
+        response = None
+        last_err = None
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            response = await client.get(csv_url)
-            response.raise_for_status()
+            for csv_filename in candidate_files:
+                csv_url = f"{self.linxy_base_url}/{csv_filename}"
+                try:
+                    # These CSVs can be large (10MB+). Prefer a tail range request.
+                    # We only need the most recent candles.
+                    resp = await client.get(
+                        csv_url,
+                        follow_redirects=True,
+                        headers={"Range": "bytes=-1500000"},
+                    )
+                    resp.raise_for_status()
+                    response = resp
+                    break
+                except Exception as e:
+                    last_err = e
+                    continue
+
+        if response is None:
+            raise HTTPException(status_code=404, detail=f"linxy/CryptoCoin CSV not found for {symbol}/{timeframe}: {last_err}")
             
             # Parse CSV
+            # Note: with Range requests we likely won't have the header row.
             csv_content = response.text
-            csv_reader = csv.DictReader(io.StringIO(csv_content))
+            lines = csv_content.splitlines()
+            if not lines:
+                raise HTTPException(status_code=404, detail=f"Empty CSV content for {symbol}/{timeframe}")
+
+            # Drop first line if it's a partial row (common with Range tail)
+            if lines and ("timestamp" not in lines[0].lower()):
+                lines = lines[1:]
+
+            # If header present, use DictReader; otherwise use fixed fieldnames.
+            if lines and ("timestamp" in lines[0].lower() and "open" in lines[0].lower()):
+                csv_reader = csv.DictReader(io.StringIO("\n".join(lines)))
+            else:
+                csv_reader = csv.DictReader(
+                    io.StringIO("\n".join(lines)),
+                    fieldnames=["timestamp", "open", "high", "low", "close", "volume"],
+                )
             
             ohlcv_data = []
             for row in csv_reader:
                 try:
-                    # linxy/CryptoCoin CSV format:
-                    # timestamp, open, high, low, close, volume
+                    # linxy/CryptoCoin CSV formats vary.
+                    # Common format is Binance-style export with:
+                    # "Open time,open,high,low,close,volume,Close time,..."
+                    ts_raw = (
+                        row.get("timestamp")
+                        or row.get("Open time")
+                        or row.get("open_time")
+                        or row.get("time")
+                        or row.get("date")
+                    )
+                    if ts_raw is None:
+                        continue
+
+                    # Parse timestamp (supports int, float, or datetime strings)
+                    ts_val: int
+                    try:
+                        ts_val = int(float(ts_raw))
+                    except Exception:
+                        # Example: "2017-08-17 04:00:00"
+                        try:
+                            dt = datetime.fromisoformat(str(ts_raw).strip())
+                        except Exception:
+                            dt = datetime.strptime(str(ts_raw).strip(), "%Y-%m-%d %H:%M:%S")
+                        ts_val = int(dt.timestamp() * 1000)
+
                     ohlcv_data.append({
-                        "timestamp": int(row.get("timestamp", 0)),
-                        "open": float(row.get("open", 0)),
-                        "high": float(row.get("high", 0)),
-                        "low": float(row.get("low", 0)),
-                        "close": float(row.get("close", 0)),
-                        "volume": float(row.get("volume", 0))
+                        "timestamp": ts_val,
+                        "open": float(row.get("open", 0) or 0),
+                        "high": float(row.get("high", 0) or 0),
+                        "low": float(row.get("low", 0) or 0),
+                        "close": float(row.get("close", 0) or 0),
+                        "volume": float(row.get("volume", 0) or 0)
                     })
                 except (ValueError, KeyError) as e:
                     logger.warning(f"⚠️ Failed to parse row: {e}")
@@ -169,12 +230,25 @@ class HFDatasetAggregator:
                 csv_url = f"{base_url}/{csv_filename}"
                 
                 async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    response = await client.get(csv_url)
+                    response = await client.get(
+                        csv_url,
+                        follow_redirects=True,
+                        headers={"Range": "bytes=-1500000"},
+                    )
                     response.raise_for_status()
                     
                     # Parse CSV
                     csv_content = response.text
-                    csv_reader = csv.DictReader(io.StringIO(csv_content))
+                    lines = csv_content.splitlines()
+                    if lines and ("timestamp" not in lines[0].lower()):
+                        lines = lines[1:]
+                    if lines and ("timestamp" in lines[0].lower() and "open" in lines[0].lower()):
+                        csv_reader = csv.DictReader(io.StringIO("\n".join(lines)))
+                    else:
+                        csv_reader = csv.DictReader(
+                            io.StringIO("\n".join(lines)),
+                            fieldnames=["timestamp", "open", "high", "low", "close", "volume"],
+                        )
                     
                     ohlcv_data = []
                     for row in csv_reader:
@@ -188,15 +262,29 @@ class HFDatasetAggregator:
                                     break
                             
                             if not timestamp_key:
-                                continue
+                                # Try Binance-style export
+                                if "Open time" in row:
+                                    timestamp_key = "Open time"
+                                else:
+                                    continue
                             
+                            ts_raw = row.get(timestamp_key, 0)
+                            try:
+                                ts_val = int(float(ts_raw))
+                            except Exception:
+                                try:
+                                    dt = datetime.fromisoformat(str(ts_raw).strip())
+                                except Exception:
+                                    dt = datetime.strptime(str(ts_raw).strip(), "%Y-%m-%d %H:%M:%S")
+                                ts_val = int(dt.timestamp() * 1000)
+
                             ohlcv_data.append({
-                                "timestamp": int(float(row.get(timestamp_key, 0))),
-                                "open": float(row.get("open", 0)),
-                                "high": float(row.get("high", 0)),
-                                "low": float(row.get("low", 0)),
-                                "close": float(row.get("close", 0)),
-                                "volume": float(row.get("volume", 0))
+                                "timestamp": ts_val,
+                                "open": float(row.get("open", 0) or 0),
+                                "high": float(row.get("high", 0) or 0),
+                                "low": float(row.get("low", 0) or 0),
+                                "close": float(row.get("close", 0) or 0),
+                                "volume": float(row.get("volume", 0) or 0)
                             })
                         except (ValueError, KeyError) as e:
                             logger.warning(f"⚠️ Failed to parse row: {e}")
