@@ -328,16 +328,10 @@ async def rate_limit_middleware(request: Request, call_next):
             # Silently fail - don't break requests if monitoring fails
             pass
     
-    # Add Permissions-Policy header with only recognized features (no warnings)
-    # Only include well-recognized features that browsers support
-    # Removed: ambient-light-sensor, battery, vr, document-domain, etc. (these cause warnings)
+    # Add Permissions-Policy header with ONLY widely-supported features (no browser warnings)
+    # Standard features that all modern browsers recognize without warnings
     response.headers['Permissions-Policy'] = (
-        'accelerometer=(), autoplay=(), camera=(), '
-        'display-capture=(), encrypted-media=(), '
-        'fullscreen=(), geolocation=(), gyroscope=(), '
-        'magnetometer=(), microphone=(), midi=(), '
-        'payment=(), picture-in-picture=(), '
-        'sync-xhr=(), usb=(), web-share=()'
+        'camera=(), microphone=(), geolocation=()'
     )
     
     return response

@@ -1,20 +1,41 @@
 #!/usr/bin/env python3
 """
-Technical Indicators API Router
+Technical Indicators API Router (PRODUCTION SAFE)
 Provides API endpoints for calculating technical indicators on cryptocurrency data.
 Includes: Bollinger Bands, Stochastic RSI, ATR, SMA, EMA, MACD, RSI
+
+CRITICAL RULES:
+- HTTP 400 for insufficient data (NOT HTTP 500)
+- Strict minimum candle requirements enforced
+- NaN/Infinity values sanitized before response
+- Comprehensive logging for all operations
+- Never crash - always return valid JSON
 """
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import logging
-import numpy as np
+import math
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/indicators", tags=["Technical Indicators"])
+
+# ============================================================================
+# MINIMUM CANDLE REQUIREMENTS (MANDATORY)
+# ============================================================================
+MIN_CANDLES = {
+    "SMA": 20,
+    "EMA": 20,
+    "RSI": 15,
+    "ATR": 15,
+    "MACD": 35,
+    "STOCH_RSI": 50,
+    "BOLLINGER_BANDS": 20
+}
 
 
 # ============================================================================
@@ -122,6 +143,72 @@ class ComprehensiveIndicatorsResponse(BaseModel):
     rsi: RSIResponse
     overall_signal: str
     recommendation: str
+
+
+# ============================================================================
+# Helper Functions - Data Validation & Sanitization
+# ============================================================================
+
+def sanitize_value(value: Any) -> Optional[float]:
+    """
+    Sanitize a numeric value - remove NaN, Infinity, None
+    Returns None if value is invalid, otherwise returns the float value
+    """
+    if value is None:
+        return None
+    try:
+        val = float(value)
+        if math.isnan(val) or math.isinf(val):
+            return None
+        return val
+    except (ValueError, TypeError):
+        return None
+
+
+def sanitize_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Sanitize all numeric values in a dictionary
+    Replace NaN/Infinity with None or 0 depending on context
+    """
+    sanitized = {}
+    for key, value in data.items():
+        if isinstance(value, dict):
+            sanitized[key] = sanitize_dict(value)
+        elif isinstance(value, (int, float)):
+            clean_val = sanitize_value(value)
+            sanitized[key] = clean_val if clean_val is not None else 0
+        else:
+            sanitized[key] = value
+    return sanitized
+
+
+def validate_ohlcv_data(ohlcv: Optional[Dict[str, Any]], min_candles: int, symbol: str, indicator: str) -> tuple[bool, Optional[List[float]], Optional[str]]:
+    """
+    Validate OHLCV data and extract prices
+    
+    Returns:
+        (is_valid, prices, error_message)
+    """
+    if not ohlcv:
+        logger.warning(f"❌ {indicator} - {symbol}: No OHLCV data received")
+        return False, None, "No market data available"
+    
+    if "prices" not in ohlcv:
+        logger.warning(f"❌ {indicator} - {symbol}: OHLCV missing 'prices' key")
+        return False, None, "Invalid market data format"
+    
+    prices = [p[1] for p in ohlcv["prices"] if len(p) >= 2]
+    
+    if not prices:
+        logger.warning(f"❌ {indicator} - {symbol}: Empty price array")
+        return False, None, "No price data available"
+    
+    if len(prices) < min_candles:
+        logger.warning(f"❌ {indicator} - {symbol}: Insufficient candles ({len(prices)} < {min_candles} required)")
+        return False, None, f"Insufficient market data: need at least {min_candles} candles, got {len(prices)}"
+    
+    logger.info(f"✅ {indicator} - {symbol}: Validated {len(prices)} candles (required: {min_candles})")
+    return True, prices, None
 
 
 # ============================================================================
@@ -423,8 +510,31 @@ async def get_bollinger_bands(
     period: int = Query(default=20, description="Period for calculation"),
     std_dev: float = Query(default=2.0, description="Standard deviation multiplier")
 ):
-    """Calculate Bollinger Bands for a symbol"""
+    """Calculate Bollinger Bands for a symbol - PRODUCTION SAFE"""
+    indicator_name = "BOLLINGER_BANDS"
+    logger.info(f"📊 {indicator_name} - Endpoint called: symbol={symbol}, timeframe={timeframe}, period={period}, std_dev={std_dev}")
+    
     try:
+        # Validate parameters
+        if period < 1 or period > 100:
+            logger.warning(f"❌ {indicator_name} - Invalid period: {period}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": f"Invalid period: must be between 1 and 100, got {period}"
+                }
+            )
+        if std_dev <= 0 or std_dev > 5:
+            logger.warning(f"❌ {indicator_name} - Invalid std_dev: {std_dev}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": f"Invalid std_dev: must be between 0 and 5, got {std_dev}"
+                }
+            )
+        
         # Get OHLCV data from market API
         from backend.services.coingecko_client import coingecko_client
         
@@ -432,33 +542,53 @@ async def get_bollinger_bands(
         timeframe_days = {"1m": 1, "5m": 1, "15m": 1, "1h": 7, "4h": 30, "1d": 90}
         days = timeframe_days.get(timeframe, 7)
         
-        ohlcv = await coingecko_client.get_ohlcv(symbol, days=days)
+        try:
+            ohlcv = await coingecko_client.get_ohlcv(symbol, days=days)
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Failed to fetch OHLCV: {e}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "Unable to fetch market data for this symbol"
+                }
+            )
         
-        if not ohlcv or "prices" not in ohlcv:
-            # Return demo data if API fails
-            current_price = 67500 if symbol.upper() == "BTC" else 3400 if symbol.upper() == "ETH" else 100
-            return {
-                "success": True,
-                "symbol": symbol.upper(),
-                "timeframe": timeframe,
-                "indicator": "bollinger_bands",
-                "data": {
-                    "upper": round(current_price * 1.05, 2),
-                    "middle": current_price,
-                    "lower": round(current_price * 0.95, 2),
-                    "bandwidth": 10.0,
-                    "percent_b": 50.0
-                },
-                "signal": "neutral",
-                "description": "Price is within the bands - no extreme conditions detected",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "source": "fallback"
-            }
+        # Validate OHLCV data
+        min_required = MIN_CANDLES["BOLLINGER_BANDS"]
+        is_valid, prices, error_msg = validate_ohlcv_data(ohlcv, min_required, symbol, indicator_name)
         
-        prices = [p[1] for p in ohlcv["prices"]]
-        bb = calculate_bollinger_bands(prices, period, std_dev)
+        if not is_valid:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": error_msg,
+                    "symbol": symbol.upper(),
+                    "timeframe": timeframe,
+                    "indicator": "bollinger_bands",
+                    "data_points": 0
+                }
+            )
         
-        current_price = prices[-1] if prices else 0
+        # Calculate Bollinger Bands
+        try:
+            bb = calculate_bollinger_bands(prices, period, std_dev)
+            current_price = prices[-1] if prices else 0
+            
+            # Sanitize output
+            bb = sanitize_dict(bb)
+            current_price = sanitize_value(current_price) or 0
+            
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Calculation failed: {e}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": True,
+                    "message": "Internal indicator calculation error"
+                }
+            )
         
         # Determine signal
         if bb["percent_b"] > 95:
@@ -477,13 +607,17 @@ async def get_bollinger_bands(
             signal = "neutral"
             description = "Price within normal range - no extreme conditions"
         
+        logger.info(f"✅ {indicator_name} - Success: symbol={symbol}, percent_b={bb['percent_b']:.2f}, signal={signal}")
+        
         return {
             "success": True,
             "symbol": symbol.upper(),
             "timeframe": timeframe,
             "indicator": "bollinger_bands",
+            "value": bb,
             "data": bb,
             "current_price": round(current_price, 8),
+            "data_points": len(prices),
             "signal": signal,
             "description": description,
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -491,8 +625,14 @@ async def get_bollinger_bands(
         }
         
     except Exception as e:
-        logger.error(f"Bollinger Bands calculation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ {indicator_name} - Unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "Internal server error"
+            }
+        )
 
 
 @router.get("/stoch-rsi")
@@ -502,30 +642,82 @@ async def get_stoch_rsi(
     rsi_period: int = Query(default=14, description="RSI period"),
     stoch_period: int = Query(default=14, description="Stochastic period")
 ):
-    """Calculate Stochastic RSI for a symbol"""
+    """Calculate Stochastic RSI for a symbol - PRODUCTION SAFE"""
+    indicator_name = "STOCH_RSI"
+    logger.info(f"📊 {indicator_name} - Endpoint called: symbol={symbol}, timeframe={timeframe}, rsi_period={rsi_period}, stoch_period={stoch_period}")
+    
     try:
+        # Validate parameters
+        if rsi_period < 1 or rsi_period > 100:
+            logger.warning(f"❌ {indicator_name} - Invalid rsi_period: {rsi_period}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": f"Invalid rsi_period: must be between 1 and 100, got {rsi_period}"
+                }
+            )
+        if stoch_period < 1 or stoch_period > 100:
+            logger.warning(f"❌ {indicator_name} - Invalid stoch_period: {stoch_period}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": f"Invalid stoch_period: must be between 1 and 100, got {stoch_period}"
+                }
+            )
+        
+        # Fetch OHLCV data
         from backend.services.coingecko_client import coingecko_client
         
         timeframe_days = {"1m": 1, "5m": 1, "15m": 1, "1h": 7, "4h": 30, "1d": 90}
         days = timeframe_days.get(timeframe, 7)
         
-        ohlcv = await coingecko_client.get_ohlcv(symbol, days=days)
+        try:
+            ohlcv = await coingecko_client.get_ohlcv(symbol, days=days)
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Failed to fetch OHLCV: {e}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "Unable to fetch market data for this symbol"
+                }
+            )
         
-        if not ohlcv or "prices" not in ohlcv:
-            return {
-                "success": True,
-                "symbol": symbol.upper(),
-                "timeframe": timeframe,
-                "indicator": "stoch_rsi",
-                "data": {"value": 50.0, "k_line": 50.0, "d_line": 50.0},
-                "signal": "neutral",
-                "description": "Neutral momentum conditions",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "source": "fallback"
-            }
+        # Validate OHLCV data
+        min_required = MIN_CANDLES["STOCH_RSI"]
+        is_valid, prices, error_msg = validate_ohlcv_data(ohlcv, min_required, symbol, indicator_name)
         
-        prices = [p[1] for p in ohlcv["prices"]]
-        stoch = calculate_stoch_rsi(prices, rsi_period, stoch_period)
+        if not is_valid:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": error_msg,
+                    "symbol": symbol.upper(),
+                    "timeframe": timeframe,
+                    "indicator": "stoch_rsi",
+                    "data_points": 0
+                }
+            )
+        
+        # Calculate Stochastic RSI
+        try:
+            stoch = calculate_stoch_rsi(prices, rsi_period, stoch_period)
+            
+            # Sanitize output
+            stoch = sanitize_dict(stoch)
+            
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Calculation failed: {e}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": True,
+                    "message": "Internal indicator calculation error"
+                }
+            )
         
         # Determine signal
         if stoch["value"] > 80:
@@ -544,12 +736,16 @@ async def get_stoch_rsi(
             signal = "neutral"
             description = "Normal momentum range - no extreme conditions"
         
+        logger.info(f"✅ {indicator_name} - Success: symbol={symbol}, value={stoch['value']:.2f}, signal={signal}")
+        
         return {
             "success": True,
             "symbol": symbol.upper(),
             "timeframe": timeframe,
             "indicator": "stoch_rsi",
+            "value": stoch,
             "data": stoch,
+            "data_points": len(prices),
             "signal": signal,
             "description": description,
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -557,8 +753,14 @@ async def get_stoch_rsi(
         }
         
     except Exception as e:
-        logger.error(f"Stochastic RSI calculation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ {indicator_name} - Unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "Internal server error"
+            }
+        )
 
 
 @router.get("/atr")
@@ -567,42 +769,81 @@ async def get_atr(
     timeframe: str = Query(default="1h", description="Timeframe"),
     period: int = Query(default=14, description="ATR period")
 ):
-    """Calculate Average True Range for a symbol"""
+    """Calculate Average True Range for a symbol - PRODUCTION SAFE"""
+    indicator_name = "ATR"
+    logger.info(f"📊 {indicator_name} - Endpoint called: symbol={symbol}, timeframe={timeframe}, period={period}")
+    
     try:
+        # Validate parameters
+        if period < 1 or period > 100:
+            logger.warning(f"❌ {indicator_name} - Invalid period: {period}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": f"Invalid period: must be between 1 and 100, got {period}"
+                }
+            )
+        
+        # Fetch OHLCV data
         from backend.services.coingecko_client import coingecko_client
         
         timeframe_days = {"1m": 1, "5m": 1, "15m": 1, "1h": 7, "4h": 30, "1d": 90}
         days = timeframe_days.get(timeframe, 7)
         
-        ohlcv = await coingecko_client.get_ohlcv(symbol, days=days)
+        try:
+            ohlcv = await coingecko_client.get_ohlcv(symbol, days=days)
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Failed to fetch OHLCV: {e}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "Unable to fetch market data for this symbol"
+                }
+            )
         
-        if not ohlcv or "prices" not in ohlcv:
-            current_price = 67500 if symbol.upper() == "BTC" else 3400 if symbol.upper() == "ETH" else 100
-            atr_value = current_price * 0.02  # 2% default volatility
-            return {
-                "success": True,
-                "symbol": symbol.upper(),
-                "timeframe": timeframe,
-                "indicator": "atr",
-                "data": {
-                    "value": round(atr_value, 2),
-                    "percent": 2.0
-                },
-                "volatility_level": "medium",
-                "signal": "neutral",
-                "description": "Normal market volatility",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "source": "fallback"
-            }
+        # Validate OHLCV data
+        min_required = MIN_CANDLES["ATR"]
+        is_valid, prices, error_msg = validate_ohlcv_data(ohlcv, min_required, symbol, indicator_name)
         
-        prices = [p[1] for p in ohlcv["prices"]]
-        # For ATR we need H/L/C - use price approximation
-        highs = [p * 1.005 for p in prices]  # Approximate
-        lows = [p * 0.995 for p in prices]
+        if not is_valid:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": error_msg,
+                    "symbol": symbol.upper(),
+                    "timeframe": timeframe,
+                    "indicator": "atr",
+                    "data_points": 0
+                }
+            )
         
-        atr_value = calculate_atr(highs, lows, prices, period)
-        current_price = prices[-1] if prices else 1
-        atr_percent = (atr_value / current_price) * 100 if current_price > 0 else 0
+        # Calculate ATR
+        try:
+            # For ATR we need H/L/C - use price approximation
+            highs = [p * 1.005 for p in prices]  # Approximate
+            lows = [p * 0.995 for p in prices]
+            
+            atr_value = calculate_atr(highs, lows, prices, period)
+            current_price = prices[-1] if prices else 1
+            atr_percent = (atr_value / current_price) * 100 if current_price > 0 else 0
+            
+            # Sanitize
+            atr_value = sanitize_value(atr_value) or 0
+            atr_percent = sanitize_value(atr_percent) or 0
+            current_price = sanitize_value(current_price) or 0
+            
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Calculation failed: {e}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": True,
+                    "message": "Internal indicator calculation error"
+                }
+            )
         
         # Determine volatility level
         if atr_percent > 5:
@@ -622,16 +863,23 @@ async def get_atr(
             signal = "breakout_watch"
             description = "Low volatility - potential breakout forming"
         
+        logger.info(f"✅ {indicator_name} - Success: symbol={symbol}, value={atr_value:.2f}, volatility={volatility_level}")
+        
         return {
             "success": True,
             "symbol": symbol.upper(),
             "timeframe": timeframe,
             "indicator": "atr",
+            "value": {
+                "value": round(atr_value, 8),
+                "percent": round(atr_percent, 2)
+            },
             "data": {
                 "value": round(atr_value, 8),
                 "percent": round(atr_percent, 2)
             },
             "current_price": round(current_price, 8),
+            "data_points": len(prices),
             "volatility_level": volatility_level,
             "signal": signal,
             "description": description,
@@ -640,8 +888,14 @@ async def get_atr(
         }
         
     except Exception as e:
-        logger.error(f"ATR calculation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ {indicator_name} - Unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "Internal server error"
+            }
+        )
 
 
 @router.get("/sma")
@@ -649,41 +903,67 @@ async def get_sma(
     symbol: str = Query(default="BTC", description="Cryptocurrency symbol"),
     timeframe: str = Query(default="1h", description="Timeframe")
 ):
-    """Calculate Simple Moving Averages (20, 50, 200) for a symbol"""
+    """Calculate Simple Moving Averages (20, 50, 200) for a symbol - PRODUCTION SAFE"""
+    indicator_name = "SMA"
+    logger.info(f"📊 {indicator_name} - Endpoint called: symbol={symbol}, timeframe={timeframe}")
+    
     try:
+        # Fetch OHLCV data
         from backend.services.coingecko_client import coingecko_client
         
-        # Need more data for SMA 200
-        ohlcv = await coingecko_client.get_ohlcv(symbol, days=365)
+        try:
+            # Need more data for SMA 200
+            ohlcv = await coingecko_client.get_ohlcv(symbol, days=365)
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Failed to fetch OHLCV: {e}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "Unable to fetch market data for this symbol"
+                }
+            )
         
-        if not ohlcv or "prices" not in ohlcv:
-            current_price = 67500 if symbol.upper() == "BTC" else 3400 if symbol.upper() == "ETH" else 100
-            return {
-                "success": True,
-                "symbol": symbol.upper(),
-                "timeframe": timeframe,
-                "indicator": "sma",
-                "data": {
-                    "sma20": current_price,
-                    "sma50": current_price * 0.98,
-                    "sma200": current_price * 0.95
-                },
-                "current_price": current_price,
-                "price_vs_sma20": "above",
-                "price_vs_sma50": "above",
-                "trend": "bullish",
-                "signal": "buy",
-                "description": "Price above all major SMAs - bullish trend",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "source": "fallback"
-            }
+        # Validate OHLCV data
+        min_required = MIN_CANDLES["SMA"]
+        is_valid, prices, error_msg = validate_ohlcv_data(ohlcv, min_required, symbol, indicator_name)
         
-        prices = [p[1] for p in ohlcv["prices"]]
-        current_price = prices[-1] if prices else 0
+        if not is_valid:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": error_msg,
+                    "symbol": symbol.upper(),
+                    "timeframe": timeframe,
+                    "indicator": "sma",
+                    "data_points": 0
+                }
+            )
         
-        sma20 = calculate_sma(prices, 20)
-        sma50 = calculate_sma(prices, 50)
-        sma200 = calculate_sma(prices, 200) if len(prices) >= 200 else None
+        # Calculate SMAs
+        try:
+            current_price = prices[-1] if prices else 0
+            
+            sma20 = calculate_sma(prices, 20)
+            sma50 = calculate_sma(prices, 50)
+            sma200 = calculate_sma(prices, 200) if len(prices) >= 200 else None
+            
+            # Sanitize
+            current_price = sanitize_value(current_price) or 0
+            sma20 = sanitize_value(sma20) or 0
+            sma50 = sanitize_value(sma50) or 0
+            sma200 = sanitize_value(sma200) if sma200 is not None else None
+            
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Calculation failed: {e}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": True,
+                    "message": "Internal indicator calculation error"
+                }
+            )
         
         price_vs_sma20 = "above" if current_price > sma20 else "below"
         price_vs_sma50 = "above" if current_price > sma50 else "below"
@@ -710,17 +990,25 @@ async def get_sma(
             signal = "hold"
             description = "Mixed signals - waiting for clearer direction"
         
+        logger.info(f"✅ {indicator_name} - Success: symbol={symbol}, trend={trend}")
+        
         return {
             "success": True,
             "symbol": symbol.upper(),
             "timeframe": timeframe,
             "indicator": "sma",
+            "value": {
+                "sma20": round(sma20, 8),
+                "sma50": round(sma50, 8),
+                "sma200": round(sma200, 8) if sma200 else None
+            },
             "data": {
                 "sma20": round(sma20, 8),
                 "sma50": round(sma50, 8),
                 "sma200": round(sma200, 8) if sma200 else None
             },
             "current_price": round(current_price, 8),
+            "data_points": len(prices),
             "price_vs_sma20": price_vs_sma20,
             "price_vs_sma50": price_vs_sma50,
             "trend": trend,
@@ -731,8 +1019,14 @@ async def get_sma(
         }
         
     except Exception as e:
-        logger.error(f"SMA calculation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ {indicator_name} - Unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "Internal server error"
+            }
+        )
 
 
 @router.get("/ema")
@@ -740,38 +1034,66 @@ async def get_ema(
     symbol: str = Query(default="BTC", description="Cryptocurrency symbol"),
     timeframe: str = Query(default="1h", description="Timeframe")
 ):
-    """Calculate Exponential Moving Averages for a symbol"""
+    """Calculate Exponential Moving Averages for a symbol - PRODUCTION SAFE"""
+    indicator_name = "EMA"
+    logger.info(f"📊 {indicator_name} - Endpoint called: symbol={symbol}, timeframe={timeframe}")
+    
     try:
+        # Fetch OHLCV data
         from backend.services.coingecko_client import coingecko_client
         
-        ohlcv = await coingecko_client.get_ohlcv(symbol, days=90)
+        try:
+            ohlcv = await coingecko_client.get_ohlcv(symbol, days=90)
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Failed to fetch OHLCV: {e}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "Unable to fetch market data for this symbol"
+                }
+            )
         
-        if not ohlcv or "prices" not in ohlcv:
-            current_price = 67500 if symbol.upper() == "BTC" else 3400 if symbol.upper() == "ETH" else 100
-            return {
-                "success": True,
-                "symbol": symbol.upper(),
-                "timeframe": timeframe,
-                "indicator": "ema",
-                "data": {
-                    "ema12": current_price,
-                    "ema26": current_price * 0.99,
-                    "ema50": current_price * 0.97
-                },
-                "current_price": current_price,
-                "trend": "bullish",
-                "signal": "buy",
-                "description": "EMAs aligned bullish",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "source": "fallback"
-            }
+        # Validate OHLCV data
+        min_required = MIN_CANDLES["EMA"]
+        is_valid, prices, error_msg = validate_ohlcv_data(ohlcv, min_required, symbol, indicator_name)
         
-        prices = [p[1] for p in ohlcv["prices"]]
-        current_price = prices[-1] if prices else 0
+        if not is_valid:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": error_msg,
+                    "symbol": symbol.upper(),
+                    "timeframe": timeframe,
+                    "indicator": "ema",
+                    "data_points": 0
+                }
+            )
         
-        ema12 = calculate_ema(prices, 12)
-        ema26 = calculate_ema(prices, 26)
-        ema50 = calculate_ema(prices, 50) if len(prices) >= 50 else None
+        # Calculate EMAs
+        try:
+            current_price = prices[-1] if prices else 0
+            
+            ema12 = calculate_ema(prices, 12)
+            ema26 = calculate_ema(prices, 26)
+            ema50 = calculate_ema(prices, 50) if len(prices) >= 50 else None
+            
+            # Sanitize
+            current_price = sanitize_value(current_price) or 0
+            ema12 = sanitize_value(ema12) or 0
+            ema26 = sanitize_value(ema26) or 0
+            ema50 = sanitize_value(ema50) if ema50 is not None else None
+            
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Calculation failed: {e}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": True,
+                    "message": "Internal indicator calculation error"
+                }
+            )
         
         # Determine trend
         if ema12 > ema26:
@@ -793,17 +1115,25 @@ async def get_ema(
                 signal = "sell"
                 description = "Bearish EMAs - EMA12 below EMA26"
         
+        logger.info(f"✅ {indicator_name} - Success: symbol={symbol}, trend={trend}")
+        
         return {
             "success": True,
             "symbol": symbol.upper(),
             "timeframe": timeframe,
             "indicator": "ema",
+            "value": {
+                "ema12": round(ema12, 8),
+                "ema26": round(ema26, 8),
+                "ema50": round(ema50, 8) if ema50 else None
+            },
             "data": {
                 "ema12": round(ema12, 8),
                 "ema26": round(ema26, 8),
                 "ema50": round(ema50, 8) if ema50 else None
             },
             "current_price": round(current_price, 8),
+            "data_points": len(prices),
             "trend": trend,
             "signal": signal,
             "description": description,
@@ -812,8 +1142,14 @@ async def get_ema(
         }
         
     except Exception as e:
-        logger.error(f"EMA calculation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ {indicator_name} - Unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "Internal server error"
+            }
+        )
 
 
 @router.get("/macd")
@@ -824,32 +1160,70 @@ async def get_macd(
     slow: int = Query(default=26, description="Slow EMA period"),
     signal_period: int = Query(default=9, description="Signal line period")
 ):
-    """Calculate MACD for a symbol"""
+    """Calculate MACD for a symbol - PRODUCTION SAFE"""
+    indicator_name = "MACD"
+    logger.info(f"📊 {indicator_name} - Endpoint called: symbol={symbol}, timeframe={timeframe}, fast={fast}, slow={slow}, signal={signal_period}")
+    
     try:
+        # Validate parameters
+        if fast >= slow:
+            logger.warning(f"❌ {indicator_name} - Invalid parameters: fast={fast} must be < slow={slow}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": f"Invalid parameters: fast period ({fast}) must be less than slow period ({slow})"
+                }
+            )
+        
+        # Fetch OHLCV data
         from backend.services.coingecko_client import coingecko_client
         
-        ohlcv = await coingecko_client.get_ohlcv(symbol, days=90)
+        try:
+            ohlcv = await coingecko_client.get_ohlcv(symbol, days=90)
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Failed to fetch OHLCV: {e}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "Unable to fetch market data for this symbol"
+                }
+            )
         
-        if not ohlcv or "prices" not in ohlcv:
-            return {
-                "success": True,
-                "symbol": symbol.upper(),
-                "timeframe": timeframe,
-                "indicator": "macd",
-                "data": {
-                    "macd_line": 50.0,
-                    "signal_line": 45.0,
-                    "histogram": 5.0
-                },
-                "trend": "bullish",
-                "signal": "buy",
-                "description": "MACD above signal line - bullish momentum",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "source": "fallback"
-            }
+        # Validate OHLCV data
+        min_required = MIN_CANDLES["MACD"]
+        is_valid, prices, error_msg = validate_ohlcv_data(ohlcv, min_required, symbol, indicator_name)
         
-        prices = [p[1] for p in ohlcv["prices"]]
-        macd = calculate_macd(prices, fast, slow, signal_period)
+        if not is_valid:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": error_msg,
+                    "symbol": symbol.upper(),
+                    "timeframe": timeframe,
+                    "indicator": "macd",
+                    "data_points": 0
+                }
+            )
+        
+        # Calculate MACD
+        try:
+            macd = calculate_macd(prices, fast, slow, signal_period)
+            
+            # Sanitize output
+            macd = sanitize_dict(macd)
+            
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Calculation failed: {e}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": True,
+                    "message": "Internal indicator calculation error"
+                }
+            )
         
         # Determine signal
         if macd["histogram"] > 0:
@@ -871,12 +1245,16 @@ async def get_macd(
                 signal = "sell"
                 description = "Bearish crossover - MACD below signal"
         
+        logger.info(f"✅ {indicator_name} - Success: symbol={symbol}, trend={trend}, signal={signal}")
+        
         return {
             "success": True,
             "symbol": symbol.upper(),
             "timeframe": timeframe,
             "indicator": "macd",
+            "value": macd,
             "data": macd,
+            "data_points": len(prices),
             "trend": trend,
             "signal": signal,
             "description": description,
@@ -885,8 +1263,14 @@ async def get_macd(
         }
         
     except Exception as e:
-        logger.error(f"MACD calculation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ {indicator_name} - Unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "Internal server error"
+            }
+        )
 
 
 @router.get("/rsi")
@@ -895,30 +1279,75 @@ async def get_rsi(
     timeframe: str = Query(default="1h", description="Timeframe"),
     period: int = Query(default=14, description="RSI period")
 ):
-    """Calculate RSI for a symbol"""
+    """Calculate RSI for a symbol - PRODUCTION SAFE"""
+    indicator_name = "RSI"
+    logger.info(f"📊 {indicator_name} - Endpoint called: symbol={symbol}, timeframe={timeframe}, period={period}")
+    
     try:
+        # Validate parameters
+        if period < 1 or period > 100:
+            logger.warning(f"❌ {indicator_name} - Invalid period: {period}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": f"Invalid period: must be between 1 and 100, got {period}"
+                }
+            )
+        
+        # Fetch OHLCV data
         from backend.services.coingecko_client import coingecko_client
         
         timeframe_days = {"1m": 1, "5m": 1, "15m": 1, "1h": 7, "4h": 30, "1d": 90}
         days = timeframe_days.get(timeframe, 7)
         
-        ohlcv = await coingecko_client.get_ohlcv(symbol, days=days)
+        try:
+            ohlcv = await coingecko_client.get_ohlcv(symbol, days=days)
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Failed to fetch OHLCV: {e}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": "Unable to fetch market data for this symbol"
+                }
+            )
         
-        if not ohlcv or "prices" not in ohlcv:
-            return {
-                "success": True,
-                "symbol": symbol.upper(),
-                "timeframe": timeframe,
-                "indicator": "rsi",
-                "data": {"value": 55.0},
-                "signal": "neutral",
-                "description": "RSI in neutral zone - no extreme conditions",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "source": "fallback"
-            }
+        # Validate OHLCV data with minimum candle requirement
+        min_required = MIN_CANDLES["RSI"]
+        is_valid, prices, error_msg = validate_ohlcv_data(ohlcv, min_required, symbol, indicator_name)
         
-        prices = [p[1] for p in ohlcv["prices"]]
-        rsi = calculate_rsi(prices, period)
+        if not is_valid:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": True,
+                    "message": error_msg,
+                    "symbol": symbol.upper(),
+                    "timeframe": timeframe,
+                    "indicator": "rsi",
+                    "data_points": 0
+                }
+            )
+        
+        # Calculate RSI
+        try:
+            rsi = calculate_rsi(prices, period)
+            
+            # Sanitize output
+            rsi = sanitize_value(rsi)
+            if rsi is None:
+                raise ValueError("RSI calculation returned invalid value")
+            
+        except Exception as e:
+            logger.error(f"❌ {indicator_name} - Calculation failed: {e}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": True,
+                    "message": "Internal indicator calculation error"
+                }
+            )
         
         # Determine signal
         if rsi > 70:
@@ -937,12 +1366,16 @@ async def get_rsi(
             signal = "neutral"
             description = f"RSI at {rsi:.1f} - neutral zone"
         
+        logger.info(f"✅ {indicator_name} - Success: symbol={symbol}, value={rsi:.2f}, signal={signal}")
+        
         return {
             "success": True,
             "symbol": symbol.upper(),
             "timeframe": timeframe,
             "indicator": "rsi",
+            "value": round(rsi, 2),
             "data": {"value": round(rsi, 2)},
+            "data_points": len(prices),
             "signal": signal,
             "description": description,
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -950,8 +1383,14 @@ async def get_rsi(
         }
         
     except Exception as e:
-        logger.error(f"RSI calculation error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"❌ {indicator_name} - Unexpected error: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": True,
+                "message": "Internal server error"
+            }
+        )
 
 
 @router.get("/comprehensive")
