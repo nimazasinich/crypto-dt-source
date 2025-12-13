@@ -54,3 +54,9 @@ logs/
 # Data
 data/database/
 data/exports/
+
+# Binary files not allowed on Hugging Face
+.coverage
+*.docx
+*.pyc
+__pycache__/
